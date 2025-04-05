@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "bKHlOF/7hHQ=",
+  "success": true,
+  "projectFilePath": "D:\\POS-qu\\POS-qu\\POS-qu.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\yleno\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\8.0.2\\microsoft.extensions.dependencyinjection.abstractions.8.0.2.nupkg.sha512",
+    "C:\\Users\\yleno\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\8.0.2\\microsoft.extensions.logging.abstractions.8.0.2.nupkg.sha512",
+    "C:\\Users\\yleno\\.nuget\\packages\\npgsql\\9.0.2\\npgsql.9.0.2.nupkg.sha512"
+  ],
+  "logs": []
+}
