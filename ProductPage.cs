@@ -1,4 +1,4 @@
-﻿using POS_qu.Controllers;
+﻿
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using POS_qu.Models;
 using POS_qu.Helpers;
+using POS_qu.Controllers;
 
 namespace POS_qu
 {
@@ -18,6 +19,8 @@ namespace POS_qu
         private ItemController itemController;
         private string selectedImagePath = "";
         private DataGridViewManager dgvManager;
+        private List<UnitVariant> unitVariantsFromForm = new List<UnitVariant>(); // Store globally if needed
+
         public ProductPage()
         {
             InitializeComponent();
@@ -26,7 +29,7 @@ namespace POS_qu
             {
                 Directory.CreateDirectory(imageFolder);
             }
-  
+
 
         }
 
@@ -96,7 +99,7 @@ namespace POS_qu
 
 
 
-        
+
             LoadItems();
 
 
@@ -158,16 +161,15 @@ namespace POS_qu
 
                 Item item = new Item
                 {
-                    name = txtName.Text,
-                    buy_price = decimal.Parse(txtBuyPrice.Text),
-                    sell_price = decimal.Parse(txtSellPrice.Text),
-                    stock = double.Parse(txtStock.Text),
-                    barcode = txtBarcode.Text,
+                    name = name,
+                    buy_price = buyPrice,
+                    sell_price = sellPrice,
+                    stock = stock,
+                    barcode = barcode,
                     unit = cmbUnit.SelectedValue?.ToString(),
-                    group = Convert.ToInt32(cmbGroup.SelectedValue),
-                    note = txtDescription.Text,
+                    group = groupId,
+                    note = description,
 
-                    // optional/default values
                     reserved_stock = 0,
                     is_inventory_p = "Y",
                     is_changeprice_p = "N",
@@ -176,31 +178,42 @@ namespace POS_qu
                     created_at = DateTime.Now,
                     updated_at = DateTime.Now,
                     deleted_at = null,
-                    supplier_id = 1, // example value, update based on actual form
+                    supplier_id = 1,
                     flag = 1
                 };
 
+                int? insertedItemId = itemController.InsertItem(item);
 
-                bool result = itemController.InsertItem(item);
-                MessageBox.Show("Item inserted successfully.");
-                //bool result = itemController.InsertItem(name, buyPrice, sellPrice, stock, barcode, unitId, groupId, description);
 
-                if (result)
-                {
-                    MessageBox.Show("Item saved successfully!");
-                    LoadItems();
-                    ClearInputs();
-                }
-                else
+                if (insertedItemId == null)
                 {
                     MessageBox.Show("Failed to save item.");
+                    return;
                 }
+
+
+                // Insert unit variants
+                foreach (UnitVariant variant in unitVariantsFromForm)
+                {
+                    bool variantResult = itemController.InsertUnitVariant(insertedItemId.Value, variant);
+                    if (!variantResult)
+                    {
+                        MessageBox.Show("Failed to insert one of the unit variants.");
+                    }
+                }
+
+                MessageBox.Show("Item and unit variants saved successfully!");
+                LoadItems();
+                ClearInputs();
+                unitVariantsFromForm.Clear(); // Clear after saving
+
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error: " + ex.Message);
             }
         }
+
 
 
         private void btnUpdate_Click(object sender, EventArgs e)
@@ -372,6 +385,40 @@ namespace POS_qu
             }
         }
 
-     
+        //private void CheckUnitVariantEligibility()
+        //{
+        //    // Assuming txtItemName and cmbUnit are your controls
+        //    bool isItemNameValid = !string.IsNullOrWhiteSpace(txtName.Text);
+        //    bool isUnitSelected = cmbUnit.SelectedIndex >= 0;
+
+        //    btnUnitVariant.Enabled = isItemNameValid && isUnitSelected;
+        //}
+
+
+        private void btnUnitVariant_Click(object sender, EventArgs e)
+        {
+            bool isItemNameValid = !string.IsNullOrWhiteSpace(txtName.Text);
+            bool isUnitSelected = cmbUnit.SelectedIndex >= 0;
+
+            if (!isItemNameValid || !isUnitSelected)
+            {
+                btnUnitVariant.Cursor = Cursors.No; // Stop sign cursor
+                MessageBox.Show("Please enter item name and select a unit first.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            btnUnitVariant.Cursor = Cursors.Default;
+
+            int itemId = 2; // Replace with how you actually get it
+            string baseUnitName = cmbUnit.Text; // get selected base unit name
+            using (var variantForm = new UnitVariantForm(itemId, baseUnitName, unitVariantsFromForm))
+            {
+                var result = variantForm.ShowDialog();
+                if (result == DialogResult.OK)
+                {
+                    unitVariantsFromForm = variantForm.UnitVariants;
+                }
+            }
+        }
     }
 }

@@ -53,6 +53,7 @@
             btnNext = new Button();
             btnClose = new Button();
             dataGridView1 = new DataGridView();
+            btnUnitVariant = new Button();
             inputPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox).BeginInit();
             tablePanel.SuspendLayout();
@@ -62,6 +63,7 @@
             // inputPanel
             // 
             inputPanel.BackColor = Color.LightGray;
+            inputPanel.Controls.Add(btnUnitVariant);
             inputPanel.Controls.Add(label8);
             inputPanel.Controls.Add(label7);
             inputPanel.Controls.Add(label6);
@@ -221,7 +223,7 @@
             // pictureBox
             // 
             pictureBox.BackColor = Color.White;
-            pictureBox.Location = new Point(20, 660);
+            pictureBox.Location = new Point(16, 728);
             pictureBox.Name = "pictureBox";
             pictureBox.Size = new Size(150, 100);
             pictureBox.TabIndex = 16;
@@ -229,7 +231,7 @@
             // 
             // btnUploadImage
             // 
-            btnUploadImage.Location = new Point(176, 736);
+            btnUploadImage.Location = new Point(172, 804);
             btnUploadImage.Name = "btnUploadImage";
             btnUploadImage.Size = new Size(120, 30);
             btnUploadImage.TabIndex = 17;
@@ -238,7 +240,7 @@
             // 
             // btnSave
             // 
-            btnSave.Location = new Point(20, 780);
+            btnSave.Location = new Point(16, 848);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(90, 35);
             btnSave.TabIndex = 18;
@@ -247,7 +249,7 @@
             // 
             // btnUpdate
             // 
-            btnUpdate.Location = new Point(130, 780);
+            btnUpdate.Location = new Point(126, 848);
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(90, 35);
             btnUpdate.TabIndex = 19;
@@ -256,7 +258,7 @@
             // 
             // btnDelete
             // 
-            btnDelete.Location = new Point(240, 780);
+            btnDelete.Location = new Point(236, 848);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(90, 35);
             btnDelete.TabIndex = 20;
@@ -384,6 +386,16 @@
             dataGridView1.TabIndex = 0;
             dataGridView1.CellContentClick += dataGridView1_CellContentClick;
             // 
+            // btnUnitVariant
+            // 
+            btnUnitVariant.Location = new Point(16, 672);
+            btnUnitVariant.Name = "btnUnitVariant";
+            btnUnitVariant.Size = new Size(112, 34);
+            btnUnitVariant.TabIndex = 22;
+            btnUnitVariant.Text = "Unit Variant";
+            btnUnitVariant.UseVisualStyleBackColor = true;
+            btnUnitVariant.Click += btnUnitVariant_Click;
+            // 
             // ProductPage
             // 
             ClientSize = new Size(1600, 900);
@@ -416,6 +428,7 @@
         private Button btnFirstPage;
         private Label lblSearch;
         private ComboBox cmbPageSize;
+        private Button btnUnitVariant;
 
         //private void SetupLabelAndControl(string labelText, Control control, int y)
         //{

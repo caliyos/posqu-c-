@@ -126,6 +126,7 @@ namespace POS_qu.Controllers
             }
         }
 
+
         public int GetItemStock(int id)
         {
             try
@@ -223,6 +224,21 @@ namespace POS_qu.Controllers
             }
         }
 
+        public int GetItemIdById(int id)
+        {
+            using (var conn = new NpgsqlConnection(vStrConnection))
+            {
+                conn.Open();
+                string query = "SELECT id FROM items WHERE id = @id ORDER BY id DESC LIMIT 1";
+                using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("id", id);
+                    object result = cmd.ExecuteScalar();
+                    return result != null ? Convert.ToInt32(result) : -1;
+                }
+            }
+        }
+
 
         public DataTable GetItems(string searchTerm = null)
         {
@@ -259,7 +275,43 @@ namespace POS_qu.Controllers
             return dt;
         }
 
-        public bool InsertItem(Item item)
+        public bool InsertUnitVariant(int itemId, UnitVariant variant)
+        {
+            try
+            {
+                using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+                {
+                    vCon.Open();
+
+                    string query = @"
+                INSERT INTO unit_variants (
+                    item_id, unit_id, conversion, sell_price
+                ) VALUES (
+                    @item_id, @unit_id, @conversion, @sell_price
+                );";
+
+                    using (NpgsqlCommand vCmd = new NpgsqlCommand(query, vCon))
+                    {
+                        vCmd.Parameters.AddWithValue("@item_id", itemId);
+                        vCmd.Parameters.AddWithValue("@unit_id", variant.UnitId);
+                        vCmd.Parameters.AddWithValue("@conversion", variant.Conversion);
+                        vCmd.Parameters.AddWithValue("@sell_price", variant.SellPrice);
+                        //vCmd.Parameters.AddWithValue("@is_base_unit", variant.IsBaseUnit);
+                        //vCmd.Parameters.AddWithValue("@barcode_suffix", (object)variant.BarcodeSuffix ?? DBNull.Value);
+
+                        return vCmd.ExecuteNonQuery() > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error inserting unit variant: " + ex.Message);
+                return false;
+            }
+        }
+
+
+        public int? InsertItem(Item item)
         {
             try
             {
@@ -275,7 +327,8 @@ namespace POS_qu.Controllers
                     @name, @buy_price, @sell_price, @barcode, @stock, @reserved_stock, @unit, @group, 
                     @is_inventory_p, @is_changeprice_p, @materials, @note, @picture, @created_at, 
                     @updated_at, @deleted_at, @supplier_id, @flag
-                )";
+                )
+                RETURNING id;"; // 👈 This returns the newly inserted item's ID
 
                     using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
                     {
@@ -298,18 +351,19 @@ namespace POS_qu.Controllers
                         vCmd.Parameters.AddWithValue("@supplier_id", item.supplier_id);
                         vCmd.Parameters.AddWithValue("@flag", item.flag);
 
-                        vCmd.ExecuteNonQuery();
+                        // Execute and return the inserted ID
+                        object result = vCmd.ExecuteScalar();
+                        return result != null ? Convert.ToInt32(result) : null;
                     }
                 }
-
-                return true;
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error inserting item: " + ex.Message);
-                return false;
+                return null;
             }
         }
+
 
 
         public bool UpdateItem(Item item)

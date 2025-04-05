@@ -26,3 +26,5 @@ D:\POS-qu\POS-qu\obj\Debug\net8.0-windows\POS_qu.SearchFormItem.resources
 D:\POS-qu\POS-qu\obj\Debug\net8.0-windows\POS_qu.PaymentModalForm.resources
 D:\POS-qu\POS-qu\obj\Debug\net8.0-windows\POS_qu.QuantityForm.resources
 D:\POS-qu\POS-qu\obj\Debug\net8.0-windows\POS_qu.ProductPage.resources
+D:\POS-qu\POS-qu\obj\Debug\net8.0-windows\POS_qu.UnitVariantForm.resources
+D:\POS-qu\POS-qu\obj\Debug\net8.0-windows\POS-qu.sourcelink.json
