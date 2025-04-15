@@ -21,6 +21,7 @@
         private void InitializeComponent()
         {
             inputPanel = new Panel();
+            btnUnitVariant = new Button();
             label8 = new Label();
             label7 = new Label();
             label6 = new Label();
@@ -53,7 +54,7 @@
             btnNext = new Button();
             btnClose = new Button();
             dataGridView1 = new DataGridView();
-            btnUnitVariant = new Button();
+            btnCancelEdit = new Button();
             inputPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox).BeginInit();
             tablePanel.SuspendLayout();
@@ -63,6 +64,7 @@
             // inputPanel
             // 
             inputPanel.BackColor = Color.LightGray;
+            inputPanel.Controls.Add(btnCancelEdit);
             inputPanel.Controls.Add(btnUnitVariant);
             inputPanel.Controls.Add(label8);
             inputPanel.Controls.Add(label7);
@@ -91,6 +93,16 @@
             inputPanel.Padding = new Padding(20);
             inputPanel.Size = new Size(400, 900);
             inputPanel.TabIndex = 1;
+            // 
+            // btnUnitVariant
+            // 
+            btnUnitVariant.Location = new Point(16, 672);
+            btnUnitVariant.Name = "btnUnitVariant";
+            btnUnitVariant.Size = new Size(112, 34);
+            btnUnitVariant.TabIndex = 22;
+            btnUnitVariant.Text = "Unit Variant";
+            btnUnitVariant.UseVisualStyleBackColor = true;
+            btnUnitVariant.Click += btnUnitVariant_Click;
             // 
             // label8
             // 
@@ -177,6 +189,7 @@
             txtBuyPrice.Name = "txtBuyPrice";
             txtBuyPrice.Size = new Size(340, 31);
             txtBuyPrice.TabIndex = 3;
+            txtBuyPrice.KeyPress += TxtBuyPrice_KeyPress;
             // 
             // txtSellPrice
             // 
@@ -184,6 +197,7 @@
             txtSellPrice.Name = "txtSellPrice";
             txtSellPrice.Size = new Size(340, 31);
             txtSellPrice.TabIndex = 5;
+            txtSellPrice.KeyPress += TxtSellPrice_KeyPress;
             // 
             // txtStock
             // 
@@ -191,6 +205,7 @@
             txtStock.Name = "txtStock";
             txtStock.Size = new Size(340, 31);
             txtStock.TabIndex = 7;
+            txtStock.KeyPress += TxtStock_KeyPress;
             // 
             // txtBarcode
             // 
@@ -231,7 +246,7 @@
             // 
             // btnUploadImage
             // 
-            btnUploadImage.Location = new Point(172, 804);
+            btnUploadImage.Location = new Point(16, 840);
             btnUploadImage.Name = "btnUploadImage";
             btnUploadImage.Size = new Size(120, 30);
             btnUploadImage.TabIndex = 17;
@@ -240,7 +255,7 @@
             // 
             // btnSave
             // 
-            btnSave.Location = new Point(16, 848);
+            btnSave.Location = new Point(184, 736);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(90, 35);
             btnSave.TabIndex = 18;
@@ -249,7 +264,7 @@
             // 
             // btnUpdate
             // 
-            btnUpdate.Location = new Point(126, 848);
+            btnUpdate.Location = new Point(184, 784);
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(90, 35);
             btnUpdate.TabIndex = 19;
@@ -258,7 +273,7 @@
             // 
             // btnDelete
             // 
-            btnDelete.Location = new Point(236, 848);
+            btnDelete.Location = new Point(184, 832);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(90, 35);
             btnDelete.TabIndex = 20;
@@ -386,15 +401,15 @@
             dataGridView1.TabIndex = 0;
             dataGridView1.CellContentClick += dataGridView1_CellContentClick;
             // 
-            // btnUnitVariant
+            // btnCancelEdit
             // 
-            btnUnitVariant.Location = new Point(16, 672);
-            btnUnitVariant.Name = "btnUnitVariant";
-            btnUnitVariant.Size = new Size(112, 34);
-            btnUnitVariant.TabIndex = 22;
-            btnUnitVariant.Text = "Unit Variant";
-            btnUnitVariant.UseVisualStyleBackColor = true;
-            btnUnitVariant.Click += btnUnitVariant_Click;
+            btnCancelEdit.Location = new Point(280, 784);
+            btnCancelEdit.Name = "btnCancelEdit";
+            btnCancelEdit.Size = new Size(112, 34);
+            btnCancelEdit.TabIndex = 23;
+            btnCancelEdit.Text = "Cancel Edit";
+            btnCancelEdit.UseVisualStyleBackColor = true;
+            btnCancelEdit.Click += btnCancelEdit_Click;
             // 
             // ProductPage
             // 
@@ -429,6 +444,7 @@
         private Label lblSearch;
         private ComboBox cmbPageSize;
         private Button btnUnitVariant;
+        private Button btnCancelEdit;
 
         //private void SetupLabelAndControl(string labelText, Control control, int y)
         //{

@@ -32,8 +32,10 @@ namespace POS_qu
 
             try
             {
-                Application.Run(new ProductPage());
+                //Application.Run(new ProductPage());
                 //Application.Run(new Form2_crud());
+                Application.Run(new Form4_crud());
+
             }
             catch (Exception ex)
             {

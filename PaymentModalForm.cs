@@ -67,27 +67,61 @@ namespace POS_qu
         // Event handler for when the payment amount changes (recalculate cashback)
         private void txtPaymentAmount_TextChanged(object sender, EventArgs e)
         {
-            //MessageBox.Show("Run.");
-            // Only recalculate if the payment amount is valid
             if (decimal.TryParse(txtPaymentAmount.Text, out decimal paymentAmount))
             {
-                decimal cashback = paymentAmount - this.totalAmount;
-                txtCashback.Text = cashback >= 0 ? cashback.ToString("C") : "0";
+                decimal totalAmount = 0.0m;
+
+                // You can replace this with the actual total amount value
+                if (decimal.TryParse(lblTotal.Text.Replace("Total: $", ""), out decimal parsedTotal))
+                {
+                    totalAmount = parsedTotal;
+                }
+
+                decimal cashback = paymentAmount - totalAmount;
+                txtCashback.Text = cashback > 0 ? cashback.ToString("C") : "$0.00";
             }
             else
             {
-                txtCashback.Text = "0";
+                txtCashback.Text = "$0.00";
             }
         }
+
+
+        private void cmbPaymentMethod_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string selected = cmbPaymentMethod.SelectedItem.ToString();
+
+            // Hide all panels first
+            panelCardDetails.Visible = false;
+            panelEwalletDetails.Visible = false;
+            panelBankTransfer.Visible = false;
+            panelSplitPayment.Visible = false;
+
+            switch (selected)
+            {
+                case "Card":
+                    panelCardDetails.Visible = true;
+                    break;
+                case "QRIS":
+                    panelEwalletDetails.Visible = true;
+                    break;
+                case "Bank Transfer":
+                    panelBankTransfer.Visible = true;
+                    break;
+                case "Split Payment":
+                    panelSplitPayment.Visible = true;
+                    break;
+                    // Cash doesn't show a panel
+            }
+        }
+
+
 
         private void PaymentModalForm_Load(object sender, EventArgs e)
         {
 
         }
 
-        private void cmbPaymentMethod_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
+   
     }
 }

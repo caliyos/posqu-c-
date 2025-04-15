@@ -2,15 +2,8 @@
 {
     partial class Form4_crud
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -22,104 +15,142 @@
 
         #region Windows Form Designer generated code
 
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
-            btnPay = new Button();
-            panel1 = new Panel();
-            dataGridViewCart4 = new DataGridView();
+            panelTop = new Panel();
+            labelCari = new Label();
             txtCariBarang = new TextBox();
-            label1 = new Label();
+            panelMid = new Panel();
+            dataGridViewCart4 = new DataGridView();
+            panelBottom = new Panel();
             label2 = new Label();
-            panel1.SuspendLayout();
+            btnPay = new Button();
+            panelTop.SuspendLayout();
+            panelMid.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewCart4).BeginInit();
+            panelBottom.SuspendLayout();
             SuspendLayout();
             // 
-            // btnPay
+            // panelTop
             // 
-            btnPay.Location = new Point(296, 136);
-            btnPay.Name = "btnPay";
-            btnPay.Size = new Size(112, 34);
-            btnPay.TabIndex = 4;
-            btnPay.Text = "Pay";
-            btnPay.UseVisualStyleBackColor = true;
-            btnPay.Click += btnPay_Click;
+            panelTop.BackColor = Color.White;
+            panelTop.Controls.Add(labelCari);
+            panelTop.Controls.Add(txtCariBarang);
+            panelTop.Dock = DockStyle.Top;
+            panelTop.Location = new Point(0, 0);
+            panelTop.Name = "panelTop";
+            panelTop.Padding = new Padding(20);
+            panelTop.Size = new Size(1672, 80);
+            panelTop.TabIndex = 2;
             // 
-            // panel1
+            // labelCari
             // 
-            panel1.BorderStyle = BorderStyle.FixedSingle;
-            panel1.Controls.Add(label2);
-            panel1.Location = new Point(512, 24);
-            panel1.Name = "panel1";
-            panel1.Size = new Size(1000, 160);
-            panel1.TabIndex = 3;
-            //panel1.Paint += panel1_Paint;
-            // 
-            // dataGridViewCart4
-            // 
-            dataGridViewCart4.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridViewCart4.Location = new Point(40, 216);
-            dataGridViewCart4.Name = "dataGridViewCart4";
-            dataGridViewCart4.RowHeadersWidth = 62;
-            dataGridViewCart4.Size = new Size(1472, 392);
-            dataGridViewCart4.TabIndex = 2;
-            //dataGridViewCart4.CellContentClick += dataGridViewCart4_CellContentClick;
+            labelCari.AutoSize = true;
+            labelCari.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            labelCari.Location = new Point(20, 20);
+            labelCari.Name = "labelCari";
+            labelCari.Size = new Size(68, 38);
+            labelCari.TabIndex = 0;
+            labelCari.Text = "Cari";
             // 
             // txtCariBarang
             // 
-            txtCariBarang.Location = new Point(144, 56);
+            txtCariBarang.Font = new Font("Segoe UI", 14F);
+            txtCariBarang.Location = new Point(100, 18);
             txtCariBarang.Name = "txtCariBarang";
-            txtCariBarang.Size = new Size(280, 31);
+            txtCariBarang.Size = new Size(400, 45);
             txtCariBarang.TabIndex = 1;
             // 
-            // label1
+            // panelMid
             // 
-            label1.AutoSize = true;
-            label1.Location = new Point(80, 56);
-            label1.Name = "label1";
-            label1.Size = new Size(42, 25);
-            label1.TabIndex = 0;
-            label1.Text = "Cari";
+            panelMid.BackColor = Color.White;
+            panelMid.Controls.Add(dataGridViewCart4);
+            panelMid.Dock = DockStyle.Fill;
+            panelMid.Location = new Point(0, 80);
+            panelMid.Name = "panelMid";
+            panelMid.Padding = new Padding(20);
+            panelMid.Size = new Size(1672, 700);
+            panelMid.TabIndex = 0;
+            // 
+            // dataGridViewCart4
+            // 
+            dataGridViewCart4.BackgroundColor = Color.White;
+            dataGridViewCart4.BorderStyle = BorderStyle.None;
+            dataGridViewCart4.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewCart4.Dock = DockStyle.Fill;
+            dataGridViewCart4.Location = new Point(20, 20);
+            dataGridViewCart4.Name = "dataGridViewCart4";
+            dataGridViewCart4.RowHeadersWidth = 62;
+            dataGridViewCart4.Size = new Size(1632, 660);
+            dataGridViewCart4.TabIndex = 0;
+            // 
+            // panelBottom
+            // 
+            panelBottom.BackColor = Color.FromArgb(245, 245, 245);
+            panelBottom.Controls.Add(label2);
+            panelBottom.Controls.Add(btnPay);
+            panelBottom.Dock = DockStyle.Bottom;
+            panelBottom.Location = new Point(0, 780);
+            panelBottom.Name = "panelBottom";
+            panelBottom.Padding = new Padding(20);
+            panelBottom.Size = new Size(1672, 120);
+            panelBottom.TabIndex = 1;
             // 
             // label2
             // 
             label2.AutoSize = true;
-            label2.Font = new Font("Arial", 36F, FontStyle.Bold);
-            label2.Location = new Point(640, 72);
+            label2.Font = new Font("Segoe UI", 36F, FontStyle.Bold);
+            label2.Location = new Point(20, 20);
             label2.Name = "label2";
-            label2.Size = new Size(0, 84);
+            label2.Size = new Size(193, 96);
             label2.TabIndex = 0;
+            label2.Text = "Rp 0";
+            // 
+            // btnPay
+            // 
+            btnPay.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnPay.BackColor = Color.FromArgb(0, 123, 255);
+            btnPay.FlatAppearance.BorderSize = 0;
+            btnPay.FlatStyle = FlatStyle.Flat;
+            btnPay.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            btnPay.ForeColor = Color.White;
+            btnPay.Location = new Point(1672, 30);
+            btnPay.Name = "btnPay";
+            btnPay.Size = new Size(200, 60);
+            btnPay.TabIndex = 1;
+            btnPay.Text = "Bayar (F12)";
+            btnPay.UseVisualStyleBackColor = false;
+            btnPay.Click += btnPay_Click;
             // 
             // Form4_crud
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1577, 671);
-            Controls.Add(panel1);
-            Controls.Add(btnPay);
-            Controls.Add(dataGridViewCart4);
-            Controls.Add(txtCariBarang);
-            Controls.Add(label1);
+            ClientSize = new Size(1672, 900);
+            Controls.Add(panelMid);
+            Controls.Add(panelBottom);
+            Controls.Add(panelTop);
             Name = "Form4_crud";
-            Text = "Form4_crud";
-            //Load += Form4_crud_Load;
-            panel1.ResumeLayout(false);
-            panel1.PerformLayout();
+            Text = "Kasir POS";
+            WindowState = FormWindowState.Maximized;
+            panelTop.ResumeLayout(false);
+            panelTop.PerformLayout();
+            panelMid.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridViewCart4).EndInit();
+            panelBottom.ResumeLayout(false);
+            panelBottom.PerformLayout();
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
 
-        private Button btnPay;
-        private Panel panel1;
-        private Label label2;
-        private DataGridView dataGridViewCart4;
+        private Panel panelTop;
+        private Label labelCari;
         private TextBox txtCariBarang;
-        private Label label1;
+        private Panel panelMid;
+        private DataGridView dataGridViewCart4;
+        private Panel panelBottom;
+        private Label label2;
+        private Button btnPay;
     }
 }

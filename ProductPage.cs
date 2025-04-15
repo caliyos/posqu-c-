@@ -33,6 +33,35 @@ namespace POS_qu
 
         }
 
+        private void SetFormMode(bool isEditing)
+        {
+            btnSave.Enabled = !isEditing;
+            btnUpdate.Enabled = isEditing;
+            btnDelete.Enabled = isEditing;
+
+        }
+        private void TxtBuyPrice_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+        private void TxtSellPrice_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+        private void TxtStock_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
+            {
+                e.Handled = true;
+            }
+        }
+
         //private string selectedImagePath = "";
 
 
@@ -142,6 +171,7 @@ namespace POS_qu
             cmbGroup.ValueMember = "id";        // this stores the unit ID
             cmbGroup.SelectedIndex = -1;        // optional: makes sure nothing is selected by default
 
+            SetFormMode(false); // Ensure buttons are reset
             // fill cmbunits
             // fill groups
         }
@@ -259,7 +289,22 @@ namespace POS_qu
 
                 if (result)
                 {
+                    // Delete all previous variants
+                    itemController.DeleteUnitVariantsByItemId(id);
+
+                    // Re-insert updated variants
+                    foreach (UnitVariant variant in unitVariantsFromForm)
+                    {
+                        bool variantResult = itemController.InsertUnitVariant(id, variant);
+                        if (!variantResult)
+                        {
+                            MessageBox.Show("Failed to update one of the unit variants.");
+                        }
+                    }
+
+
                     MessageBox.Show("Item updated successfully!");
+
                     LoadItems();
                     ClearInputs();
                 }
@@ -344,6 +389,14 @@ namespace POS_qu
                     pictureBox.Image = null;
                 }
 
+               
+                int itemid = Convert.ToInt32(row.Cells["id"].Value);
+               
+                // get unit variant
+                unitVariantsFromForm = itemController.GetUnitVariant(itemid);
+
+                SetFormMode(true); // You're now in 'edit' mode
+
             }
         }
 
@@ -359,6 +412,10 @@ namespace POS_qu
             cmbUnit.SelectedIndex = -1;
             cmbGroup.SelectedIndex = -1;
             txtDescription.Clear();
+            pictureBox.Image = null;
+            selectedImagePath = "";
+
+            SetFormMode(false); // Set to 'new entry' mode
         }
 
         private void btnUploadImage_Click(object sender, EventArgs e)
@@ -419,6 +476,12 @@ namespace POS_qu
                     unitVariantsFromForm = variantForm.UnitVariants;
                 }
             }
+        }
+
+        private void btnCancelEdit_Click(object sender, EventArgs e)
+        {
+            ClearInputs(); // Clears form & resets mode
+            dataGridView1.ClearSelection(); // Deselect any selected row
         }
     }
 }

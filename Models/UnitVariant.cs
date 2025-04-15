@@ -13,6 +13,13 @@ namespace POS_qu.Models
         public int Conversion { get; set; }
         public decimal SellPrice { get; set; }
         public decimal Profit { get; set; }
+
+        //public override string ToString()
+        //{
+        //    return $"{UnitName} (x{Conversion}) - Rp {SellPrice:N0}";
+
+        //}
+        public string DisplayText => $"{UnitName} (x{Conversion}) - Rp {SellPrice:N0}";
     }
 
 }

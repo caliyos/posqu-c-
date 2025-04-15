@@ -23,13 +23,94 @@ namespace POS_qu.Controllers
             using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
             {
                 vCon.Open();
-                string sql = "SELECT * FROM items WHERE deleted_at IS NULL";
+                string sql = @"
+            SELECT 
+                items.name, 
+                items.barcode, 
+                items.buy_price, 
+                items.sell_price, 
+                items.stock, 
+                units.name AS unit, 
+                items.reserved_stock
+            FROM 
+                items
+            LEFT JOIN 
+                units ON items.unit = units.id
+            WHERE 
+                items.deleted_at IS NULL
+        ";
                 using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
                 {
                     NpgsqlDataReader dr = vCmd.ExecuteReader();
                     dt.Load(dr);
                 }
             }
+            return dt;
+        }
+
+           public DataTable GetItems(string searchTerm = null)
+        {
+            DataTable dt = new DataTable();
+
+            // Build the base SQL query
+            string sql = @"SELECT
+            items.id, 
+            items.name, 
+            items.barcode, 
+            items.buy_price, 
+            items.sell_price, 
+            items.stock, 
+            units.name AS unit, 
+            items.reserved_stock  FROM 
+            items
+        LEFT JOIN 
+            units ON items.unit = units.id
+        WHERE 
+            items.deleted_at IS NULL ";
+            //    string sql = @"
+            //    SELECT 
+            //        items.name, 
+            //        items.barcode, 
+            //        items.buy_price, 
+            //        items.sell_price, 
+            //        items.stock, 
+            //        units.name AS unit, 
+            //        items.reserved_stock
+            //    FROM 
+            //        items
+            //    LEFT JOIN 
+            //        units ON items.unit = units.id
+            //    WHERE 
+            //        items.deleted_at IS NULL
+            //";
+
+
+            // If searchTerm is provided, add search condition
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                sql += " AND items.name ILIKE @searchTerm"; // Use ILIKE for case-insensitive partial match
+            }
+
+
+            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            {
+                vCon.Open();
+
+                using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
+                {
+                    // If searchTerm is provided, add it as a parameter to prevent SQL injection
+                    if (!string.IsNullOrEmpty(searchTerm))
+                    {
+                        vCmd.Parameters.AddWithValue("@searchTerm", "%" + searchTerm + "%");
+                    }
+
+                    using (NpgsqlDataReader dr = vCmd.ExecuteReader())
+                    {
+                        dt.Load(dr);
+                    }
+                }
+            }
+
             return dt;
         }
 
@@ -90,6 +171,30 @@ namespace POS_qu.Controllers
                     using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
                     {
                         vCmd.Parameters.AddWithValue("@barcode", barcode);
+
+                        var result = vCmd.ExecuteScalar();
+                        return result != null ? Convert.ToInt32(result) : 0; // Return the current stock, or 0 if not found
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error retrieving stock: {ex.Message}");
+                return 0;
+            }
+        }
+
+        public decimal GetItemPrice(int id)
+        {
+            try
+            {
+                using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+                {
+                    vCon.Open();
+                    string sql = "SELECT sell_price FROM items WHERE id = @id";
+                    using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
+                    {
+                        vCmd.Parameters.AddWithValue("@id", id);
 
                         var result = vCmd.ExecuteScalar();
                         return result != null ? Convert.ToInt32(result) : 0; // Return the current stock, or 0 if not found
@@ -240,39 +345,57 @@ namespace POS_qu.Controllers
         }
 
 
-        public DataTable GetItems(string searchTerm = null)
+     
+
+
+        public bool DeleteUnitVariantsByItemId(int itemId)
         {
-            DataTable dt = new DataTable();
-
-            // Build the base SQL query
-            string sql = "SELECT * FROM items";
-
-            // Add filter condition if searchTerm is provided
-            if (!string.IsNullOrEmpty(searchTerm))
+            using (var conn = new NpgsqlConnection(vStrConnection))
             {
-                sql += " WHERE name ILIKE @searchTerm"; // ILIKE for case-insensitive matching in PostgreSQL
+                conn.Open();
+                string query = "DELETE FROM unit_variants WHERE item_id = @item_id";
+                using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@item_id", itemId);
+                    return cmd.ExecuteNonQuery() >= 0;
+                }
             }
+        }
+
+        public List<UnitVariant> GetUnitVariant(int itemId)
+        {
+            List<UnitVariant> variants = new List<UnitVariant>();
 
             using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
             {
                 vCon.Open();
 
-                using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
-                {
-                    // If searchTerm is provided, add it as a parameter to prevent SQL injection
-                    if (!string.IsNullOrEmpty(searchTerm))
-                    {
-                        vCmd.Parameters.AddWithValue("@searchTerm", "%" + searchTerm + "%");
-                    }
+                string query = @"SELECT uv.unit_id, u.name AS unit_name, uv.conversion, uv.sell_price
+                         FROM unit_variants uv
+                         JOIN units u ON uv.unit_id = u.id
+                         WHERE uv.item_id = @item_id";
 
-                    using (NpgsqlDataReader dr = vCmd.ExecuteReader())
+                using (NpgsqlCommand vCmd = new NpgsqlCommand(query, vCon))
+                {
+                    vCmd.Parameters.AddWithValue("@item_id", itemId);
+
+                    using (NpgsqlDataReader reader = vCmd.ExecuteReader())
                     {
-                        dt.Load(dr);
+                        while (reader.Read())
+                        {
+                            variants.Add(new UnitVariant
+                            {
+                                UnitId = Convert.ToInt32(reader["unit_id"]),
+                                UnitName = reader["unit_name"].ToString(),
+                                Conversion = Convert.ToInt32(reader["conversion"]),
+                                SellPrice = Convert.ToDecimal(reader["sell_price"])
+                            });
+                        }
                     }
                 }
             }
 
-            return dt;
+            return variants;
         }
 
         public bool InsertUnitVariant(int itemId, UnitVariant variant)
@@ -709,16 +832,17 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
 
 
         
-        public bool UpdatePendingTransactionStock(int terminalId, int itemId, decimal newQuantity)
+        public bool UpdatePendingTransactionStock(int terminalId, int itemId, decimal newQuantity,decimal newTotal)
         {
             using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
             {
                 vCon.Open();
-                string query = "UPDATE pending_transactions SET quantity = @newQuantity, updated_at = CURRENT_TIMESTAMP WHERE terminal_id = @terminalId AND item_id = @itemId";
+                string query = "UPDATE pending_transactions SET quantity = @newQuantity,total = @newTotal, updated_at = CURRENT_TIMESTAMP WHERE terminal_id = @terminalId AND item_id = @itemId";
 
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, vCon))
                 {
                     cmd.Parameters.AddWithValue("@newQuantity", newQuantity);
+                    cmd.Parameters.AddWithValue("@newTotal", newTotal);
                     cmd.Parameters.AddWithValue("@terminalId", terminalId);
                     cmd.Parameters.AddWithValue("@itemId", itemId);
                     return cmd.ExecuteNonQuery() > 0;
@@ -787,20 +911,7 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
 
     }
 
-    // Payment class to map payment details
-    public class Payment
-        {
-            public decimal Amount { get; set; }
-            public string PaymentMethod { get; set; }
-            public DateTime PaymentDate { get; set; }
 
-            public Payment(decimal amount, string paymentMethod, DateTime paymentDate)
-            {
-                Amount = amount;
-                PaymentMethod = paymentMethod;
-                PaymentDate = paymentDate;
-            }
-        }
 
     }
 

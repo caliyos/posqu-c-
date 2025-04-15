@@ -2,9 +2,6 @@
 {
     partial class PaymentModalForm
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
         private Label lblTotal;
@@ -16,11 +13,39 @@
         private ComboBox cmbPaymentMethod;
         private Button btnPay;
 
+        private Label label1;
+        private ComboBox cmbMember;
+        private Panel panelCardDetails;
+        private Panel panelEwalletDetails;
+        private Panel panelSplitPayment;
+        private Panel panelBankTransfer;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
+        // panel card
+        private Label lblCardNumber;
+        private TextBox txtCardNumber;
+        private Label lblCardHolder;
+        private TextBox txtCardHolder;
+        private Label lblExpiry;
+        private TextBox txtExpiry;
+
+        // panel ewallet
+        private Label lblEwalletProvider;
+        private ComboBox cmbEwalletProvider;
+        private Label lblEwalletRef;
+        private TextBox txtEwalletRef;
+
+        // panel bank transfer
+        private Label lblBankName;
+        private ComboBox cmbBankName;
+        private Label lblTransferRef;
+        private TextBox txtTransferRef;
+
+        // panel split payment
+        private Label lblCashPart;
+        private TextBox txtCashPart;
+        private Label lblCardPart;
+        private TextBox txtCardPart;
+
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -42,6 +67,32 @@
             btnPay = new Button();
             label1 = new Label();
             cmbMember = new ComboBox();
+            panelCardDetails = new Panel();
+            lblCardNumber = new Label();
+            txtCardNumber = new TextBox();
+            lblCardHolder = new Label();
+            txtCardHolder = new TextBox();
+            lblExpiry = new Label();
+            txtExpiry = new TextBox();
+            panelEwalletDetails = new Panel();
+            lblEwalletProvider = new Label();
+            cmbEwalletProvider = new ComboBox();
+            lblEwalletRef = new Label();
+            txtEwalletRef = new TextBox();
+            panelBankTransfer = new Panel();
+            lblBankName = new Label();
+            cmbBankName = new ComboBox();
+            lblTransferRef = new Label();
+            txtTransferRef = new TextBox();
+            panelSplitPayment = new Panel();
+            lblCashPart = new Label();
+            txtCashPart = new TextBox();
+            lblCardPart = new Label();
+            txtCardPart = new TextBox();
+            panelCardDetails.SuspendLayout();
+            panelEwalletDetails.SuspendLayout();
+            panelBankTransfer.SuspendLayout();
+            panelSplitPayment.SuspendLayout();
             SuspendLayout();
             // 
             // lblTotal
@@ -83,6 +134,7 @@
             // 
             txtCashback.Location = new Point(232, 112);
             txtCashback.Name = "txtCashback";
+            txtCashback.ReadOnly = true;
             txtCashback.Size = new Size(150, 31);
             txtCashback.TabIndex = 4;
             // 
@@ -98,7 +150,7 @@
             // cmbPaymentMethod
             // 
             cmbPaymentMethod.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbPaymentMethod.Items.AddRange(new object[] { "Cash", "Card", "QRIS" });
+            cmbPaymentMethod.Items.AddRange(new object[] { "Cash", "Card", "QRIS", "Bank Transfer", "Split Payment" });
             cmbPaymentMethod.Location = new Point(232, 152);
             cmbPaymentMethod.Name = "cmbPaymentMethod";
             cmbPaymentMethod.Size = new Size(150, 33);
@@ -109,8 +161,8 @@
             // 
             btnPay.Location = new Point(232, 232);
             btnPay.Name = "btnPay";
-            btnPay.Size = new Size(75, 30);
-            btnPay.TabIndex = 7;
+            btnPay.Size = new Size(120, 40);
+            btnPay.TabIndex = 9;
             btnPay.Text = "Pay";
             btnPay.UseVisualStyleBackColor = true;
             btnPay.Click += btnPay_Click;
@@ -121,7 +173,7 @@
             label1.Location = new Point(32, 192);
             label1.Name = "label1";
             label1.Size = new Size(79, 25);
-            label1.TabIndex = 5;
+            label1.TabIndex = 7;
             label1.Text = "Member";
             // 
             // cmbMember
@@ -131,51 +183,231 @@
             cmbMember.Location = new Point(232, 192);
             cmbMember.Name = "cmbMember";
             cmbMember.Size = new Size(150, 33);
-            cmbMember.TabIndex = 6;
+            cmbMember.TabIndex = 8;
+            // 
+            // panelCardDetails
+            // 
+            panelCardDetails.Controls.Add(lblCardNumber);
+            panelCardDetails.Controls.Add(txtCardNumber);
+            panelCardDetails.Controls.Add(lblCardHolder);
+            panelCardDetails.Controls.Add(txtCardHolder);
+            panelCardDetails.Controls.Add(lblExpiry);
+            panelCardDetails.Controls.Add(txtExpiry);
+            panelCardDetails.Location = new Point(420, 30);
+            panelCardDetails.Name = "panelCardDetails";
+            panelCardDetails.Size = new Size(600, 146);
+            panelCardDetails.TabIndex = 10;
+            panelCardDetails.Visible = false;
+            // 
+            // lblCardNumber
+            // 
+            lblCardNumber.Location = new Point(10, 10);
+            lblCardNumber.Name = "lblCardNumber";
+            lblCardNumber.Size = new Size(100, 23);
+            lblCardNumber.TabIndex = 0;
+            lblCardNumber.Text = "Card Number:";
+            // 
+            // txtCardNumber
+            // 
+            txtCardNumber.Location = new Point(160, 10);
+            txtCardNumber.Name = "txtCardNumber";
+            txtCardNumber.Size = new Size(100, 31);
+            txtCardNumber.TabIndex = 1;
+            // 
+            // lblCardHolder
+            // 
+            lblCardHolder.Location = new Point(10, 50);
+            lblCardHolder.Name = "lblCardHolder";
+            lblCardHolder.Size = new Size(100, 23);
+            lblCardHolder.TabIndex = 2;
+            lblCardHolder.Text = "Card Holder:";
+            // 
+            // txtCardHolder
+            // 
+            txtCardHolder.Location = new Point(160, 50);
+            txtCardHolder.Name = "txtCardHolder";
+            txtCardHolder.Size = new Size(100, 31);
+            txtCardHolder.TabIndex = 3;
+            // 
+            // lblExpiry
+            // 
+            lblExpiry.Location = new Point(10, 90);
+            lblExpiry.Name = "lblExpiry";
+            lblExpiry.Size = new Size(100, 23);
+            lblExpiry.TabIndex = 4;
+            lblExpiry.Text = "Expiry Date:";
+            // 
+            // txtExpiry
+            // 
+            txtExpiry.Location = new Point(160, 90);
+            txtExpiry.Name = "txtExpiry";
+            txtExpiry.Size = new Size(100, 31);
+            txtExpiry.TabIndex = 5;
+            // 
+            // panelEwalletDetails
+            // 
+            panelEwalletDetails.Controls.Add(lblEwalletProvider);
+            panelEwalletDetails.Controls.Add(cmbEwalletProvider);
+            panelEwalletDetails.Controls.Add(lblEwalletRef);
+            panelEwalletDetails.Controls.Add(txtEwalletRef);
+            panelEwalletDetails.Location = new Point(416, 184);
+            panelEwalletDetails.Name = "panelEwalletDetails";
+            panelEwalletDetails.Size = new Size(600, 120);
+            panelEwalletDetails.TabIndex = 11;
+            panelEwalletDetails.Visible = false;
+            // 
+            // lblEwalletProvider
+            // 
+            lblEwalletProvider.Location = new Point(10, 10);
+            lblEwalletProvider.Name = "lblEwalletProvider";
+            lblEwalletProvider.Size = new Size(100, 23);
+            lblEwalletProvider.TabIndex = 0;
+            lblEwalletProvider.Text = "Provider:";
+            // 
+            // cmbEwalletProvider
+            // 
+            cmbEwalletProvider.Items.AddRange(new object[] { "OVO", "GoPay", "ShopeePay" });
+            cmbEwalletProvider.Location = new Point(160, 10);
+            cmbEwalletProvider.Name = "cmbEwalletProvider";
+            cmbEwalletProvider.Size = new Size(121, 33);
+            cmbEwalletProvider.TabIndex = 1;
+            // 
+            // lblEwalletRef
+            // 
+            lblEwalletRef.Location = new Point(10, 50);
+            lblEwalletRef.Name = "lblEwalletRef";
+            lblEwalletRef.Size = new Size(100, 23);
+            lblEwalletRef.TabIndex = 2;
+            lblEwalletRef.Text = "Reference Code:";
+            // 
+            // txtEwalletRef
+            // 
+            txtEwalletRef.Location = new Point(160, 50);
+            txtEwalletRef.Name = "txtEwalletRef";
+            txtEwalletRef.Size = new Size(100, 31);
+            txtEwalletRef.TabIndex = 3;
+            // 
+            // panelBankTransfer
+            // 
+            panelBankTransfer.Controls.Add(lblBankName);
+            panelBankTransfer.Controls.Add(cmbBankName);
+            panelBankTransfer.Controls.Add(lblTransferRef);
+            panelBankTransfer.Controls.Add(txtTransferRef);
+            panelBankTransfer.Location = new Point(416, 320);
+            panelBankTransfer.Name = "panelBankTransfer";
+            panelBankTransfer.Size = new Size(600, 120);
+            panelBankTransfer.TabIndex = 12;
+            panelBankTransfer.Visible = false;
+            // 
+            // lblBankName
+            // 
+            lblBankName.Location = new Point(10, 10);
+            lblBankName.Name = "lblBankName";
+            lblBankName.Size = new Size(100, 23);
+            lblBankName.TabIndex = 0;
+            lblBankName.Text = "Bank Name:";
+            // 
+            // cmbBankName
+            // 
+            cmbBankName.Items.AddRange(new object[] { "BCA", "BNI", "BRI", "Mandiri" });
+            cmbBankName.Location = new Point(160, 10);
+            cmbBankName.Name = "cmbBankName";
+            cmbBankName.Size = new Size(121, 33);
+            cmbBankName.TabIndex = 1;
+            // 
+            // lblTransferRef
+            // 
+            lblTransferRef.Location = new Point(10, 50);
+            lblTransferRef.Name = "lblTransferRef";
+            lblTransferRef.Size = new Size(100, 23);
+            lblTransferRef.TabIndex = 2;
+            lblTransferRef.Text = "Reference Number:";
+            // 
+            // txtTransferRef
+            // 
+            txtTransferRef.Location = new Point(160, 50);
+            txtTransferRef.Name = "txtTransferRef";
+            txtTransferRef.Size = new Size(100, 31);
+            txtTransferRef.TabIndex = 3;
+            // 
+            // panelSplitPayment
+            // 
+            panelSplitPayment.Controls.Add(lblCashPart);
+            panelSplitPayment.Controls.Add(txtCashPart);
+            panelSplitPayment.Controls.Add(lblCardPart);
+            panelSplitPayment.Controls.Add(txtCardPart);
+            panelSplitPayment.Location = new Point(416, 448);
+            panelSplitPayment.Name = "panelSplitPayment";
+            panelSplitPayment.Size = new Size(600, 120);
+            panelSplitPayment.TabIndex = 13;
+            panelSplitPayment.Visible = false;
+            // 
+            // lblCashPart
+            // 
+            lblCashPart.Location = new Point(10, 10);
+            lblCashPart.Name = "lblCashPart";
+            lblCashPart.Size = new Size(100, 23);
+            lblCashPart.TabIndex = 0;
+            lblCashPart.Text = "Cash Amount:";
+            // 
+            // txtCashPart
+            // 
+            txtCashPart.Location = new Point(160, 10);
+            txtCashPart.Name = "txtCashPart";
+            txtCashPart.Size = new Size(100, 31);
+            txtCashPart.TabIndex = 1;
+            // 
+            // lblCardPart
+            // 
+            lblCardPart.Location = new Point(10, 50);
+            lblCardPart.Name = "lblCardPart";
+            lblCardPart.Size = new Size(100, 23);
+            lblCardPart.TabIndex = 2;
+            lblCardPart.Text = "Card Amount:";
+            // 
+            // txtCardPart
+            // 
+            txtCardPart.Location = new Point(160, 50);
+            txtCardPart.Name = "txtCardPart";
+            txtCardPart.Size = new Size(100, 31);
+            txtCardPart.TabIndex = 3;
             // 
             // PaymentModalForm
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1212, 597);
-            Controls.Add(btnPay);
-            Controls.Add(cmbMember);
+            AutoScroll = true;
+            ClientSize = new Size(1100, 600);
+            Controls.Add(lblTotal);
+            Controls.Add(lblPaymentAmount);
+            Controls.Add(txtPaymentAmount);
+            Controls.Add(lblCashback);
+            Controls.Add(txtCashback);
+            Controls.Add(lblPaymentMethod);
             Controls.Add(cmbPaymentMethod);
             Controls.Add(label1);
-            Controls.Add(lblPaymentMethod);
-            Controls.Add(txtCashback);
-            Controls.Add(lblCashback);
-            Controls.Add(txtPaymentAmount);
-            Controls.Add(lblPaymentAmount);
-            Controls.Add(lblTotal);
+            Controls.Add(cmbMember);
+            Controls.Add(btnPay);
+            Controls.Add(panelCardDetails);
+            Controls.Add(panelEwalletDetails);
+            Controls.Add(panelBankTransfer);
+            Controls.Add(panelSplitPayment);
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            MaximizeBox = false;
+            MinimumSize = new Size(800, 480);
             Name = "PaymentModalForm";
+            StartPosition = FormStartPosition.CenterScreen;
             Text = "Payment Modal";
+            panelCardDetails.ResumeLayout(false);
+            panelCardDetails.PerformLayout();
+            panelEwalletDetails.ResumeLayout(false);
+            panelEwalletDetails.PerformLayout();
+            panelBankTransfer.ResumeLayout(false);
+            panelBankTransfer.PerformLayout();
+            panelSplitPayment.ResumeLayout(false);
+            panelSplitPayment.PerformLayout();
             ResumeLayout(false);
             PerformLayout();
-            // 
-            // PaymentModalForm
-            // 
-
-            //Name = "PaymentModalForm";
-            //Text = "PaymentModalForm";
-            //Load += PaymentModalForm_Load;
-            //ResumeLayout(false);
-
         }
-        #region Windows Form Designer generated code
-
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
-        //private void InitializeComponent()
-        //{
-
-        //}
-
-        #endregion
-
-        private Label label1;
-        private ComboBox cmbMember;
     }
 }

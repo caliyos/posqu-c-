@@ -44,7 +44,10 @@ namespace POS_qu.Helpers
             // Apply search filter
             if (!string.IsNullOrWhiteSpace(SearchText) && !string.IsNullOrWhiteSpace(SearchColumn))
             {
-                filteredRows = filteredRows.Where(row => row[SearchColumn]?.ToString().IndexOf(SearchText, StringComparison.OrdinalIgnoreCase) >= 0);
+                filteredRows = filteredRows.Where(row => 
+                row[SearchColumn]?.ToString().IndexOf(SearchText, StringComparison.OrdinalIgnoreCase) >= 0
+                    
+                );
             }
 
             TotalRecords = filteredRows.Count();
