@@ -13,32 +13,43 @@ namespace POS_qu
 
         private List<UnitVariant> unitVariants;
 
-        public QuantityForm(int availableStock, List<UnitVariant> variants)
+        private string mainunit;
+
+        public QuantityForm(int availableStock, List<UnitVariant> variants,string prmmainunit)
         {
             InitializeComponent();
             lblStockAvailable.Text = $"Stock Available: {availableStock}";
-            unitVariants = variants;
-
-            if (unitVariants == null || unitVariants.Count == 0)
+            unitVariants = variants ?? new List<UnitVariant>();
+            mainunit = prmmainunit;
+            if (unitVariants.Count == 0)
             {
-                // Sembunyikan ComboBox dan Label untuk unit variant
                 lblUnitVariant.Visible = false;
                 cbUnitVariant.Visible = false;
-                ShowNoUnitVariantMessage();  // Tampilkan pesan jika tidak ada unit variant
+                ShowNoUnitVariantMessage();
             }
             else
             {
-                // Tampilkan unit variant jika ada
+                // Add a dummy 'No Variant' option
+                UnitVariant noVariantOption = new UnitVariant
+                {
+                    UnitId = 0, // assuming 0 means "No Variant"
+                    UnitName = "-- No Variant (Base Unit) --",
+                    Conversion = 1,
+                    SellPrice = 0 // let it indicate base price is used elsewhere
+                };
+
+                unitVariants.Insert(0, noVariantOption);
+
                 cbUnitVariant.DataSource = unitVariants;
                 cbUnitVariant.DisplayMember = "UnitName";
                 cbUnitVariant.ValueMember = "UnitId";
 
-                if (unitVariants.Count > 0)
-                    cbUnitVariant.SelectedIndex = 0;
+                cbUnitVariant.SelectedIndex = 0;
 
-                UpdateUnitVariantInfo(); // Update informasi konversi dan harga jual
+                UpdateUnitVariantInfo();
             }
         }
+
 
         private void cbUnitVariant_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -52,12 +63,20 @@ namespace POS_qu
                 var selectedUnit = cbUnitVariant.SelectedItem as UnitVariant;
                 if (selectedUnit != null)
                 {
-                    // Tampilkan conversion rate dan harga jual
-                    lblConversionRate.Text = $"Conversion Rate: 1 {selectedUnit.UnitName} = {selectedUnit.Conversion} pcs";
-                    lblSellPrice.Text = $"Sell Price: {selectedUnit.SellPrice:C} per {selectedUnit.UnitName}";
+                    if (selectedUnit.UnitId == 0) // No Variant Selected
+                    {
+                        lblConversionRate.Text = "Using base unit.";
+                        lblSellPrice.Text = ""; // or your base unit price if you have it
+                    }
+                    else
+                    {
+                        lblConversionRate.Text = $"Conversion Rate: 1 {selectedUnit.UnitName} = {selectedUnit.Conversion} {mainunit}";
+                        lblSellPrice.Text = $"Sell Price: {selectedUnit.SellPrice:C} per {selectedUnit.UnitName}";
+                    }
                 }
             }
         }
+
 
         private void btnSubmit_Click(object sender, EventArgs e)
         {
@@ -77,18 +96,34 @@ namespace POS_qu
 
                     if (unitVariants != null && unitVariants.Count > 0)
                     {
-                        SelectedUnitVariant = cbUnitVariant.SelectedItem as UnitVariant;
+                        var selected = cbUnitVariant.SelectedItem as UnitVariant;
+
+                        if (selected != null && selected.UnitId != 0) // Real variant selected
+                        {
+                            SelectedUnitVariant = selected;
+                            TotalSellPrice = SelectedUnitVariant.SellPrice * enteredQuantity;
+                        }
+                        else
+                        {
+                            // No Variant chosen (base unit)
+                            SelectedUnitVariant = null;
+
+                            // Assume you want to use base unit price here, 
+                            // for example if you passed a decimal `BaseSellPrice` in constructor
+                            // TotalSellPrice = BaseSellPrice * enteredQuantity;
+
+                            TotalSellPrice = 0; // Set 0 or handle base price as needed
+                        }
                     }
                     else
                     {
-                        // Jika tidak ada unit variant, set null
+                        // Tidak ada unit variants, jadi base unit digunakan
                         SelectedUnitVariant = null;
-                    }
 
-                    // Menghitung total harga jual berdasarkan unit yang dipilih
-                    if (SelectedUnitVariant != null)
-                    {
-                        TotalSellPrice = SelectedUnitVariant.SellPrice * enteredQuantity;
+                        // Assume you want to use base unit price here
+                        // TotalSellPrice = BaseSellPrice * enteredQuantity;
+
+                        TotalSellPrice = 0; // or your calculation
                     }
 
                     DialogResult = DialogResult.OK;
@@ -104,6 +139,7 @@ namespace POS_qu
                 MessageBox.Show("Please enter a valid number.");
             }
         }
+
 
         public void ShowNoUnitVariantMessage()
         {

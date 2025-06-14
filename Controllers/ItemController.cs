@@ -25,12 +25,17 @@ namespace POS_qu.Controllers
                 vCon.Open();
                 string sql = @"
             SELECT 
+                items.id, 
                 items.name, 
                 items.barcode, 
                 items.buy_price, 
                 items.sell_price, 
                 items.stock, 
                 units.name AS unit, 
+                items.unit AS unit_id, 
+                items.group, 
+                items.note,   
+                items.picture, 
                 items.reserved_stock
             FROM 
                 items
@@ -48,7 +53,82 @@ namespace POS_qu.Controllers
             return dt;
         }
 
-           public DataTable GetItems(string searchTerm = null)
+        public DataTable GetAvailableItems()
+        {
+            MessageBox.Show("GetItems no param called.");
+            DataTable dt = new DataTable();
+            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            {
+                vCon.Open();
+                string sql = @"
+            SELECT 
+                items.id, 
+                items.name, 
+                items.barcode, 
+                items.buy_price, 
+                items.sell_price, 
+                items.stock, 
+                units.name AS unit, 
+                items.unit AS unit_id, 
+                items.group, 
+                items.note,   
+                items.picture, 
+                items.reserved_stock
+            FROM 
+                items
+            LEFT JOIN 
+                units ON items.unit = units.id
+            WHERE 
+                items.deleted_at IS NULL
+                AND items.stock > 0
+        ";
+                using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
+                {
+                    NpgsqlDataReader dr = vCmd.ExecuteReader();
+                    dt.Load(dr);
+                }
+            }
+            return dt;
+        }
+
+        public DataTable GetNonAvailableItems()
+        {
+            MessageBox.Show("GetItems no param called.");
+            DataTable dt = new DataTable();
+            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            {
+                vCon.Open();
+                string sql = @"
+            SELECT 
+                items.id, 
+                items.name, 
+                items.barcode, 
+                items.buy_price, 
+                items.sell_price, 
+                items.stock, 
+                units.name AS unit, 
+                items.unit AS unit_id, 
+                items.group, 
+                items.note,   
+                items.picture, 
+                items.reserved_stock
+            FROM 
+                items
+            LEFT JOIN 
+                units ON items.unit = units.id
+            WHERE 
+                items.deleted_at IS NULL
+                AND items.stock < 1
+        ";
+                using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
+                {
+                    NpgsqlDataReader dr = vCmd.ExecuteReader();
+                    dt.Load(dr);
+                }
+            }
+            return dt;
+        }
+        public DataTable GetItems(string searchTerm = null)
         {
             DataTable dt = new DataTable();
 
@@ -207,6 +287,34 @@ namespace POS_qu.Controllers
                 return 0;
             }
         }
+
+        public string GetItemUnit(int id)
+        {
+            try
+            {
+                using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+                {
+                    vCon.Open();
+                    string sql = @"SELECT units.name FROM items
+LEFT JOIN units ON items.unit = units.id
+WHERE items.id = @id";
+
+                    using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
+                    {
+                        vCmd.Parameters.AddWithValue("@id", id);
+
+                        var result = vCmd.ExecuteScalar();
+                        return result != null ? result.ToString() : "";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error retrieving unit: {ex.Message}");
+                return "";
+            }
+        }
+
         public int GetItemReservedStock(string barcode)
         {
             try
@@ -268,6 +376,7 @@ namespace POS_qu.Controllers
                         vCmd.Parameters.AddWithValue("@id", id);
 
                         var result = vCmd.ExecuteScalar();
+                        MessageBox.Show(result != null ? $"Raw result: {result.ToString()}" : "Result is NULL");
                         return result != null ? Convert.ToInt32(result) : 0; // Return the current stock, or 0 if not found
                     }
                 }
@@ -623,11 +732,13 @@ namespace POS_qu.Controllers
         INSERT INTO transactions (
             ts_numbering, ts_code, ts_total, ts_payment_amount, ts_cashback, 
             ts_method, ts_status, ts_change, ts_internal_note, ts_note, 
-            ts_customer, ts_freename, created_by, created_at) 
+            ts_customer, ts_freename, terminal_id, shift_id,user_id, created_by, created_at
+        ) 
         VALUES (
             @ts_numbering, @ts_code, @ts_total, @ts_payment_amount, @ts_cashback, 
             @ts_method, @ts_status, @ts_change, @ts_internal_note, @ts_note, 
-            @ts_customer, @ts_freename, @created_by, @created_at) 
+            @ts_customer, @ts_freename, @terminal_id, @shift_id, @user_id,@created_by, @created_at
+        ) 
         RETURNING ts_id";
 
                 using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
@@ -635,7 +746,7 @@ namespace POS_qu.Controllers
                     vCmd.Parameters.AddWithValue("@ts_numbering", transaction.TsNumbering);
                     vCmd.Parameters.AddWithValue("@ts_code", transaction.TsCode);
                     vCmd.Parameters.AddWithValue("@ts_total", transaction.TsTotal);
-                    vCmd.Parameters.AddWithValue("@ts_payment_amount", transaction.TsPaymentAmount); // ✅ Add payment amount
+                    vCmd.Parameters.AddWithValue("@ts_payment_amount", transaction.TsPaymentAmount);
                     vCmd.Parameters.AddWithValue("@ts_cashback", transaction.TsCashback);
                     vCmd.Parameters.AddWithValue("@ts_method", transaction.TsMethod);
                     vCmd.Parameters.AddWithValue("@ts_status", transaction.TsStatus);
@@ -644,10 +755,13 @@ namespace POS_qu.Controllers
                     vCmd.Parameters.AddWithValue("@ts_note", transaction.TsNote);
                     vCmd.Parameters.AddWithValue("@ts_customer", (object)transaction.TsCustomer ?? DBNull.Value);
                     vCmd.Parameters.AddWithValue("@ts_freename", transaction.TsFreename);
-                    vCmd.Parameters.AddWithValue("@created_by", transaction.CreatedBy);
+                    vCmd.Parameters.AddWithValue("@terminal_id", transaction.TerminalId); // TerminalId ditambahkan
+                    vCmd.Parameters.AddWithValue("@shift_id", transaction.ShiftId); // ShiftId ditambahkan
+                    vCmd.Parameters.AddWithValue("@user_id", transaction.UserId); // ShiftId ditambahkan
+                    vCmd.Parameters.AddWithValue("@created_by", transaction.CreatedBy); // CreatedBy dari sesi
                     vCmd.Parameters.AddWithValue("@created_at", transaction.CreatedAt);
 
-                    return Convert.ToInt32(vCmd.ExecuteScalar()); // Returns transaction ID
+                    return Convert.ToInt32(vCmd.ExecuteScalar()); // Mengembalikan transaction ID
                 }
             }
         }
@@ -660,14 +774,14 @@ namespace POS_qu.Controllers
             {
                 vCon.Open();
                 string sql = @"
-    INSERT INTO transaction_details (
-        ts_id, item_id, tsd_barcode, tsd_sell_price, tsd_quantity, tsd_unit, tsd_note, 
-        tsd_discount_per_item, tsd_discount_percentage, tsd_discount_total, 
-        tsd_tax, tsd_total, created_by, created_at) 
-    VALUES (
-        @ts_id, @item_id, @tsd_barcode, @tsd_sell_price, @tsd_quantity, @tsd_unit, @tsd_note, 
-        @tsd_discount_per_item, @tsd_discount_percentage, @tsd_discount_total, 
-        @tsd_tax, @tsd_total, @created_by, @created_at)";
+INSERT INTO transaction_details (
+    ts_id, item_id, tsd_barcode, tsd_sell_price, tsd_quantity, tsd_unit, tsd_note, 
+    tsd_discount_per_item, tsd_discount_percentage, tsd_discount_total, 
+    tsd_tax, tsd_total, tsd_conversion_rate, tsd_price_per_unit, tsd_unit_variant, created_by, created_at) 
+VALUES (
+    @ts_id, @item_id, @tsd_barcode, @tsd_sell_price, @tsd_quantity, @tsd_unit, @tsd_note, 
+    @tsd_discount_per_item, @tsd_discount_percentage, @tsd_discount_total, 
+    @tsd_tax, @tsd_total, @tsd_conversion_rate, @tsd_price_per_unit,@tsd_unit_variant, @created_by, @created_at)";
 
                 foreach (var detail in details)
                 {
@@ -685,6 +799,9 @@ namespace POS_qu.Controllers
                         vCmd.Parameters.AddWithValue("@tsd_discount_total", detail.TsdDiscountTotal);
                         vCmd.Parameters.AddWithValue("@tsd_tax", detail.TsdTax);
                         vCmd.Parameters.AddWithValue("@tsd_total", detail.TsdTotal);
+                        vCmd.Parameters.AddWithValue("@tsd_conversion_rate", detail.TsdConversionRate); // Added conversion rate
+                        vCmd.Parameters.AddWithValue("@tsd_price_per_unit", detail.TsdPricePerUnit); // Added price per unit
+                        vCmd.Parameters.AddWithValue("@tsd_unit_variant", detail.TsdUnitVariant);
                         vCmd.Parameters.AddWithValue("@created_by", detail.CreatedBy);
                         vCmd.Parameters.AddWithValue("@created_at", detail.CreatedAt);
 
@@ -693,6 +810,7 @@ namespace POS_qu.Controllers
                 }
             }
         }
+
 
         /////////////////////////////////////////////////////////////////
 
@@ -763,7 +881,7 @@ namespace POS_qu.Controllers
             INSERT INTO pending_transactions 
             (terminal_id, cashier_id, item_id, barcode, unit, quantity, sell_price, discount_percentage, discount_total, tax, total, note) 
             VALUES (@terminalId, @cashierId, @itemId, @barcode, @unit, @quantity, @sellPrice, @discountPercentage, @discountTotal, @tax, @total, @note) 
-            ON CONFLICT (terminal_id, item_id) 
+            ON CONFLICT (terminal_id, item_id,unit) 
             DO UPDATE SET 
                 quantity = pending_transactions.quantity + EXCLUDED.quantity, 
                 discount_percentage = EXCLUDED.discount_percentage,
@@ -832,12 +950,12 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
 
 
         
-        public bool UpdatePendingTransactionStock(int terminalId, int itemId, decimal newQuantity,decimal newTotal)
+        public bool UpdatePendingTransactionStock(int terminalId, int itemId, decimal newQuantity,decimal newTotal,string unit)
         {
             using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
             {
                 vCon.Open();
-                string query = "UPDATE pending_transactions SET quantity = @newQuantity,total = @newTotal, updated_at = CURRENT_TIMESTAMP WHERE terminal_id = @terminalId AND item_id = @itemId";
+                string query = "UPDATE pending_transactions SET quantity = @newQuantity,total = @newTotal, updated_at = CURRENT_TIMESTAMP WHERE terminal_id = @terminalId AND item_id = @itemId AND unit = @unit";
 
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, vCon))
                 {
@@ -845,6 +963,7 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
                     cmd.Parameters.AddWithValue("@newTotal", newTotal);
                     cmd.Parameters.AddWithValue("@terminalId", terminalId);
                     cmd.Parameters.AddWithValue("@itemId", itemId);
+                    cmd.Parameters.AddWithValue("@unit", unit);
                     return cmd.ExecuteNonQuery() > 0;
                 }
             }
@@ -904,6 +1023,92 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
 
 
 
+        public Item GetRandomItemByBarcode()
+        {
+            List<string> barcodes = new List<string>();
+
+            using (var con = new NpgsqlConnection(vStrConnection))
+            {
+                con.Open();
+
+                // Step 1: Get all barcodes
+                string barcodeSql = "SELECT barcode FROM items WHERE deleted_at IS NULL";
+                using (var cmd = new NpgsqlCommand(barcodeSql, con))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        barcodes.Add(reader.GetString(0));
+                    }
+                }
+
+                // Step 2: Check if we got any
+                if (barcodes.Count == 0)
+                    return null;
+
+                // Step 3: Pick a random barcode
+                var random = new Random();
+                int index = random.Next(barcodes.Count);
+                string randomBarcode = barcodes[index];
+
+                // Step 4: Get item by barcode
+         
+
+                string itemSql = "SELECT items.id,items.name,items.barcode, items.sell_price,items.stock, units.name as unitname FROM items LEFT JOIN units units ON items.unit = units.id WHERE barcode = @barcode";
+                using (var itemCmd = new NpgsqlCommand(itemSql, con))
+                {
+                    itemCmd.Parameters.AddWithValue("@barcode", randomBarcode);
+
+                    using (var itemReader = itemCmd.ExecuteReader())
+                    {
+                        if (itemReader.Read())
+                        {
+                            var sellPrice = itemReader.GetDecimal(itemReader.GetOrdinal("sell_price"));
+                            int productId = itemReader.GetInt32(itemReader.GetOrdinal("id"));
+                            string name = itemReader.GetString(itemReader.GetOrdinal("name"));
+                            string barcode = itemReader.GetString(itemReader.GetOrdinal("barcode"));
+                            double stock = itemReader.GetDouble(itemReader.GetOrdinal("stock"));
+                            string unitName = itemReader.GetString(itemReader.GetOrdinal("unitname"));
+                            int conversion = 1;
+
+                            int reservedStock = GetItemReservedStock(barcode);
+                            int quantity = 1;  // assume 1 by default
+                            int stockNeeded = quantity * conversion;
+
+
+                            if (stockNeeded > stock)
+                                throw new InvalidOperationException("Insufficient stock for random item.");
+                           
+                            int newReservedStock = reservedStock + stockNeeded;
+                            if (newReservedStock > stock)
+                                throw new InvalidOperationException("Stock already reserved for random item.");
+
+                            // Step 5: Update reserved stock
+                            UpdateReservedStock(barcode, newReservedStock);
+
+                            // Step 6: Get real price
+                            decimal realprice = GetItemPrice(productId);
+
+                            // Step 7: Build item object
+                            return new Item
+                            {
+                                id = productId,
+                                barcode = barcode,
+                                name = name,
+                                stock = quantity,
+                                unit = unitName,
+                                conversion = conversion,
+                                sell_price = sellPrice,
+                                price_per_pcs = Math.Round(sellPrice / conversion, 2),
+                                price_per_pcs_asli = realprice
+                            };
+                        }
+                    }
+                }
+            }
+
+            return null; // fallback if not found
+        }
 
 
 
@@ -913,6 +1118,6 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
 
 
 
-    }
+}
 
 

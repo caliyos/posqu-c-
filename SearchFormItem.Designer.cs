@@ -43,6 +43,7 @@
             // 
             // dataGridViewSearchResults
             // 
+            dataGridViewSearchResults.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
             dataGridViewSearchResults.BackgroundColor = Color.White;
             dataGridViewSearchResults.BorderStyle = BorderStyle.None;
             dataGridViewSearchResults.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
@@ -51,10 +52,6 @@
             dataGridViewSearchResults.RowHeadersWidth = 62;
             dataGridViewSearchResults.Size = new Size(1320, 560);
             dataGridViewSearchResults.TabIndex = 2;
-            // Auto resize columns
-            dataGridViewSearchResults.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
-            // Allow user to resize columns
-            dataGridViewSearchResults.AllowUserToResizeColumns = true;
             // 
             // txtSearch
             // 
@@ -66,7 +63,7 @@
             // 
             // btnSearch
             // 
-            btnSearch.BackColor = Color.FromArgb(0, 123, 255);
+            btnSearch.BackColor = Color.FromArgb(10, 223, 255);
             btnSearch.FlatAppearance.BorderSize = 0;
             btnSearch.FlatStyle = FlatStyle.Flat;
             btnSearch.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
@@ -95,7 +92,6 @@
             btnFirstPage.TabIndex = 15;
             btnFirstPage.Text = "First";
             btnFirstPage.UseVisualStyleBackColor = true;
-            //btnFirstPage.Click += btnFirstPage_Click;
             // 
             // lblPagingInfo
             // 
@@ -123,7 +119,6 @@
             btnNext.TabIndex = 15;
             btnNext.Text = "Next";
             btnNext.UseVisualStyleBackColor = true;
-            //btnNext.Click += btnFirstPage_Click;
             // 
             // btnPrevious
             // 
@@ -133,7 +128,6 @@
             btnPrevious.TabIndex = 15;
             btnPrevious.Text = "Prev";
             btnPrevious.UseVisualStyleBackColor = true;
-            //btnPrevious.Click += btnFirstPage_Click;
             // 
             // btnLastPage
             // 
@@ -143,7 +137,6 @@
             btnLastPage.TabIndex = 15;
             btnLastPage.Text = "Last";
             btnLastPage.UseVisualStyleBackColor = true;
-            //btnLastPage.Click += btnFirstPage_Click;
             // 
             // SearchFormItem
             // 

@@ -126,12 +126,7 @@ namespace POS_qu
             dataGridView1.CellClick += DataGridView1_CellClick;
             pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
 
-
-
-
             LoadItems();
-
-
 
         }
         // CUSTOM BUTTON CLOSE
@@ -364,7 +359,7 @@ namespace POS_qu
                 txtSellPrice.Text = row.Cells["sell_price"].Value.ToString();
                 txtStock.Text = row.Cells["stock"].Value.ToString();
                 txtBarcode.Text = row.Cells["barcode"].Value.ToString();
-                cmbUnit.SelectedValue = Convert.ToInt32(row.Cells["unit"].Value);
+                cmbUnit.SelectedValue = Convert.ToInt32(row.Cells["unit_id"].Value);
                 cmbGroup.SelectedValue = row.Cells["group"].Value;
                 txtDescription.Text = row.Cells["note"].Value.ToString();
 

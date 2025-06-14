@@ -22,6 +22,8 @@ namespace POS_qu.Helpers
         public string SearchText { get; set; }
         public string SearchColumn { get; set; }
 
+        public event Action OnAfterLoadPage;
+
         public DataGridViewManager(DataGridView dgv, DataTable data, int pageSize = 10)
         {
             this.dataGridView = dgv;
@@ -39,14 +41,18 @@ namespace POS_qu.Helpers
 
         public void LoadPage()
         {
+            if (originalData == null || dataGridView == null)
+                return;
+
             IEnumerable<DataRow> filteredRows = originalData.AsEnumerable();
 
-            // Apply search filter
-            if (!string.IsNullOrWhiteSpace(SearchText) && !string.IsNullOrWhiteSpace(SearchColumn))
+            if (!string.IsNullOrWhiteSpace(SearchText) &&
+                !string.IsNullOrWhiteSpace(SearchColumn) &&
+                originalData.Columns.Contains(SearchColumn))
             {
-                filteredRows = filteredRows.Where(row => 
-                row[SearchColumn]?.ToString().IndexOf(SearchText, StringComparison.OrdinalIgnoreCase) >= 0
-                    
+                filteredRows = filteredRows.Where(row =>
+                    row[SearchColumn] != null &&
+                    row[SearchColumn].ToString().IndexOf(SearchText, StringComparison.OrdinalIgnoreCase) >= 0
                 );
             }
 
@@ -57,8 +63,12 @@ namespace POS_qu.Helpers
                 .Skip((currentPage - 1) * pageSize)
                 .Take(pageSize);
 
-            dataGridView.DataSource = pagedRows.Any() ? pagedRows.CopyToDataTable() : originalData.Clone();
+            dataGridView.DataSource = pagedRows.Any()
+                ? pagedRows.CopyToDataTable()
+                : originalData.Clone();
+
             UpdatePagingInfo();
+            OnAfterLoadPage?.Invoke();
         }
 
         public void NextPage()
@@ -115,6 +125,14 @@ namespace POS_qu.Helpers
             {
                 dataGridView.Columns[columnName].Visible = visible;
             }
+        }
+
+        public void reloadData(DataTable dt)
+        {
+            this.originalData = dt.Copy();
+            this.pageSize = pageSize;
+            CalculateTotalPages();
+            LoadPage();
         }
 
         private void UpdatePagingInfo()

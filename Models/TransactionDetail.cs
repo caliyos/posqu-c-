@@ -22,6 +22,10 @@ namespace POS_qu.Models
         public decimal TsdDiscountTotal { get; set; } // Total discount amount
         public decimal TsdTax { get; set; } // Tax applied to the item
         public decimal TsdTotal { get; set; } // Final total per item (after discount & tax)
+        
+        public decimal TsdConversionRate { get; set; }
+        public decimal TsdPricePerUnit { get; set; } // Final total per item (after discount & tax)
+        public string TsdUnitVariant { get; set; } // Unit of measurement (e.g., kg, pcs)
 
         public int CreatedBy { get; set; } // User who created the record
         public DateTime CreatedAt { get; set; } // Timestamp when created

@@ -24,6 +24,14 @@ namespace POS_qu.Models
         public int? TsCustomer { get; set; } // ts_customer (nullable for optional reference)
         public string TsFreename { get; set; } // ts_freename (free text customer name)
 
+        // Menambahkan properti untuk ShiftId dan TerminalId
+        public int? ShiftId { get; set; }  // shift_id (nullable)
+        public int? TerminalId { get; set; }  // terminal_id (nullable)
+
+
+        public int UserId { get; set; } // yang melakukan transaksi
+
+
         public int? CreatedBy { get; set; } // created_by
         public int? UpdatedBy { get; set; } // updated_by
         public int? DeletedBy { get; set; } // deleted_by

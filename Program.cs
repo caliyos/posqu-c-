@@ -1,7 +1,9 @@
 
 using System;
 using Npgsql;
-
+using POSqu_menu;
+using QuestPDF.Infrastructure;
+using QuestPDF;
 namespace POS_qu
 
 
@@ -18,23 +20,35 @@ namespace POS_qu
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
 
+            // Aktifkan Community License (gratis)
+            QuestPDF.Settings.License = LicenseType.Community;
+
 
             //Console.WriteLine("Test message from the Main method.");
 
             //     // Wait for user input before closing the console
             //Console.WriteLine("Press any key to exit...");
             //Console.ReadLine();  // Waits for the user to press Enter
-           
-            
+
+
             ApplicationConfiguration.Initialize();
             //Application.Run(new Form3_crud());
 
 
             try
             {
-                //Application.Run(new ProductPage());
+
                 //Application.Run(new Form2_crud());
-                Application.Run(new Form4_crud());
+                //Application.Run(new Roles());
+                //Application.Run(new Terminal());
+                //Application.Run(new MenuNative());
+                Application.Run(new Login());
+                //Application.Run(new Casher_POS());
+                //Application.Run(new SalesReports());
+                //Application.Run(new StockReports());
+                //Application.Run(new ProductPage());
+                //Application.Run(new TokoSetting());
+                //Application.Run(new StrukSetting());
 
             }
             catch (Exception ex)

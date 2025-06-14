@@ -37,6 +37,12 @@ namespace POS_qu
             dataGridViewSearchResults.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridViewSearchResults.KeyDown += DataGridViewSearchResults_KeyDown;
 
+            // Disable the last empty row from appearing
+            dataGridViewSearchResults.AllowUserToAddRows = false;
+
+            // all readonly
+            dataGridViewSearchResults.ReadOnly = true;
+
             // DataGridView Manager setup
             dgvManager = new DataGridViewManager(dataGridViewSearchResults, itemsDataTable, 10);
             dgvManager.PagingInfoLabel = lblPageNumber; // Optional label for paging info
@@ -58,9 +64,33 @@ namespace POS_qu
             // Handle the DataBindingComplete event
             dataGridViewSearchResults.DataBindingComplete += (sender, e) =>
             {
+                // Format columns to show as "Rp."
+                FormatCurrencyColumns();
                 SetColumnWidths();
             };
         }
+
+
+        private void FormatCurrencyColumns()
+        {
+            foreach (DataGridViewColumn column in dataGridViewSearchResults.Columns)
+            {
+                // Check if the column's data type is numeric
+                if (column.Name == "sell_price" || column.Name == "total" || column.Name == "price_per_pcs" || column.Name == "price_per_pcs_asli")
+                {
+                    // Format as currency with the Rp symbol and correct number format
+                    column.DefaultCellStyle.Format = "#,0.##";  // This will add thousand separator
+                    column.DefaultCellStyle.NullValue = "Rp. 0"; // To handle null values
+
+                    // Add the "Rp." symbol manually in the display value
+                    column.DefaultCellStyle.FormatProvider = new System.Globalization.CultureInfo("id-ID");
+                    column.DefaultCellStyle.Format = "Rp #,0";  // Format as Rp. xxxxx
+                }
+            }
+        }
+
+
+
 
         // Method to set specific column widths
         private void SetColumnWidths()
@@ -170,10 +200,11 @@ namespace POS_qu
             {
                 int productId = Convert.ToInt32(dataRowView["id"]);
                 int stock = Convert.ToInt32(dataRowView["stock"]);
+                string mainunit = dataRowView["unit"].ToString();
                 string name = dataRowView["name"].ToString();
                 List<UnitVariant> unitVariants = itemController.GetUnitVariant(productId);
 
-                using (var quantityForm = new QuantityForm(stock, unitVariants))
+                using (var quantityForm = new QuantityForm(stock, unitVariants, mainunit))
                 {
                     if (unitVariants == null || unitVariants.Count == 0)
                         quantityForm.ShowNoUnitVariantMessage();
@@ -185,12 +216,7 @@ namespace POS_qu
                     int quantity = quantityForm.Quantity;
                     UnitVariant selectedUnit = quantityForm.SelectedUnitVariant;
 
-                    if (selectedUnit == null && unitVariants.Count > 0)
-                    {
-                        MessageBox.Show("Please select a valid unit variant.");
-                        return;
-                    }
-
+                    // Hitung total stock yang dibutuhkan
                     int stockNeeded = quantity * (selectedUnit?.Conversion ?? 1);
 
                     if (stockNeeded > stock)
@@ -205,25 +231,24 @@ namespace POS_qu
 
                     itemController.UpdateReservedStock(barcode, new_reserved_stock);
 
-                    // getprice asli
+                    // Get harga asli dari database
                     decimal realprice = itemController.GetItemPrice(productId);
 
+                    // Buat object Item untuk transaksi
                     SelectedItem = new Item
                     {
                         id = productId,
                         barcode = barcode,
                         name = name,
-                        stock = quantity,                          // qty user pilih
-                        unit = selectedUnit?.UnitName ?? "pcs",    // unit name
-                        conversion = selectedUnit?.Conversion ?? 1, // default 1 kalau tidak ada unit variant
+                        stock = quantity,                                      // jumlah qty yang dipilih user
+                        unit = selectedUnit?.UnitName ?? mainunit,               // unit variant atau 'pcs'
+                        conversion = selectedUnit?.Conversion ?? 1,           // default 1 kalau tidak ada unit variant
                         sell_price = selectedUnit?.SellPrice ?? Convert.ToDecimal(dataRowView["sell_price"]),
                         price_per_pcs = selectedUnit != null
-                     ? Math.Round(selectedUnit.SellPrice / selectedUnit.Conversion, 2)
-                     : selectedUnit?.SellPrice ?? Convert.ToDecimal(dataRowView["sell_price"]),
+                            ? Math.Round(selectedUnit.SellPrice / selectedUnit.Conversion, 2)
+                            : Convert.ToDecimal(dataRowView["sell_price"]),  // base price kalau tidak ada variant
                         price_per_pcs_asli = realprice
                     };
-
-
 
                     this.DialogResult = DialogResult.OK;
                     this.Close();
@@ -238,5 +263,6 @@ namespace POS_qu
                 MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
     }
 }
