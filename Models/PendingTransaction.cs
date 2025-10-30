@@ -21,6 +21,8 @@ namespace POS_qu.Models
         public decimal DiscountTotal { get; set; }
         public decimal Tax { get; set; }
         public decimal Total { get; set; }
+
+        public string Note { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
         public DateTime ExpiredAt { get; set; }

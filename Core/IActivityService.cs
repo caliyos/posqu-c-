@@ -14,7 +14,8 @@ namespace POS_qu.Core
             ✅ message → short description, e.g., "Added item to cart", "Payment succeeded".
             ✅ details → optional: could pass an object with details (itemCode, amount, username, etc.).
          */
-        void LogAction(string actionType, string message, object? details = null);
+ 
+        public void LogAction(string userId, string actionType, int? referenceId, string? desc = null,  object? details = null);
 
     }
 }

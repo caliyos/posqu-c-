@@ -39,8 +39,6 @@
             dgv = new DataGridView();
             lblTerminalName = new Label();
             txtTerminalName = new TextBox();
-            lblPcId = new Label();
-            txtPcId = new TextBox();
             btnAdd = new Button();
             btnEdit = new Button();
             btnDelete = new Button();
@@ -150,21 +148,6 @@
             txtTerminalName.Size = new Size(250, 31);
             txtTerminalName.TabIndex = 21;
             // 
-            // lblPcId
-            // 
-            lblPcId.Location = new Point(872, 74);
-            lblPcId.Name = "lblPcId";
-            lblPcId.Size = new Size(116, 30);
-            lblPcId.TabIndex = 22;
-            lblPcId.Text = "Description:";
-            // 
-            // txtPcId
-            // 
-            txtPcId.Location = new Point(1012, 72);
-            txtPcId.Name = "txtPcId";
-            txtPcId.Size = new Size(250, 31);
-            txtPcId.TabIndex = 23;
-            // 
             // btnAdd
             // 
             btnAdd.Location = new Point(872, 208);
@@ -199,7 +182,7 @@
             // 
             // txtDesc
             // 
-            txtDesc.Location = new Point(1012, 118);
+            txtDesc.Location = new Point(1012, 70);
             txtDesc.Name = "txtDesc";
             txtDesc.Size = new Size(250, 31);
             txtDesc.TabIndex = 23;
@@ -207,7 +190,7 @@
             // 
             // lblDesc
             // 
-            lblDesc.Location = new Point(872, 120);
+            lblDesc.Location = new Point(872, 72);
             lblDesc.Name = "lblDesc";
             lblDesc.Size = new Size(116, 30);
             lblDesc.TabIndex = 22;
@@ -231,8 +214,6 @@
             Controls.Add(txtTerminalName);
             Controls.Add(lblDesc);
             Controls.Add(txtDesc);
-            Controls.Add(lblPcId);
-            Controls.Add(txtPcId);
             Controls.Add(btnAdd);
             Controls.Add(btnEdit);
             Controls.Add(btnDelete);
@@ -258,8 +239,6 @@
         private DataGridView dgv;
         private Label lblTerminalName;
         private TextBox txtTerminalName;
-        private Label lblPcId;
-        private TextBox txtPcId;
         private Button btnAdd;
         private Button btnEdit;
         private Button btnDelete;

@@ -39,5 +39,7 @@ namespace POS_qu.Models
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // created_at
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow; // updated_at
         public DateTime? DeletedAt { get; set; } // deleted_at (nullable)
+
+        public int? OrderId { get; set; } // yang melakukan transaksi
     }
 }

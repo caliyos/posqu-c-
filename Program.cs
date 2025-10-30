@@ -1,9 +1,10 @@
-
+﻿
 using System;
 using Npgsql;
 using POSqu_menu;
 using QuestPDF.Infrastructure;
 using QuestPDF;
+using POS_qu.Helpers;
 namespace POS_qu
 
 
@@ -24,15 +25,20 @@ namespace POS_qu
             QuestPDF.Settings.License = LicenseType.Community;
 
 
+
             //Console.WriteLine("Test message from the Main method.");
 
             //     // Wait for user input before closing the console
             //Console.WriteLine("Press any key to exit...");
             //Console.ReadLine();  // Waits for the user to press Enter
+            // Inisialisasi UserAgent global sekali
+
 
 
             ApplicationConfiguration.Initialize();
             //Application.Run(new Form3_crud());
+
+
 
 
             try
@@ -43,12 +49,17 @@ namespace POS_qu
                 //Application.Run(new Terminal());
                 //Application.Run(new MenuNative());
                 Application.Run(new Login());
+
                 //Application.Run(new Casher_POS());
                 //Application.Run(new SalesReports());
                 //Application.Run(new StockReports());
                 //Application.Run(new ProductPage());
                 //Application.Run(new TokoSetting());
                 //Application.Run(new StrukSetting());
+                //Application.Run(new DatabaseSetting());
+
+                //Application.Run(new PurchaseOrderForm());
+                //Application.Run(new PurchaseOrderListForm());
 
             }
             catch (Exception ex)
@@ -85,5 +96,7 @@ namespace POS_qu
             //}
 
         }
+
+
     }
 }

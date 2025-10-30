@@ -10,26 +10,51 @@ namespace POS_qu.Models
     {
         private static SessionUser instance;
 
-        public int UserId { get; private set; }
-        public string Username { get; private set; }
-        public int Role { get; private set; }
-        public int ShiftId { get; private set; }  // Menambahkan Shift
-        public int TerminalId { get; private set; }  // Menambahkan Terminal
+        public long UserId { get; private set; }
 
-        private SessionUser(int userId, string username, int role, int shiftId, int terminalId)
+        public long LoginId { get; private set; }
+        public string Username { get; private set; }
+        public int RoleId { get; private set; }
+        public string RoleName { get; private set; }
+        public int ShiftId { get; private set; }
+        public int TerminalId { get; private set; }
+        public string TerminalName { get; private set; }
+
+        private SessionUser(
+            int userId,
+            int loginId,
+            string username,
+            int roleId,
+            string roleName,
+            int shiftId,
+            int terminalId,
+            string terminalName
+        )
         {
             UserId = userId;
+            LoginId = loginId;
             Username = username;
-            Role = role;
+            RoleId = roleId;
+            RoleName = roleName;
             ShiftId = shiftId;
             TerminalId = terminalId;
+            TerminalName = terminalName;
         }
 
-
-        public static void CreateSession(int userId, string username, int role, int shiftId, int terminalId)
+        public static void CreateSession(
+            int userId,
+            int loginId,
+            string username,
+            int roleId,
+            string roleName,
+            int shiftId,
+            int terminalId,
+            string terminalName
+        )
         {
-            instance = new SessionUser(userId, username, role, shiftId, terminalId);
+            instance = new SessionUser(userId, loginId,username, roleId, roleName, shiftId, terminalId, terminalName);
         }
+
         public static SessionUser GetCurrentUser()
         {
             return instance;
@@ -40,5 +65,4 @@ namespace POS_qu.Models
             instance = null;
         }
     }
-
 }

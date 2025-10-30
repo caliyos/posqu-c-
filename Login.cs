@@ -25,30 +25,37 @@ namespace POS_qu
             string username = textBoxUsername.Text.Trim();
             string password = textBoxPassword.Text;
 
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            {
+                MessageBox.Show("Please enter both username and password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             LoginController loginController = new LoginController();
             var user = loginController.AuthenticateUser(username, password);
 
             if (user != null)
             {
-                // Buat sesi user setelah login sukses
-                SessionUser.CreateSession(user.Id, user.Username, user.RoleId, user.ShiftId,user.TerminalId );
-
-                MessageBox.Show($"Login successful! Welcome {user.Username}");
+               
+                MessageBox.Show(
+                    $"Login successful!\n\nUsername: {user.Username}\nRole: {user.RoleName}\nTerminal: {user.TerminalName}",
+                    "Welcome",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
 
                 // Pindah ke form utama
                 this.Hide();
-                MenuNative posForm = new MenuNative();
-                posForm.FormClosed += (s, args) => Application.Exit(); // Kalau POS ditutup, aplikasi juga close
-                posForm.Show();
-                //Casher_POS posForm = new Casher_POS();
-                //posForm.FormClosed += (s, args) => Application.Exit(); // Kalau POS ditutup, aplikasi juga close
-                //posForm.Show();
+                MenuNative menu = new MenuNative();
+                menu.FormClosed += (s, args) => Application.Exit();
+                menu.Show();
             }
             else
             {
-                MessageBox.Show("Invalid username or password.");
+                MessageBox.Show("Invalid username or password.", "Login Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
 
     }
 }

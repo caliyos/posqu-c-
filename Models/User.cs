@@ -11,8 +11,9 @@ namespace POS_qu.Models
         public int Id { get; set; }
         public string Username { get; set; }
         public int RoleId { get; set; }
+        public string RoleName { get; set; }
         public int TerminalId { get; set; }
-        public int ShiftId { get;  set; }
-
+        public string TerminalName { get; set; }
+        public int ShiftId { get; set; }
     }
 }

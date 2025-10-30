@@ -28,6 +28,8 @@ namespace POS_qu.Models
         public int stock { get; set; }
         public int reserved_stock { get; set; }
         public string unit { get; set; }
+
+        public int unitid { get; set; }
         public int group { get; set; }
         public string is_inventory_p { get; set; }
         public string is_changeprice_p { get; set; }

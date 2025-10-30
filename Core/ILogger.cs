@@ -8,7 +8,8 @@ namespace POS_qu.Core
 {
     public interface ILogger
     {
-        void Log(string message);
+        //void Log(string message);
+        void Log(string userId, string actionType, int? referenceId, string? desc , string? details); // versi baru
     }
 
 }

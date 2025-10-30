@@ -3,18 +3,18 @@ using System;
 using System.Data;
 using POS_qu.Models;
 using System.Xml.Linq;
+using POS_qu.Helpers;
 
 namespace POS_qu.Controllers
 {
     class TerminalController
     {
-        private string vStrConnection = "Host=localhost;Port=5433;Username=postgres;Password=postgres11;Database=posqu";
 
         public DataTable GetAllTerminals()
         {
             DataTable dt = new DataTable();
 
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 string query = "SELECT id, terminal_name, pc_id,description FROM terminals ORDER BY id ASC";
@@ -30,7 +30,7 @@ namespace POS_qu.Controllers
 
         public bool AddTerminal(string terminalname, string pc_id ,string description)
         {
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 string query = "INSERT INTO terminals (terminal_name,pc_id, description) VALUES (@terminal_name,@pc_id, @description)";
@@ -46,7 +46,7 @@ namespace POS_qu.Controllers
 
         public bool UpdateRole(int id, string terminal_name, string pc_id, string description)
         {
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 string query = "UPDATE terminals SET terminal_name = @terminal_name, pc_id = @pc_id, description = @description WHERE id = @id";
@@ -63,7 +63,7 @@ namespace POS_qu.Controllers
 
         public bool DeleteRole(int id)
         {
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 string query = "DELETE FROM terminals WHERE id = @id";

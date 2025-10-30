@@ -3,12 +3,40 @@
   "WorkspaceRootPath": "D:\\POS-qu\\POS-qu\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\menunative.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:menunative.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\controllers\\settingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:controllers\\settingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\helpers\\filelogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:helpers\\filelogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\helpers\\globalcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:helpers\\globalcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\helpers\\networking.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:helpers\\networking.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\menunative.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:menunative.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\productpage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:productpage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\productpage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:productpage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\stockreports.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:stockreports.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\controllers\\transactioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:controllers\\transactioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\struksetting.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -23,6 +51,258 @@
       "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:helpers\\struksettinghelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\salesreports.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:salesreports.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\salesreports.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:salesreports.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\purchaseorderform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:purchaseorderform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\controllers\\terminalcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:controllers\\terminalcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\controllers\\settingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:controllers\\settingcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\controllers\\rolescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:controllers\\rolescontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\controllers\\ordercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:controllers\\ordercontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\tokosetting.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:tokosetting.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\tokosetting.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:tokosetting.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\terminal.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:terminal.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\terminal.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:terminal.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\controllers\\logincontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:controllers\\logincontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\login.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:login.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\login.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:login.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\casher-pos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:casher-pos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\models\\sessionuser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:models\\sessionuser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\core\\activityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:core\\activityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\helpers\\dblogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:helpers\\dblogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\core\\iactivityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:core\\iactivityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\core\\ilogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:core\\ilogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\casher-pos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:casher-pos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\helpers\\dbconfig.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:helpers\\dbconfig.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\core\\activitytype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:core\\activitytype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\controllers\\itemcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:controllers\\itemcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\casher-pos.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:casher-pos.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\purchaseorderdetailform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:purchaseorderdetailform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\purchaseorderlistform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:purchaseorderlistform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\purchaseorderlistform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:purchaseorderlistform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\purchaseorderform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:purchaseorderform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\purchaseorderdetailform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:purchaseorderdetailform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\menunative.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:menunative.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\helpers\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:helpers\\dbinitializer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\core\\istockadjustmentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:core\\istockadjustmentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\core\\stockadjustmentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:core\\stockadjustmentservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\models\\transactions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:models\\transactions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\helpers\\consolelogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:helpers\\consolelogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\databasesetting.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:databasesetting.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\productpage.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:productpage.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\models\\item.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:models\\item.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\purchaseorderform.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:purchaseorderform.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\roles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:roles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\roles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:roles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\roles.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:roles.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\helpers\\datagridviewmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:helpers\\datagridviewmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\pos-qu.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:pos-qu.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\orderlist.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:orderlist.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\orderlist.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:orderlist.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\orderlist.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:orderlist.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\orderdetailform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:orderdetailform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\orderdetailform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:orderdetailform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\models\\orderdetail.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:models\\orderdetail.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\models\\orders.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:models\\orders.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\models\\pendingtransaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:models\\pendingtransaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\orderform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:orderform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\orderform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:orderform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\orderform.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:orderform.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\quantityform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:quantityform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\databasesetting.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:databasesetting.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\form2-crud.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:form2-crud.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\quantityform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:quantityform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\login.resx||{81828910-B8B3-4D2B-99A3-067027C180C1}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:login.resx||{81828910-B8B3-4D2B-99A3-067027C180C1}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\models\\struksettingmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:models\\struksettingmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -35,36 +315,8 @@
       "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:tokosetting.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\tokosetting.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:tokosetting.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\tokosetting.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:tokosetting.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\helpers\\imagehelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:helpers\\imagehelper.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\helpers\\filelogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:helpers\\filelogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\helpers\\datagridviewmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:helpers\\datagridviewmanager.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\productpage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:productpage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\productpage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:productpage.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\controllers\\itemcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:controllers\\itemcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\salesreports.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -83,48 +335,16 @@
       "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:terminal.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\stockreports.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:stockreports.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\productpage.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:productpage.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\stockreports.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
       "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:stockreports.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\salesreports.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:salesreports.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\salesreports.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:salesreports.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\controllers\\logincontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:controllers\\logincontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\stockreports.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:stockreports.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\roles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:roles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\roles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:roles.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\form3-crud.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
       "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:form3-crud.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\casher-pos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:casher-pos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
     },
     {
       "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\form2-crud.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
@@ -139,10 +359,6 @@
       "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:searchformitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\casher-pos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:casher-pos.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:form1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -151,58 +367,10 @@
       "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:searchformitem.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\controllers\\transactioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:controllers\\transactioncontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\quantityform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:quantityform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\casher-pos.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:casher-pos.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\menunative.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:menunative.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\menunative.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:menunative.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\core\\activityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:core\\activityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\core\\activitytype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:core\\activitytype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\core\\ilogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:core\\ilogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\core\\iactivityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:core\\iactivityservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\POS-qu\\Logger\\logger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\helpers\\consolelogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:helpers\\consolelogger.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\menunative.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:menunative.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\POS-qu\\POSqu-menu\\MenuNative.Designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\login.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:login.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\POS-qu\\POSqu-menu\\MenuNative.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
@@ -212,40 +380,12 @@
       "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:searchformitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\models\\transactions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:models\\transactions.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:models\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\models\\sessionuser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:models\\sessionuser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\login.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:login.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\models\\unitvariant.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:models\\unitvariant.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|D:\\POS-qu\\POS-qu\\quantityform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:quantityform.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}|Form"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\models\\pendingtransaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:models\\pendingtransaction.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\models\\transactiondetail.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:models\\transactiondetail.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\models\\item.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:models\\item.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\backupcode\\searchformitem-backup.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -322,6 +462,10 @@
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|D:\\POS-qu\\POS-qu\\Form4-crud.resx||{81828910-B8B3-4D2B-99A3-067027C180C1}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:Form4-crud.resx||{81828910-B8B3-4D2B-99A3-067027C180C1}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|d:\\pos-qu\\pos-qu\\purchaseorderdetailform.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E679B032-F85B-4F1A-A9EA-417B674B5502}|POS-qu.csproj|solutionrelative:purchaseorderdetailform.designer.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -331,11 +475,11 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 6,
+          "SelectedChildIndex": 3,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 35,
+              "DocumentIndex": 89,
               "Title": "Form1.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Form1.cs",
               "RelativeDocumentMoniker": "Form1.cs",
@@ -349,13 +493,13 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 38,
+              "DocumentIndex": 70,
               "Title": "QuantityForm.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\QuantityForm.cs",
               "RelativeDocumentMoniker": "QuantityForm.cs",
               "ToolTip": "D:\\POS-qu\\POS-qu\\QuantityForm.cs",
               "RelativeToolTip": "QuantityForm.cs",
-              "ViewState": "AgIAADYAAAAAAAAAAAAowEUAAAAVAAAAAAAAAA==",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAACoAAAA3AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2025-03-13T11:13:25.223Z",
               "IsPinned": true,
@@ -363,31 +507,948 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "StrukSetting.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\StrukSetting.cs",
-              "RelativeDocumentMoniker": "StrukSetting.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\StrukSetting.cs",
-              "RelativeToolTip": "StrukSetting.cs",
-              "ViewState": "AgIAAD0AAAAAAAAAAAAiwFAAAABEAAAAAAAAAA==",
+              "DocumentIndex": 52,
+              "Title": "Item.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\Item.cs",
+              "RelativeDocumentMoniker": "Models\\Item.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Models\\Item.cs",
+              "RelativeToolTip": "Models\\Item.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAARAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-03T06:03:52.477Z"
+              "WhenOpened": "2025-02-24T13:13:29.253Z",
+              "IsPinned": true,
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "MenuNative.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\MenuNative.cs",
+              "RelativeDocumentMoniker": "MenuNative.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\MenuNative.cs [Design]*",
+              "RelativeToolTip": "MenuNative.cs [Design]*",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-09T04:57:27.59Z",
+              "EditorCaption": " [Design]"
             },
             {
               "$type": "Document",
               "DocumentIndex": 4,
+              "Title": "MenuNative.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\MenuNative.cs",
+              "RelativeDocumentMoniker": "MenuNative.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\MenuNative.cs*",
+              "RelativeToolTip": "MenuNative.cs*",
+              "ViewState": "AgIAABEBAAAAAAAAAAAvwCIBAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-09T04:57:15.786Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Networking.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Helpers\\Networking.cs",
+              "RelativeDocumentMoniker": "Helpers\\Networking.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Helpers\\Networking.cs",
+              "RelativeToolTip": "Helpers\\Networking.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAUwAMAAAAhAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-27T06:44:46.484Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "GlobalContext.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Helpers\\GlobalContext.cs",
+              "RelativeDocumentMoniker": "Helpers\\GlobalContext.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Helpers\\GlobalContext.cs",
+              "RelativeToolTip": "Helpers\\GlobalContext.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAuwAcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-27T06:50:00.815Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "FileLogger.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Helpers\\FileLogger.cs",
+              "RelativeDocumentMoniker": "Helpers\\FileLogger.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Helpers\\FileLogger.cs",
+              "RelativeToolTip": "Helpers\\FileLogger.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAA1wB4AAABBAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-10T04:15:44.533Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "ProductPage.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\ProductPage.cs",
+              "RelativeDocumentMoniker": "ProductPage.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\ProductPage.cs [Design]",
+              "RelativeToolTip": "ProductPage.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-20T05:31:47.745Z",
+              "EditorCaption": " [Design]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "ProductPage.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\ProductPage.cs",
+              "RelativeDocumentMoniker": "ProductPage.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\ProductPage.cs",
+              "RelativeToolTip": "ProductPage.cs",
+              "ViewState": "AgIAAIkAAAAAAAAAAADgv5oAAAAMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-03T06:57:02.928Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "StockReports.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\StockReports.cs",
+              "RelativeDocumentMoniker": "StockReports.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\StockReports.cs",
+              "RelativeToolTip": "StockReports.cs",
+              "ViewState": "AgIAABoAAAAAAAAAAAASwBsAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-03T01:03:28.477Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "TransactionController.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Controllers\\TransactionController.cs",
+              "RelativeDocumentMoniker": "Controllers\\TransactionController.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Controllers\\TransactionController.cs",
+              "RelativeToolTip": "Controllers\\TransactionController.cs",
+              "ViewState": "AgIAAB8AAAAAAAAAAAAQwDEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-21T12:48:51.226Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
               "Title": "StrukSettingHelper.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Helpers\\StrukSettingHelper.cs",
               "RelativeDocumentMoniker": "Helpers\\StrukSettingHelper.cs",
               "ToolTip": "D:\\POS-qu\\POS-qu\\Helpers\\StrukSettingHelper.cs",
               "RelativeToolTip": "Helpers\\StrukSettingHelper.cs",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAAAB4AAAAOAAAAAAAAAA==",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAxwBgAAAA5AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-03T05:58:13.419Z"
+              "WhenOpened": "2025-06-03T05:58:13.419Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 9,
+              "Title": "StrukSetting.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\StrukSetting.cs",
+              "RelativeDocumentMoniker": "StrukSetting.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\StrukSetting.cs",
+              "RelativeToolTip": "StrukSetting.cs",
+              "ViewState": "AgIAAA8AAAAAAAAAAAAAABQAAAApAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-03T06:03:52.477Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "StrukSetting.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\StrukSetting.cs",
+              "RelativeDocumentMoniker": "StrukSetting.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\StrukSetting.cs [Design]",
+              "RelativeToolTip": "StrukSetting.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-03T05:51:08.756Z",
+              "EditorCaption": " [Design]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "SalesReports.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\SalesReports.cs",
+              "RelativeDocumentMoniker": "SalesReports.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\SalesReports.cs",
+              "RelativeToolTip": "SalesReports.cs",
+              "ViewState": "AgIAAL8BAAAAAAAAAAAEwNgBAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T12:55:48.861Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "SalesReports.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\SalesReports.cs",
+              "RelativeDocumentMoniker": "SalesReports.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\SalesReports.cs [Design]",
+              "RelativeToolTip": "SalesReports.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T03:49:19.265Z",
+              "EditorCaption": " [Design]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "PurchaseOrderForm.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\PurchaseOrderForm.cs",
+              "RelativeDocumentMoniker": "PurchaseOrderForm.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\PurchaseOrderForm.cs",
+              "RelativeToolTip": "PurchaseOrderForm.cs",
+              "ViewState": "AgIAAPMAAAAAAAAAAADgvwYBAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-15T15:53:33.626Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "TerminalController.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Controllers\\TerminalController.cs",
+              "RelativeDocumentMoniker": "Controllers\\TerminalController.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Controllers\\TerminalController.cs",
+              "RelativeToolTip": "Controllers\\TerminalController.cs",
+              "ViewState": "AgIAAC8AAAAAAAAAAAAgwEEAAABMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-30T11:43:47.585Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "RolesController.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Controllers\\RolesController.cs",
+              "RelativeDocumentMoniker": "Controllers\\RolesController.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Controllers\\RolesController.cs",
+              "RelativeToolTip": "Controllers\\RolesController.cs",
+              "ViewState": "AgIAADUAAAAAAAAAAAAgwD8AAABMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-30T11:43:22.909Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "TokoSetting.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\TokoSetting.cs",
+              "RelativeDocumentMoniker": "TokoSetting.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\TokoSetting.cs",
+              "RelativeToolTip": "TokoSetting.cs",
+              "ViewState": "AgIAAA0AAAAAAAAAAAAUwB8AAAA2AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-03T01:48:30.923Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "TokoSetting.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\TokoSetting.cs",
+              "RelativeDocumentMoniker": "TokoSetting.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\TokoSetting.cs [Design]",
+              "RelativeToolTip": "TokoSetting.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-03T01:13:13.247Z",
+              "EditorCaption": " [Design]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "SettingController.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Controllers\\SettingController.cs",
+              "RelativeDocumentMoniker": "Controllers\\SettingController.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Controllers\\SettingController.cs",
+              "RelativeToolTip": "Controllers\\SettingController.cs",
+              "ViewState": "AgIAAN4AAAAAAAAAAAAIwMcAAABMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-03T02:26:03.63Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "OrderController.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Controllers\\OrderController.cs",
+              "RelativeDocumentMoniker": "Controllers\\OrderController.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Controllers\\OrderController.cs",
+              "RelativeToolTip": "Controllers\\OrderController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACkAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-10T13:16:39.071Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "Terminal.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Terminal.cs",
+              "RelativeDocumentMoniker": "Terminal.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Terminal.cs [Design]",
+              "RelativeToolTip": "Terminal.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-30T11:41:50.275Z",
+              "EditorCaption": " [Design]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "Terminal.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Terminal.cs",
+              "RelativeDocumentMoniker": "Terminal.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Terminal.cs",
+              "RelativeToolTip": "Terminal.cs",
+              "ViewState": "AgIAAHIAAAAAAAAAAAAIwAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-30T11:41:51.978Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "SessionUser.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\SessionUser.cs",
+              "RelativeDocumentMoniker": "Models\\SessionUser.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Models\\SessionUser.cs",
+              "RelativeToolTip": "Models\\SessionUser.cs",
+              "ViewState": "AgIAACsAAAAAAAAAAADwvw4AAAAbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-21T15:20:55.127Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "LoginController.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Controllers\\LoginController.cs",
+              "RelativeDocumentMoniker": "Controllers\\LoginController.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Controllers\\LoginController.cs",
+              "RelativeToolTip": "Controllers\\LoginController.cs",
+              "ViewState": "AgIAAFoAAAAAAAAAAAAEwG4AAABMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-21T15:39:04.276Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "Login.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Login.cs",
+              "RelativeDocumentMoniker": "Login.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Login.cs",
+              "RelativeToolTip": "Login.cs",
+              "ViewState": "AgIAABEAAAAAAAAAAAAqwCIAAAAxAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-21T15:38:24.589Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "Login.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Login.cs",
+              "RelativeDocumentMoniker": "Login.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Login.cs [Design]",
+              "RelativeToolTip": "Login.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-21T15:38:21.269Z",
+              "EditorCaption": " [Design]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "Casher-POS.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Casher-POS.cs",
+              "RelativeDocumentMoniker": "Casher-POS.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Casher-POS.cs",
+              "RelativeToolTip": "Casher-POS.cs",
+              "ViewState": "AgIAAN0AAAAAAAAAAAAnwOcAAAA2AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-21T15:06:14.884Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
+              "Title": "ActivityService.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Core\\ActivityService.cs",
+              "RelativeDocumentMoniker": "Core\\ActivityService.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Core\\ActivityService.cs",
+              "RelativeToolTip": "Core\\ActivityService.cs",
+              "ViewState": "AgIAACEAAAAAAAAAAAAIwDEAAABOAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-10T04:15:00.851Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 29,
+              "Title": "DbLogger.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Helpers\\DbLogger.cs",
+              "RelativeDocumentMoniker": "Helpers\\DbLogger.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Helpers\\DbLogger.cs",
+              "RelativeToolTip": "Helpers\\DbLogger.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAAfAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-15T14:07:41.912Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 30,
+              "Title": "IActivityService.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Core\\IActivityService.cs",
+              "RelativeDocumentMoniker": "Core\\IActivityService.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Core\\IActivityService.cs",
+              "RelativeToolTip": "Core\\IActivityService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAvwBEAAAAUAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-10-20T07:59:20.984Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 31,
+              "Title": "ILogger.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Core\\ILogger.cs",
+              "RelativeDocumentMoniker": "Core\\ILogger.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Core\\ILogger.cs",
+              "RelativeToolTip": "Core\\ILogger.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAABbAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-10T04:15:26.645Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 32,
+              "Title": "Casher-POS.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Casher-POS.cs",
+              "RelativeDocumentMoniker": "Casher-POS.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Casher-POS.cs [Design]",
+              "RelativeToolTip": "Casher-POS.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-18T11:07:04.689Z",
+              "EditorCaption": " [Design]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 33,
+              "Title": "DbConfig.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Helpers\\DbConfig.cs",
+              "RelativeDocumentMoniker": "Helpers\\DbConfig.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Helpers\\DbConfig.cs",
+              "RelativeToolTip": "Helpers\\DbConfig.cs",
+              "ViewState": "AgIAABIAAAAAAAAAAAAYwCYAAAATAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-10T05:38:35.815Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 34,
+              "Title": "ActivityType.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Core\\ActivityType.cs",
+              "RelativeDocumentMoniker": "Core\\ActivityType.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Core\\ActivityType.cs",
+              "RelativeToolTip": "Core\\ActivityType.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-10T06:01:29.944Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 35,
+              "Title": "ItemController.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Controllers\\ItemController.cs",
+              "RelativeDocumentMoniker": "Controllers\\ItemController.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Controllers\\ItemController.cs",
+              "RelativeToolTip": "Controllers\\ItemController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAABLAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-02-24T13:13:56.161Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 36,
+              "Title": "Casher-POS.Designer.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Casher-POS.Designer.cs",
+              "RelativeDocumentMoniker": "Casher-POS.Designer.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Casher-POS.Designer.cs",
+              "RelativeToolTip": "Casher-POS.Designer.cs",
+              "ViewState": "AgIAAMAAAAAAAAAAAAAYwAIAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-09T02:10:39.48Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 37,
+              "Title": "Program.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAACEAAAAAAAAAAAAEwD0AAAA+AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-02-21T11:00:48.782Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 38,
+              "Title": "PurchaseOrderDetailForm.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\PurchaseOrderDetailForm.cs",
+              "RelativeDocumentMoniker": "PurchaseOrderDetailForm.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\PurchaseOrderDetailForm.cs",
+              "RelativeToolTip": "PurchaseOrderDetailForm.cs",
+              "ViewState": "AgIAABsAAAAAAAAAAAAYwCoAAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-15T16:42:51.965Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 39,
+              "Title": "PurchaseOrderListForm.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\PurchaseOrderListForm.cs",
+              "RelativeDocumentMoniker": "PurchaseOrderListForm.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\PurchaseOrderListForm.cs",
+              "RelativeToolTip": "PurchaseOrderListForm.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAAAQwCUAAAAyAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-15T16:41:14.964Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 40,
+              "Title": "PurchaseOrderListForm.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\PurchaseOrderListForm.cs",
+              "RelativeDocumentMoniker": "PurchaseOrderListForm.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\PurchaseOrderListForm.cs [Design]",
+              "RelativeToolTip": "PurchaseOrderListForm.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-15T16:38:30.379Z",
+              "EditorCaption": " [Design]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 41,
+              "Title": "PurchaseOrderForm.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\PurchaseOrderForm.cs",
+              "RelativeDocumentMoniker": "PurchaseOrderForm.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\PurchaseOrderForm.cs [Design]",
+              "RelativeToolTip": "PurchaseOrderForm.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-16T15:21:40.45Z",
+              "EditorCaption": " [Design]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 42,
+              "Title": "PurchaseOrderDetailForm.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\PurchaseOrderDetailForm.cs",
+              "RelativeDocumentMoniker": "PurchaseOrderDetailForm.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\PurchaseOrderDetailForm.cs [Design]",
+              "RelativeToolTip": "PurchaseOrderDetailForm.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-15T16:41:53.459Z",
+              "EditorCaption": " [Design]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 43,
+              "Title": "MenuNative.Designer.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\MenuNative.Designer.cs",
+              "RelativeDocumentMoniker": "MenuNative.Designer.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\MenuNative.Designer.cs*",
+              "RelativeToolTip": "MenuNative.Designer.cs*",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAF4AAAAjAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-09T05:22:58.269Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 44,
+              "Title": "DbInitializer.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Helpers\\DbInitializer.cs",
+              "RelativeDocumentMoniker": "Helpers\\DbInitializer.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Helpers\\DbInitializer.cs",
+              "RelativeToolTip": "Helpers\\DbInitializer.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAAAQwCAAAAAnAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-10T05:48:33.47Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 45,
+              "Title": "IStockAdjustmentService.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Core\\IStockAdjustmentService.cs",
+              "RelativeDocumentMoniker": "Core\\IStockAdjustmentService.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Core\\IStockAdjustmentService.cs",
+              "RelativeToolTip": "Core\\IStockAdjustmentService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAuwAQAAAANAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-10T04:14:35.778Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 46,
+              "Title": "StockAdjustmentService.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Core\\StockAdjustmentService.cs",
+              "RelativeDocumentMoniker": "Core\\StockAdjustmentService.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Core\\StockAdjustmentService.cs",
+              "RelativeToolTip": "Core\\StockAdjustmentService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAuwAkAAAC2AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-15T14:09:31.823Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 47,
+              "Title": "Transactions.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\Transactions.cs",
+              "RelativeDocumentMoniker": "Models\\Transactions.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Models\\Transactions.cs",
+              "RelativeToolTip": "Models\\Transactions.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAkAAAARAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-03-15T11:10:44.906Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 48,
+              "Title": "ConsoleLogger.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Helpers\\ConsoleLogger.cs",
+              "RelativeDocumentMoniker": "Helpers\\ConsoleLogger.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Helpers\\ConsoleLogger.cs",
+              "RelativeToolTip": "Helpers\\ConsoleLogger.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-05-10T04:15:55.893Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 49,
+              "Title": "User.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\User.cs",
+              "RelativeDocumentMoniker": "Models\\User.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Models\\User.cs",
+              "RelativeToolTip": "Models\\User.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAuwBEAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-21T15:39:32.982Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 50,
+              "Title": "DatabaseSetting.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\DatabaseSetting.cs",
+              "RelativeDocumentMoniker": "DatabaseSetting.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\DatabaseSetting.cs",
+              "RelativeToolTip": "DatabaseSetting.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABMAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-10T05:27:43.39Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 51,
+              "Title": "ProductPage.Designer.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\ProductPage.Designer.cs",
+              "RelativeDocumentMoniker": "ProductPage.Designer.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\ProductPage.Designer.cs",
+              "RelativeToolTip": "ProductPage.Designer.cs",
+              "ViewState": "AgIAAJsBAAAAAAAAAAAYwLMBAAApAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-03T07:00:27.524Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 116,
+              "Title": "PurchaseOrderDetailForm.Designer.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\PurchaseOrderDetailForm.Designer.cs",
+              "RelativeDocumentMoniker": "PurchaseOrderDetailForm.Designer.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\PurchaseOrderDetailForm.Designer.cs",
+              "RelativeToolTip": "PurchaseOrderDetailForm.Designer.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-16T15:01:05.905Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 55,
+              "Title": "Roles.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Roles.cs",
+              "RelativeDocumentMoniker": "Roles.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Roles.cs [Design]",
+              "RelativeToolTip": "Roles.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T06:06:29.372Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 54,
+              "Title": "Roles.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Roles.cs",
+              "RelativeDocumentMoniker": "Roles.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Roles.cs",
+              "RelativeToolTip": "Roles.cs",
+              "ViewState": "AgIAAJIAAAAAAAAAAAAmwFIAAABNAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-02T06:08:59.97Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 53,
+              "Title": "PurchaseOrderForm.Designer.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\PurchaseOrderForm.Designer.cs",
+              "RelativeDocumentMoniker": "PurchaseOrderForm.Designer.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\PurchaseOrderForm.Designer.cs",
+              "RelativeToolTip": "PurchaseOrderForm.Designer.cs",
+              "ViewState": "AgIAAJAAAAAAAAAAAAAYwFEAAAAiAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-15T16:16:10.801Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 56,
+              "Title": "Roles.Designer.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Roles.Designer.cs",
+              "RelativeDocumentMoniker": "Roles.Designer.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Roles.Designer.cs",
+              "RelativeToolTip": "Roles.Designer.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAOEAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-10T17:41:18.285Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 57,
+              "Title": "DataGridViewManager.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Helpers\\DataGridViewManager.cs",
+              "RelativeDocumentMoniker": "Helpers\\DataGridViewManager.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Helpers\\DataGridViewManager.cs",
+              "RelativeToolTip": "Helpers\\DataGridViewManager.cs",
+              "ViewState": "AgIAAFYAAAAAAAAAAAAswG4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-04-05T02:20:57.097Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 58,
+              "Title": "POS-qu.csproj",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\POS-qu.csproj",
+              "RelativeDocumentMoniker": "POS-qu.csproj",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\POS-qu.csproj",
+              "RelativeToolTip": "POS-qu.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2025-08-10T05:18:30.836Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 59,
+              "Title": "OrderLIst.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\OrderLIst.cs",
+              "RelativeDocumentMoniker": "OrderLIst.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\OrderLIst.cs",
+              "RelativeToolTip": "OrderLIst.cs",
+              "ViewState": "AgIAAKoAAAAAAAAAAAAwwL8AAABDAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-10T15:10:48.926Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 62,
+              "Title": "OrderDetailForm.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\OrderDetailForm.cs",
+              "RelativeDocumentMoniker": "OrderDetailForm.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\OrderDetailForm.cs [Design]",
+              "RelativeToolTip": "OrderDetailForm.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-10T18:11:35.989Z",
+              "EditorCaption": " [Design]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 60,
+              "Title": "OrderLIst.Designer.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\OrderLIst.Designer.cs",
+              "RelativeDocumentMoniker": "OrderLIst.Designer.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\OrderLIst.Designer.cs",
+              "RelativeToolTip": "OrderLIst.Designer.cs",
+              "ViewState": "AgIAABkAAAAAAAAAAAAYwDQAAAA1AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-10T18:42:07.988Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 61,
+              "Title": "OrderLIst.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\OrderLIst.cs",
+              "RelativeDocumentMoniker": "OrderLIst.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\OrderLIst.cs [Design]",
+              "RelativeToolTip": "OrderLIst.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-10T15:10:29.801Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 63,
+              "Title": "OrderDetailForm.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\OrderDetailForm.cs",
+              "RelativeDocumentMoniker": "OrderDetailForm.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\OrderDetailForm.cs",
+              "RelativeToolTip": "OrderDetailForm.cs",
+              "ViewState": "AgIAADYAAAAAAAAAAIAwwA4AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-10T18:11:45.987Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 64,
+              "Title": "OrderDetail.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\OrderDetail.cs",
+              "RelativeDocumentMoniker": "Models\\OrderDetail.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Models\\OrderDetail.cs",
+              "RelativeToolTip": "Models\\OrderDetail.cs",
+              "ViewState": "AgIAAAgAAAAAAAAAAAA3wBYAAAAmAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-09-10T18:03:09.039Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 65,
+              "Title": "Orders.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\Orders.cs",
+              "RelativeDocumentMoniker": "Models\\Orders.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Models\\Orders.cs",
+              "RelativeToolTip": "Models\\Orders.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAoAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-10T13:17:51.993Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 66,
+              "Title": "PendingTransaction.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\PendingTransaction.cs",
+              "RelativeDocumentMoniker": "Models\\PendingTransaction.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Models\\PendingTransaction.cs",
+              "RelativeToolTip": "Models\\PendingTransaction.cs",
+              "ViewState": "AgIAAAsAAAAAAAAAAAAAwBgAAAAaAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-03-15T14:39:19.995Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 67,
+              "Title": "OrderForm.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\OrderForm.cs",
+              "RelativeDocumentMoniker": "OrderForm.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\OrderForm.cs",
+              "RelativeToolTip": "OrderForm.cs",
+              "ViewState": "AgIAABAAAAAAAAAAAAAYwHUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-10T12:39:17.045Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 68,
+              "Title": "OrderForm.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\OrderForm.cs",
+              "RelativeDocumentMoniker": "OrderForm.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\OrderForm.cs [Design]",
+              "RelativeToolTip": "OrderForm.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-10T13:00:58.448Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 69,
+              "Title": "OrderForm.Designer.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\OrderForm.Designer.cs",
+              "RelativeDocumentMoniker": "OrderForm.Designer.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\OrderForm.Designer.cs",
+              "RelativeToolTip": "OrderForm.Designer.cs",
+              "ViewState": "AgIAAL8AAAAAAAAAAAAQwNMAAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-10T12:40:23.722Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 71,
+              "Title": "DatabaseSetting.Designer.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\DatabaseSetting.Designer.cs",
+              "RelativeDocumentMoniker": "DatabaseSetting.Designer.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\DatabaseSetting.Designer.cs",
+              "RelativeToolTip": "DatabaseSetting.Designer.cs",
+              "ViewState": "AgIAAAcAAAAAAAAAAAAowK0AAAAdAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-10T05:20:15.808Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 72,
+              "Title": "Form2-crud.Designer.cs",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Form2-crud.Designer.cs",
+              "RelativeDocumentMoniker": "Form2-crud.Designer.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Form2-crud.Designer.cs",
+              "RelativeToolTip": "Form2-crud.Designer.cs",
+              "ViewState": "AgIAAAkAAAAAAAAAAAAgwMQAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-09T09:27:10.607Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 73,
+              "Title": "QuantityForm.cs [Design]",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\QuantityForm.cs",
+              "RelativeDocumentMoniker": "QuantityForm.cs",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\QuantityForm.cs [Design]",
+              "RelativeToolTip": "QuantityForm.cs [Design]",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-03-13T11:11:35.006Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 74,
+              "Title": "Login.resx",
+              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Login.resx",
+              "RelativeDocumentMoniker": "Login.resx",
+              "ToolTip": "D:\\POS-qu\\POS-qu\\Login.resx",
+              "RelativeToolTip": "Login.resx",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001005|",
+              "WhenOpened": "2025-08-09T09:00:04.371Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 75,
               "Title": "StrukSettingModel.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\StrukSettingModel.cs",
               "RelativeDocumentMoniker": "Models\\StrukSettingModel.cs",
@@ -399,44 +1460,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "SettingController.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Controllers\\SettingController.cs",
-              "RelativeDocumentMoniker": "Controllers\\SettingController.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Controllers\\SettingController.cs",
-              "RelativeToolTip": "Controllers\\SettingController.cs",
-              "ViewState": "AgIAAJQAAAAAAAAAAAAAAKwAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-03T02:26:03.63Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "Program.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Program.cs",
-              "RelativeDocumentMoniker": "Program.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Program.cs",
-              "RelativeToolTip": "Program.cs",
-              "ViewState": "AgIAABcAAAAAAAAAAAAswDIAAAAvAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-02-21T11:00:48.782Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "StrukSetting.cs [Design]",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\StrukSetting.cs",
-              "RelativeDocumentMoniker": "StrukSetting.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\StrukSetting.cs [Design]",
-              "RelativeToolTip": "StrukSetting.cs [Design]",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-03T05:51:08.756Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 76,
               "Title": "StrukSetting.Designer.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\StrukSetting.Designer.cs",
               "RelativeDocumentMoniker": "StrukSetting.Designer.cs",
@@ -444,11 +1468,12 @@
               "RelativeToolTip": "StrukSetting.Designer.cs",
               "ViewState": "AgIAABwAAAAAAAAAAAA+wO4AAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-03T05:51:36.501Z"
+              "WhenOpened": "2025-06-03T05:51:36.501Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 10,
+              "DocumentIndex": 78,
               "Title": "ImageHelper.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Helpers\\ImageHelper.cs",
               "RelativeDocumentMoniker": "Helpers\\ImageHelper.cs",
@@ -460,20 +1485,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
-              "Title": "TokoSetting.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\TokoSetting.cs",
-              "RelativeDocumentMoniker": "TokoSetting.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\TokoSetting.cs",
-              "RelativeToolTip": "TokoSetting.cs",
-              "ViewState": "AgIAAD4AAAAAAAAAAAAuwFcAAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-03T01:48:30.923Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 77,
               "Title": "TokoSetting.Designer.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\TokoSetting.Designer.cs",
               "RelativeDocumentMoniker": "TokoSetting.Designer.cs",
@@ -481,70 +1493,12 @@
               "RelativeToolTip": "TokoSetting.Designer.cs",
               "ViewState": "AgIAAJcAAAAAAAAAAAAAAKMAAAA0AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-03T01:14:38.484Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 12,
-              "Title": "DataGridViewManager.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Helpers\\DataGridViewManager.cs",
-              "RelativeDocumentMoniker": "Helpers\\DataGridViewManager.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Helpers\\DataGridViewManager.cs",
-              "RelativeToolTip": "Helpers\\DataGridViewManager.cs",
-              "ViewState": "AgIAADcAAAAAAAAAAAAwwEYAAAAmAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-05T02:20:57.097Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 9,
-              "Title": "TokoSetting.cs [Design]",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\TokoSetting.cs",
-              "RelativeDocumentMoniker": "TokoSetting.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\TokoSetting.cs [Design]",
-              "RelativeToolTip": "TokoSetting.cs [Design]",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-03T01:13:13.247Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 13,
-              "Title": "ProductPage.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\ProductPage.cs",
-              "RelativeDocumentMoniker": "ProductPage.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\ProductPage.cs",
-              "RelativeToolTip": "ProductPage.cs",
-              "ViewState": "AgIAAKsAAAAAAAAAAAASwO4AAAANAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-03T06:57:02.928Z",
+              "WhenOpened": "2025-06-03T01:14:38.484Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 11,
-              "Title": "FileLogger.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Helpers\\FileLogger.cs",
-              "RelativeDocumentMoniker": "Helpers\\FileLogger.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Helpers\\FileLogger.cs",
-              "RelativeToolTip": "Helpers\\FileLogger.cs",
-              "ViewState": "AgIAAAQAAAAAAAAAAAAAABAAAAAiAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-10T04:15:44.533Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 14,
-              "Title": "ProductPage.cs [Design]",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\ProductPage.cs",
-              "RelativeDocumentMoniker": "ProductPage.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\ProductPage.cs [Design]",
-              "RelativeToolTip": "ProductPage.cs [Design]",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-04T06:37:16.764Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 16,
+              "DocumentIndex": 79,
               "Title": "SalesReports.Designer.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\SalesReports.Designer.cs",
               "RelativeDocumentMoniker": "SalesReports.Designer.cs",
@@ -552,23 +1506,12 @@
               "RelativeToolTip": "SalesReports.Designer.cs",
               "ViewState": "AgIAAGsDAAAAAAAAAAAuwIEDAAAmAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-02T03:49:07.188Z"
+              "WhenOpened": "2025-06-02T03:49:07.188Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 15,
-              "Title": "ItemController.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Controllers\\ItemController.cs",
-              "RelativeDocumentMoniker": "Controllers\\ItemController.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Controllers\\ItemController.cs",
-              "RelativeToolTip": "Controllers\\ItemController.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-02-24T13:13:56.161Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 19,
+              "DocumentIndex": 82,
               "Title": "Terminal.Designer.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Terminal.Designer.cs",
               "RelativeDocumentMoniker": "Terminal.Designer.cs",
@@ -576,11 +1519,12 @@
               "RelativeToolTip": "Terminal.Designer.cs",
               "ViewState": "AgIAAK4AAAAAAAAAAAAYwAAAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-03T01:38:37.809Z"
+              "WhenOpened": "2025-06-03T01:38:37.809Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 17,
+              "DocumentIndex": 80,
               "Title": "RoundedPanel.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Helpers\\RoundedPanel.cs",
               "RelativeDocumentMoniker": "Helpers\\RoundedPanel.cs",
@@ -592,7 +1536,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 18,
+              "DocumentIndex": 81,
               "Title": "RoundedTextBox.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Helpers\\RoundedTextBox.cs",
               "RelativeDocumentMoniker": "Helpers\\RoundedTextBox.cs",
@@ -604,32 +1548,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 20,
-              "Title": "StockReports.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\StockReports.cs",
-              "RelativeDocumentMoniker": "StockReports.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\StockReports.cs",
-              "RelativeToolTip": "StockReports.cs",
-              "ViewState": "AgIAABoAAAAAAAAAAAAAwCcBAAAnAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-03T01:03:28.477Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 21,
-              "Title": "ProductPage.Designer.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\ProductPage.Designer.cs",
-              "RelativeDocumentMoniker": "ProductPage.Designer.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\ProductPage.Designer.cs",
-              "RelativeToolTip": "ProductPage.Designer.cs",
-              "ViewState": "AgIAAJsBAAAAAAAAAAAYwBEAAAAjAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-03T07:00:27.524Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 22,
+              "DocumentIndex": 83,
               "Title": "StockReports.cs [Design]",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\StockReports.cs",
               "RelativeDocumentMoniker": "StockReports.cs",
@@ -640,42 +1559,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 24,
-              "Title": "SalesReports.cs [Design]",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\SalesReports.cs",
-              "RelativeDocumentMoniker": "SalesReports.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\SalesReports.cs [Design]",
-              "RelativeToolTip": "SalesReports.cs [Design]",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-02T03:49:19.265Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 23,
-              "Title": "SalesReports.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\SalesReports.cs",
-              "RelativeDocumentMoniker": "SalesReports.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\SalesReports.cs",
-              "RelativeToolTip": "SalesReports.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABIAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-02T12:55:48.861Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 25,
-              "Title": "LoginController.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Controllers\\LoginController.cs",
-              "RelativeDocumentMoniker": "Controllers\\LoginController.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Controllers\\LoginController.cs",
-              "RelativeToolTip": "Controllers\\LoginController.cs",
-              "ViewState": "AgIAABsAAAAAAAAAAAAnwCYAAAA4AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-21T15:39:04.276Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 26,
+              "DocumentIndex": 84,
               "Title": "StockReports.Designer.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\StockReports.Designer.cs",
               "RelativeDocumentMoniker": "StockReports.Designer.cs",
@@ -687,31 +1571,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 27,
-              "Title": "Roles.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Roles.cs",
-              "RelativeDocumentMoniker": "Roles.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Roles.cs",
-              "RelativeToolTip": "Roles.cs",
-              "ViewState": "AgIAAA0AAAAAAAAAAAAQwB4AAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-02T06:08:59.97Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 28,
-              "Title": "Roles.cs [Design]",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Roles.cs",
-              "RelativeDocumentMoniker": "Roles.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Roles.cs [Design]",
-              "RelativeToolTip": "Roles.cs [Design]",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-02T06:06:29.372Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 29,
+              "DocumentIndex": 85,
               "Title": "Form3-crud.cs [Design]",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Form3-crud.cs",
               "RelativeDocumentMoniker": "Form3-crud.cs",
@@ -722,18 +1582,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 30,
-              "Title": "Casher-POS.cs [Design]",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Casher-POS.cs",
-              "RelativeDocumentMoniker": "Casher-POS.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Casher-POS.cs [Design]",
-              "RelativeToolTip": "Casher-POS.cs [Design]",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-18T11:07:04.689Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 31,
+              "DocumentIndex": 86,
               "Title": "Form2-crud.cs [Design]",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Form2-crud.cs",
               "RelativeDocumentMoniker": "Form2-crud.cs",
@@ -744,7 +1593,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 32,
+              "DocumentIndex": 87,
               "Title": "Form1.cs [Design]",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Form1.cs",
               "RelativeDocumentMoniker": "Form1.cs",
@@ -755,30 +1604,19 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 33,
+              "DocumentIndex": 88,
               "Title": "SearchFormItem.cs [Design]",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\SearchFormItem.cs",
               "RelativeDocumentMoniker": "SearchFormItem.cs",
               "ToolTip": "D:\\POS-qu\\POS-qu\\SearchFormItem.cs [Design]",
               "RelativeToolTip": "SearchFormItem.cs [Design]",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-15T03:43:56.211Z"
+              "WhenOpened": "2025-04-15T03:43:56.211Z",
+              "EditorCaption": " [Design]"
             },
             {
               "$type": "Document",
-              "DocumentIndex": 34,
-              "Title": "Casher-POS.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Casher-POS.cs",
-              "RelativeDocumentMoniker": "Casher-POS.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Casher-POS.cs",
-              "RelativeToolTip": "Casher-POS.cs",
-              "ViewState": "AgIAAIYCAAAAAAAAAIAwwJgCAAApAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-21T15:06:14.884Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 36,
+              "DocumentIndex": 90,
               "Title": "SearchFormItem.Designer.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\SearchFormItem.Designer.cs",
               "RelativeDocumentMoniker": "SearchFormItem.Designer.cs",
@@ -786,107 +1624,12 @@
               "RelativeToolTip": "SearchFormItem.Designer.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-15T03:43:32.48Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 37,
-              "Title": "TransactionController.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Controllers\\TransactionController.cs",
-              "RelativeDocumentMoniker": "Controllers\\TransactionController.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Controllers\\TransactionController.cs",
-              "RelativeToolTip": "Controllers\\TransactionController.cs",
-              "ViewState": "AgIAABcAAAAAAAAAAAAiwC4AAAA8AAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-21T12:48:51.226Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 39,
-              "Title": "Casher-POS.Designer.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Casher-POS.Designer.cs",
-              "RelativeDocumentMoniker": "Casher-POS.Designer.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Casher-POS.Designer.cs",
-              "RelativeToolTip": "Casher-POS.Designer.cs",
-              "ViewState": "AgIAAL0AAAAAAAAAAAAAAMUAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T02:10:39.48Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 40,
-              "Title": "MenuNative.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\MenuNative.cs",
-              "RelativeDocumentMoniker": "MenuNative.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\MenuNative.cs",
-              "RelativeToolTip": "MenuNative.cs",
-              "ViewState": "AgIAAEEAAAAAAAAAAAAmwFsAAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T04:57:15.786Z",
+              "WhenOpened": "2025-04-15T03:43:32.48Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 41,
-              "Title": "MenuNative.cs [Design]",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\MenuNative.cs",
-              "RelativeDocumentMoniker": "MenuNative.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\MenuNative.cs [Design]",
-              "RelativeToolTip": "MenuNative.cs [Design]",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T04:57:27.59Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 45,
-              "Title": "IActivityService.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Core\\IActivityService.cs",
-              "RelativeDocumentMoniker": "Core\\IActivityService.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Core\\IActivityService.cs",
-              "RelativeToolTip": "Core\\IActivityService.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAALAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-10T04:14:35.778Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 44,
-              "Title": "ILogger.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Core\\ILogger.cs",
-              "RelativeDocumentMoniker": "Core\\ILogger.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Core\\ILogger.cs",
-              "RelativeToolTip": "Core\\ILogger.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-10T04:15:26.645Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 42,
-              "Title": "ActivityService.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Core\\ActivityService.cs",
-              "RelativeDocumentMoniker": "Core\\ActivityService.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Core\\ActivityService.cs",
-              "RelativeToolTip": "Core\\ActivityService.cs",
-              "ViewState": "AgIAAAkAAAAAAAAAAAAAABsAAABCAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-10T04:15:00.851Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 43,
-              "Title": "ActivityType.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Core\\ActivityType.cs",
-              "RelativeDocumentMoniker": "Core\\ActivityType.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Core\\ActivityType.cs",
-              "RelativeToolTip": "Core\\ActivityType.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAOAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-10T06:01:29.944Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 46,
+              "DocumentIndex": 91,
               "Title": "logger.cs",
               "DocumentMoniker": "D:\\POS-qu\\Logger\\logger.cs",
               "RelativeDocumentMoniker": "..\\Logger\\logger.cs",
@@ -898,31 +1641,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 47,
-              "Title": "ConsoleLogger.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Helpers\\ConsoleLogger.cs",
-              "RelativeDocumentMoniker": "Helpers\\ConsoleLogger.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Helpers\\ConsoleLogger.cs",
-              "RelativeToolTip": "Helpers\\ConsoleLogger.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAFAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-10T04:15:55.893Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 48,
-              "Title": "MenuNative.Designer.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\MenuNative.Designer.cs",
-              "RelativeDocumentMoniker": "MenuNative.Designer.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\MenuNative.Designer.cs",
-              "RelativeToolTip": "MenuNative.Designer.cs",
-              "ViewState": "AgIAAA8AAAAAAAAAAAAYwA8AAAAIAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-05-09T05:22:58.269Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 49,
+              "DocumentIndex": 92,
               "Title": "MenuNative.Designer.cs",
               "DocumentMoniker": "D:\\POS-qu\\POSqu-menu\\MenuNative.Designer.cs",
               "RelativeDocumentMoniker": "..\\POSqu-menu\\MenuNative.Designer.cs",
@@ -934,20 +1653,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 50,
-              "Title": "Login.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Login.cs",
-              "RelativeDocumentMoniker": "Login.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Login.cs",
-              "RelativeToolTip": "Login.cs",
-              "ViewState": "AgIAABQAAAAAAAAAAAAQwCkAAAAfAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-21T15:38:24.589Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 51,
+              "DocumentIndex": 93,
               "Title": "MenuNative.cs",
               "DocumentMoniker": "D:\\POS-qu\\POSqu-menu\\MenuNative.cs",
               "RelativeDocumentMoniker": "..\\POSqu-menu\\MenuNative.cs",
@@ -959,7 +1665,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 52,
+              "DocumentIndex": 94,
               "Title": "SearchFormItem.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\SearchFormItem.cs",
               "RelativeDocumentMoniker": "SearchFormItem.cs",
@@ -971,54 +1677,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 53,
-              "Title": "Transactions.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\Transactions.cs",
-              "RelativeDocumentMoniker": "Models\\Transactions.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Models\\Transactions.cs",
-              "RelativeToolTip": "Models\\Transactions.cs",
-              "ViewState": "AgIAABEAAAAAAAAAAAAowB8AAAAZAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-15T11:10:44.906Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 55,
-              "Title": "SessionUser.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\SessionUser.cs",
-              "RelativeDocumentMoniker": "Models\\SessionUser.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Models\\SessionUser.cs",
-              "RelativeToolTip": "Models\\SessionUser.cs",
-              "ViewState": "AgIAAAYAAAAAAAAAAAAAAAwAAAAZAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-21T15:20:55.127Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 54,
-              "Title": "User.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\User.cs",
-              "RelativeDocumentMoniker": "Models\\User.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Models\\User.cs",
-              "RelativeToolTip": "Models\\User.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAApAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-21T15:39:32.982Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 56,
-              "Title": "Login.cs [Design]",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Login.cs",
-              "RelativeDocumentMoniker": "Login.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Login.cs [Design]",
-              "RelativeToolTip": "Login.cs [Design]",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-04-21T15:38:21.269Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 57,
+              "DocumentIndex": 95,
               "Title": "UnitVariant.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\UnitVariant.cs",
               "RelativeDocumentMoniker": "Models\\UnitVariant.cs",
@@ -1030,42 +1689,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 58,
-              "Title": "QuantityForm.cs [Design]",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\QuantityForm.cs",
-              "RelativeDocumentMoniker": "QuantityForm.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\QuantityForm.cs [Design]",
-              "RelativeToolTip": "QuantityForm.cs [Design]",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-13T11:11:35.006Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 59,
-              "Title": "PendingTransaction.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\PendingTransaction.cs",
-              "RelativeDocumentMoniker": "Models\\PendingTransaction.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Models\\PendingTransaction.cs",
-              "RelativeToolTip": "Models\\PendingTransaction.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABsAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-15T14:39:19.995Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 61,
-              "Title": "Item.cs",
-              "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\Item.cs",
-              "RelativeDocumentMoniker": "Models\\Item.cs",
-              "ToolTip": "D:\\POS-qu\\POS-qu\\Models\\Item.cs",
-              "RelativeToolTip": "Models\\Item.cs",
-              "ViewState": "AgIAABQAAAAAAAAAAAAowBsAAAAYAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-02-24T13:13:29.253Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 60,
+              "DocumentIndex": 96,
               "Title": "TransactionDetail.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\TransactionDetail.cs",
               "RelativeDocumentMoniker": "Models\\TransactionDetail.cs",
@@ -1077,7 +1701,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 78,
+              "DocumentIndex": 113,
               "Title": "Form4-crud.cs [Design]",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Form4-crud.cs",
               "RelativeDocumentMoniker": "Form4-crud.cs",
@@ -1088,7 +1712,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 62,
+              "DocumentIndex": 97,
               "Title": "SearchFormItem-backup.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\backupcode\\SearchFormItem-backup.cs",
               "RelativeDocumentMoniker": "backupcode\\SearchFormItem-backup.cs",
@@ -1100,7 +1724,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 63,
+              "DocumentIndex": 98,
               "Title": "Form4-crud_backup4.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\backupcode\\Form4-crud_backup4.cs",
               "RelativeDocumentMoniker": "backupcode\\Form4-crud_backup4.cs",
@@ -1112,7 +1736,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 64,
+              "DocumentIndex": 99,
               "Title": "QuantityForm.Designer.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\QuantityForm.Designer.cs",
               "RelativeDocumentMoniker": "QuantityForm.Designer.cs",
@@ -1124,7 +1748,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 79,
+              "DocumentIndex": 114,
               "Title": "Form4-crud.Designer.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Form4-crud.Designer.cs",
               "RelativeDocumentMoniker": "Form4-crud.Designer.cs",
@@ -1136,7 +1760,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 80,
+              "DocumentIndex": 115,
               "Title": "Form4-crud.resx",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Form4-crud.resx",
               "RelativeDocumentMoniker": "Form4-crud.resx",
@@ -1147,7 +1771,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 65,
+              "DocumentIndex": 100,
               "Title": "Form4-crud_backup3.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\backupcode\\Form4-crud_backup3.cs",
               "RelativeDocumentMoniker": "backupcode\\Form4-crud_backup3.cs",
@@ -1159,7 +1783,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 66,
+              "DocumentIndex": 101,
               "Title": "PaymentModalForm.cs [Design]",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\PaymentModalForm.cs",
               "RelativeDocumentMoniker": "PaymentModalForm.cs",
@@ -1170,7 +1794,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 68,
+              "DocumentIndex": 103,
               "Title": "PaymentModalForm.Designer.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\PaymentModalForm.Designer.cs",
               "RelativeDocumentMoniker": "PaymentModalForm.Designer.cs",
@@ -1182,7 +1806,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 67,
+              "DocumentIndex": 102,
               "Title": "PaymentModalForm.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\PaymentModalForm.cs",
               "RelativeDocumentMoniker": "PaymentModalForm.cs",
@@ -1194,7 +1818,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 70,
+              "DocumentIndex": 105,
               "Title": "UnitVariantForm.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\UnitVariantForm.cs",
               "RelativeDocumentMoniker": "UnitVariantForm.cs",
@@ -1207,7 +1831,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 69,
+              "DocumentIndex": 104,
               "Title": "Payment.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Models\\Payment.cs",
               "RelativeDocumentMoniker": "Models\\Payment.cs",
@@ -1219,7 +1843,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 72,
+              "DocumentIndex": 107,
               "Title": "UnitVariantForm.cs [Design]",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\UnitVariantForm.cs",
               "RelativeDocumentMoniker": "UnitVariantForm.cs",
@@ -1230,7 +1854,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 71,
+              "DocumentIndex": 106,
               "Title": "UnitVariantForm.Designer.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\UnitVariantForm.Designer.cs",
               "RelativeDocumentMoniker": "UnitVariantForm.Designer.cs",
@@ -1242,7 +1866,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 73,
+              "DocumentIndex": 108,
               "Title": "Form2-crud.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Form2-crud.cs",
               "RelativeDocumentMoniker": "Form2-crud.cs",
@@ -1254,7 +1878,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 74,
+              "DocumentIndex": 109,
               "Title": "Form1.Designer.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Form1.Designer.cs",
               "RelativeDocumentMoniker": "Form1.Designer.cs",
@@ -1266,7 +1890,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 75,
+              "DocumentIndex": 110,
               "Title": "Form4-crud_backup.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\backupcode\\Form4-crud_backup.cs",
               "RelativeDocumentMoniker": "backupcode\\Form4-crud_backup.cs",
@@ -1274,11 +1898,12 @@
               "RelativeToolTip": "backupcode\\Form4-crud_backup.cs",
               "ViewState": "AgIAALcBAAAAAAAAAAAiwNYBAAACAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-03-14T02:18:41.75Z"
+              "WhenOpened": "2025-03-14T02:18:41.75Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 76,
+              "DocumentIndex": 111,
               "Title": "Form3-crud.Designer.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Form3-crud.Designer.cs",
               "RelativeDocumentMoniker": "Form3-crud.Designer.cs",
@@ -1290,7 +1915,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 77,
+              "DocumentIndex": 112,
               "Title": "Form3-crud.cs",
               "DocumentMoniker": "D:\\POS-qu\\POS-qu\\Form3-crud.cs",
               "RelativeDocumentMoniker": "Form3-crud.cs",

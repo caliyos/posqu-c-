@@ -22,10 +22,19 @@ namespace POS_qu.Helpers
             _filePath = Path.Combine(logDir, "activity_log.txt");
         }
 
-        public void Log(string message)
+
+        // Versi baru untuk log terstruktur
+        public void Log(string userId, string actionType, int? referenceId, string? desc, string details)
         {
-            File.AppendAllText(_filePath, $"{DateTime.Now}: {message}\n");
+            string logEntry = $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} | " +
+                              $"{(string.IsNullOrEmpty(userId) ? "NULL" : userId)} | " +
+                              $"{(actionType ?? "APP_LOG")} | " +
+                              $"{(referenceId.HasValue ? referenceId.Value.ToString() : "NULL")} | " +
+                              $"{(string.IsNullOrEmpty(details) ? "{}" : details)}";
+
+            File.AppendAllText(_filePath, logEntry + Environment.NewLine);
         }
+
     }
 
 

@@ -18,6 +18,7 @@
         private void InitializeComponent()
         {
             panelTop = new Panel();
+            BtnToggleInfo = new Button();
             labelSessionInfo = new Label();
             labelCari = new Label();
             txtCariBarang = new TextBox();
@@ -28,18 +29,25 @@
             flowLayoutPanel = new FlowLayoutPanel();
             dataGridViewCart4 = new DataGridView();
             panelBottom = new Panel();
+            lblOrderBadge = new Label();
             label2 = new Label();
+            buttonListOrders = new Button();
+            buttonOrders = new Button();
             btnPay = new Button();
+            infoPanel = new Panel();
+            infoLabel = new Label();
             panelTop.SuspendLayout();
             panelMid.SuspendLayout();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewCart4).BeginInit();
             panelBottom.SuspendLayout();
+            infoPanel.SuspendLayout();
             SuspendLayout();
             // 
             // panelTop
             // 
             panelTop.BackColor = Color.White;
+            panelTop.Controls.Add(BtnToggleInfo);
             panelTop.Controls.Add(labelSessionInfo);
             panelTop.Controls.Add(labelCari);
             panelTop.Controls.Add(txtCariBarang);
@@ -49,6 +57,17 @@
             panelTop.Padding = new Padding(20);
             panelTop.Size = new Size(2244, 80);
             panelTop.TabIndex = 2;
+            // 
+            // BtnToggleInfo
+            // 
+            BtnToggleInfo.BackColor = Color.DeepSkyBlue;
+            BtnToggleInfo.Location = new Point(2104, 24);
+            BtnToggleInfo.Name = "BtnToggleInfo";
+            BtnToggleInfo.Size = new Size(128, 34);
+            BtnToggleInfo.TabIndex = 3;
+            BtnToggleInfo.Text = "! Info (ctrl+i)";
+            BtnToggleInfo.UseVisualStyleBackColor = false;
+            BtnToggleInfo.Click += BtnToggleInfo_Click;
             // 
             // labelSessionInfo
             // 
@@ -88,7 +107,7 @@
             panelMid.Location = new Point(0, 80);
             panelMid.Name = "panelMid";
             panelMid.Padding = new Padding(20);
-            panelMid.Size = new Size(2244, 700);
+            panelMid.Size = new Size(2244, 776);
             panelMid.TabIndex = 0;
             // 
             // panel1
@@ -100,7 +119,7 @@
             panel1.Dock = DockStyle.Right;
             panel1.Location = new Point(1608, 20);
             panel1.Name = "panel1";
-            panel1.Size = new Size(616, 660);
+            panel1.Size = new Size(616, 736);
             panel1.TabIndex = 1;
             // 
             // label1
@@ -144,20 +163,32 @@
             dataGridViewCart4.Location = new Point(20, 20);
             dataGridViewCart4.Name = "dataGridViewCart4";
             dataGridViewCart4.RowHeadersWidth = 62;
-            dataGridViewCart4.Size = new Size(1532, 660);
+            dataGridViewCart4.Size = new Size(1532, 736);
             dataGridViewCart4.TabIndex = 0;
             // 
             // panelBottom
             // 
             panelBottom.BackColor = Color.FromArgb(245, 245, 245);
+            panelBottom.Controls.Add(lblOrderBadge);
             panelBottom.Controls.Add(label2);
+            panelBottom.Controls.Add(buttonListOrders);
+            panelBottom.Controls.Add(buttonOrders);
             panelBottom.Controls.Add(btnPay);
             panelBottom.Dock = DockStyle.Bottom;
-            panelBottom.Location = new Point(0, 780);
+            panelBottom.Location = new Point(0, 856);
             panelBottom.Name = "panelBottom";
             panelBottom.Padding = new Padding(20);
             panelBottom.Size = new Size(2244, 120);
             panelBottom.TabIndex = 1;
+            // 
+            // lblOrderBadge
+            // 
+            lblOrderBadge.AutoSize = true;
+            lblOrderBadge.Location = new Point(1464, 32);
+            lblOrderBadge.Name = "lblOrderBadge";
+            lblOrderBadge.Size = new Size(59, 25);
+            lblOrderBadge.TabIndex = 2;
+            lblOrderBadge.Text = "label3";
             // 
             // label2
             // 
@@ -169,6 +200,38 @@
             label2.TabIndex = 0;
             label2.Text = "Rp 0";
             // 
+            // buttonListOrders
+            // 
+            buttonListOrders.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            buttonListOrders.BackColor = Color.FromArgb(0, 123, 255);
+            buttonListOrders.FlatAppearance.BorderSize = 0;
+            buttonListOrders.FlatStyle = FlatStyle.Flat;
+            buttonListOrders.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            buttonListOrders.ForeColor = Color.White;
+            buttonListOrders.Location = new Point(1240, 32);
+            buttonListOrders.Name = "buttonListOrders";
+            buttonListOrders.Size = new Size(288, 60);
+            buttonListOrders.TabIndex = 1;
+            buttonListOrders.Text = "List Orders (Ctrl+L)";
+            buttonListOrders.UseVisualStyleBackColor = false;
+            buttonListOrders.Click += buttonListOrders_Click;
+            // 
+            // buttonOrders
+            // 
+            buttonOrders.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            buttonOrders.BackColor = Color.FromArgb(0, 123, 255);
+            buttonOrders.FlatAppearance.BorderSize = 0;
+            buttonOrders.FlatStyle = FlatStyle.Flat;
+            buttonOrders.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
+            buttonOrders.ForeColor = Color.White;
+            buttonOrders.Location = new Point(968, 32);
+            buttonOrders.Name = "buttonOrders";
+            buttonOrders.Size = new Size(240, 60);
+            buttonOrders.TabIndex = 1;
+            buttonOrders.Text = "Orders (Ctrl+O)";
+            buttonOrders.UseVisualStyleBackColor = false;
+            buttonOrders.Click += btnOrder_Click;
+            // 
             // btnPay
             // 
             btnPay.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
@@ -179,17 +242,40 @@
             btnPay.ForeColor = Color.White;
             btnPay.Location = new Point(622, 30);
             btnPay.Name = "btnPay";
-            btnPay.Size = new Size(100, 60);
+            btnPay.Size = new Size(234, 60);
             btnPay.TabIndex = 1;
-            btnPay.Text = "Bayar (F12)";
+            btnPay.Text = "Bayar (Ctrl+P)";
             btnPay.UseVisualStyleBackColor = false;
             btnPay.Click += btnPay_Click;
+            // 
+            // infoPanel
+            // 
+            infoPanel.Anchor = AnchorStyles.None;
+            infoPanel.BackColor = Color.LightYellow;
+            infoPanel.BorderStyle = BorderStyle.FixedSingle;
+            infoPanel.Controls.Add(infoLabel);
+            infoPanel.Location = new Point(278, 244);
+            infoPanel.Name = "infoPanel";
+            infoPanel.Size = new Size(300, 200);
+            infoPanel.TabIndex = 0;
+            // 
+            // infoLabel
+            // 
+            infoLabel.Dock = DockStyle.Fill;
+            infoLabel.Font = new Font("Segoe UI", 10F);
+            infoLabel.Location = new Point(0, 0);
+            infoLabel.Name = "infoLabel";
+            infoLabel.Size = new Size(298, 198);
+            infoLabel.TabIndex = 0;
+            infoLabel.Text = "Shortcut List:\nF12     - Bayar\nCtrl+P  - Print\nCtrl+N  - Add Item\nCtrl+E  - Edit Item\nDel     - Delete Item\nF5      - Refresh Data\n";
+            infoLabel.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // Casher_POS
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(2244, 900);
+            ClientSize = new Size(2244, 976);
+            Controls.Add(infoPanel);
             Controls.Add(panelMid);
             Controls.Add(panelBottom);
             Controls.Add(panelTop);
@@ -204,6 +290,7 @@
             ((System.ComponentModel.ISupportInitialize)dataGridViewCart4).EndInit();
             panelBottom.ResumeLayout(false);
             panelBottom.PerformLayout();
+            infoPanel.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -221,6 +308,12 @@
         private Panel panel1;
         private Label labelNumOfItems;
         private Label label1;
+        private Panel infoPanel;
+        private Label infoLabel;
         private FlowLayoutPanel flowLayoutPanel;
+        private Button BtnToggleInfo;
+        private Button buttonOrders;
+        private Button buttonListOrders;
+        private Label lblOrderBadge;
     }
 }

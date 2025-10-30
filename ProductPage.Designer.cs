@@ -21,6 +21,7 @@
         private void InitializeComponent()
         {
             inputPanel = new Panel();
+            btnCancelEdit = new Button();
             btnUnitVariant = new Button();
             label8 = new Label();
             label7 = new Label();
@@ -44,6 +45,8 @@
             btnUpdate = new Button();
             btnDelete = new Button();
             tablePanel = new Panel();
+            btnImportExcel = new Button();
+            btnExportExcel = new Button();
             cmbPageSize = new ComboBox();
             lblSearch = new Label();
             btnLastPage = new Button();
@@ -54,7 +57,6 @@
             btnNext = new Button();
             btnClose = new Button();
             dataGridView1 = new DataGridView();
-            btnCancelEdit = new Button();
             inputPanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox).BeginInit();
             tablePanel.SuspendLayout();
@@ -91,8 +93,18 @@
             inputPanel.Location = new Point(0, 0);
             inputPanel.Name = "inputPanel";
             inputPanel.Padding = new Padding(20);
-            inputPanel.Size = new Size(400, 900);
+            inputPanel.Size = new Size(400, 1370);
             inputPanel.TabIndex = 1;
+            // 
+            // btnCancelEdit
+            // 
+            btnCancelEdit.Location = new Point(280, 784);
+            btnCancelEdit.Name = "btnCancelEdit";
+            btnCancelEdit.Size = new Size(112, 34);
+            btnCancelEdit.TabIndex = 23;
+            btnCancelEdit.Text = "Cancel Edit";
+            btnCancelEdit.UseVisualStyleBackColor = true;
+            btnCancelEdit.Click += btnCancelEdit_Click;
             // 
             // btnUnitVariant
             // 
@@ -283,6 +295,8 @@
             // tablePanel
             // 
             tablePanel.BackColor = Color.White;
+            tablePanel.Controls.Add(btnImportExcel);
+            tablePanel.Controls.Add(btnExportExcel);
             tablePanel.Controls.Add(cmbPageSize);
             tablePanel.Controls.Add(lblSearch);
             tablePanel.Controls.Add(btnLastPage);
@@ -297,13 +311,33 @@
             tablePanel.Location = new Point(400, 0);
             tablePanel.Name = "tablePanel";
             tablePanel.Padding = new Padding(10);
-            tablePanel.Size = new Size(1200, 900);
+            tablePanel.Size = new Size(1784, 1370);
             tablePanel.TabIndex = 0;
+            // 
+            // btnImportExcel
+            // 
+            btnImportExcel.Location = new Point(1600, 1312);
+            btnImportExcel.Name = "btnImportExcel";
+            btnImportExcel.Size = new Size(168, 34);
+            btnImportExcel.TabIndex = 8;
+            btnImportExcel.Text = "Import Excel";
+            btnImportExcel.UseVisualStyleBackColor = true;
+            btnImportExcel.Click += btnImportExcel_Click;
+            // 
+            // btnExportExcel
+            // 
+            btnExportExcel.Location = new Point(1600, 1256);
+            btnExportExcel.Name = "btnExportExcel";
+            btnExportExcel.Size = new Size(168, 34);
+            btnExportExcel.TabIndex = 8;
+            btnExportExcel.Text = "Export Excel";
+            btnExportExcel.UseVisualStyleBackColor = true;
+            btnExportExcel.Click += btnExportExcel_Click;
             // 
             // cmbPageSize
             // 
             cmbPageSize.FormattingEnabled = true;
-            cmbPageSize.Location = new Point(24, 720);
+            cmbPageSize.Location = new Point(16, 1272);
             cmbPageSize.Name = "cmbPageSize";
             cmbPageSize.Size = new Size(182, 33);
             cmbPageSize.TabIndex = 7;
@@ -320,7 +354,7 @@
             // 
             // btnLastPage
             // 
-            btnLastPage.Location = new Point(848, 688);
+            btnLastPage.Location = new Point(1432, 1248);
             btnLastPage.Name = "btnLastPage";
             btnLastPage.Size = new Size(112, 34);
             btnLastPage.TabIndex = 5;
@@ -330,7 +364,7 @@
             // 
             // btnFirstPage
             // 
-            btnFirstPage.Location = new Point(440, 688);
+            btnFirstPage.Location = new Point(1024, 1248);
             btnFirstPage.Name = "btnFirstPage";
             btnFirstPage.Size = new Size(112, 34);
             btnFirstPage.TabIndex = 5;
@@ -341,7 +375,7 @@
             // lblPagingInfo
             // 
             lblPagingInfo.AutoSize = true;
-            lblPagingInfo.Location = new Point(16, 688);
+            lblPagingInfo.Location = new Point(16, 1240);
             lblPagingInfo.Name = "lblPagingInfo";
             lblPagingInfo.Size = new Size(103, 25);
             lblPagingInfo.TabIndex = 4;
@@ -357,7 +391,7 @@
             // 
             // btnPrevious
             // 
-            btnPrevious.Location = new Point(712, 688);
+            btnPrevious.Location = new Point(1296, 1248);
             btnPrevious.Name = "btnPrevious";
             btnPrevious.Size = new Size(112, 34);
             btnPrevious.TabIndex = 1;
@@ -367,7 +401,7 @@
             // 
             // btnNext
             // 
-            btnNext.Location = new Point(568, 688);
+            btnNext.Location = new Point(1152, 1248);
             btnNext.Name = "btnNext";
             btnNext.Size = new Size(112, 34);
             btnNext.TabIndex = 1;
@@ -383,7 +417,7 @@
             btnClose.FlatStyle = FlatStyle.Flat;
             btnClose.Font = new Font("Arial", 14F, FontStyle.Bold);
             btnClose.ForeColor = Color.White;
-            btnClose.Location = new Point(1120, 8);
+            btnClose.Location = new Point(1720, 0);
             btnClose.Name = "btnClose";
             btnClose.Size = new Size(50, 40);
             btnClose.TabIndex = 0;
@@ -397,23 +431,13 @@
             dataGridView1.Location = new Point(16, 64);
             dataGridView1.Name = "dataGridView1";
             dataGridView1.RowHeadersWidth = 62;
-            dataGridView1.Size = new Size(1180, 616);
+            dataGridView1.Size = new Size(1760, 1168);
             dataGridView1.TabIndex = 0;
             dataGridView1.CellContentClick += dataGridView1_CellContentClick;
             // 
-            // btnCancelEdit
-            // 
-            btnCancelEdit.Location = new Point(280, 784);
-            btnCancelEdit.Name = "btnCancelEdit";
-            btnCancelEdit.Size = new Size(112, 34);
-            btnCancelEdit.TabIndex = 23;
-            btnCancelEdit.Text = "Cancel Edit";
-            btnCancelEdit.UseVisualStyleBackColor = true;
-            btnCancelEdit.Click += btnCancelEdit_Click;
-            // 
             // ProductPage
             // 
-            ClientSize = new Size(1600, 900);
+            ClientSize = new Size(2184, 1370);
             Controls.Add(tablePanel);
             Controls.Add(inputPanel);
             Name = "ProductPage";
@@ -445,6 +469,8 @@
         private ComboBox cmbPageSize;
         private Button btnUnitVariant;
         private Button btnCancelEdit;
+        private Button btnExportExcel;
+        private Button btnImportExcel;
 
         //private void SetupLabelAndControl(string labelText, Control control, int y)
         //{

@@ -9,17 +9,19 @@ using System.Threading.Tasks;
 using POS_qu.Models;
 using System.Transactions;
 using Microsoft.VisualBasic.Devices;
+using POS_qu.Helpers;
 
 namespace POS_qu.Controllers
 {
     class TransactionController
     {
-        private string vStrConnection = "Host=localhost;Port=5433;Username=postgres;Password=postgres11;Database=posqu";
+      
 
         public DataTable GetSalesReport(DateTime start, DateTime end)
         {
+
             DataTable dt = new DataTable();
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string sql = "SELECT * FROM get_sales_report(@start, @end);";
@@ -41,7 +43,7 @@ namespace POS_qu.Controllers
         public DataTable GetTopProducts(DateTime start, DateTime end)
         {
             DataTable dt = new DataTable();
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string sql = "SELECT * FROM get_top_products(@start, @end);";

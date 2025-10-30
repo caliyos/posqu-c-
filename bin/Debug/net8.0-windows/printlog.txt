@@ -1,0 +1,247 @@
+2025-10-30 15:52:22 - PRINT
+Toko ABC
+Jl. Merdeka No. 123, Jakarta
+021-12345678
+------------------------------
+Terminal : 
+Kasir    : admin
+Shift    : shift 2
+Tanggal  : 2025-10-30
+Waktu    : 15:52:22
+------------------------------
+Jumlah Barang: 2
+------------------------------
+1x Microwave Sharp   2,000,000
+1x Mesin Cuci LG     4,500,000
+------------------------------
+Subtotal             6,500,000
+Discount                     0
+Tax                          0
+Grand Total          6,500,000
+Status Bayar : status : 1
+Metode Bayar : Cash 
+Jumlah Bayar : 10000000
+Kembalian    : 3500000
+------------------------------
+Terima kasih atas kunjungan Anda!
+
+
+
+2025-10-30 15:54:28 - PRINT
+Toko ABC
+Jl. Merdeka No. 123, Jakarta
+021-12345678
+------------------------------
+Terminal : 
+Kasir    : admin
+Shift    : shift 2
+Tanggal  : 2025-10-30
+Waktu    : 15:54:28
+------------------------------
+Jumlah Barang: 3
+------------------------------
+1x Laptop Lenovo Thi 8,500,000
+1x Kabel Listrik 100   250,000
+1x Bor Hitachi       1,500,000
+------------------------------
+Subtotal            10,250,000
+Discount                     0
+Tax                          0
+Grand Total         10,250,000
+Status Bayar : status : 1
+Metode Bayar : Cash 
+Jumlah Bayar : 20000000
+Kembalian    : 9750000
+------------------------------
+Terima kasih atas kunjungan Anda!
+
+
+
+2025-10-30 16:03:56 - PRINT
+Toko ABC
+Jl. Merdeka No. 123, Jakarta
+021-12345678
+------------------------------
+Terminal : T3
+Kasir    : admin
+Shift    : shift 2
+Tanggal  : 2025-10-30
+Waktu    : 16:03:55
+------------------------------
+Jumlah Barang: 6
+------------------------------
+1x Kabel Listrik 100   250,000
+1x Kompor Gas 2 Tung 1,400,000
+4x Peralatan Dapur S 3,200,000
+------------------------------
+Subtotal             4,850,000
+Discount                     0
+Tax                          0
+Grand Total          4,850,000
+Status Bayar : status : 1
+Metode Bayar : Cash 
+Jumlah Bayar : 5000000
+Kembalian    : 150000
+------------------------------
+Terima kasih atas kunjungan Anda!
+
+
+
+2025-10-30 19:48:15 - PRINT
+JYALAH SELALU
+Jl. Merdeka No. 123, Jakarta
+021-12345678
+------------------------------
+Terminal : T3
+Kasir    : admin
+Shift    : shift 2
+Tanggal  : 2025-10-30
+Waktu    : 19:48:15
+------------------------------
+Jumlah Barang: 6
+------------------------------
+1x Mesin Cuci LG     4,500,000
+1x Kulkas Panasonic  5,000,000
+3x Semprotan Cat       210,000
+1x Lampu LED Philips    70,000
+------------------------------
+Subtotal             9,780,000
+Discount                     0
+Tax                          0
+Grand Total          9,780,000
+Status Bayar : status : 1
+Metode Bayar : Cash 
+Jumlah Bayar : 10000000
+Kembalian    : 220000
+------------------------------
+Terima kasih atas kunjungan Anda!
+
+
+
+2025-10-30 19:57:37 - PRINT
+Toko ABC
+Jl. Merdeka No. 123, Jakarta
+021-12345678
+------------------------------
+Terminal : T3
+Kasir    : admin
+Shift    : shift 2
+Tanggal  : 2025-10-30
+Waktu    : 19:57:37
+------------------------------
+Jumlah Barang: 4
+------------------------------
+1x Pompa Air Shimizu 1,200,000
+2x Kulkas Panasonic 10,000,000
+1x Bor Hitachi       1,500,000
+------------------------------
+Subtotal            12,700,000
+Discount                     0
+Tax                          0
+Grand Total         12,700,000
+Status Bayar : status : 1
+Metode Bayar : Cash 
+Jumlah Bayar : 15000000
+Kembalian    : 2300000
+------------------------------
+Terima kasih atas kunjungan Anda!
+
+
+
+2025-10-30 19:58:53 - PRINT
+Toko ABC
+Jl. Merdeka No. 123, Jakarta
+021-12345678
+------------------------------
+Terminal : T3
+Kasir    : admin
+Shift    : shift 2
+Tanggal  : 2025-10-30
+Waktu    : 19:58:53
+------------------------------
+Jumlah Barang: 7
+------------------------------
+1x Bor Hitachi       1,500,000
+1x Kompor Gas 2 Tung 1,400,000
+1x Pompa Air Shimizu 1,200,000
+1x Solderan Elektrik   200,000
+1x Peralatan Dapur S   800,000
+1x Paku Kayu 2 Inch     15,000
+1x Microwave Sharp   2,000,000
+------------------------------
+Subtotal             7,115,000
+Discount                     0
+Tax                          0
+Grand Total          7,115,000
+Status Bayar : status : 1
+Metode Bayar : Cash 
+Jumlah Bayar : 10000000
+Kembalian    : 2885000
+------------------------------
+Terima kasih atas kunjungan Anda!
+
+
+
+2025-10-30 19:59:40 - PRINT
+SAYA PUNYA TOKO
+Jl. Merdeka No. 123, Jakarta
+021-12345678
+------------------------------
+Terminal : T3
+Kasir    : admin
+Shift    : shift 2
+Tanggal  : 2025-10-30
+Waktu    : 19:59:40
+------------------------------
+Jumlah Barang: 5
+------------------------------
+1x Kulkas Panasonic  5,000,000
+1x Kabel Listrik 100   250,000
+1x Smartphone Samsun 4,000,000
+1x AC Daikin 1 PK    6,500,000
+1x Semprotan Cat        70,000
+------------------------------
+Subtotal            15,820,000
+Discount                     0
+Tax                          0
+Grand Total         15,820,000
+Status Bayar : status : 1
+Metode Bayar : Cash 
+Jumlah Bayar : 20000000
+Kembalian    : 4180000
+------------------------------
+Terima kasih atas kunjungan Anda!
+
+
+
+2025-10-30 20:16:43 - PRINT
+Toko Sukses Makmur
+Jl. Merdeka No. 123, Jakarta
+021-12345678
+------------------------------
+Terminal : T3
+Kasir    : admin
+Shift    : shift 2
+Tanggal  : 2025-10-30
+Waktu    : 20:16:43
+------------------------------
+Jumlah Barang: 5
+------------------------------
+1x Microwave Sharp   2,000,000
+1x Kompor Gas 2 Tung 1,400,000
+2x Bor Hitachi       3,000,000
+1x Semprotan Cat        70,000
+------------------------------
+Subtotal             6,470,000
+Discount                     0
+Tax                          0
+Grand Total          6,470,000
+Status Bayar : status : 1
+Metode Bayar : Cash 
+Jumlah Bayar : 10000000
+Kembalian    : 3530000
+------------------------------
+Terima kasih atas kunjungan Anda!
+
+
+

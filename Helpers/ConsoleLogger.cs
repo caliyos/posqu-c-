@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace POS_qu.Helpers
 {
     // === Logger Implementations ===
-    public class ConsoleLogger : ILogger
+    public class ConsoleLogger 
     {
         public void Log(string message)
         {

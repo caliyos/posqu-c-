@@ -3,12 +3,19 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Windows.Forms;
+using System.Drawing.Printing;
+using System.IO.Ports;
+
 using POS_qu.Controllers;
 using POS_qu.Models;
 using POS_qu.Helpers;
-using System.Diagnostics; // Add this at the top
-using System.Drawing.Printing;
 using POS_qu.Core;
+using System.Text;
+using Npgsql;
+using QuestPDF.Infrastructure;
+
+using QuestPDF.Fluent;
+using QuestPDF.Helpers;
 
 namespace POS_qu
 {
@@ -19,7 +26,8 @@ namespace POS_qu
         private PrintPreviewDialog printPreviewDialog = new PrintPreviewDialog();
 
         private IActivityService activityService;
-        private ILogger logger = new FileLogger();
+        private ILogger flogger = new FileLogger();
+        private ILogger dlogger = new DbLogger();
 
 
         public Casher_POS()
@@ -32,10 +40,10 @@ namespace POS_qu
             this.KeyPreview = true; // Ensure the form can intercept key events
             this.KeyDown += Casher_POS_KeyDown; // Add the key down event handler
 
-  
+
 
             // Inject the FileLogger into ActivityService
-            activityService = new ActivityService(logger);
+            activityService = new ActivityService(flogger, dlogger);
             //activityService.LogAction(ActivityType.Print.ToString(), "Printing preview", new { ItemCode = "A123", Quantity = 2 });
             // Example of logging an action
 
@@ -50,7 +58,16 @@ namespace POS_qu
             //var user = SessionUser.GetCurrentUser();
             //string pcId = Utility.GetPcId();
             //labelSessionInfo.Text = $"User: {user.Username} | Terminal: {user.TerminalId} | Shift: {user.ShiftId} |pcid: {pcId}";
+            //txtCariBarang.Focus();
 
+            this.Shown += Casher_POS_Shown;
+            infoPanel.Visible = false;
+            UpdateOrderBadge();
+        }
+
+        private void Casher_POS_Shown(object sender, EventArgs e)
+        {
+            txtCariBarang.Focus();
         }
 
         public static string GetCurrentShift()
@@ -61,187 +78,570 @@ namespace POS_qu
             return "3";                                // Shift Malam
         }
 
-        private void PrintReceipt()
-        {
-            // Membuat objek PrintDocument
-            PrintDocument printDoc = new PrintDocument();
+        //private void PrintReceipt()
+        //{
+        //    // Membuat objek PrintDocument
+        //    PrintDocument printDoc = new PrintDocument();
 
-            // Tentukan ukuran kertas (contohnya 80mm x 200mm)
-            printDoc.DefaultPageSettings.PaperSize = new PaperSize("Custom", 315, 800); // Lebar 80mm (315 pixel), panjang 200mm (800 pixel)
+        //    // Tentukan ukuran kertas (contohnya 80mm x 200mm)
+        //    printDoc.DefaultPageSettings.PaperSize = new PaperSize("Custom", 315, 800); // Lebar 80mm (315 pixel), panjang 200mm (800 pixel)
 
-            // Tentukan margin (jika diperlukan)
-            printDoc.DefaultPageSettings.Margins = new Margins(0, 0, 0, 0); // Tidak ada margin
+        //    // Tentukan margin (jika diperlukan)
+        //    printDoc.DefaultPageSettings.Margins = new Margins(0, 0, 0, 0); // Tidak ada margin
 
-            // Tentukan event handler untuk PrintPage
-            printDoc.PrintPage += new PrintPageEventHandler(PrintPage);
+        //    // Tentukan event handler untuk PrintPage
+        //    printDoc.PrintPage += new PrintPageEventHandler(PrintPage);
 
-            // Mulai pencetakan
-            printDoc.Print();
-            activityService.LogAction(ActivityType.Print.ToString(), "Printing preview");
+        //    // Mulai pencetakan
+        //    printDoc.Print();
+        //    activityService.LogAction(ActivityType.Print.ToString(), "Printing preview");
 
-        }
-
-
-        private void PrintPage(object sender, PrintPageEventArgs e)
-        {
-            Graphics g = e.Graphics;
-            Font font = new Font("Arial", 10);
-            Font boldFont = new Font("Arial", 10, FontStyle.Bold);
-            Brush brush = Brushes.Black;
-            int yPosition = 10; // Starting Y position for the first row
-            int lineSpacing = 20; // Space between lines
-            int leftColumnWidth = 300; // Set width for the left column (item names)
-            int rightColumnWidth = 100; // Set width for the right column (prices)
-
-            int rowHeight = 20; // Height of each row (to control the space between each row)
-            int currentRowHeight = yPosition; // Start the first row at the top of the page
-
-            //// Add the first label (label1)
-            //g.DrawString(label1.Text, font, brush, new PointF(10, currentRowHeight)); // Assuming label1 is aligned as needed
-            //currentRowHeight += lineSpacing;
-
-            // Add the number of items label (labelNumOfItems)
-            g.DrawString($"Jumlah barang: {labelNumOfItems.Text}", font, brush, new PointF(10, currentRowHeight)); // Assuming labelNumOfItems displays number of items
-            currentRowHeight += lineSpacing;
-
-            // Add a horizontal line under the subtotal
-            Label separator = new Label();
-            separator.AutoSize = false;
-            separator.Height = 1;
-            separator.Width = 400;  // Adjust width as needed
-            separator.BackColor = Color.Gray;
-            g.DrawLine(new Pen(Color.Gray), new Point(10, currentRowHeight), new Point(400, currentRowHeight)); // Horizontal line
-            currentRowHeight += 5; // Move down after the line
-
-            foreach (Control ctrl in flowLayoutPanel.Controls)
-            {
-                if (ctrl is TableLayoutPanel tableLayoutPanel)
-                {
-                    foreach (Control tableControl in tableLayoutPanel.Controls)
-                    {
-                        if (tableControl is Label label)
-                        {
-                            // Print labels aligned left for item name
-                            if (label.TextAlign == ContentAlignment.MiddleLeft)
-                            {
-                                // Check if the label is "Grand Total" and apply bold formatting
-                                if (label.Text == "Grand Total")
-                                {
-                                    g.DrawString(label.Text, boldFont, brush, new PointF(10, currentRowHeight)); // Bold for Grand Total
-                                }
-                                else if (label.Text == "Subtotal")  // This condition places the separator right before the "Subtotal"
-                                {
-                                    g.DrawString(label.Text, font, brush, new PointF(10, currentRowHeight)); // Regular font for Subtotal
-                                    g.DrawLine(new Pen(Color.Gray), new Point(10, currentRowHeight + rowHeight), new Point(400, currentRowHeight + rowHeight)); // Horizontal line
-                                    currentRowHeight += 5; // Move down after the line
-                                }
-                                else
-                                {
-                                    g.DrawString(label.Text, font, brush, new PointF(10, currentRowHeight)); // Regular font for other labels
-                                }
-                            }
-                            // Print labels aligned right for totals or prices
-                            else if (label.TextAlign == ContentAlignment.MiddleRight)
-                            {
-                                // Check if the label is "Grand Total" and apply bold formatting for value
-                                if (label.Text == "Grand Total")
-                                {
-                                    g.DrawString(label.Text, boldFont, brush, new PointF(leftColumnWidth, currentRowHeight)); // Bold for Grand Total value
-                                }
-                                else
-                                {
-                                    g.DrawString(label.Text, font, brush, new PointF(leftColumnWidth, currentRowHeight)); // Regular font for other values
-                                }
-                            }
-
-                            // If the label is on the right column, move to the next row
-                            if (label.TextAlign == ContentAlignment.MiddleRight)
-                            {
-                                currentRowHeight += rowHeight; // Move to the next row after printing the right-aligned label
-                            }
-                        }
-                    }
-                }
-            }
+        //}
 
 
-            // Print Barcode (You can replace this with actual barcode generation logic)
-            string barcode = "1234567890"; // Replace with your barcode value
-            g.DrawString($"Barcode: {barcode}", font, brush, new PointF(10, currentRowHeight));
-            currentRowHeight += lineSpacing;
+        //private void PrintPage(object sender, PrintPageEventArgs e)
+        //{
+        //    Graphics g = e.Graphics;
+        //    Font font = new Font("Arial", 10);
+        //    Font boldFont = new Font("Arial", 10, FontStyle.Bold);
+        //    Brush brush = Brushes.Black;
+        //    int yPosition = 10; // Starting Y position for the first row
+        //    int lineSpacing = 20; // Space between lines
+        //    int leftColumnWidth = 300; // Set width for the left column (item names)
+        //    int rightColumnWidth = 100; // Set width for the right column (prices)
 
-            // Print Thank You note
-            string thankYouNote = "Thank you for your purchase!";
-            g.DrawString(thankYouNote, font, brush, new PointF(10, currentRowHeight));
-            currentRowHeight += lineSpacing;
+        //    int rowHeight = 20; // Height of each row (to control the space between each row)
+        //    int currentRowHeight = yPosition; // Start the first row at the top of the page
 
-            // Print Store Name
-            string storeName = "Your Store Name";
-            g.DrawString(storeName, boldFont, brush, new PointF(10, currentRowHeight));
-            currentRowHeight += lineSpacing;
+        //    //// Add the first label (label1)
+        //    //g.DrawString(label1.Text, font, brush, new PointF(10, currentRowHeight)); // Assuming label1 is aligned as needed
+        //    //currentRowHeight += lineSpacing;
 
-            string logoPath = @"D:\POS-qu\POS-qu\bin\Debug\net8.0-windows\appimages\2.png";
-            Image logo = Image.FromFile(logoPath);
-            g.DrawImage(logo, new PointF(10, currentRowHeight));
+        //    // Add the number of items label (labelNumOfItems)
+        //    g.DrawString($"Jumlah barang: {labelNumOfItems.Text}", font, brush, new PointF(10, currentRowHeight)); // Assuming labelNumOfItems displays number of items
+        //    currentRowHeight += lineSpacing;
 
-            //// Print Store Logo (Make sure the logo is an image file and has been loaded)
-            //Image logo = Image.FromFile("path_to_logo.png"); // Specify the path to your logo file
-            //g.DrawImage(logo, new PointF(10, currentRowHeight)); // Adjust the location as needed
-            //currentRowHeight += logo.Height + 10; // Adjust for logo height and some space below it
+        //    // Add a horizontal line under the subtotal
+        //    Label separator = new Label();
+        //    separator.AutoSize = false;
+        //    separator.Height = 1;
+        //    separator.Width = 400;  // Adjust width as needed
+        //    separator.BackColor = Color.Gray;
+        //    g.DrawLine(new Pen(Color.Gray), new Point(10, currentRowHeight), new Point(400, currentRowHeight)); // Horizontal line
+        //    currentRowHeight += 5; // Move down after the line
+
+        //    foreach (Control ctrl in flowLayoutPanel.Controls)
+        //    {
+        //        if (ctrl is TableLayoutPanel tableLayoutPanel)
+        //        {
+        //            foreach (Control tableControl in tableLayoutPanel.Controls)
+        //            {
+        //                if (tableControl is Label label)
+        //                {
+        //                    // Print labels aligned left for item name
+        //                    if (label.TextAlign == ContentAlignment.MiddleLeft)
+        //                    {
+        //                        // Check if the label is "Grand Total" and apply bold formatting
+        //                        if (label.Text == "Grand Total")
+        //                        {
+        //                            g.DrawString(label.Text, boldFont, brush, new PointF(10, currentRowHeight)); // Bold for Grand Total
+        //                        }
+        //                        else if (label.Text == "Subtotal")  // This condition places the separator right before the "Subtotal"
+        //                        {
+        //                            g.DrawString(label.Text, font, brush, new PointF(10, currentRowHeight)); // Regular font for Subtotal
+        //                            g.DrawLine(new Pen(Color.Gray), new Point(10, currentRowHeight + rowHeight), new Point(400, currentRowHeight + rowHeight)); // Horizontal line
+        //                            currentRowHeight += 5; // Move down after the line
+        //                        }
+        //                        else
+        //                        {
+        //                            g.DrawString(label.Text, font, brush, new PointF(10, currentRowHeight)); // Regular font for other labels
+        //                        }
+        //                    }
+        //                    // Print labels aligned right for totals or prices
+        //                    else if (label.TextAlign == ContentAlignment.MiddleRight)
+        //                    {
+        //                        // Check if the label is "Grand Total" and apply bold formatting for value
+        //                        if (label.Text == "Grand Total")
+        //                        {
+        //                            g.DrawString(label.Text, boldFont, brush, new PointF(leftColumnWidth, currentRowHeight)); // Bold for Grand Total value
+        //                        }
+        //                        else
+        //                        {
+        //                            g.DrawString(label.Text, font, brush, new PointF(leftColumnWidth, currentRowHeight)); // Regular font for other values
+        //                        }
+        //                    }
+
+        //                    // If the label is on the right column, move to the next row
+        //                    if (label.TextAlign == ContentAlignment.MiddleRight)
+        //                    {
+        //                        currentRowHeight += rowHeight; // Move to the next row after printing the right-aligned label
+        //                    }
+        //                }
+        //            }
+        //        }
+        //    }
+
+
+        //    // Print Barcode (You can replace this with actual barcode generation logic)
+        //    string barcode = "1234567890"; // Replace with your barcode value
+        //    g.DrawString($"Barcode: {barcode}", font, brush, new PointF(10, currentRowHeight));
+        //    currentRowHeight += lineSpacing;
+
+        //    // Print Thank You note
+        //    string thankYouNote = "Thank you for your purchase!";
+        //    g.DrawString(thankYouNote, font, brush, new PointF(10, currentRowHeight));
+        //    currentRowHeight += lineSpacing;
+
+        //    // Print Store Name
+        //    string storeName = "Your Store Name";
+        //    g.DrawString(storeName, boldFont, brush, new PointF(10, currentRowHeight));
+        //    currentRowHeight += lineSpacing;
+
+        //    string logoPath = @"D:\POS-qu\POS-qu\bin\Debug\net8.0-windows\appimages\2.png";
+        //    Image logo = Image.FromFile(logoPath);
+        //    g.DrawImage(logo, new PointF(10, currentRowHeight));
+
+        //    //// Print Store Logo (Make sure the logo is an image file and has been loaded)
+        //    //Image logo = Image.FromFile("path_to_logo.png"); // Specify the path to your logo file
+        //    //g.DrawImage(logo, new PointF(10, currentRowHeight)); // Adjust the location as needed
+        //    //currentRowHeight += logo.Height + 10; // Adjust for logo height and some space below it
 
 
 
-        }
+        //}
 
-    
+
 
 
         private void Casher_POS_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Control && e.KeyCode == Keys.J)
-            {
-                // Jika Ctrl + J ditekan, cetak panel
-                PrintPanel();
-            }
+            //if (e.Control && e.KeyCode == Keys.J)
+            //{
+            //    print();
+            //}
         }
 
-        private void PrintPanel()
+        private void print(Transactions t)
         {
-            // Set up the event handler for printing
-            printDoc.PrintPage += new PrintPageEventHandler(PrintPage);
+            var sessionUser = SessionUser.GetCurrentUser();
 
-            // Menampilkan dialog print preview (opsional)
-            printPreviewDialog.Document = printDoc;
-            printPreviewDialog.ShowDialog();
+            string receipt = GenerateReceiptText(
+                terminal: SessionUser.GetCurrentUser().TerminalName,
+                user: SessionUser.GetCurrentUser().Username,
+                shift: "shift " + SessionUser.GetCurrentUser().ShiftId,
+                statusBayar: "status : " + t.TsStatus,
+                jumlahBayar: t.TsPaymentAmount.ToString(),
+                metodeBayar: t.TsMethod + " ",
+                kembalian: t.TsChange.ToString()
+            );
+
+            // Simpan ke global jika dibutuhkan
+            lastReceipt = receipt;
+
+
+            // Print dan log
+            //PrintToPOS58(receipt);
+
+            // save pdf receipt
+
+            SaveReceiptToPdf(receipt);
+            // Simpan ke database
+            SimpanReceiptKeDatabase(receipt);
+            //SimpanReceiptKeDatabase(receipt);
+            LogReceipt(receipt);
         }
 
-   
+        private string lastReceipt = ""; // Untuk simpan isi struk terakhir jika perlu akses dari luar
 
-        private void GetRandomItemByBarcode()
+        //private string GenerateReceiptText(string terminal, string user, string shift, string statusBayar,string jumlahBayar, string metodeBayar, string kembalian)
+        //{
+        //    StringBuilder receipt = new StringBuilder();
+
+        //    // Header toko
+        //    receipt.AppendLine("TOKO KITA");
+        //    receipt.AppendLine("Jl. Contoh No. 1");
+        //    receipt.AppendLine("Telp: 08123456789");
+        //    receipt.AppendLine("------------------------------");
+
+        //    // Info transaksi
+        //    receipt.AppendLine($"Terminal : {terminal}");
+        //    receipt.AppendLine($"Kasir    : {user}");
+        //    receipt.AppendLine($"Shift    : {shift}");
+        //    receipt.AppendLine($"Tanggal  : {DateTime.Now:yyyy-MM-dd}");
+        //    receipt.AppendLine($"Waktu    : {DateTime.Now:HH:mm:ss}");
+        //    receipt.AppendLine("------------------------------");
+
+        //    // Jumlah item
+        //    receipt.AppendLine($"Jumlah Barang: {labelNumOfItems.Text}");
+        //    receipt.AppendLine("------------------------------");
+
+        //    // Isi dari flowLayoutPanel
+        //    foreach (Control ctrl in flowLayoutPanel.Controls)
+        //    {
+        //        if (ctrl is TableLayoutPanel panel)
+        //        {
+        //            int rowCount = panel.RowCount;
+        //            for (int i = 0; i < rowCount; i++)
+        //            {
+        //                string leftText = "";
+        //                string rightText = "";
+
+        //                var leftLabel = panel.GetControlFromPosition(0, i) as Label;
+        //                var rightLabel = panel.GetControlFromPosition(1, i) as Label;
+
+        //                if (leftLabel != null) leftText = leftLabel.Text;
+        //                if (rightLabel != null) rightText = rightLabel.Text;
+
+        //                if (!string.IsNullOrWhiteSpace(leftText) || !string.IsNullOrWhiteSpace(rightText))
+        //                {
+        //                    receipt.AppendLine(leftText.PadRight(20).Substring(0, Math.Min(20, leftText.Length)) + rightText.PadLeft(10));
+        //                }
+        //            }
+        //        }
+        //        else if (ctrl is Label separator && separator.Height == 1)
+        //        {
+        //            receipt.AppendLine("------------------------------");
+        //        }
+        //    }
+
+        //    // Status pembayaran
+        //    receipt.AppendLine($"Status Bayar : {statusBayar}");
+        //    receipt.AppendLine($"Metode Bayar: {metodeBayar}");
+        //    receipt.AppendLine($"Jumlah Bayar: {jumlahBayar}");
+        //    receipt.AppendLine($"Kembalian   : {kembalian}");
+        //    receipt.AppendLine("------------------------------");
+
+        //    // Footer
+        //    receipt.AppendLine("Terima kasih!");
+        //    receipt.AppendLine("~ Kunjungi kembali ~");
+        //    receipt.AppendLine("");
+
+        //    return receipt.ToString();
+        //}
+
+        private string GenerateReceiptText(
+    string terminal,
+    string user,
+    string shift,
+    string statusBayar,
+    string jumlahBayar,
+    string metodeBayar,
+    string kembalian)
         {
-            // Your logic here, for example:
-            Item randomItem = itemController.GetRandomItemByBarcode();
-            if (randomItem != null)
+            StringBuilder receipt = new StringBuilder();
+
+            // === 1️⃣ Ambil data dari database ===
+            string judul = "";
+            string alamat = "";
+            string telepon = "";
+            string footer = "";
+            bool showNamaToko = true, showAlamat = true, showTelepon = true, showFooter = true;
+
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
-                MessageBox.Show($"Found item: {randomItem.name} - {randomItem.barcode}");
+                conn.Open();
+
+                string query = "SELECT * FROM struk_setting ORDER BY updated_at DESC LIMIT 1;";
+                using (var cmd = new NpgsqlCommand(query, conn))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        judul = reader["judul"]?.ToString()?.Trim() ?? "";
+                        alamat = reader["alamat"]?.ToString()?.Trim() ?? "";
+                        telepon = reader["telepon"]?.ToString()?.Trim() ?? "";
+                        footer = reader["footer"]?.ToString()?.Trim() ?? "";
+                        showNamaToko = reader["is_visible_nama_toko"] as bool? ?? true;
+                        showAlamat = reader["is_visible_alamat"] as bool? ?? true;
+                        showTelepon = reader["is_visible_telepon"] as bool? ?? true;
+                        showFooter = reader["is_visible_footer"] as bool? ?? true;
+                    }
+                }
             }
-            else
+
+            // === 2️⃣ Header toko ===
+            if (showNamaToko && !string.IsNullOrEmpty(judul))
+                receipt.AppendLine(judul);
+            if (showAlamat && !string.IsNullOrEmpty(alamat))
+                receipt.AppendLine(alamat);
+            if (showTelepon && !string.IsNullOrEmpty(telepon))
+                receipt.AppendLine(telepon);
+
+            receipt.AppendLine("------------------------------");
+
+            // === 3️⃣ Info transaksi ===
+            receipt.AppendLine($"Terminal : {terminal}");
+            receipt.AppendLine($"Kasir    : {user}");
+            receipt.AppendLine($"Shift    : {shift}");
+            receipt.AppendLine($"Tanggal  : {DateTime.Now:yyyy-MM-dd}");
+            receipt.AppendLine($"Waktu    : {DateTime.Now:HH:mm:ss}");
+            receipt.AppendLine("------------------------------");
+
+            // === 4️⃣ Jumlah item ===
+            receipt.AppendLine($"Jumlah Barang: {labelNumOfItems.Text}");
+            receipt.AppendLine("------------------------------");
+
+            // === 5️⃣ Detail item (loop flowLayoutPanel) ===
+            foreach (Control ctrl in flowLayoutPanel.Controls)
             {
-                MessageBox.Show("No item found!");
+                if (ctrl is TableLayoutPanel panel)
+                {
+                    int rowCount = panel.RowCount;
+                    for (int i = 0; i < rowCount; i++)
+                    {
+                        var leftLabel = panel.GetControlFromPosition(0, i) as Label;
+                        var rightLabel = panel.GetControlFromPosition(1, i) as Label;
+
+                        string leftText = leftLabel?.Text?.Trim() ?? "";
+                        string rightText = rightLabel?.Text?.Trim() ?? "";
+
+                        if (!string.IsNullOrEmpty(leftText) || !string.IsNullOrEmpty(rightText))
+                        {
+                            string left = leftText.Length > 20 ? leftText.Substring(0, 20) : leftText.PadRight(20);
+                            string right = rightText.PadLeft(10);
+                            receipt.AppendLine(left + right);
+                        }
+                    }
+                }
+                else if (ctrl is Label separator && separator.Height == 1)
+                {
+                    receipt.AppendLine("------------------------------");
+                }
+            }
+
+            // === 6️⃣ Pembayaran ===
+            receipt.AppendLine($"Status Bayar : {statusBayar}");
+            receipt.AppendLine($"Metode Bayar : {metodeBayar}");
+            receipt.AppendLine($"Jumlah Bayar : {jumlahBayar}");
+            receipt.AppendLine($"Kembalian    : {kembalian}");
+            receipt.AppendLine("------------------------------");
+
+            // === 7️⃣ Footer dari database ===
+            if (showFooter && !string.IsNullOrEmpty(footer))
+            {
+                receipt.AppendLine(footer);
+            }
+
+            receipt.AppendLine("");
+
+            return receipt.ToString();
+        }
+
+
+
+
+
+        private void SimpanReceiptKeDatabase(string receiptMessage)
+        {
+
+            using (var conn = new Npgsql.NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                conn.Open();
+
+                string sql = "INSERT INTO receipt_logs (message) VALUES (@message)";
+                using (var cmd = new Npgsql.NpgsqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@message", receiptMessage);
+                    cmd.ExecuteNonQuery();
+                }
             }
         }
+
+
+        private void PrintToPOS58(string receiptText)
+        {
+            try
+            {
+                using (SerialPort port = new SerialPort("COM4", 9600, Parity.None, 8, StopBits.One))
+                {
+                    port.Open();
+                    port.WriteLine(receiptText);
+
+                    // ESC/POS Cut Paper command (jika printer support)
+                    port.Write(new byte[] { 0x1D, 0x56, 0x01 }, 0, 3);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Gagal print: " + ex.Message);
+            }
+        }
+
+
+
+        private void SaveReceiptToPdf(string receiptText, string fileName = null)
+        {
+            try
+            {
+                // Lokasi folder untuk simpan otomatis
+                string receiptsFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Receipts");
+                if (!Directory.Exists(receiptsFolder))
+                    Directory.CreateDirectory(receiptsFolder);
+
+                // Nama file default
+                string safeFileName = fileName ?? $"Receipt_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                string pdfPath = Path.Combine(receiptsFolder, safeFileName);
+
+                QuestPDF.Settings.License = LicenseType.Community;
+
+                // Buat PDF dari text struk
+                Document.Create(container =>
+                {
+                    container.Page(page =>
+                    {
+                        // Ukuran thermal 58mm (sekitar 2.28 inch)
+                        page.Size(150, PageSizes.A4.Height);
+                        page.Margin(10);
+                        page.DefaultTextStyle(x => x.FontSize(9).FontFamily("Courier New"));
+
+                        page.Content().Column(col =>
+                        {
+                            string[] lines = receiptText.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+                            foreach (var line in lines)
+                            {
+                                col.Item().Text(line).LineHeight(1.2f);
+                            }
+                        });
+                    });
+                })
+                .GeneratePdf(pdfPath);
+
+                // Bisa kamu buka otomatis:
+                // Process.Start("explorer.exe", pdfPath);
+
+                // Simpan log
+                Debug.WriteLine($"Receipt PDF saved: {pdfPath}");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Gagal membuat PDF struk: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void LogReceipt(string receiptText)
+        {
+            try
+            {
+                string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "printlog.txt");
+                File.AppendAllText(logPath, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - PRINT\n{receiptText}\n\n");
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Gagal simpan log print: " + ex.Message);
+            }
+        }
+
+
+
+
+        //private void GetRandomItemByBarcode()
+        //{
+        //    // Your logic here, for example:
+        //    Item randomItem = itemController.GetItemByBarcode();
+        //    if (randomItem != null)
+        //    {
+        //        MessageBox.Show($"Found item: {randomItem.name} - {randomItem.barcode}");
+        //    }
+        //    else
+        //    {
+        //        MessageBox.Show("No item found!");
+        //    }
+        //}
         private void TxtCariBarang_KeyDown(object sender, KeyEventArgs e)
         {
+            try
+            {
+                if (e.KeyCode == Keys.Enter)
+                {
+                    e.SuppressKeyPress = true;
 
-            if (e.Control && e.KeyCode == Keys.S)
-            {
-                e.SuppressKeyPress = true;
-                ProcessRandomItem();
+                    string barcode = txtCariBarang.Text.Trim();
+                    if (!string.IsNullOrEmpty(barcode))
+                    {
+                        ProcessItem(barcode);
+                        txtCariBarang.Clear(); // Bersihkan agar siap untuk scan berikut
+                    }
+                }
+
+                if (e.Control && e.KeyCode == Keys.S)
+                {
+                    string barcode = txtCariBarang.Text.Trim();
+                    e.SuppressKeyPress = true;
+                    ProcessRandomItem();
+                }
+
+                if (e.Control && e.KeyCode == Keys.F)
+                {
+                    MessageBox.Show("");
+                    SearchAndAddItem();
+                }
+                if (e.Control && e.KeyCode == Keys.I)
+                {
+                    BtnToggleInfo.PerformClick(); // Jalankan event Click tombol
+                }
+                if (e.KeyCode == Keys.F12) // Pressing F12 triggers payment
+                {
+                    e.SuppressKeyPress = true; // Prevents default behavior
+                                               //print();
+                    btnPay.PerformClick(); // Simulates button click
+                }
+
+                if (e.Control && e.KeyCode == Keys.P) // Ctrl + P also triggers payment
+                {
+                    e.SuppressKeyPress = true;
+                    //print();
+                    btnPay.PerformClick();
+                }
+
+                if (e.Control && e.KeyCode == Keys.O) // Ctrl + P also triggers payment
+                {
+                    e.SuppressKeyPress = true;
+                    //print();
+                    buttonOrders.PerformClick();
+                }
+
+                if (e.Control && e.KeyCode == Keys.L) // Ctrl + P also triggers payment
+                {
+                    e.SuppressKeyPress = true;
+                    //print();
+                    buttonListOrders.PerformClick();
+                }
             }
-            if (e.KeyCode == Keys.Enter)
+            catch (Exception ex)
             {
-                SearchAndAddItem();
+                MessageBox.Show("Terjadi kesalahan: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+        }
+
+
+        private void ProcessItem(string barcode)
+        {
+            var randomItem = itemController.GetItemByBarcode(barcode);
+            if (randomItem == null)
+            {
+                MessageBox.Show("No random item found.");
+                return;
+            }
+
+            // Try to update existing row
+            if (UpdateExistingItem(randomItem))
+            {
+                //MessageBox.Show("Random item quantity updated.");
+                CalculateAllTotals();
+                return;
+            }
+
+            // Insert new pending transaction
+            if (!InsertPendingTransaction(randomItem))
+            {
+                MessageBox.Show("Failed to insert random item transaction.");
+                return;
+            }
+
+            // Add to DataGridView
+            AddNewItemToGrid(randomItem);
+            CalculateAllTotals();
+            //MessageBox.Show("Random item transaction inserted successfully.");
         }
 
         private void ProcessRandomItem()
@@ -271,7 +671,7 @@ namespace POS_qu
             // Add to DataGridView
             AddNewItemToGrid(randomItem);
             CalculateAllTotals();
-            MessageBox.Show("Random item transaction inserted successfully.");
+            //MessageBox.Show("Random item transaction inserted successfully.");
         }
 
 
@@ -289,7 +689,7 @@ namespace POS_qu
                 if (searchForm.ShowDialog() == DialogResult.OK && searchForm.SelectedItem != null)
                 {
                     var selectedItem = searchForm.SelectedItem;
-                 
+
                     // Try to update existing row
                     if (UpdateExistingItem(selectedItem))
                     {
@@ -343,7 +743,7 @@ namespace POS_qu
             catch (Exception ex)
             {
                 // Log error, tampilkan pesan, atau lakukan fallback
-                activityService.LogAction(ActivityType.Error.ToString(), $" Failed to insert transaction: {ex.Message}");
+                //activityService.LogAction(ActivityType.Error.ToString(), $" Failed to insert transaction: {ex.Message}");
                 return false;
             }
         }
@@ -379,7 +779,32 @@ namespace POS_qu
 
             );
 
-            activityService.LogAction(ActivityType.Cart.ToString(), $"Successfully added Item: {selectedItem.name} to cart. ID: {selectedItem.id}, Barcode: {selectedItem.barcode}", selectedItem);
+            activityService.LogAction(
+            userId: SessionUser.GetCurrentUser().UserId.ToString(),
+            actionType: ActivityType.Cart.ToString(),
+                referenceId: null,
+                desc: $"Successfully added Item: {selectedItem.name} to cart. ID: {selectedItem.id}, Barcode: {selectedItem.barcode}",
+                details: new
+                {
+                    loginId = SessionUser.GetCurrentUser().LoginId,
+                    itemId = selectedItem.id,
+                    adjustmentType = "ADD_ITEM",
+                    reason = "default reason",
+                    referenceTable = "items",
+                    terminal = SessionUser.GetCurrentUser().TerminalId,
+                    shiftId = SessionUser.GetCurrentUser().ShiftId,
+                    IpAddress = NetworkHelper.GetLocalIPAddress(),
+                    UserAgent = GlobalContext.getAppVersion(),
+                    userId = SessionUser.GetCurrentUser().UserId.ToString(),
+                    selectedItem
+                    //TsCode = transaction.TsCode,
+                    //TotalAmount = transaction.TsTotal,
+                    //PaymentMethod = transaction.TsMethod,
+                    //OrderId = transaction.OrderId
+                }
+            );
+
+            //activityService.LogAction(ActivityType.Cart.ToString(), $"Successfully added Item: {selectedItem.name} to cart. ID: {selectedItem.id}, Barcode: {selectedItem.barcode}", selectedItem);
 
         }
 
@@ -473,12 +898,14 @@ namespace POS_qu
             if (e.KeyCode == Keys.F12) // Pressing F12 triggers payment
             {
                 e.SuppressKeyPress = true; // Prevents default behavior
+                //print();
                 btnPay.PerformClick(); // Simulates button click
             }
 
             if (e.Control && e.KeyCode == Keys.P) // Ctrl + P also triggers payment
             {
                 e.SuppressKeyPress = true;
+                //print();
                 btnPay.PerformClick();
             }
         }
@@ -523,7 +950,7 @@ namespace POS_qu
             {
                 if (row.Cells["id"].Value != null && Convert.ToInt32(row.Cells["id"].Value) == selectedItem.id && row.Cells["unit"].Value.ToString() == selectedItem.unit)
                 {
-                    MessageBox.Show("unit : " + row.Cells["unit"].Value.ToString());
+                    //MessageBox.Show("unit : " + row.Cells["unit"].Value.ToString());
                     int qtyToAdd = Convert.ToInt32(selectedItem.stock);
                     return ProcessItemStockUpdate(row, qtyToAdd, allowAppend: true);
                 }
@@ -613,9 +1040,33 @@ namespace POS_qu
             isProgrammaticChange = false;
 
             row.Cells["stock"].Tag = enteredQuantity;
+
+            activityService.LogAction(
+            userId: SessionUser.GetCurrentUser().UserId.ToString(),
+            actionType: ActivityType.Cart.ToString(),
+                referenceId: null,
+                desc: $"Successfully update Item in cart: {itemId} newreqstock : {newReservedStock}, prevreservedstock: {stockNeededOld}",
+                details: new
+                {
+                    loginId = SessionUser.GetCurrentUser().LoginId,
+                    itemId = itemId,
+                    adjustmentType = "UPDATE_ITEM_IN_CART",
+                    reason = "default reason",
+                    referenceTable = "items",
+                    terminal = SessionUser.GetCurrentUser().TerminalId,
+                    shiftId = SessionUser.GetCurrentUser().ShiftId,
+                    IpAddress = NetworkHelper.GetLocalIPAddress(),
+                    UserAgent = GlobalContext.getAppVersion(),                 
+                    //TsCode = transaction.TsCode,
+                    //TotalAmount = transaction.TsTotal,
+                    //PaymentMethod = transaction.TsMethod,
+                    //OrderId = transaction.OrderId
+                }
+            );
+
             CalculateAllTotals();
             return true;
-        }
+        }   
 
 
 
@@ -724,6 +1175,26 @@ namespace POS_qu
                 if (newReservedStock < 0) newReservedStock = 0; // proteksi biar tidak minus
 
                 itemController.UpdateReservedStock(barcode, newReservedStock);
+              
+                activityService.LogAction(
+                  userId: SessionUser.GetCurrentUser().UserId.ToString(),
+                  actionType: ActivityType.Cart.ToString(),
+                      referenceId: null,
+                      desc: $"Successfully delete Item in cart: {itemId}",
+                      details: new
+                      {
+                          itemId = itemId,
+                          adjustmentType = "DELETE_ITEM_FROM_CART",
+                          reason = "default reason",
+                          referenceTable = "items",
+                          terminal = SessionUser.GetCurrentUser().TerminalId,
+                          shiftId = SessionUser.GetCurrentUser().ShiftId,
+                          IpAddress = NetworkHelper.GetLocalIPAddress(),
+                          UserAgent = GlobalContext.getAppVersion(),
+                          loginId = SessionUser.GetCurrentUser().LoginId
+
+                      }
+                  );
 
                 MessageBox.Show("Row deleted & reserved stock updated.");
             }
@@ -834,7 +1305,7 @@ namespace POS_qu
             separator.AutoSize = false;
             separator.Height = 1;
             separator.Width = flowLayoutPanel.Width;
-            separator.BackColor = Color.Gray; // Warna pemisah
+            separator.BackColor = System.Drawing.Color.Gray; // Warna pemisah
             flowLayoutPanel.Controls.Add(separator);
 
             // Buat TableLayoutPanel lagi untuk menampilkan subtotal, diskon, pajak, dan total
@@ -927,13 +1398,150 @@ namespace POS_qu
         private void DataGridViewCart4_RowPostPaint(object sender, DataGridViewRowPostPaintEventArgs e)
         {
             Rectangle rect = new Rectangle(e.RowBounds.Left, e.RowBounds.Top, dataGridViewCart4.RowHeadersWidth, e.RowBounds.Height);
-            TextRenderer.DrawText(e.Graphics, (e.RowIndex + 1).ToString(), dataGridViewCart4.Font, rect, Color.Black, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
+            TextRenderer.DrawText(e.Graphics, (e.RowIndex + 1).ToString(), dataGridViewCart4.Font, rect, System.Drawing.Color.Black, TextFormatFlags.VerticalCenter | TextFormatFlags.Right);
         }
 
 
         private string GenerateTransactionNumber()
         {
             return "TRX-" + DateTime.Now.ToString("yyyyMMddHHmmss");
+        }
+
+        private void btnOrder_Click(object sender, EventArgs e)
+        {
+            var result = MessageBox.Show("Apakah Anda ingin menyimpan data sebagai Pesanan/Bon/Utang/Nota ?", "Konfirmasi", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+
+            if (result == DialogResult.Cancel)
+            {
+                return; // Batalkan
+            }
+           
+            // Kalau No, lanjut buka form Order untuk input data order baru tanpa simpan dulu
+
+            using (OrderForm orderModal = new OrderForm())
+            {
+                if (orderModal.ShowDialog() == DialogResult.OK)
+                {
+                    // Ambil data order dari form
+                    Orders order = orderModal.GetOrder();
+
+                    OrderController controller = new OrderController();
+                    if (controller.SaveOrderWithDetails(order,1,100, out string errMsg))
+                    {
+
+                        // Clear the cart (remove all rows)
+                        dataGridViewCart4.Rows.Clear();
+
+                        // Reset total label
+                        label2.Text = "0.00";
+
+                        // Set focus back to search box
+                        txtCariBarang.Focus();
+                        MessageBox.Show("Order berhasil disimpan!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        // Lakukan refresh list order atau logic lainnya jika perlu
+                    }
+                    else
+                    {
+                        MessageBox.Show("Gagal menyimpan order: " + errMsg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+
+
+            UpdateOrderBadge();
+        }
+
+        private void LoadOrderToCart(int orderId)
+        {
+            string query = @"
+        SELECT 
+            od.item_id,
+            od.od_barcode,
+            i.name,
+            od.od_quantity,
+            od.od_unit,
+            od.od_conversion_rate,
+            od.od_price_per_unit,
+            (od.od_price_per_unit / NULLIF(od.od_conversion_rate,1)) AS price_per_pcs,
+            (i.sell_price / NULLIF(od.od_conversion_rate,1)) AS price_per_pcs_asli,
+            od.od_discount_percentage,
+            od.od_tax,
+            od.od_total,
+            od.od_note
+        FROM order_details od
+        JOIN items i ON i.id = od.item_id
+        WHERE od.order_id = @order_id
+        ORDER BY od.order_detail_id ASC;
+    ";
+
+            using (var vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                vCon.Open();
+                using (var cmd = new NpgsqlCommand(query, vCon))
+                {
+                    cmd.Parameters.AddWithValue("order_id", orderId);
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        dataGridViewCart4.Rows.Clear();
+
+                        while (reader.Read())
+                        {
+                            dataGridViewCart4.Rows.Add(
+                                reader["item_id"],                // id
+                                reader["od_barcode"],             // barcode
+                                reader["name"],                   // Nama Barang
+                                reader["od_quantity"],            // qty
+                                reader["od_unit"],                // Satuan
+                                reader["od_conversion_rate"],     // Conversion
+                                reader["od_price_per_unit"],      // Harga/Unit
+                                reader["price_per_pcs"],          // Harga/Satuan Utama
+                                reader["price_per_pcs_asli"],     // Harga/Satuan Utama Asli
+                                reader["od_discount_percentage"], // Pot(%)
+                                reader["od_tax"],                 // Pajak
+                                reader["od_total"],               // Total
+                                reader["od_note"],                // Keterangan Per Item
+                                reader["od_conversion_rate"]      // conversion
+                            );
+                        }
+                    }
+                }
+            }
+
+            CalculateAllTotals();
+        }
+
+
+        public int? SelectedOrderId = null;
+        private void buttonListOrders_Click(object sender, EventArgs e)
+        {
+            using (OrderLIst frm = new OrderLIst())
+            {
+                if (frm.ShowDialog() == DialogResult.OK)
+                {
+                    if (frm.SelectedOrderId > 0)
+                    {
+                        SelectedOrderId = frm.SelectedOrderId;
+                        LoadOrderToCart(frm.SelectedOrderId);
+                    }
+                }
+            }
+        }
+        private void UpdateOrderBadge()
+        {
+            OrderController controller = new OrderController();
+            int pendingOrders = controller.GetPendingOrdersCount();
+
+            // Kalau ada order pending, tampilkan badge
+            if (pendingOrders > 0)
+            {
+                lblOrderBadge.Text = pendingOrders.ToString();
+                lblOrderBadge.Visible = true;
+            }
+            else
+            {
+                lblOrderBadge.Visible = false;
+            }
         }
 
         private void btnPay_Click(object sender, EventArgs e)
@@ -961,6 +1569,18 @@ namespace POS_qu
 
                         // Ambil data sesi pengguna
                         var sessionUser = SessionUser.GetCurrentUser();
+
+                        // Tentukan apakah ini transaksi dari pending order
+                        int? orderId = null;
+                        if (SelectedOrderId > 0)
+                        {
+                            orderId = SelectedOrderId;
+
+                            // Update order jadi PAID + set metode pembayaran
+                            itemController.UpdateOrderPayment(orderId.Value, 1, paymentModal.PaymentMethod);
+                        }
+
+
                         // Create transaction object
                         Transactions transaction = new Transactions
                         {
@@ -976,12 +1596,32 @@ namespace POS_qu
                             TsNote = "Test Note",
                             TsCustomer = null,
                             TsFreename = "Guest",
-                            TerminalId = sessionUser.TerminalId,
-                            ShiftId = sessionUser.ShiftId,
-                            UserId = SessionUser.GetCurrentUser().UserId,
-                            CreatedBy = SessionUser.GetCurrentUser().UserId, // Replace with GetCurrentUserId() if available
-                            CreatedAt = DateTime.UtcNow
+                            //TerminalId = sessionUser.TerminalId,
+                            //ShiftId = sessionUser.ShiftId,
+                            //UserId = SessionUser.GetCurrentUser().UserId,
+                            //CreatedBy = SessionUser.GetCurrentUser().UserId,
+                            UserId = 1,
+                            CreatedBy = 1, // Replace with GetCurrentUserId() if available
+                            TerminalId = 1,
+                            ShiftId = 1,
+                            CreatedAt = DateTime.UtcNow,
+                            OrderId = orderId // ✅ simpan order_id di transaksi
                         };
+
+                        // Log: memulai transaksi
+                        activityService.LogAction(
+                            userId: sessionUser.UserId.ToString(),
+                            actionType: "Transaction_Start",
+                            referenceId: null,
+                            details: new
+                            {
+                                loginId = SessionUser.GetCurrentUser().LoginId,
+                                TsCode = transaction.TsCode,
+                                TotalAmount = transaction.TsTotal,
+                                PaymentMethod = transaction.TsMethod,
+                                OrderId = transaction.OrderId
+                            }
+                        );
 
                         // Insert Transaction and Get Transaction ID
                         int transactionId = itemController.InsertTransaction(transaction);
@@ -1073,6 +1713,36 @@ namespace POS_qu
                                 itemController.InsertTransactionDetails(transactionDetails);
                             }
 
+                             // Log: transaksi berhasil
+    activityService.LogAction(
+        userId: sessionUser.UserId.ToString(),
+        actionType: "Transaction_Complete",
+        referenceId: transactionId,
+        details: new
+        {
+            loginId = SessionUser.GetCurrentUser().LoginId,
+            TsCode = transaction.TsCode,
+            TotalAmount = transaction.TsTotal,
+            PaymentAmount = transaction.TsPaymentAmount,
+            Change = transaction.TsChange,
+            Items = transactionDetails.Select(d => new
+            {
+                d.ItemId,
+                d.TsdUnit,
+                d.TsdQuantity,
+                d.TsdSellPrice
+            }).ToList()
+        }
+    );
+
+                            //////////////////////////////PRINT TRANSACTION//////////////////////
+
+                            print(transaction);  
+                          
+                            //////////////////////////////END PRINT TRANSACTION//////////////////////
+
+
+
                             // re roll the datagridview
                             // Clear pending-transactions
                             foreach (DataGridViewRow row in dataGridViewCart4.Rows)
@@ -1110,6 +1780,8 @@ namespace POS_qu
                                 quantity = quantity / conversion;
                                 itemController.ClearPendingTransaction(barcode, quantity, unit);
                             }
+
+                            //print(transaction);
 
                             // Clear the cart (remove all rows)
                             dataGridViewCart4.Rows.Clear();
@@ -1153,5 +1825,57 @@ namespace POS_qu
         {
 
         }
+
+        private void label3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void BtnToggleInfo_Click(object sender, EventArgs e)
+        {
+            // 🔹 Lokasi file di D:
+            string filePath = @"D:\shortcuts.txt";
+
+            // 🔹 Jika file belum ada, buat dengan isi default
+            if (!System.IO.File.Exists(filePath))
+            {
+                string defaultShortcuts =
+        @"F12  - Bayar
+Ctrl+P - Bayar
+Ctrl+J - Print to EPPOS
+Ctrl+I - Info
+Ctrl+S - Search Random Item
+";
+
+                System.IO.File.WriteAllText(filePath, defaultShortcuts);
+            }
+
+            // 🔹 Baca isi file dan tampilkan di label
+            infoLabel.Text = System.IO.File.ReadAllText(filePath);
+
+            // 🔹 Daftar posisi yang dirotasi
+            Point[] positions = new Point[]
+            {
+        new Point(278, 244),
+        new Point(50, 50),
+        new Point(600, 50),
+        new Point(50, 400),
+        new Point(600, 400)
+            };
+
+            // 🔹 Simpan posisi index di Tag biar tetap ingat antar klik
+            if (infoPanel.Tag == null) infoPanel.Tag = 0;
+            int index = (int)infoPanel.Tag;
+            infoPanel.Location = positions[index];
+            infoPanel.Tag = (index + 1) % positions.Length;
+
+            // 🔹 Tampilkan / sembunyikan
+            infoPanel.Visible = !infoPanel.Visible;
+        }
+
+
+
+
+
     }
 }

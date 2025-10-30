@@ -27,7 +27,7 @@ namespace POS_qu
                 label8.Text = setting.Footer;
                 pictureBox1.Image = StrukSettingHelper.GetLogoImage(setting.LogoBytes);
 
-                MessageBox.Show("setting.IsVisibleNamaToko");
+                //MessageBox.Show("setting.IsVisibleNamaToko");
                 chkTampilkanNama.Checked = setting.IsVisibleNamaToko;
             }
             txtNamaManual.Enabled = false; // Disable

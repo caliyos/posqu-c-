@@ -7,16 +7,17 @@ using System;
 using System.Data;
 using Npgsql;
 using POS_qu.Models;
+using POS_qu.Helpers;
 
 namespace POS_qu.Controllers
 {
     class SettingController
     {
-        private string vStrConnection = "Host=localhost;Port=5433;Username=postgres;Password=postgres11;Database=posqu";
+       
 
         public DataRow GetSettingToko()
         {
-            using var conn = new NpgsqlConnection(vStrConnection);
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
             conn.Open();
 
             string sql = "SELECT * FROM settingtoko LIMIT 1"; // ambil 1 data saja
@@ -36,7 +37,7 @@ namespace POS_qu.Controllers
         {
             string query = "UPDATE settingtoko SET nama = @nama, alamat = @alamat, npwp = @npwp, logo = @logo WHERE id = 1";
 
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 using (var cmd = new NpgsqlCommand(query, conn))
@@ -53,7 +54,7 @@ namespace POS_qu.Controllers
 
         public DataRow GetStrukSetting()
         {
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 using (var cmd = new NpgsqlCommand("SELECT * FROM struk_setting LIMIT 1", conn))
@@ -70,7 +71,7 @@ namespace POS_qu.Controllers
 
         public void SaveStrukSetting(StrukSettingModel model)
         {
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
 
@@ -117,7 +118,7 @@ namespace POS_qu.Controllers
         {
             string query = "UPDATE struk_setting SET " + settingKey + " = @isVisible, updated_at = NOW() WHERE id = 1";
 
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             using (var cmd = new NpgsqlCommand(query, conn))
             {
                 cmd.Parameters.AddWithValue("@isVisible", isVisible);
@@ -130,7 +131,7 @@ namespace POS_qu.Controllers
         public string GetNamaToko()
         {
             string sql = "SELECT nama FROM settingtoko LIMIT 1";
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 using (var cmd = new NpgsqlCommand(sql, conn))
@@ -143,7 +144,7 @@ namespace POS_qu.Controllers
         public string GetNamaTokoDariStrukSetting()
         {
             string sql = "SELECT judul FROM struk_setting LIMIT 1";
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 using (var cmd = new NpgsqlCommand(sql, conn))
@@ -163,7 +164,7 @@ namespace POS_qu.Controllers
         WHERE id = 1; -- asumsikan data hanya 1 baris setting
     ";
 
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 using (var cmd = new NpgsqlCommand(sql, conn))
@@ -196,7 +197,7 @@ namespace POS_qu.Controllers
         WHERE id = 1;
     ";
 
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 using (var cmd = new NpgsqlCommand(sql, conn))

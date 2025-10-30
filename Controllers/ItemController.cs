@@ -9,18 +9,34 @@ using System.Threading.Tasks;
 using POS_qu.Models;
 using System.Transactions;
 using Microsoft.VisualBasic.Devices;
+using POS_qu.Helpers;
 
 namespace POS_qu.Controllers
 {
     class ItemController
     {
-        private string vStrConnection = "Host=localhost;Port=5433;Username=postgres;Password=postgres11;Database=posqu";
+        //private string vStrConnection = "Host=localhost;Port=5433;Username=postgres;Password=postgres11;Database=posqu";
+
+        public static DataTable GetSuppliers()
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            string sql = "SELECT id, name FROM suppliers ORDER BY name";
+            using var cmd = new NpgsqlCommand(sql, conn);
+            using var reader = cmd.ExecuteReader();
+
+            DataTable dt = new DataTable();
+            dt.Load(reader); // <- ini penting, biar hasil query masuk ke DataTable
+
+            return dt;
+        }
 
         public DataTable GetItems()
         {
-            MessageBox.Show("GetItems no param called.");
+            //MessageBox.Show("GetItems no param called.");
             DataTable dt = new DataTable();
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string sql = @"
@@ -43,6 +59,7 @@ namespace POS_qu.Controllers
                 units ON items.unit = units.id
             WHERE 
                 items.deleted_at IS NULL
+            ORDER BY items.id DESC 
         ";
                 using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
                 {
@@ -57,7 +74,7 @@ namespace POS_qu.Controllers
         {
             MessageBox.Show("GetItems no param called.");
             DataTable dt = new DataTable();
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string sql = @"
@@ -95,7 +112,7 @@ namespace POS_qu.Controllers
         {
             MessageBox.Show("GetItems no param called.");
             DataTable dt = new DataTable();
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string sql = @"
@@ -172,7 +189,7 @@ namespace POS_qu.Controllers
             }
 
 
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
 
@@ -197,7 +214,7 @@ namespace POS_qu.Controllers
         public DataTable GetUnits()
         {
             DataTable dt = new DataTable();
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string sql = @"
@@ -219,7 +236,7 @@ namespace POS_qu.Controllers
         public DataTable GetGroups()
         {
             DataTable dt = new DataTable();
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string sql = @"
@@ -244,7 +261,7 @@ namespace POS_qu.Controllers
         {
             try
             {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
                 {
                     vCon.Open();
                     string sql = "SELECT stock FROM items WHERE barcode = @barcode";
@@ -268,7 +285,7 @@ namespace POS_qu.Controllers
         {
             try
             {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
                 {
                     vCon.Open();
                     string sql = "SELECT sell_price FROM items WHERE id = @id";
@@ -292,7 +309,7 @@ namespace POS_qu.Controllers
         {
             try
             {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
                 {
                     vCon.Open();
                     string sql = @"SELECT units.name FROM items
@@ -319,7 +336,7 @@ WHERE items.id = @id";
         {
             try
             {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
                 {
                     vCon.Open();
                     string sql = "SELECT reserved_stock FROM items WHERE barcode = @barcode";
@@ -344,7 +361,7 @@ WHERE items.id = @id";
         {
             try
             {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
                 {
                     vCon.Open();
                     string sql = "SELECT stock FROM items WHERE id = @id";
@@ -367,7 +384,7 @@ WHERE items.id = @id";
         {
             try
             {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
                 {
                     vCon.Open();
                     string sql = "SELECT reserved_stock FROM items WHERE id = @id";
@@ -393,7 +410,7 @@ WHERE items.id = @id";
         {
             try
             {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
                 {
                     vCon.Open();
                     string sql = "UPDATE items SET stock = @stock WHERE barcode = @barcode";
@@ -417,7 +434,7 @@ WHERE items.id = @id";
         {
             try
             {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
                 {
                     vCon.Open();
                     string sql = "UPDATE items SET stock = @stock, reserved_stock = @rStock WHERE id = @id";
@@ -440,7 +457,7 @@ WHERE items.id = @id";
 
         public int GetItemIdById(int id)
         {
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 string query = "SELECT id FROM items WHERE id = @id ORDER BY id DESC LIMIT 1";
@@ -459,7 +476,7 @@ WHERE items.id = @id";
 
         public bool DeleteUnitVariantsByItemId(int itemId)
         {
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 string query = "DELETE FROM unit_variants WHERE item_id = @item_id";
@@ -475,7 +492,7 @@ WHERE items.id = @id";
         {
             List<UnitVariant> variants = new List<UnitVariant>();
 
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
 
@@ -511,7 +528,7 @@ WHERE items.id = @id";
         {
             try
             {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
                 {
                     vCon.Open();
 
@@ -547,7 +564,7 @@ WHERE items.id = @id";
         {
             try
             {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
                 {
                     vCon.Open();
                     string sql = @"
@@ -570,7 +587,7 @@ WHERE items.id = @id";
                         vCmd.Parameters.AddWithValue("@barcode", item.barcode ?? "");
                         vCmd.Parameters.AddWithValue("@stock", item.stock);
                         vCmd.Parameters.AddWithValue("@reserved_stock", item.reserved_stock);
-                        vCmd.Parameters.AddWithValue("@unit", item.unit ?? "");
+                        vCmd.Parameters.AddWithValue("@unit", item.unitid);
                         vCmd.Parameters.AddWithValue("@group", item.group);
                         vCmd.Parameters.AddWithValue("@is_inventory_p", item.is_inventory_p ?? "Y");
                         vCmd.Parameters.AddWithValue("@is_changeprice_p", item.is_changeprice_p ?? "N");
@@ -600,9 +617,10 @@ WHERE items.id = @id";
 
         public bool UpdateItem(Item item)
         {
+
             try
             {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
                 {
                     vCon.Open();
                     string sql = @"
@@ -635,7 +653,7 @@ WHERE items.id = @id";
                         vCmd.Parameters.AddWithValue("@barcode", item.barcode ?? "");
                         vCmd.Parameters.AddWithValue("@stock", item.stock);
                         vCmd.Parameters.AddWithValue("@reserved_stock", item.reserved_stock);
-                        vCmd.Parameters.AddWithValue("@unit", item.unit ?? "");
+                        vCmd.Parameters.AddWithValue("@unit", item.unitid);
                         vCmd.Parameters.AddWithValue("@group", item.group);
                         vCmd.Parameters.AddWithValue("@is_inventory_p", item.is_inventory_p ?? "Y");
                         vCmd.Parameters.AddWithValue("@is_changeprice_p", item.is_changeprice_p ?? "N");
@@ -682,7 +700,7 @@ WHERE items.id = @id";
         {
             try
             {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
                 {
                     vCon.Open();
                     string sql = @"UPDATE items SET deleted_at = @deleted_at WHERE id = @id";
@@ -708,7 +726,7 @@ WHERE items.id = @id";
         public DataTable SearchItems(string keyword)
         {
             DataTable dt = new DataTable();
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string sql = "SELECT * FROM items WHERE name ILIKE @keyword";
@@ -725,19 +743,19 @@ WHERE items.id = @id";
         // Method to insert a payment record into the 'payment' table
         public int InsertTransaction(Transactions transaction)
         {
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string sql = @"
         INSERT INTO transactions (
             ts_numbering, ts_code, ts_total, ts_payment_amount, ts_cashback, 
             ts_method, ts_status, ts_change, ts_internal_note, ts_note, 
-            ts_customer, ts_freename, terminal_id, shift_id,user_id, created_by, created_at
+            ts_customer, ts_freename, terminal_id, shift_id,user_id, created_by, created_at,order_id
         ) 
         VALUES (
             @ts_numbering, @ts_code, @ts_total, @ts_payment_amount, @ts_cashback, 
             @ts_method, @ts_status, @ts_change, @ts_internal_note, @ts_note, 
-            @ts_customer, @ts_freename, @terminal_id, @shift_id, @user_id,@created_by, @created_at
+            @ts_customer, @ts_freename, @terminal_id, @shift_id, @user_id,@created_by, @created_at, @order_id
         ) 
         RETURNING ts_id";
 
@@ -760,6 +778,7 @@ WHERE items.id = @id";
                     vCmd.Parameters.AddWithValue("@user_id", transaction.UserId); // ShiftId ditambahkan
                     vCmd.Parameters.AddWithValue("@created_by", transaction.CreatedBy); // CreatedBy dari sesi
                     vCmd.Parameters.AddWithValue("@created_at", transaction.CreatedAt);
+                    vCmd.Parameters.AddWithValue("@order_id", (object)transaction.OrderId ?? DBNull.Value);
 
                     return Convert.ToInt32(vCmd.ExecuteScalar()); // Mengembalikan transaction ID
                 }
@@ -770,7 +789,7 @@ WHERE items.id = @id";
 
         public void InsertTransactionDetails(List<TransactionDetail> details)
         {
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string sql = @"
@@ -819,7 +838,7 @@ VALUES (
         //update stock reserved stock 
         public void updateStockAndReservedStock (int id,decimal stock, decimal rstock)
         {
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string sql = "UPDATE items SET reserved_stock = @reservedStock " +
@@ -840,7 +859,7 @@ VALUES (
         // the rows in cart (product and qty must be the same with product and qty in pending_transactions table)
         public void ClearPendingTransaction(string barcode, decimal qty, string unit)
         {
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string sql = "DELETE FROM pending_transactions WHERE barcode = @barcode AND quantity = @qty AND unit = @unit";
@@ -859,7 +878,7 @@ VALUES (
 
         public void UpdateReservedStock(string barcode, int newReservedStock)
         {
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string sql = "UPDATE items SET reserved_stock = @reservedStock WHERE barcode = @barcode";
@@ -874,7 +893,7 @@ VALUES (
         }
         public bool AddPendingTransaction(int terminalId, int cashierId, int itemId, string barcode, string unit, decimal quantity, decimal sellPrice, decimal discountPercentage, decimal discountTotal, decimal tax, decimal total, string note)
 {
-    using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+    using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
     {
         vCon.Open();
         string query = @"
@@ -914,7 +933,7 @@ VALUES (
 
 public bool UpdatePendingTransactionQuantity(int terminalId, int itemId, decimal newQuantity)
 {
-    using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+    using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
     {
         vCon.Open();
         string query = "UPDATE pending_transactions SET quantity = @newQuantity, updated_at = CURRENT_TIMESTAMP WHERE terminal_id = @terminalId AND item_id = @itemId";
@@ -931,7 +950,7 @@ public bool UpdatePendingTransactionQuantity(int terminalId, int itemId, decimal
 
 public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal discountPercentage, decimal discountTotal)
 {
-    using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+    using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
     {
         vCon.Open();
         string query = "UPDATE pending_transactions SET discount_percentage = @discountPercentage, discount_total = @discountTotal, updated_at = CURRENT_TIMESTAMP WHERE terminal_id = @terminalId AND item_id = @itemId";
@@ -952,7 +971,7 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
         
         public bool UpdatePendingTransactionStock(int terminalId, int itemId, decimal newQuantity,decimal newTotal,string unit)
         {
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string query = "UPDATE pending_transactions SET quantity = @newQuantity,total = @newTotal, updated_at = CURRENT_TIMESTAMP WHERE terminal_id = @terminalId AND item_id = @itemId AND unit = @unit";
@@ -971,7 +990,7 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
 
         public bool DeletePendingTransaction(int terminalId, int itemId)
         {
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string query = "DELETE FROM pending_transactions WHERE terminal_id = @terminalId AND item_id = @itemId";
@@ -987,7 +1006,7 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
 
         public bool UpdatePendingTransactionNote(int terminalId, int itemId, string note)
         {
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string query = "UPDATE pending_transactions SET note = @note, updated_at = CURRENT_TIMESTAMP WHERE terminal_id = @terminalId AND item_id = @itemId";
@@ -1004,7 +1023,7 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
 
         public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal discountPercentage)
         {
-            using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string query = "UPDATE pending_transactions SET discount_percentage = @discountPercentage, updated_at = CURRENT_TIMESTAMP WHERE terminal_id = @terminalId AND item_id = @itemId";
@@ -1022,12 +1041,82 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
         //////////////////////////////////////////////////////////////////
 
 
+        //get item by barcode
+        public Item GetItemByBarcode(string barcode)
+        {
+            using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                con.Open();
 
+                string itemSql = @"
+            SELECT items.id, items.name, items.barcode, items.sell_price, items.stock,
+                   units.name as unitname
+            FROM items
+            LEFT JOIN units ON items.unit = units.id
+            WHERE items.barcode = @barcode AND items.deleted_at IS NULL
+            LIMIT 1";
+
+                using (var cmd = new NpgsqlCommand(itemSql, con))
+                {
+                    cmd.Parameters.AddWithValue("@barcode", barcode);
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            int productId = reader.GetInt32(reader.GetOrdinal("id"));
+                            string name = reader.GetString(reader.GetOrdinal("name"));
+                            string barcodeVal = reader.GetString(reader.GetOrdinal("barcode"));
+                            double stock = reader.GetDouble(reader.GetOrdinal("stock"));
+                            string unitName = reader.GetString(reader.GetOrdinal("unitname"));
+                            decimal sellPrice = reader.GetDecimal(reader.GetOrdinal("sell_price"));
+                            int conversion = 1;
+
+                            int reservedStock = GetItemReservedStock(barcodeVal);
+                            int quantity = 1;
+                            int stockNeeded = quantity * conversion;
+
+                            if (stockNeeded > stock)
+                                throw new InvalidOperationException("Stok tidak cukup.");
+
+                            int newReservedStock = reservedStock + stockNeeded;
+                            if (newReservedStock > stock)
+                                throw new InvalidOperationException("Stok sudah penuh oleh reserved stock.");
+
+                            // Update reserved stock
+                            UpdateReservedStock(barcodeVal, newReservedStock);
+
+                            // Hitung harga asli per pcs
+                            decimal realPrice = GetItemPrice(productId);
+
+                            return new Item
+                            {
+                                id = productId,
+                                barcode = barcodeVal,
+                                name = name,
+                                stock = quantity,
+                                unit = unitName,
+                                conversion = conversion,
+                                sell_price = sellPrice,
+                                price_per_pcs = Math.Round(sellPrice / conversion, 2),
+                                price_per_pcs_asli = realPrice
+                            };
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+
+
+        //// RANDOM BARCODE
         public Item GetRandomItemByBarcode()
         {
             List<string> barcodes = new List<string>();
 
-            using (var con = new NpgsqlConnection(vStrConnection))
+            using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 con.Open();
 
@@ -1052,7 +1141,7 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
                 string randomBarcode = barcodes[index];
 
                 // Step 4: Get item by barcode
-         
+
 
                 string itemSql = "SELECT items.id,items.name,items.barcode, items.sell_price,items.stock, units.name as unitname FROM items LEFT JOIN units units ON items.unit = units.id WHERE barcode = @barcode";
                 using (var itemCmd = new NpgsqlCommand(itemSql, con))
@@ -1078,7 +1167,7 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
 
                             if (stockNeeded > stock)
                                 throw new InvalidOperationException("Insufficient stock for random item.");
-                           
+
                             int newReservedStock = reservedStock + stockNeeded;
                             if (newReservedStock > stock)
                                 throw new InvalidOperationException("Stock already reserved for random item.");
@@ -1111,7 +1200,38 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
         }
 
 
+        public bool UpdateOrderPayment(int orderId, int newStatus, string paymentMethod)
+        {
+            try
+            {
+                using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
+                {
+                    conn.Open();
+                    string query = @"
+                UPDATE orders
+                SET order_status = @status,
+                    payment_method = @method,
+                    updated_at = NOW()
+                WHERE order_id = @orderId
+            ";
 
+                    using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@status", newStatus);
+                        cmd.Parameters.AddWithValue("@method", paymentMethod ?? "");
+                        cmd.Parameters.AddWithValue("@orderId", orderId);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        return rowsAffected > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Failed to update order: " + ex.Message);
+                return false;
+            }
+        }
 
 
     }

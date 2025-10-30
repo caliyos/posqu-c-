@@ -2,18 +2,19 @@
 using System;
 using System.Data;
 using POS_qu.Models;
+using POS_qu.Helpers;
 
 namespace POS_qu.Controllers
 {
     class RolesController
     {
-        private string vStrConnection = "Host=localhost;Port=5433;Username=postgres;Password=postgres11;Database=posqu";
+  
 
         public DataTable GetAllRoles()
         {
             DataTable dt = new DataTable();
 
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 string query = "SELECT id, name, description FROM roles ORDER BY id ASC";
@@ -29,7 +30,7 @@ namespace POS_qu.Controllers
 
         public bool AddRole(string name, string description)
         {
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 string query = "INSERT INTO roles (name, description) VALUES (@name, @description)";
@@ -44,7 +45,7 @@ namespace POS_qu.Controllers
 
         public bool UpdateRole(int id, string name, string description)
         {
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 string query = "UPDATE roles SET name = @name, description = @description WHERE id = @id";
@@ -60,7 +61,7 @@ namespace POS_qu.Controllers
 
         public bool DeleteRole(int id)
         {
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
                 string query = "DELETE FROM roles WHERE id = @id";
