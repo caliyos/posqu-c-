@@ -1,0 +1,111 @@
+# ============================
+# C# / .NET / VS Code Project
+# ============================
+
+## Build hasil kompilasi
+bin/
+obj/
+out/
+publish/
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+*.exe
+*.dll
+*.pdb
+*.appx
+*.appxupload
+*.log
+*.cache
+
+## VS Code
+.vscode/
+.history/
+.settings/
+*.code-workspace
+
+## Paket & dependency
+*.nuget/
+packages/
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+
+## File konfigurasi sementara
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.vspscc
+*.vssscc
+*.vsp
+*.vsmdi
+*.psess
+*.vspx
+*.vsix
+*.orig
+*.bak
+
+## IDE / Tooling
+.vs/
+.idea/
+*.DotSettings.user
+
+## Sistem
+[Tt]humbs.db
+ehthumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.tmp
+*.temp
+*.log
+*.swp
+*.swn
+*.swo
+
+## OS
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Linux
+*~
+.nfs*
+
+# Windows
+*.lnk
+
+## Environment & konfigurasi rahasia
+.env
+.env.*
+secrets.json
+appsettings.*.json
+
+## File publish & test
+TestResults/
+*.coverage
+*.coveragexml
+*.testsettings
+*.trx
+
+## Cache / tooling tambahan
+node_modules/
+dist/
+coverage/
+.vscode-test/
+
+## JetBrains Rider (jika kadang pakai)
+.idea/
+*.iml
+.idea_modules/
+
+## Git
+*.orig
+*.rej
+*.diff
+*.patch
+.gitignore.swp
