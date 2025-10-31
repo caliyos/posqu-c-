@@ -245,3 +245,171 @@ Terima kasih atas kunjungan Anda!
 
 
 
+2025-10-31 10:48:07 - PRINT
+Toko ABC
+Jl. Merdeka No. 123, Jakarta
+021-12345678
+------------------------------
+Terminal : T3
+Kasir    : admin
+Shift    : shift 1
+Tanggal  : 2025-10-31
+Waktu    : 10:48:07
+------------------------------
+Jumlah Barang: 2
+------------------------------
+1x Microwave Sharp   1,600,000
+1x Solderan Elektrik   200,000
+------------------------------
+Subtotal             1,800,000
+Discount                    20
+Tax                          0
+Grand Total          1,800,000
+Status Bayar : status : 1
+Metode Bayar : Cash 
+Jumlah Bayar : 2000000
+Kembalian    : 200000
+------------------------------
+Terima kasih atas kunjungan Anda!
+
+
+
+2025-10-31 10:56:43 - PRINT
+Toko ABC
+Jl. Merdeka No. 123, Jakarta
+021-12345678
+------------------------------
+Terminal : T3
+Kasir    : admin
+Shift    : shift 1
+Tanggal  : 2025-10-31
+Waktu    : 10:56:43
+------------------------------
+Jumlah Barang: 3
+------------------------------
+1x Gerinda Makita    1,800,000
+1x Kabel Listrik 100   200,000
+1x Lampu LED Philips    59,500
+------------------------------
+Subtotal             2,059,500
+Discount                    35
+Tax                          0
+Grand Total          2,059,500
+Status Bayar : status : 1
+Metode Bayar : Cash 
+Jumlah Bayar : 3000000
+Kembalian    : 940500
+------------------------------
+Terima kasih atas kunjungan Anda!
+
+
+
+2025-10-31 11:20:43 - PRINT
+Toko ABC
+Jl. Merdeka No. 123, Jakarta
+021-12345678
+------------------------------
+Terminal : T3
+Kasir    : admin
+Shift    : shift 1
+Tanggal  : 2025-10-31
+Waktu    : 11:20:43
+------------------------------
+1x Smartphone Samsun 4,000,000
+1x Kompor Gas 2 Tung 1,120,000
+  Diskon: 20%         -280,000
+1x Solderan Elektrik   200,000
+  Catatan: keterangan
+1x Mesin Cuci LG     3,600,000
+  Diskon: 20%         -900,000
+------------------------------
+Subtotal            10,100,000
+Diskon              -1,180,000
+------------------------------
+Grand Total          8,920,000
+------------------------------
+Status Bayar : status : 1
+Metode Bayar : Cash 
+Jumlah Bayar : 10000000
+Kembalian    : 1080000
+------------------------------
+Terima kasih atas kunjungan Anda!
+
+
+
+2025-10-31 11:22:56 - PRINT
+Toko ABC
+Jl. Merdeka No. 123, Jakarta
+021-12345678
+------------------------------
+Terminal : T3
+Kasir    : admin
+Shift    : shift 1
+Tanggal  : 2025-10-31
+Waktu    : 11:22:56
+------------------------------
+3x Pompa Air Shimizu 3,600,000
+4x Peralatan Dapur S 3,200,000
+2x Gerinda Makita    3,600,000
+1x TV LED 40 Inch Sa 4,000,000
+2x Palu Kayu            70,000
+4x Microwave Sharp   8,000,000
+2x Kompor Gas 2 Tung 2,800,000
+3x Blender Philips   2,100,000
+5x Smartphone Samsun20,000,000
+2x Paku Kayu 2 Inch     30,000
+6x Cat Dinding Dulux   900,000
+2x Lampu LED Philips   140,000
+1x Kabel Listrik 100   250,000
+2x Bor Hitachi       3,000,000
+2x Laptop Lenovo Thi17,000,000
+1x Kulkas Panasonic  5,000,000
+1x Solderan Elektrik   200,000
+2x Mesin Cuci LG     9,000,000
+1x AC Daikin 1 PK    6,500,000
+------------------------------
+Subtotal            89,390,000
+Diskon                      -0
+------------------------------
+Grand Total         89,390,000
+------------------------------
+Status Bayar : status : 1
+Metode Bayar : Cash 
+Jumlah Bayar : 100000000
+Kembalian    : 10610000
+------------------------------
+Terima kasih atas kunjungan Anda!
+
+
+
+2025-10-31 11:27:21 - PRINT
+Toko ABC
+Jl. Merdeka No. 123, Jakarta
+021-12345678
+------------------------------
+Terminal : T3
+Kasir    : admin
+Shift    : shift 1
+Tanggal  : 2025-10-31
+Waktu    : 11:27:20
+------------------------------
+1x Palu Kayu            35,000
+1x Lampu LED Philips    56,000
+  Diskon: 20%          -14,000
+  Catatan: keteangan per item
+1x Laptop Lenovo Thi 8,500,000
+------------------------------
+Subtotal             8,605,000
+Diskon                 -14,000
+------------------------------
+Grand Total          8,591,000
+------------------------------
+Status Bayar : status : 1
+Metode Bayar : Cash 
+Jumlah Bayar : 10,000,000
+Kembalian    : 1,409,000
+------------------------------
+Terima kasih atas kunjungan Anda!
+
+
+

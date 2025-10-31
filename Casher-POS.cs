@@ -318,29 +318,24 @@ namespace POS_qu
 
         //    return receipt.ToString();
         //}
-
         private string GenerateReceiptText(
-    string terminal,
-    string user,
-    string shift,
-    string statusBayar,
-    string jumlahBayar,
-    string metodeBayar,
-    string kembalian)
+     string terminal,
+     string user,
+     string shift,
+     string statusBayar,
+     string jumlahBayar,
+     string metodeBayar,
+     string kembalian)
         {
             StringBuilder receipt = new StringBuilder();
 
-            // === 1️⃣ Ambil data dari database ===
-            string judul = "";
-            string alamat = "";
-            string telepon = "";
-            string footer = "";
+            // === 1️⃣ Ambil data setting struk ===
+            string judul = "", alamat = "", telepon = "", footer = "";
             bool showNamaToko = true, showAlamat = true, showTelepon = true, showFooter = true;
 
             using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
-
                 string query = "SELECT * FROM struk_setting ORDER BY updated_at DESC LIMIT 1;";
                 using (var cmd = new NpgsqlCommand(query, conn))
                 using (var reader = cmd.ExecuteReader())
@@ -360,13 +355,9 @@ namespace POS_qu
             }
 
             // === 2️⃣ Header toko ===
-            if (showNamaToko && !string.IsNullOrEmpty(judul))
-                receipt.AppendLine(judul);
-            if (showAlamat && !string.IsNullOrEmpty(alamat))
-                receipt.AppendLine(alamat);
-            if (showTelepon && !string.IsNullOrEmpty(telepon))
-                receipt.AppendLine(telepon);
-
+            if (showNamaToko && !string.IsNullOrEmpty(judul)) receipt.AppendLine(judul);
+            if (showAlamat && !string.IsNullOrEmpty(alamat)) receipt.AppendLine(alamat);
+            if (showTelepon && !string.IsNullOrEmpty(telepon)) receipt.AppendLine(telepon);
             receipt.AppendLine("------------------------------");
 
             // === 3️⃣ Info transaksi ===
@@ -377,56 +368,239 @@ namespace POS_qu
             receipt.AppendLine($"Waktu    : {DateTime.Now:HH:mm:ss}");
             receipt.AppendLine("------------------------------");
 
-            // === 4️⃣ Jumlah item ===
-            receipt.AppendLine($"Jumlah Barang: {labelNumOfItems.Text}");
-            receipt.AppendLine("------------------------------");
+            // === 4️⃣ Detail item + diskon + catatan ===
+            decimal subTotal = 0;
+            decimal totalDiscount = 0;
 
-            // === 5️⃣ Detail item (loop flowLayoutPanel) ===
-            foreach (Control ctrl in flowLayoutPanel.Controls)
+            foreach (DataGridViewRow row in dataGridViewCart4.Rows)
             {
-                if (ctrl is TableLayoutPanel panel)
+                if (row.IsNewRow || row.Cells["name"].Value == null)
+                    continue;
+
+                string itemName = row.Cells["name"].Value.ToString();
+                int qty = Convert.ToInt32(row.Cells["stock"].Value ?? 0);
+                decimal price = Convert.ToDecimal(row.Cells["sell_price"].Value ?? 0);
+
+                // Ambil diskon dari kolom "discount" sebagai persen
+                decimal discountPercent = Convert.ToDecimal(row.Cells["discount"]?.Value ?? 0);
+                decimal totalBeforeDiscount = price * qty;
+                decimal discountAmount = totalBeforeDiscount * (discountPercent / 100);
+                decimal totalAfterDiscount = totalBeforeDiscount - discountAmount;
+
+                subTotal += totalBeforeDiscount;
+                totalDiscount += discountAmount;
+
+                // Baris 1: nama item dan total sesudah diskon
+                string itemLine = $"{qty}x {itemName}";
+                if (itemLine.Length > 20) itemLine = itemLine.Substring(0, 20);
+                receipt.AppendLine(itemLine.PadRight(20) + $"{totalAfterDiscount:N0}".PadLeft(10));
+
+                // Baris 2: diskon per item (jika ada)
+                if (discountPercent > 0)
                 {
-                    int rowCount = panel.RowCount;
-                    for (int i = 0; i < rowCount; i++)
-                    {
-                        var leftLabel = panel.GetControlFromPosition(0, i) as Label;
-                        var rightLabel = panel.GetControlFromPosition(1, i) as Label;
-
-                        string leftText = leftLabel?.Text?.Trim() ?? "";
-                        string rightText = rightLabel?.Text?.Trim() ?? "";
-
-                        if (!string.IsNullOrEmpty(leftText) || !string.IsNullOrEmpty(rightText))
-                        {
-                            string left = leftText.Length > 20 ? leftText.Substring(0, 20) : leftText.PadRight(20);
-                            string right = rightText.PadLeft(10);
-                            receipt.AppendLine(left + right);
-                        }
-                    }
+                    string discLine = $"  Diskon: {discountPercent:N0}%".PadRight(20) + $"-{discountAmount:N0}".PadLeft(10);
+                    receipt.AppendLine(discLine);
                 }
-                else if (ctrl is Label separator && separator.Height == 1)
+
+                // Baris 3: catatan (jika ada)
+                if (row.Cells["note"]?.Value != null && !string.IsNullOrWhiteSpace(row.Cells["note"].Value.ToString()))
                 {
-                    receipt.AppendLine("------------------------------");
+                    string note = row.Cells["note"].Value.ToString().Trim();
+                    receipt.AppendLine($"  Catatan: {note}");
                 }
             }
 
-            // === 6️⃣ Pembayaran ===
+            receipt.AppendLine("------------------------------");
+
+            // === 5️⃣ Ringkasan subtotal & total ===
+            decimal grandTotal = subTotal - totalDiscount;
+            receipt.AppendLine($"Subtotal".PadRight(20) + $"{subTotal:N0}".PadLeft(10));
+            receipt.AppendLine($"Diskon".PadRight(20) + $"-{totalDiscount:N0}".PadLeft(10));
+            receipt.AppendLine("------------------------------");
+            receipt.AppendLine($"Grand Total".PadRight(20) + $"{grandTotal:N0}".PadLeft(10));
+            receipt.AppendLine("------------------------------");
+
+            // === 6️⃣ Info pembayaran ===
             receipt.AppendLine($"Status Bayar : {statusBayar}");
             receipt.AppendLine($"Metode Bayar : {metodeBayar}");
+
+            // Format jumlah bayar dan kembalian ke format ribuan
+            if (decimal.TryParse(jumlahBayar, out decimal jmlBayar))
+                jumlahBayar = jmlBayar.ToString("N0");
+            if (decimal.TryParse(kembalian, out decimal kemb))
+                kembalian = kemb.ToString("N0");
+
             receipt.AppendLine($"Jumlah Bayar : {jumlahBayar}");
             receipt.AppendLine($"Kembalian    : {kembalian}");
             receipt.AppendLine("------------------------------");
 
-            // === 7️⃣ Footer dari database ===
+
+            // === 7️⃣ Footer ===
             if (showFooter && !string.IsNullOrEmpty(footer))
-            {
                 receipt.AppendLine(footer);
-            }
 
             receipt.AppendLine("");
 
             return receipt.ToString();
         }
 
+        private void CalculateAllTotals()
+        {
+            decimal totalCart = 0;
+            int numOfItems = 0;
+            decimal subTotal = 0;
+            decimal totalTax = 0;
+            decimal totalDiscount = 0;
+
+            Debug.WriteLine("Recalculating totals...");
+
+            flowLayoutPanel.Controls.Clear();
+
+            TableLayoutPanel tableLayoutPanel = new TableLayoutPanel();
+            tableLayoutPanel.ColumnCount = 2;
+            tableLayoutPanel.AutoSize = true;
+            tableLayoutPanel.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            tableLayoutPanel.Dock = DockStyle.Top;
+            tableLayoutPanel.CellBorderStyle = TableLayoutPanelCellBorderStyle.None;
+            tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70));
+            tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
+
+            foreach (DataGridViewRow row in dataGridViewCart4.Rows)
+            {
+                if (row.Cells["name"].Value == null) continue;
+
+                string itemName = row.Cells["name"].Value.ToString();
+                int rowQty = Convert.ToInt32(row.Cells["stock"].Value ?? 0);
+                decimal rowPrice = Convert.ToDecimal(row.Cells["sell_price"].Value ?? 0);
+                decimal rowDiscountPercent = Convert.ToDecimal(row.Cells["discount"].Value ?? 0);
+                string note = row.Cells["note"]?.Value?.ToString()?.Trim() ?? "";
+
+                // Hitung total & potongan
+                decimal totalBeforeDiscount = rowPrice * rowQty;
+                decimal discountAmount = totalBeforeDiscount * (rowDiscountPercent / 100);
+                decimal rowTotal = totalBeforeDiscount - discountAmount;
+
+                numOfItems += rowQty;
+                totalCart += rowTotal;
+                totalDiscount += discountAmount;
+
+                // === Baris 1: nama item dan total ===
+                Label itemNameLabel = new Label
+                {
+                    AutoSize = true,
+                    Text = $"{rowQty}x {itemName}",
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Padding = new Padding(5, 2, 5, 0),
+                    ForeColor = System.Drawing.Color.Black
+                };
+
+                Label itemTotalLabel = new Label
+                {
+                    AutoSize = true,
+                    Text = $"{rowTotal:N0}",
+                    TextAlign = ContentAlignment.MiddleRight,
+                    Padding = new Padding(5, 2, 5, 0),
+                    ForeColor = System.Drawing.Color.Black
+                };
+
+                tableLayoutPanel.RowCount++;
+                tableLayoutPanel.Controls.Add(itemNameLabel, 0, tableLayoutPanel.RowCount - 1);
+                tableLayoutPanel.Controls.Add(itemTotalLabel, 1, tableLayoutPanel.RowCount - 1);
+
+                // === Baris 2: Diskon (jika ada) ===
+                if (rowDiscountPercent > 0)
+                {
+                    Label discountLabel = new Label
+                    {
+                        AutoSize = true,
+                        Text = $"   Diskon: {rowDiscountPercent:N0}% (-{discountAmount:N0})",
+                        ForeColor = System.Drawing.Color.FromArgb(200, 50, 50),
+                        Font = new Font("Segoe UI", 8.5f, FontStyle.Italic),
+                        Padding = new Padding(5, 0, 5, 0)
+                    };
+
+                    tableLayoutPanel.RowCount++;
+                    tableLayoutPanel.Controls.Add(discountLabel, 0, tableLayoutPanel.RowCount - 1);
+                    tableLayoutPanel.SetColumnSpan(discountLabel, 2);
+                }
+
+                // === Baris 3: Catatan (jika ada) ===
+                if (!string.IsNullOrEmpty(note))
+                {
+                    Label noteLabel = new Label
+                    {
+                        AutoSize = true,
+                        Text = $"   Catatan: {note}",
+                        ForeColor = System.Drawing.Color.DimGray,
+                        Font = new Font("Segoe UI", 8.5f, FontStyle.Italic),
+                        Padding = new Padding(5, 0, 5, 2)
+                    };
+
+                    tableLayoutPanel.RowCount++;
+                    tableLayoutPanel.Controls.Add(noteLabel, 0, tableLayoutPanel.RowCount - 1);
+                    tableLayoutPanel.SetColumnSpan(noteLabel, 2);
+                }
+
+                Debug.WriteLine($"Item: {itemName}, Qty: {rowQty}, Price: {rowPrice}, Disc: {rowDiscountPercent}%, Note: {note}");
+            }
+
+            flowLayoutPanel.Controls.Add(tableLayoutPanel);
+
+            // Garis pemisah
+            Label separator = new Label
+            {
+                AutoSize = false,
+                Height = 1,
+                Width = flowLayoutPanel.Width,
+                BackColor = System.Drawing.Color.Gray
+            };
+            flowLayoutPanel.Controls.Add(separator);
+
+            // === Totals ===
+            subTotal = totalCart + totalDiscount; // sebelum diskon
+
+            TableLayoutPanel totalsTable = new TableLayoutPanel();
+            totalsTable.ColumnCount = 2;
+            totalsTable.AutoSize = true;
+            totalsTable.Dock = DockStyle.Top;
+            totalsTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70));
+            totalsTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
+
+            void AddRow(string labelText, string valueText, bool bold = false)
+            {
+                Label lbl = new Label
+                {
+                    AutoSize = true,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Text = labelText,
+                    Padding = new Padding(10, 3, 10, 3),
+                    Font = bold ? new Font("Segoe UI", 9, FontStyle.Bold | FontStyle.Underline) : new Font("Segoe UI", 9)
+                };
+
+                Label val = new Label
+                {
+                    AutoSize = true,
+                    TextAlign = ContentAlignment.MiddleRight,
+                    Text = valueText,
+                    Padding = new Padding(10, 3, 10, 3),
+                    Font = bold ? new Font("Segoe UI", 9, FontStyle.Bold | FontStyle.Underline) : new Font("Segoe UI", 9)
+                };
+
+                totalsTable.RowCount++;
+                totalsTable.Controls.Add(lbl, 0, totalsTable.RowCount - 1);
+                totalsTable.Controls.Add(val, 1, totalsTable.RowCount - 1);
+            }
+
+            AddRow("Subtotal", $"{subTotal:N0}");
+            AddRow("Discount", $"{totalDiscount:N0}");
+            AddRow("Grand Total", $"{totalCart:N0}", true);
+
+            flowLayoutPanel.Controls.Add(totalsTable);
+
+            // Update label di UI
+            labelNumOfItems.Text = numOfItems.ToString();
+            label2.Text = $"{totalCart:N0}";
+        }
 
 
 
@@ -969,6 +1143,8 @@ namespace POS_qu
             int itemId = Convert.ToInt32(row.Cells["id"].Value);
             string barcode = row.Cells["barcode"].Value.ToString();
             string unit = row.Cells["unit"].Value.ToString();
+            string discount = row.Cells["discount"].Value.ToString();
+            string note = row.Cells["note"].Value.ToString();
 
             // untuk case edit qty dari cart
             int previousQuantity = row.Cells["stock"].Tag != null ? Convert.ToInt32(row.Cells["stock"].Tag) : 0;
@@ -1056,7 +1232,9 @@ namespace POS_qu
                     terminal = SessionUser.GetCurrentUser().TerminalId,
                     shiftId = SessionUser.GetCurrentUser().ShiftId,
                     IpAddress = NetworkHelper.GetLocalIPAddress(),
-                    UserAgent = GlobalContext.getAppVersion(),                 
+                    UserAgent = GlobalContext.getAppVersion(),      
+                    Discount = discount,
+                    Note = note
                     //TsCode = transaction.TsCode,
                     //TotalAmount = transaction.TsTotal,
                     //PaymentMethod = transaction.TsMethod,
@@ -1099,6 +1277,10 @@ namespace POS_qu
                 if (!updateSuccess)
                 {
                     MessageBox.Show("Failed to update note in database.");
+                } else
+                {
+                    RecalculateTotalForRow(row);
+                    CalculateAllTotals();
                 }
             }
             if (dataGridViewCart4.Columns[e.ColumnIndex].Name == "stock")
@@ -1219,180 +1401,7 @@ namespace POS_qu
             }
         }
 
-        private void CalculateAllTotals()
-        {
-            decimal totalCart = 0;
-            int numOfItems = 0;
-            decimal subTotal = 0;
-            decimal totalTax = 0;
-            decimal totalDiscount = 0;
-
-            Debug.WriteLine("Recalculating totals...");
-
-            // Bersihkan panel ringkasan biar nggak dobel
-            flowLayoutPanel.Controls.Clear();
-
-            // Buat TableLayoutPanel untuk mengatur kolom
-            TableLayoutPanel tableLayoutPanel = new TableLayoutPanel();
-            tableLayoutPanel.ColumnCount = 2;  // Kolom pertama untuk nama item, kedua untuk harga
-            tableLayoutPanel.RowCount = 0;     // Menyesuaikan dengan jumlah item
-            tableLayoutPanel.AutoSize = true;
-            tableLayoutPanel.Dock = DockStyle.Top;
-            tableLayoutPanel.CellBorderStyle = TableLayoutPanelCellBorderStyle.None;
-
-            // Set ukuran kolom: kolom pertama untuk nama item (kiri), kolom kedua untuk harga (kanan)
-            tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70)); // 70% untuk nama item
-            tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30)); // 30% untuk harga
-
-            foreach (DataGridViewRow row in dataGridViewCart4.Rows)
-            {
-                if (row.Cells["name"].Value == null) continue;
-
-                string itemName = row.Cells["name"].Value.ToString();
-
-                int rowQty = 0;
-                if (row.Cells["stock"].Value != null)
-                    rowQty = Convert.ToInt32(row.Cells["stock"].Value);
-
-                decimal rowTotal = 0;
-                if (row.Cells["total"].Value != null)
-                    rowTotal = Convert.ToDecimal(row.Cells["total"].Value);
-
-                decimal rowDiscount = 0;
-                if (row.Cells["discount"].Value != null)
-                    rowDiscount = Convert.ToDecimal(row.Cells["discount"].Value);
-
-                decimal rowTax = 0;
-                if (row.Cells["tax"].Value != null)
-                    rowTax = Convert.ToDecimal(row.Cells["tax"].Value);
-
-                // Akumulasi total
-                numOfItems += rowQty;
-                totalCart += rowTotal;
-                totalDiscount += rowDiscount;
-                totalTax += rowTax;
-
-                // Tambahkan baris untuk setiap item
-                Label itemNameLabel = new Label();
-                itemNameLabel.AutoSize = true;
-                itemNameLabel.Text = $"{rowQty}x {itemName}"; // Nama item dan qty
-                itemNameLabel.TextAlign = ContentAlignment.MiddleLeft; // Rata kiri
-                itemNameLabel.Padding = new Padding(5, 2, 5, 2); // Padding sedikit untuk jarak
-
-                Label itemTotalLabel = new Label();
-                itemTotalLabel.AutoSize = true;
-                itemTotalLabel.Text = $"{rowTotal:N0}"; // Total harga per item
-                itemTotalLabel.TextAlign = ContentAlignment.MiddleRight; // Rata kanan
-                itemTotalLabel.Padding = new Padding(5, 2, 5, 2); // Padding sedikit untuk jarak
-
-                // Tambahkan ke TableLayoutPanel
-                tableLayoutPanel.RowCount++;
-                tableLayoutPanel.Controls.Add(itemNameLabel, 0, tableLayoutPanel.RowCount - 1);
-                tableLayoutPanel.Controls.Add(itemTotalLabel, 1, tableLayoutPanel.RowCount - 1);
-
-                Debug.WriteLine($"Item: {itemName}, Qty: {rowQty}, Total: {rowTotal:N0}");
-            }
-
-            flowLayoutPanel.Controls.Add(tableLayoutPanel); // Menambahkan tableLayoutPanel ke flowLayoutPanel
-
-            // Hitung subtotal sebelum diskon dan pajak
-            subTotal = totalCart;
-
-            Debug.WriteLine($"Subtotal: {subTotal}, Discount: {totalDiscount}, Tax: {totalTax}, Grand Total: {totalCart}");
-
-            // Tambahkan pemisah (garis horizontal) setelah list item
-            Label separator = new Label();
-            separator.AutoSize = false;
-            separator.Height = 1;
-            separator.Width = flowLayoutPanel.Width;
-            separator.BackColor = System.Drawing.Color.Gray; // Warna pemisah
-            flowLayoutPanel.Controls.Add(separator);
-
-            // Buat TableLayoutPanel lagi untuk menampilkan subtotal, diskon, pajak, dan total
-            TableLayoutPanel totalsTable = new TableLayoutPanel();
-            totalsTable.ColumnCount = 2;  // Kolom pertama untuk label (Subtotal, Diskon, dll), kedua untuk nilai
-            totalsTable.RowCount = 4;     // 4 baris: Subtotal, Diskon, Pajak, Grand Total
-            totalsTable.AutoSize = true;
-            totalsTable.Dock = DockStyle.Top;
-            totalsTable.CellBorderStyle = TableLayoutPanelCellBorderStyle.None;
-
-            // Set ukuran kolom: kolom pertama untuk label, kolom kedua untuk nilai
-            totalsTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70)); // 70% untuk label
-            totalsTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30)); // 30% untuk nilai
-
-            // Tambahkan label dan nilai subtotal
-            Label subTotalLabel = new Label();
-            subTotalLabel.AutoSize = true;
-            subTotalLabel.TextAlign = ContentAlignment.MiddleLeft;
-            subTotalLabel.Text = $"Subtotal";
-            subTotalLabel.Padding = new Padding(10, 5, 10, 5);
-
-            Label subTotalValueLabel = new Label();
-            subTotalValueLabel.AutoSize = true;
-            subTotalValueLabel.TextAlign = ContentAlignment.MiddleRight;
-            subTotalValueLabel.Text = $"{subTotal:N0}";
-            subTotalValueLabel.Padding = new Padding(10, 5, 10, 5);
-
-            // Tambahkan label dan nilai diskon
-            Label discountLabel = new Label();
-            discountLabel.AutoSize = true;
-            discountLabel.TextAlign = ContentAlignment.MiddleLeft;
-            discountLabel.Text = $"Discount";
-            discountLabel.Padding = new Padding(10, 5, 10, 5);
-
-            Label discountValueLabel = new Label();
-            discountValueLabel.AutoSize = true;
-            discountValueLabel.TextAlign = ContentAlignment.MiddleRight;
-            discountValueLabel.Text = $"{totalDiscount:N0}";
-            discountValueLabel.Padding = new Padding(10, 5, 10, 5);
-
-            // Tambahkan label dan nilai pajak
-            Label taxLabel = new Label();
-            taxLabel.AutoSize = true;
-            taxLabel.TextAlign = ContentAlignment.MiddleLeft;
-            taxLabel.Text = $"Tax";
-            taxLabel.Padding = new Padding(10, 5, 10, 5);
-
-            Label taxValueLabel = new Label();
-            taxValueLabel.AutoSize = true;
-            taxValueLabel.TextAlign = ContentAlignment.MiddleRight;
-            taxValueLabel.Text = $"{totalTax:N0}";
-            taxValueLabel.Padding = new Padding(10, 5, 10, 5);
-
-            // Tambahkan label dan nilai grand total
-            Label grandTotalLabel = new Label();
-            grandTotalLabel.AutoSize = true;
-            grandTotalLabel.TextAlign = ContentAlignment.MiddleLeft;
-            grandTotalLabel.Font = new Font(grandTotalLabel.Font, FontStyle.Bold | FontStyle.Underline);
-            grandTotalLabel.Text = $"Grand Total";
-            grandTotalLabel.Padding = new Padding(10, 5, 10, 5);
-
-            Label grandTotalValueLabel = new Label();
-            grandTotalValueLabel.AutoSize = true;
-            grandTotalValueLabel.TextAlign = ContentAlignment.MiddleRight;
-            grandTotalValueLabel.Font = new Font(grandTotalValueLabel.Font, FontStyle.Bold | FontStyle.Underline);
-            grandTotalValueLabel.Text = $"{totalCart:N0}";
-            grandTotalValueLabel.Padding = new Padding(10, 5, 10, 5);
-
-            // Tambahkan semua label dan nilai ke TableLayoutPanel untuk totals
-            totalsTable.Controls.Add(subTotalLabel, 0, 0);
-            totalsTable.Controls.Add(subTotalValueLabel, 1, 0);
-            totalsTable.Controls.Add(discountLabel, 0, 1);
-            totalsTable.Controls.Add(discountValueLabel, 1, 1);
-            totalsTable.Controls.Add(taxLabel, 0, 2);
-            totalsTable.Controls.Add(taxValueLabel, 1, 2);
-            totalsTable.Controls.Add(grandTotalLabel, 0, 3);
-            totalsTable.Controls.Add(grandTotalValueLabel, 1, 3);
-
-            // Tambahkan totalsTable ke flowLayoutPanel
-            flowLayoutPanel.Controls.Add(totalsTable);
-
-            // Update label di layar utama
-            labelNumOfItems.Text = numOfItems.ToString();
-            label2.Text = $"{totalCart:N0}";
-        }
-
-
+       
 
 
         private void DataGridViewCart4_RowPostPaint(object sender, DataGridViewRowPostPaintEventArgs e)
@@ -1730,7 +1739,9 @@ namespace POS_qu
                 d.ItemId,
                 d.TsdUnit,
                 d.TsdQuantity,
-                d.TsdSellPrice
+                d.TsdSellPrice,
+                d.TsdDiscountTotal,
+                d.TsdNote
             }).ToList()
         }
     );
