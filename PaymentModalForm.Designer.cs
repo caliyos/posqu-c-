@@ -46,6 +46,11 @@
         private Label lblCardPart;
         private TextBox txtCardPart;
 
+        // 🔹 Diskon keseluruhan
+        private Label lblGlobalDiscount;
+        private TextBox txtGlobalDiscountPercent;
+        private Label lblGrandTotal;
+
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -159,7 +164,7 @@
             // 
             // btnPay
             // 
-            btnPay.Location = new Point(232, 232);
+            btnPay.Location = new Point(232, 320);
             btnPay.Name = "btnPay";
             btnPay.Size = new Size(120, 40);
             btnPay.TabIndex = 9;
@@ -371,6 +376,48 @@
             txtCardPart.Name = "txtCardPart";
             txtCardPart.Size = new Size(100, 31);
             txtCardPart.TabIndex = 3;
+
+            // 
+            // lblGlobalDiscount
+            // 
+            lblGlobalDiscount = new Label();
+            lblGlobalDiscount.AutoSize = true;
+            lblGlobalDiscount.Location = new Point(30, 232);
+            lblGlobalDiscount.Name = "lblGlobalDiscount";
+            lblGlobalDiscount.Size = new Size(164, 25);
+            lblGlobalDiscount.TabIndex = 14;
+            lblGlobalDiscount.Text = "Global Discount (%):";
+            // 
+            // txtGlobalDiscountPercent
+            // 
+            txtGlobalDiscountPercent = new TextBox();
+            txtGlobalDiscountPercent.Location = new Point(232, 232);
+            txtGlobalDiscountPercent.Name = "txtGlobalDiscountPercent";
+            txtGlobalDiscountPercent.Size = new Size(150, 31);
+            txtGlobalDiscountPercent.TabIndex = 15;
+            txtGlobalDiscountPercent.Text = "0";
+            txtGlobalDiscountPercent.TextChanged += txtGlobalDiscountPercent_TextChanged;
+
+            Controls.Add(lblGlobalDiscount);
+            Controls.Add(txtGlobalDiscountPercent);
+            Controls.Add(lblGrandTotal);
+            Controls.Add(btnPay);
+
+
+            // 
+            // lblGrandTotal
+            // 
+            lblGrandTotal = new Label();
+            lblGrandTotal.AutoSize = true;
+            lblGrandTotal.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point);
+            lblGrandTotal.ForeColor = Color.DarkGreen;
+            lblGrandTotal.Location = new Point(30, 280);
+            lblGrandTotal.Name = "lblGrandTotal";
+            lblGrandTotal.Size = new Size(185, 32);
+            lblGrandTotal.TabIndex = 16;
+            lblGrandTotal.Text = "Grand Total: $0.00";
+
+
             // 
             // PaymentModalForm
             // 

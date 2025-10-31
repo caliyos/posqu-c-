@@ -200,9 +200,22 @@ namespace POS_qu
                 return;
             }
 
+            // Ambil status order
+            string statusText = row.Cells["order_status"].FormattedValue.ToString().Trim().ToLower();
+
+            // Cegah jika status = Paid
+            if (statusText == "paid" || statusText == "lunas")
+            {
+                MessageBox.Show("Order ini sudah dibayar dan tidak dapat dimuat ulang ke keranjang.",
+                    "Order Selesai", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Jika bukan Paid → lanjutkan
             SelectedOrderId = Convert.ToInt32(row.Cells["order_id"].Value);
             this.DialogResult = DialogResult.OK;
             this.Close();
         }
+
     }
 }

@@ -24,13 +24,28 @@ namespace POS_qu
             txtCashback.Text = "0";
         }
         // Property to get the payment details
-        public decimal PaymentAmount => Convert.ToDecimal(txtPaymentAmount.Text);
+        public decimal PaymentAmount
+        {
+            get
+            {
+                string input = txtPaymentAmount.Text
+                    .Replace("Rp", "")
+                    .Replace(".", "")
+                    .Replace(",", "")
+                    .Trim();
+
+                if (decimal.TryParse(input, out decimal result))
+                    return result;
+
+                return 0; // default kalau parsing gagal
+            }
+        }
         public decimal Cashback
         {
             get
             {
                 // Remove currency symbols and commas before parsing
-                string cleanText = txtCashback.Text.Replace("$", "").Replace(",", "");
+                string cleanText = txtCashback.Text.Replace("Rp. ", "").Replace(",", "");
 
                 // Try to parse the clean text to decimal
                 if (decimal.TryParse(cleanText, out decimal cashback))
@@ -69,13 +84,7 @@ namespace POS_qu
         {
             if (decimal.TryParse(txtPaymentAmount.Text, out decimal paymentAmount))
             {
-                decimal totalAmount = 0.0m;
-
-                // You can replace this with the actual total amount value
-                if (decimal.TryParse(lblTotal.Text.Replace("Total: $", ""), out decimal parsedTotal))
-                {
-                    totalAmount = parsedTotal;
-                }
+                decimal totalAmount = GrandTotal > 0 ? GrandTotal : this.totalAmount;
 
                 decimal cashback = paymentAmount - totalAmount;
                 txtCashback.Text = cashback > 0 ? cashback.ToString("C") : "$0.00";
@@ -84,6 +93,9 @@ namespace POS_qu
             {
                 txtCashback.Text = "$0.00";
             }
+
+            // 🔥 Panggil event ke form utama agar bisa update kalkulasi global
+            PaymentAmountChanged?.Invoke(PaymentAmount);
         }
 
 
@@ -122,6 +134,44 @@ namespace POS_qu
 
         }
 
-   
+        public event Action<decimal> GlobalDiscountChanged;
+        public event Action<decimal> PaymentAmountChanged;
+
+        public decimal GlobalDiscountPercent { get; private set; }
+        public decimal GrandTotal { get; private set; }
+
+        private void txtGlobalDiscountPercent_TextChanged(object sender, EventArgs e)
+        {
+            if (!decimal.TryParse(txtGlobalDiscountPercent.Text, out decimal discountPercent))
+                discountPercent = 0;
+
+            if (discountPercent > 100)
+            {
+                discountPercent = 100;
+                txtGlobalDiscountPercent.Text = "100";
+            }
+
+            decimal discountedTotal = totalAmount - (totalAmount * discountPercent / 100);
+
+            // Simpan ke properti publik
+            GlobalDiscountPercent = discountPercent;
+            GrandTotal = discountedTotal;
+
+            // 🔥 Kirim event ke form utama (agar panggil CalculateAllTotals)
+            GlobalDiscountChanged?.Invoke(discountPercent);
+
+            // Update tampilan
+            lblGrandTotal.Text = "Grand Total: " + discountedTotal.ToString("C");
+
+            if (decimal.TryParse(txtPaymentAmount.Text, out decimal paymentAmount))
+            {
+                decimal cashback = paymentAmount - discountedTotal;
+                txtCashback.Text = cashback > 0 ? cashback.ToString("C") : "$0.00";
+            }
+        }
+
+
+
+
     }
 }

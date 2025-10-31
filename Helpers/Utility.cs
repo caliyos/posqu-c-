@@ -12,7 +12,7 @@ namespace POS_qu.Helpers
 {
     class Utility
     {
-        private static string vStrConnection = "Host=localhost;Port=5433;Username=postgres;Password=postgres11;Database=posqu";
+        //private static string vStrConnection = "Host=localhost;Port=5433;Username=postgres;Password=postgres11;Database=posqu";
 
         public static string GetPcId()
         {
@@ -38,7 +38,7 @@ namespace POS_qu.Helpers
         {
             string terminalName = null;
 
-            using (var conn = new NpgsqlConnection(vStrConnection))
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 try
                 {

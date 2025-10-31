@@ -55,9 +55,9 @@ namespace POS_qu
             //string shift = Utility.GetCurrentShift();
 
 
-            //var user = SessionUser.GetCurrentUser();
-            //string pcId = Utility.GetPcId();
-            //labelSessionInfo.Text = $"User: {user.Username} | Terminal: {user.TerminalId} | Shift: {user.ShiftId} |pcid: {pcId}";
+            var user = SessionUser.GetCurrentUser();
+            string pcId = Utility.GetPcId();
+            labelSessionInfo.Text = $"User: {user.Username} | Terminal: {user.TerminalId} | Shift: {user.ShiftId} |pcid: {pcId}";
             //txtCariBarang.Focus();
 
             this.Shown += Casher_POS_Shown;
@@ -319,13 +319,13 @@ namespace POS_qu
         //    return receipt.ToString();
         //}
         private string GenerateReceiptText(
-     string terminal,
-     string user,
-     string shift,
-     string statusBayar,
-     string jumlahBayar,
-     string metodeBayar,
-     string kembalian)
+            string terminal,
+            string user,
+            string shift,
+            string statusBayar,
+            string jumlahBayar,
+            string metodeBayar,
+            string kembalian)
         {
             StringBuilder receipt = new StringBuilder();
 
@@ -368,7 +368,7 @@ namespace POS_qu
             receipt.AppendLine($"Waktu    : {DateTime.Now:HH:mm:ss}");
             receipt.AppendLine("------------------------------");
 
-            // === 4️⃣ Detail item + diskon + catatan ===
+            // === 4️⃣ Detail item ===
             decimal subTotal = 0;
             decimal totalDiscount = 0;
 
@@ -380,62 +380,67 @@ namespace POS_qu
                 string itemName = row.Cells["name"].Value.ToString();
                 int qty = Convert.ToInt32(row.Cells["stock"].Value ?? 0);
                 decimal price = Convert.ToDecimal(row.Cells["sell_price"].Value ?? 0);
-
-                // Ambil diskon dari kolom "discount" sebagai persen
                 decimal discountPercent = Convert.ToDecimal(row.Cells["discount"]?.Value ?? 0);
+                string note = row.Cells["note"]?.Value?.ToString()?.Trim() ?? "";
+
                 decimal totalBeforeDiscount = price * qty;
                 decimal discountAmount = totalBeforeDiscount * (discountPercent / 100);
-                decimal totalAfterDiscount = totalBeforeDiscount - discountAmount;
+                decimal rowTotal = totalBeforeDiscount - discountAmount;
 
                 subTotal += totalBeforeDiscount;
                 totalDiscount += discountAmount;
 
-                // Baris 1: nama item dan total sesudah diskon
+                // === Nama item dan total
                 string itemLine = $"{qty}x {itemName}";
                 if (itemLine.Length > 20) itemLine = itemLine.Substring(0, 20);
-                receipt.AppendLine(itemLine.PadRight(20) + $"{totalAfterDiscount:N0}".PadLeft(10));
+                receipt.AppendLine(itemLine.PadRight(20) + $"{rowTotal:N0}".PadLeft(10));
 
-                // Baris 2: diskon per item (jika ada)
+                // === Diskon item (jika ada)
                 if (discountPercent > 0)
                 {
                     string discLine = $"  Diskon: {discountPercent:N0}%".PadRight(20) + $"-{discountAmount:N0}".PadLeft(10);
                     receipt.AppendLine(discLine);
                 }
 
-                // Baris 3: catatan (jika ada)
-                if (row.Cells["note"]?.Value != null && !string.IsNullOrWhiteSpace(row.Cells["note"].Value.ToString()))
-                {
-                    string note = row.Cells["note"].Value.ToString().Trim();
+                // === Catatan (jika ada)
+                if (!string.IsNullOrEmpty(note))
                     receipt.AppendLine($"  Catatan: {note}");
-                }
             }
 
             receipt.AppendLine("------------------------------");
 
-            // === 5️⃣ Ringkasan subtotal & total ===
+            // === 5️⃣ Ringkasan subtotal & diskon
             decimal grandTotal = subTotal - totalDiscount;
+
             receipt.AppendLine($"Subtotal".PadRight(20) + $"{subTotal:N0}".PadLeft(10));
-            receipt.AppendLine($"Diskon".PadRight(20) + $"-{totalDiscount:N0}".PadLeft(10));
+            receipt.AppendLine($"Item Discount".PadRight(20) + $"-{totalDiscount:N0}".PadLeft(10));
+
+            // === 6️⃣ Diskon global (jika ada)
+            if (GlobalDiscountPercent > 0)
+            {
+                decimal globalDiscountValue = grandTotal * (GlobalDiscountPercent / 100);
+                grandTotal -= globalDiscountValue;
+                receipt.AppendLine($"Global Disc ({GlobalDiscountPercent:N0}%)".PadRight(20) + $"-{globalDiscountValue:N0}".PadLeft(10));
+            }
+
             receipt.AppendLine("------------------------------");
             receipt.AppendLine($"Grand Total".PadRight(20) + $"{grandTotal:N0}".PadLeft(10));
-            receipt.AppendLine("------------------------------");
 
-            // === 6️⃣ Info pembayaran ===
-            receipt.AppendLine($"Status Bayar : {statusBayar}");
-            receipt.AppendLine($"Metode Bayar : {metodeBayar}");
-
-            // Format jumlah bayar dan kembalian ke format ribuan
+            // === 7️⃣ Info pembayaran & cashback ===
             if (decimal.TryParse(jumlahBayar, out decimal jmlBayar))
                 jumlahBayar = jmlBayar.ToString("N0");
+
             if (decimal.TryParse(kembalian, out decimal kemb))
                 kembalian = kemb.ToString("N0");
 
+            receipt.AppendLine("------------------------------");
+            receipt.AppendLine($"Status Bayar : {statusBayar}");
+            receipt.AppendLine($"Metode Bayar : {metodeBayar}");
             receipt.AppendLine($"Jumlah Bayar : {jumlahBayar}");
             receipt.AppendLine($"Kembalian    : {kembalian}");
             receipt.AppendLine("------------------------------");
 
-
-            // === 7️⃣ Footer ===
+            // === 8️⃣ Footer ===
             if (showFooter && !string.IsNullOrEmpty(footer))
                 receipt.AppendLine(footer);
 
@@ -444,12 +449,26 @@ namespace POS_qu
             return receipt.ToString();
         }
 
+
+
+
+
+
+
+
+
+        /// <summary>
+        /// /////////////////////////////////////////////////CALCULATE TOTALS///////////////////////////////////////////////
+        /// </summary>
+        public decimal GlobalDiscountPercent { get; set; } = 0;
+        private decimal Cashback = 0;
+        private decimal PaymentAmount = 0;
+
         private void CalculateAllTotals()
         {
             decimal totalCart = 0;
             int numOfItems = 0;
             decimal subTotal = 0;
-            decimal totalTax = 0;
             decimal totalDiscount = 0;
 
             Debug.WriteLine("Recalculating totals...");
@@ -465,9 +484,10 @@ namespace POS_qu
             tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 70));
             tableLayoutPanel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
 
+            // === Hitung per item ===
             foreach (DataGridViewRow row in dataGridViewCart4.Rows)
             {
-                if (row.Cells["name"].Value == null) continue;
+                if (row.IsNewRow || row.Cells["name"].Value == null) continue;
 
                 string itemName = row.Cells["name"].Value.ToString();
                 int rowQty = Convert.ToInt32(row.Cells["stock"].Value ?? 0);
@@ -475,7 +495,6 @@ namespace POS_qu
                 decimal rowDiscountPercent = Convert.ToDecimal(row.Cells["discount"].Value ?? 0);
                 string note = row.Cells["note"]?.Value?.ToString()?.Trim() ?? "";
 
-                // Hitung total & potongan
                 decimal totalBeforeDiscount = rowPrice * rowQty;
                 decimal discountAmount = totalBeforeDiscount * (rowDiscountPercent / 100);
                 decimal rowTotal = totalBeforeDiscount - discountAmount;
@@ -484,7 +503,7 @@ namespace POS_qu
                 totalCart += rowTotal;
                 totalDiscount += discountAmount;
 
-                // === Baris 1: nama item dan total ===
+                // === Baris item ===
                 Label itemNameLabel = new Label
                 {
                     AutoSize = true,
@@ -507,7 +526,6 @@ namespace POS_qu
                 tableLayoutPanel.Controls.Add(itemNameLabel, 0, tableLayoutPanel.RowCount - 1);
                 tableLayoutPanel.Controls.Add(itemTotalLabel, 1, tableLayoutPanel.RowCount - 1);
 
-                // === Baris 2: Diskon (jika ada) ===
                 if (rowDiscountPercent > 0)
                 {
                     Label discountLabel = new Label
@@ -518,13 +536,11 @@ namespace POS_qu
                         Font = new Font("Segoe UI", 8.5f, FontStyle.Italic),
                         Padding = new Padding(5, 0, 5, 0)
                     };
-
                     tableLayoutPanel.RowCount++;
                     tableLayoutPanel.Controls.Add(discountLabel, 0, tableLayoutPanel.RowCount - 1);
                     tableLayoutPanel.SetColumnSpan(discountLabel, 2);
                 }
 
-                // === Baris 3: Catatan (jika ada) ===
                 if (!string.IsNullOrEmpty(note))
                 {
                     Label noteLabel = new Label
@@ -535,18 +551,15 @@ namespace POS_qu
                         Font = new Font("Segoe UI", 8.5f, FontStyle.Italic),
                         Padding = new Padding(5, 0, 5, 2)
                     };
-
                     tableLayoutPanel.RowCount++;
                     tableLayoutPanel.Controls.Add(noteLabel, 0, tableLayoutPanel.RowCount - 1);
                     tableLayoutPanel.SetColumnSpan(noteLabel, 2);
                 }
-
-                Debug.WriteLine($"Item: {itemName}, Qty: {rowQty}, Price: {rowPrice}, Disc: {rowDiscountPercent}%, Note: {note}");
             }
 
             flowLayoutPanel.Controls.Add(tableLayoutPanel);
 
-            // Garis pemisah
+            // === Garis pemisah ===
             Label separator = new Label
             {
                 AutoSize = false,
@@ -556,8 +569,8 @@ namespace POS_qu
             };
             flowLayoutPanel.Controls.Add(separator);
 
-            // === Totals ===
-            subTotal = totalCart + totalDiscount; // sebelum diskon
+            // === Perhitungan total ===
+            subTotal = totalCart + totalDiscount;
 
             TableLayoutPanel totalsTable = new TableLayoutPanel();
             totalsTable.ColumnCount = 2;
@@ -592,18 +605,39 @@ namespace POS_qu
             }
 
             AddRow("Subtotal", $"{subTotal:N0}");
-            AddRow("Discount", $"{totalDiscount:N0}");
-            AddRow("Grand Total", $"{totalCart:N0}", true);
+            AddRow("Item Discount", $"-{totalDiscount:N0}");
+
+            decimal grandTotal = totalCart;
+
+            // === Diskon global ===
+            if (GlobalDiscountPercent > 0)
+            {
+                decimal globalDiscountValue = grandTotal * (GlobalDiscountPercent / 100);
+                grandTotal -= globalDiscountValue;
+                AddRow($"Global Discount ({GlobalDiscountPercent:N0}%)", $"-{globalDiscountValue:N0}");
+            }
+
+            // === Tambah cashback ===
+            if (PaymentAmount > 0)
+            {
+                Cashback = PaymentAmount - grandTotal;
+                if (Cashback < 0) Cashback = 0; // biar gak minus
+            }
+
+            AddRow("Grand Total", $"{grandTotal:N0}", true);
+            AddRow("Cashback", $"{Cashback:N0}");
 
             flowLayoutPanel.Controls.Add(totalsTable);
 
-            // Update label di UI
+            // === Update label UI utama ===
             labelNumOfItems.Text = numOfItems.ToString();
-            label2.Text = $"{totalCart:N0}";
+            label2.Text = $"{grandTotal:N0}";
         }
 
 
-
+        /// <summary>
+        /// /////////////////////////////////////////////////END CALCULATE TOTALS///////////////////////////////////////////////
+        /// </summary>
 
         private void SimpanReceiptKeDatabase(string receiptMessage)
         {
@@ -1418,15 +1452,35 @@ namespace POS_qu
 
         private void btnOrder_Click(object sender, EventArgs e)
         {
-            var result = MessageBox.Show("Apakah Anda ingin menyimpan data sebagai Pesanan/Bon/Utang/Nota ?", "Konfirmasi", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+            // 🔍 Cek apakah keranjang kosong
+            bool isCartEmpty = true;
+            foreach (DataGridViewRow row in dataGridViewCart4.Rows)
+            {
+                if (!row.IsNewRow && row.Cells["barcode"].Value != null)
+                {
+                    isCartEmpty = false;
+                    break;
+                }
+            }
+
+            if (isCartEmpty)
+            {
+                MessageBox.Show("Keranjang masih kosong. Tambahkan barang terlebih dahulu sebelum membuat order.",
+                    "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtCariBarang.Focus();
+                return;
+            }
+
+            // ✅ Lanjut jika cart tidak kosong
+            var result = MessageBox.Show("Apakah Anda ingin menyimpan data sebagai Pesanan/Bon/Utang/Nota ?",
+                "Konfirmasi", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
 
             if (result == DialogResult.Cancel)
             {
                 return; // Batalkan
             }
-           
-            // Kalau No, lanjut buka form Order untuk input data order baru tanpa simpan dulu
 
+            // Kalau No, bisa diarahkan ke mode input manual (jika kamu punya logika khusus)
             using (OrderForm orderModal = new OrderForm())
             {
                 if (orderModal.ShowDialog() == DialogResult.OK)
@@ -1435,32 +1489,30 @@ namespace POS_qu
                     Orders order = orderModal.GetOrder();
 
                     OrderController controller = new OrderController();
-                    if (controller.SaveOrderWithDetails(order,1,100, out string errMsg))
+                    if (controller.SaveOrderWithDetails(order, 1, 100, out string errMsg))
                     {
-
-                        // Clear the cart (remove all rows)
+                        // Bersihkan cart
                         dataGridViewCart4.Rows.Clear();
-
-                        // Reset total label
                         label2.Text = "0.00";
-
-                        // Set focus back to search box
                         txtCariBarang.Focus();
-                        MessageBox.Show("Order berhasil disimpan!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        // Lakukan refresh list order atau logic lainnya jika perlu
+
+                        MessageBox.Show("Order berhasil disimpan!", "Sukses",
+                            MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                        // Refresh badge/order list jika perlu
+                        UpdateOrderBadge();
                     }
                     else
                     {
-                        MessageBox.Show("Gagal menyimpan order: " + errMsg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show("Gagal menyimpan order: " + errMsg, "Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
-
-
-            UpdateOrderBadge();
         }
 
-        private void LoadOrderToCart(int orderId)
+
+        private void LoadOrderToCart(int orderId, bool isReadOnly = false)
         {
             string query = @"
         SELECT 
@@ -1518,6 +1570,19 @@ namespace POS_qu
             }
 
             CalculateAllTotals();
+
+            // 🔒 Jika mode readonly aktif
+            if (isReadOnly)
+            {
+                foreach (DataGridViewColumn col in dataGridViewCart4.Columns)
+                {
+                    col.ReadOnly = true;
+                    col.DefaultCellStyle.BackColor = System.Drawing.Color.LightGray; // opsional: biar kelihatan beda
+                }
+
+                dataGridViewCart4.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.LightGray;
+                dataGridViewCart4.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
+            }
         }
 
 
@@ -1531,7 +1596,7 @@ namespace POS_qu
                     if (frm.SelectedOrderId > 0)
                     {
                         SelectedOrderId = frm.SelectedOrderId;
-                        LoadOrderToCart(frm.SelectedOrderId);
+                        LoadOrderToCart(frm.SelectedOrderId,true);
                     }
                 }
             }
@@ -1567,10 +1632,43 @@ namespace POS_qu
 
                 using (PaymentModalForm paymentModal = new PaymentModalForm(totalAmount))
                 {
+
+                    // 🔥 Event saat jumlah pembayaran berubah
+                    paymentModal.PaymentAmountChanged += (paymentAmount) =>
+                    {
+                        PaymentAmount = paymentAmount;  // ✅ simpan dulu nilainya
+                        CalculateAllTotals(); // misalnya mau update tampilan total/cashback di form utama
+                    };
+
+                    // 🔥 Daftarkan event SEBELUM ShowDialog()
+                    paymentModal.GlobalDiscountChanged += (discountPercent) =>
+                    {
+                        GlobalDiscountPercent = discountPercent;
+                        CalculateAllTotals(); // update subtotal, diskon, grand total
+
+                    };
                     if (paymentModal.ShowDialog() == DialogResult.OK)
                     {
+
+                        decimal grandTotal = paymentModal.GrandTotal > 0 ? paymentModal.GrandTotal : totalAmount;
+                        GlobalDiscountPercent = paymentModal.GlobalDiscountPercent;
+
+
+                        // ✅ ambil juga nilai payment amount terakhir dari modal
+                        PaymentAmount = paymentModal.PaymentAmount;
+
+                        CalculateAllTotals(); // hitung ulang setelah modal ditutup
+
+                        if (paymentModal.PaymentAmount < grandTotal)
+                        {
+                            MessageBox.Show("Insufficient payment amount!", "Payment Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return;
+                        }
+
+
+
                         // Validate Payment Input
-                        if (paymentModal.PaymentAmount < totalAmount)
+                        if (paymentModal.PaymentAmount < grandTotal)
                         {
                             MessageBox.Show("Insufficient payment amount!", "Payment Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             return;
@@ -1600,9 +1698,11 @@ namespace POS_qu
                             TsCashback = 0,
                             TsMethod = paymentModal.PaymentMethod,
                             TsStatus = 1, // 1 = Paid
-                            TsChange = paymentModal.PaymentAmount - totalAmount,
+                            TsChange = paymentModal.PaymentAmount - grandTotal,
                             TsInternalNote = "Processed via POS system",
                             TsNote = "Test Note",
+                            TsDiscountTotal = totalAmount * (paymentModal.GlobalDiscountPercent / 100),
+                            TsGrandTotal = grandTotal,
                             TsCustomer = null,
                             TsFreename = "Guest",
                             //TerminalId = sessionUser.TerminalId,
@@ -1628,7 +1728,9 @@ namespace POS_qu
                                 TsCode = transaction.TsCode,
                                 TotalAmount = transaction.TsTotal,
                                 PaymentMethod = transaction.TsMethod,
-                                OrderId = transaction.OrderId
+                                OrderId = transaction.OrderId,
+                                DiscountTotal = transaction.TsDiscountTotal,   // ✅ diskon global dicatat
+                                GrandTotal = transaction.TsGrandTotal,         // ✅ total akhir dicatat
                             }
                         );
 
@@ -1734,6 +1836,8 @@ namespace POS_qu
             TotalAmount = transaction.TsTotal,
             PaymentAmount = transaction.TsPaymentAmount,
             Change = transaction.TsChange,
+            DiscountTotal = transaction.TsDiscountTotal,   // ✅ diskon global
+            GrandTotal = transaction.TsGrandTotal,         // ✅ total setelah diskon
             Items = transactionDetails.Select(d => new
             {
                 d.ItemId,
@@ -1802,6 +1906,21 @@ namespace POS_qu
 
                             // Set focus back to search box
                             txtCariBarang.Focus();
+
+                            GlobalDiscountPercent = 0;
+                            PaymentAmount = 0;
+                            Cashback = 0;
+                            CalculateAllTotals();
+
+                            // ✅ Kembalikan DataGridView ke mode editable lagi
+                            foreach (DataGridViewColumn col in dataGridViewCart4.Columns)
+                            {
+                                col.ReadOnly = false;
+                                col.DefaultCellStyle.BackColor = System.Drawing.Color.White;
+                            }
+
+                            dataGridViewCart4.DefaultCellStyle.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+                            dataGridViewCart4.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
 
                             MessageBox.Show("Payment successful!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }

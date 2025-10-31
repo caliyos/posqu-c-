@@ -14,6 +14,10 @@ namespace POS_qu.Models
         public string TsCode { get; set; } // ts_code
         public decimal TsTotal { get; set; } // ts_total
 
+        public decimal TsDiscountTotal { get; set; } // 
+
+        public decimal TsGrandTotal { get; set; } // 
+
         public decimal TsPaymentAmount { get; set; } // ✅ Add this property
         public decimal TsCashback { get; set; } = 0; // ts_cashback
         public string TsMethod { get; set; } // ts_method

@@ -747,17 +747,21 @@ WHERE items.id = @id";
             {
                 vCon.Open();
                 string sql = @"
-        INSERT INTO transactions (
-            ts_numbering, ts_code, ts_total, ts_payment_amount, ts_cashback, 
-            ts_method, ts_status, ts_change, ts_internal_note, ts_note, 
-            ts_customer, ts_freename, terminal_id, shift_id,user_id, created_by, created_at,order_id
-        ) 
-        VALUES (
-            @ts_numbering, @ts_code, @ts_total, @ts_payment_amount, @ts_cashback, 
-            @ts_method, @ts_status, @ts_change, @ts_internal_note, @ts_note, 
-            @ts_customer, @ts_freename, @terminal_id, @shift_id, @user_id,@created_by, @created_at, @order_id
-        ) 
-        RETURNING ts_id";
+    INSERT INTO transactions (
+        ts_numbering, ts_code, ts_total, ts_payment_amount, ts_cashback, 
+        ts_method, ts_status, ts_change, ts_internal_note, ts_note, 
+        ts_global_discount_amount, ts_grand_total, 
+        ts_customer, ts_freename, terminal_id, shift_id, user_id, 
+        created_by, created_at, order_id
+    ) 
+    VALUES (
+        @ts_numbering, @ts_code, @ts_total, @ts_payment_amount, @ts_cashback, 
+        @ts_method, @ts_status, @ts_change, @ts_internal_note, @ts_note, 
+        @ts_global_discount_amount, @ts_grand_total, 
+        @ts_customer, @ts_freename, @terminal_id, @shift_id, 
+        @user_id, @created_by, @created_at, @order_id
+    ) 
+    RETURNING ts_id";
 
                 using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
                 {
@@ -771,18 +775,24 @@ WHERE items.id = @id";
                     vCmd.Parameters.AddWithValue("@ts_change", transaction.TsChange);
                     vCmd.Parameters.AddWithValue("@ts_internal_note", transaction.TsInternalNote);
                     vCmd.Parameters.AddWithValue("@ts_note", transaction.TsNote);
+
+                    // ✅ Tambahan baru
+                    vCmd.Parameters.AddWithValue("@ts_global_discount_amount", transaction.TsDiscountTotal);
+                    vCmd.Parameters.AddWithValue("@ts_grand_total", transaction.TsGrandTotal);
+
                     vCmd.Parameters.AddWithValue("@ts_customer", (object)transaction.TsCustomer ?? DBNull.Value);
                     vCmd.Parameters.AddWithValue("@ts_freename", transaction.TsFreename);
-                    vCmd.Parameters.AddWithValue("@terminal_id", transaction.TerminalId); // TerminalId ditambahkan
-                    vCmd.Parameters.AddWithValue("@shift_id", transaction.ShiftId); // ShiftId ditambahkan
-                    vCmd.Parameters.AddWithValue("@user_id", transaction.UserId); // ShiftId ditambahkan
-                    vCmd.Parameters.AddWithValue("@created_by", transaction.CreatedBy); // CreatedBy dari sesi
+                    vCmd.Parameters.AddWithValue("@terminal_id", transaction.TerminalId);
+                    vCmd.Parameters.AddWithValue("@shift_id", transaction.ShiftId);
+                    vCmd.Parameters.AddWithValue("@user_id", transaction.UserId);
+                    vCmd.Parameters.AddWithValue("@created_by", transaction.CreatedBy);
                     vCmd.Parameters.AddWithValue("@created_at", transaction.CreatedAt);
                     vCmd.Parameters.AddWithValue("@order_id", (object)transaction.OrderId ?? DBNull.Value);
 
-                    return Convert.ToInt32(vCmd.ExecuteScalar()); // Mengembalikan transaction ID
+                    return Convert.ToInt32(vCmd.ExecuteScalar());
                 }
             }
+
         }
 
 
