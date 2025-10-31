@@ -109,3 +109,9 @@ coverage/
 *.diff
 *.patch
 .gitignore.swp
+
+
+## JANGAN LUPA
+#git rm -r --cached .vs bin obj
+#git add .
+#git commit -m "Fix .gitignore: exclude .vs, bin, obj, and build artifacts"
