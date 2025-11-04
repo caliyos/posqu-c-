@@ -28,6 +28,8 @@ namespace POS_qu.Models
         public int? TsCustomer { get; set; } // ts_customer (nullable for optional reference)
         public string TsFreename { get; set; } // ts_freename (free text customer name)
 
+        public decimal TsDelivery { get; set; } = 0; 
+
         // Menambahkan properti untuk ShiftId dan TerminalId
         public int? ShiftId { get; set; }  // shift_id (nullable)
         public int? TerminalId { get; set; }  // terminal_id (nullable)

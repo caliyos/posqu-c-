@@ -752,14 +752,14 @@ WHERE items.id = @id";
         ts_method, ts_status, ts_change, ts_internal_note, ts_note, 
         ts_global_discount_amount, ts_grand_total, 
         ts_customer, ts_freename, terminal_id, shift_id, user_id, 
-        created_by, created_at, order_id
+        created_by, created_at, order_id,ts_delivery_amount
     ) 
     VALUES (
         @ts_numbering, @ts_code, @ts_total, @ts_payment_amount, @ts_cashback, 
         @ts_method, @ts_status, @ts_change, @ts_internal_note, @ts_note, 
         @ts_global_discount_amount, @ts_grand_total, 
         @ts_customer, @ts_freename, @terminal_id, @shift_id, 
-        @user_id, @created_by, @created_at, @order_id
+        @user_id, @created_by, @created_at, @order_id, @ts_delivery_amount
     ) 
     RETURNING ts_id";
 
@@ -788,6 +788,7 @@ WHERE items.id = @id";
                     vCmd.Parameters.AddWithValue("@created_by", transaction.CreatedBy);
                     vCmd.Parameters.AddWithValue("@created_at", transaction.CreatedAt);
                     vCmd.Parameters.AddWithValue("@order_id", (object)transaction.OrderId ?? DBNull.Value);
+                    vCmd.Parameters.AddWithValue("@ts_delivery_amount", transaction.TsDelivery);
 
                     return Convert.ToInt32(vCmd.ExecuteScalar());
                 }
@@ -901,47 +902,56 @@ VALUES (
                 }
             }
         }
-        public bool AddPendingTransaction(int terminalId, int cashierId, int itemId, string barcode, string unit, decimal quantity, decimal sellPrice, decimal discountPercentage, decimal discountTotal, decimal tax, decimal total, string note)
-{
-    using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
-    {
-        vCon.Open();
-        string query = @"
-            INSERT INTO pending_transactions 
-            (terminal_id, cashier_id, item_id, barcode, unit, quantity, sell_price, discount_percentage, discount_total, tax, total, note) 
-            VALUES (@terminalId, @cashierId, @itemId, @barcode, @unit, @quantity, @sellPrice, @discountPercentage, @discountTotal, @tax, @total, @note) 
-            ON CONFLICT (terminal_id, item_id,unit) 
-            DO UPDATE SET 
-                quantity = pending_transactions.quantity + EXCLUDED.quantity, 
-                discount_percentage = EXCLUDED.discount_percentage,
-                discount_total = EXCLUDED.discount_total,
-                tax = EXCLUDED.tax,
-                total = EXCLUDED.total,
-                note = EXCLUDED.note,
-                updated_at = CURRENT_TIMESTAMP 
-            RETURNING pt_id";
-
-        using (NpgsqlCommand cmd = new NpgsqlCommand(query, vCon))
+        public bool AddPendingTransaction(
+        int terminalId,
+        int cashierId,
+        int itemId,
+        string barcode,
+        string unit,
+        decimal quantity,
+        decimal sellPrice,
+        decimal discountPercentage,
+        decimal discountTotal,
+        decimal tax,
+        decimal total,
+        string note,
+        string cartSessionCode)
         {
-            cmd.Parameters.AddWithValue("@terminalId", terminalId);
-            cmd.Parameters.AddWithValue("@cashierId", cashierId);
-            cmd.Parameters.AddWithValue("@itemId", itemId);
-            cmd.Parameters.AddWithValue("@barcode", barcode);
-            cmd.Parameters.AddWithValue("@unit", unit);
-            cmd.Parameters.AddWithValue("@quantity", quantity);
-            cmd.Parameters.AddWithValue("@sellPrice", sellPrice);
-            cmd.Parameters.AddWithValue("@discountPercentage", discountPercentage);
-            cmd.Parameters.AddWithValue("@discountTotal", discountTotal);
-            cmd.Parameters.AddWithValue("@tax", tax);
-            cmd.Parameters.AddWithValue("@total", total);
-            cmd.Parameters.AddWithValue("@note", note ?? (object)DBNull.Value);
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                vCon.Open();
+                string query = @"
+INSERT INTO pending_transactions 
+    (terminal_id, cashier_id, item_id, barcode, unit, quantity, sell_price, discount_percentage, discount_total, tax, total, note, cart_session_code)
+VALUES 
+    (@terminalId, @cashierId, @itemId, @barcode, @unit, @quantity, @sellPrice, @discountPercentage, @discountTotal, @tax, @total, @note, @cartSessionCode)
+RETURNING pt_id;
+";
 
-            return cmd.ExecuteScalar() != null;
+                using (NpgsqlCommand cmd = new NpgsqlCommand(query, vCon))
+                {
+                    cmd.Parameters.AddWithValue("@terminalId", terminalId);
+                    cmd.Parameters.AddWithValue("@cashierId", cashierId);
+                    cmd.Parameters.AddWithValue("@itemId", itemId);
+                    cmd.Parameters.AddWithValue("@barcode", barcode);
+                    cmd.Parameters.AddWithValue("@unit", unit);
+                    cmd.Parameters.AddWithValue("@quantity", quantity);
+                    cmd.Parameters.AddWithValue("@sellPrice", sellPrice);
+                    cmd.Parameters.AddWithValue("@discountPercentage", discountPercentage);
+                    cmd.Parameters.AddWithValue("@discountTotal", discountTotal);
+                    cmd.Parameters.AddWithValue("@tax", tax);
+                    cmd.Parameters.AddWithValue("@total", total);
+                    cmd.Parameters.AddWithValue("@note", note ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@cartSessionCode", cartSessionCode ?? (object)DBNull.Value);
+
+                    return cmd.ExecuteScalar() != null;
+                }
+            }
         }
-    }
-}
 
-public bool UpdatePendingTransactionQuantity(int terminalId, int itemId, decimal newQuantity)
+
+
+        public bool UpdatePendingTransactionQuantity(int terminalId, int itemId, decimal newQuantity)
 {
     using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
     {
@@ -978,13 +988,28 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
 
 
 
-        
-        public bool UpdatePendingTransactionStock(int terminalId, int itemId, decimal newQuantity,decimal newTotal,string unit)
+
+        public bool UpdatePendingTransactionStock(
+          int terminalId,
+          int itemId,
+          decimal newQuantity,
+          decimal newTotal,
+          string unit,
+          string cartSessionCode
+      )
         {
             using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
-                string query = "UPDATE pending_transactions SET quantity = @newQuantity,total = @newTotal, updated_at = CURRENT_TIMESTAMP WHERE terminal_id = @terminalId AND item_id = @itemId AND unit = @unit";
+                string query = @"
+UPDATE pending_transactions
+SET quantity = @newQuantity,
+    total = @newTotal,
+    updated_at = CURRENT_TIMESTAMP
+WHERE terminal_id = @terminalId
+  AND item_id = @itemId
+  AND unit = @unit
+  AND cart_session_code = @cartSessionCode"; // 🔹 filter by cart session
 
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, vCon))
                 {
@@ -993,10 +1018,13 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
                     cmd.Parameters.AddWithValue("@terminalId", terminalId);
                     cmd.Parameters.AddWithValue("@itemId", itemId);
                     cmd.Parameters.AddWithValue("@unit", unit);
+                    cmd.Parameters.AddWithValue("@cartSessionCode", cartSessionCode);
+
                     return cmd.ExecuteNonQuery() > 0;
                 }
             }
         }
+
 
         public bool DeletePendingTransaction(int terminalId, int itemId)
         {
@@ -1240,6 +1268,66 @@ public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal
             {
                 MessageBox.Show("Failed to update order: " + ex.Message);
                 return false;
+            }
+        }
+
+
+
+        public int SaveDraftOrder(int terminalId, int cashierId, string customerName, string note, decimal total, decimal globalDiscount = 0, string csc = null)
+        {
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                vCon.Open();
+                using (var transaction = vCon.BeginTransaction())
+                {
+                    try
+                    {
+                        // 1️⃣ Insert header draft
+                        string sqlOrder = @"
+INSERT INTO pending_orders 
+    (terminal_id, cashier_id, customer_name, note, total, global_discount, po_cart_session_code, status)
+VALUES 
+    (@terminal_id, @cashier_id, @customer_name, @note, @total, @global_discount, @po_cart_session_code, 'draft')
+RETURNING po_id";
+
+                        int poId;
+                        using (NpgsqlCommand cmd = new NpgsqlCommand(sqlOrder, vCon))
+                        {
+                            cmd.Parameters.AddWithValue("@terminal_id", terminalId);
+                            cmd.Parameters.AddWithValue("@cashier_id", cashierId);
+                            cmd.Parameters.AddWithValue("@customer_name", (object)customerName ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@note", (object)note ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@total", total);
+                            cmd.Parameters.AddWithValue("@global_discount", globalDiscount);
+                            cmd.Parameters.AddWithValue("@po_cart_session_code", (object)csc ?? DBNull.Value);
+
+                            poId = Convert.ToInt32(cmd.ExecuteScalar());
+                        }
+
+                        // 2️⃣ Update semua pending_transactions terkait terminal + cashier + cart_session_code
+                        string sqlUpdateTransactions = @"
+UPDATE pending_transactions
+SET po_id = @po_id
+WHERE terminal_id = @terminal_id AND cashier_id = @cashier_id AND cart_session_code = @po_cart_session_code";
+
+                        using (NpgsqlCommand cmdUpdate = new NpgsqlCommand(sqlUpdateTransactions, vCon))
+                        {
+                            cmdUpdate.Parameters.AddWithValue("@po_id", poId);
+                            cmdUpdate.Parameters.AddWithValue("@terminal_id", terminalId);
+                            cmdUpdate.Parameters.AddWithValue("@cashier_id", cashierId);
+                            cmdUpdate.Parameters.AddWithValue("@po_cart_session_code", (object)csc ?? DBNull.Value);
+                            cmdUpdate.ExecuteNonQuery();
+                        }
+
+                        transaction.Commit();
+                        return poId;
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        throw;
+                    }
+                }
             }
         }
 

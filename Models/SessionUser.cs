@@ -10,7 +10,7 @@ namespace POS_qu.Models
     {
         private static SessionUser instance;
 
-        public long UserId { get; private set; }
+        public int UserId { get; private set; }
 
         public long LoginId { get; private set; }
         public string Username { get; private set; }

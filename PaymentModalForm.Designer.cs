@@ -7,8 +7,6 @@
         private Label lblTotal;
         private Label lblPaymentAmount;
         private TextBox txtPaymentAmount;
-        private Label lblCashback;
-        private TextBox txtCashback;
         private Label lblPaymentMethod;
         private ComboBox cmbPaymentMethod;
         private Button btnPay;
@@ -49,7 +47,6 @@
         // 🔹 Diskon keseluruhan
         private Label lblGlobalDiscount;
         private TextBox txtGlobalDiscountPercent;
-        private Label lblGrandTotal;
 
         protected override void Dispose(bool disposing)
         {
@@ -65,8 +62,6 @@
             lblTotal = new Label();
             lblPaymentAmount = new Label();
             txtPaymentAmount = new TextBox();
-            lblCashback = new Label();
-            txtCashback = new TextBox();
             lblPaymentMethod = new Label();
             cmbPaymentMethod = new ComboBox();
             btnPay = new Button();
@@ -94,6 +89,12 @@
             txtCashPart = new TextBox();
             lblCardPart = new Label();
             txtCardPart = new TextBox();
+            lblGlobalDiscount = new Label();
+            txtGlobalDiscountPercent = new TextBox();
+            label2 = new Label();
+            label3 = new Label();
+            txtDeliveryAmount = new TextBox();
+            txtGlobalNote = new TextBox();
             panelCardDetails.SuspendLayout();
             panelEwalletDetails.SuspendLayout();
             panelBankTransfer.SuspendLayout();
@@ -123,30 +124,13 @@
             txtPaymentAmount.Location = new Point(232, 64);
             txtPaymentAmount.Name = "txtPaymentAmount";
             txtPaymentAmount.Size = new Size(150, 31);
-            txtPaymentAmount.TabIndex = 2;
+            txtPaymentAmount.TabIndex = 1;
             txtPaymentAmount.TextChanged += txtPaymentAmount_TextChanged;
-            // 
-            // lblCashback
-            // 
-            lblCashback.AutoSize = true;
-            lblCashback.Location = new Point(30, 110);
-            lblCashback.Name = "lblCashback";
-            lblCashback.Size = new Size(96, 25);
-            lblCashback.TabIndex = 3;
-            lblCashback.Text = "Cashback: ";
-            // 
-            // txtCashback
-            // 
-            txtCashback.Location = new Point(232, 112);
-            txtCashback.Name = "txtCashback";
-            txtCashback.ReadOnly = true;
-            txtCashback.Size = new Size(150, 31);
-            txtCashback.TabIndex = 4;
             // 
             // lblPaymentMethod
             // 
             lblPaymentMethod.AutoSize = true;
-            lblPaymentMethod.Location = new Point(30, 150);
+            lblPaymentMethod.Location = new Point(30, 110);
             lblPaymentMethod.Name = "lblPaymentMethod";
             lblPaymentMethod.Size = new Size(157, 25);
             lblPaymentMethod.TabIndex = 5;
@@ -156,18 +140,18 @@
             // 
             cmbPaymentMethod.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbPaymentMethod.Items.AddRange(new object[] { "Cash", "Card", "QRIS", "Bank Transfer", "Split Payment" });
-            cmbPaymentMethod.Location = new Point(232, 152);
+            cmbPaymentMethod.Location = new Point(232, 112);
             cmbPaymentMethod.Name = "cmbPaymentMethod";
             cmbPaymentMethod.Size = new Size(150, 33);
-            cmbPaymentMethod.TabIndex = 6;
+            cmbPaymentMethod.TabIndex = 2;
             cmbPaymentMethod.SelectedIndexChanged += cmbPaymentMethod_SelectedIndexChanged;
             // 
             // btnPay
             // 
-            btnPay.Location = new Point(232, 320);
+            btnPay.Location = new Point(232, 344);
             btnPay.Name = "btnPay";
             btnPay.Size = new Size(120, 40);
-            btnPay.TabIndex = 9;
+            btnPay.TabIndex = 7;
             btnPay.Text = "Pay";
             btnPay.UseVisualStyleBackColor = true;
             btnPay.Click += btnPay_Click;
@@ -175,7 +159,7 @@
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(32, 192);
+            label1.Location = new Point(32, 152);
             label1.Name = "label1";
             label1.Size = new Size(79, 25);
             label1.TabIndex = 7;
@@ -185,10 +169,10 @@
             // 
             cmbMember.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbMember.Items.AddRange(new object[] { "Yoz", "Kaleb", "Umum" });
-            cmbMember.Location = new Point(232, 192);
+            cmbMember.Location = new Point(232, 152);
             cmbMember.Name = "cmbMember";
             cmbMember.Size = new Size(150, 33);
-            cmbMember.TabIndex = 8;
+            cmbMember.TabIndex = 3;
             // 
             // panelCardDetails
             // 
@@ -376,48 +360,58 @@
             txtCardPart.Name = "txtCardPart";
             txtCardPart.Size = new Size(100, 31);
             txtCardPart.TabIndex = 3;
-
             // 
             // lblGlobalDiscount
             // 
-            lblGlobalDiscount = new Label();
             lblGlobalDiscount.AutoSize = true;
-            lblGlobalDiscount.Location = new Point(30, 232);
+            lblGlobalDiscount.Location = new Point(30, 192);
             lblGlobalDiscount.Name = "lblGlobalDiscount";
-            lblGlobalDiscount.Size = new Size(164, 25);
+            lblGlobalDiscount.Size = new Size(172, 25);
             lblGlobalDiscount.TabIndex = 14;
             lblGlobalDiscount.Text = "Global Discount (%):";
             // 
             // txtGlobalDiscountPercent
             // 
-            txtGlobalDiscountPercent = new TextBox();
-            txtGlobalDiscountPercent.Location = new Point(232, 232);
+            txtGlobalDiscountPercent.Location = new Point(232, 192);
             txtGlobalDiscountPercent.Name = "txtGlobalDiscountPercent";
             txtGlobalDiscountPercent.Size = new Size(150, 31);
-            txtGlobalDiscountPercent.TabIndex = 15;
+            txtGlobalDiscountPercent.TabIndex = 4;
             txtGlobalDiscountPercent.Text = "0";
             txtGlobalDiscountPercent.TextChanged += txtGlobalDiscountPercent_TextChanged;
-
-            Controls.Add(lblGlobalDiscount);
-            Controls.Add(txtGlobalDiscountPercent);
-            Controls.Add(lblGrandTotal);
-            Controls.Add(btnPay);
-
-
             // 
-            // lblGrandTotal
+            // label2
             // 
-            lblGrandTotal = new Label();
-            lblGrandTotal.AutoSize = true;
-            lblGrandTotal.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point);
-            lblGrandTotal.ForeColor = Color.DarkGreen;
-            lblGrandTotal.Location = new Point(30, 280);
-            lblGrandTotal.Name = "lblGrandTotal";
-            lblGrandTotal.Size = new Size(185, 32);
-            lblGrandTotal.TabIndex = 16;
-            lblGrandTotal.Text = "Grand Total: $0.00";
-
-
+            label2.AutoSize = true;
+            label2.Location = new Point(32, 248);
+            label2.Name = "label2";
+            label2.Size = new Size(145, 25);
+            label2.TabIndex = 14;
+            label2.Text = "Delivery Amount";
+            // 
+            // label3
+            // 
+            label3.AutoSize = true;
+            label3.Location = new Point(32, 288);
+            label3.Name = "label3";
+            label3.Size = new Size(107, 25);
+            label3.TabIndex = 14;
+            label3.Text = "Global Note";
+            // 
+            // txtDeliveryAmount
+            // 
+            txtDeliveryAmount.Location = new Point(232, 248);
+            txtDeliveryAmount.Name = "txtDeliveryAmount";
+            txtDeliveryAmount.Size = new Size(150, 31);
+            txtDeliveryAmount.TabIndex = 5;
+            txtDeliveryAmount.TextChanged += txtDeliveryAmount_TextChanged;
+            // 
+            // txtGlobalNote
+            // 
+            txtGlobalNote.Location = new Point(232, 288);
+            txtGlobalNote.Name = "txtGlobalNote";
+            txtGlobalNote.Size = new Size(150, 31);
+            txtGlobalNote.TabIndex = 6;
+            txtGlobalNote.TextChanged += txtGlobalNote_TextChanged;
             // 
             // PaymentModalForm
             // 
@@ -425,11 +419,15 @@
             AutoScaleMode = AutoScaleMode.Font;
             AutoScroll = true;
             ClientSize = new Size(1100, 600);
+            Controls.Add(label3);
+            Controls.Add(label2);
+            Controls.Add(lblGlobalDiscount);
+            Controls.Add(txtGlobalDiscountPercent);
             Controls.Add(lblTotal);
             Controls.Add(lblPaymentAmount);
+            Controls.Add(txtGlobalNote);
+            Controls.Add(txtDeliveryAmount);
             Controls.Add(txtPaymentAmount);
-            Controls.Add(lblCashback);
-            Controls.Add(txtCashback);
             Controls.Add(lblPaymentMethod);
             Controls.Add(cmbPaymentMethod);
             Controls.Add(label1);
@@ -445,6 +443,7 @@
             Name = "PaymentModalForm";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Payment Modal";
+            Load += PaymentModalForm_Load;
             panelCardDetails.ResumeLayout(false);
             panelCardDetails.PerformLayout();
             panelEwalletDetails.ResumeLayout(false);
@@ -456,5 +455,9 @@
             ResumeLayout(false);
             PerformLayout();
         }
+        private Label label2;
+        private Label label3;
+        private TextBox txtDeliveryAmount;
+        private TextBox txtGlobalNote;
     }
 }
