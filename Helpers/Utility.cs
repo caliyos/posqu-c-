@@ -33,6 +33,11 @@ namespace POS_qu.Helpers
                 return "Shift 3"; // Malam
         }
 
+        public static string getTrxNumbering()
+        {
+            return "TXN-" + DateTime.Now.ToString("yyyyMMddHHmmss");
+        }
+
         // Method untuk mengambil nama terminal berdasarkan PC ID
         public static string GetTerminalName(string pcId)
         {

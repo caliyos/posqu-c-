@@ -214,8 +214,42 @@ namespace POS_qu
             // Jika bukan Paid → lanjutkan
             SelectedOrderId = Convert.ToInt32(row.Cells["order_id"].Value);
             this.DialogResult = DialogResult.OK;
+            this.ActionType = "addtocart";
+            this.Close();
+        }
+        public string ActionType { get; private set; } // "load" atau "delete"
+
+        private void btnDelOrder_Click(object sender, EventArgs e)
+        {
+            var row = dgvOrders.Rows.Cast<DataGridViewRow>()
+                        .FirstOrDefault(r => Convert.ToBoolean(r.Cells["Select"].Value));
+
+            if (row == null)
+            {
+                MessageBox.Show("Pilih minimal 1 order!", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            // Ambil status order
+            string statusText = row.Cells["order_status"].FormattedValue.ToString().Trim().ToLower();
+
+            // Cegah jika status = Paid
+            if (statusText == "paid" || statusText == "lunas")
+            {
+                MessageBox.Show("Order ini sudah dibayar dan tidak dapat dimuat ulang ke keranjang.",
+                    "Order Selesai", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Jika bukan Paid → lanjutkan
+            SelectedOrderId = Convert.ToInt32(row.Cells["order_id"].Value);
+            this.DialogResult = DialogResult.OK;
+            this.ActionType = "deleteorder";
             this.Close();
         }
 
+
+
+        
     }
 }

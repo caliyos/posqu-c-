@@ -328,7 +328,7 @@
             button1.TabIndex = 1;
             button1.Text = "List Draft";
             button1.UseVisualStyleBackColor = false;
-            button1.Click += buttonDraft_Click;
+            button1.Click += buttonListDraft_Click;
             // 
             // Casher_POS
             // 

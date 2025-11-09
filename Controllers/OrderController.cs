@@ -163,6 +163,56 @@ ORDER BY created_at DESC
         }
 
 
+        public bool DeleteOrderDetail(int orderId)
+        {
+            using (var vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                vCon.Open();
+                using (var trans = vCon.BeginTransaction())
+                {
+                    try
+                    {
+                        // 1. Hapus detail order berdasarkan order_id
+                        string deleteDetails = @"
+                    DELETE FROM order_details
+                    WHERE order_id = @order_id;
+                ";
+
+                        using (var cmd = new NpgsqlCommand(deleteDetails, vCon, trans))
+                        {
+                            cmd.Parameters.AddWithValue("order_id", orderId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        // 2. (Opsional) Hapus juga record utama dari tabel orders
+                        //    jika kamu memang ingin menghapus order-nya juga.
+                        string deleteOrder = @"
+                    DELETE FROM orders
+                    WHERE order_id = @order_id;
+                ";
+
+                        using (var cmd = new NpgsqlCommand(deleteOrder, vCon, trans))
+                        {
+                            cmd.Parameters.AddWithValue("order_id", orderId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        // 3. Commit transaksi
+                        trans.Commit();
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        trans.Rollback();
+                        Console.WriteLine("Error deleting order detail: " + ex.Message);
+                        return false;
+                    }
+                }
+            }
+        }
+
+
+
         public bool SaveOrderWithDetails(Orders order, int terminalId, int cashierId, out string errorMessage)
         {
             errorMessage = string.Empty;

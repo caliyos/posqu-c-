@@ -24,20 +24,31 @@ namespace POS_qu.Models
     {
         public List<InvoiceItem> Items { get; set; } = new();
 
-        public decimal Subtotal { get; set; }           // total sebelum diskon global
-        public decimal TotalDiscount { get; set; }      // total diskon item
-        public decimal GlobalDiscountValue { get; set; }// diskon global
-        public decimal GlobalDiscountPercent { get; set; }
-        public decimal GrandTotal { get; set; }         // total akhir setelah diskon global
-        public decimal Cashback { get; set; }           // kembalian
-        public int NumOfItems { get; set; }            // jumlah total item
+        // Nilai dasar perhitungan
+        public decimal Subtotal { get; set; }               // Total sebelum diskon global
+        public decimal TotalDiscount { get; set; }          // Total diskon dari tiap item
+        public decimal GlobalDiscountPercent { get; set; }  // Diskon global dalam persen
+        public decimal GlobalDiscountValue { get; set; }    // Nilai diskon global dalam rupiah
+        public decimal DeliveryAmount { get; set; }         // Ongkir
+        public decimal GrandTotal { get; set; }             // Total akhir (setelah semua diskon dan ongkir)
+        public decimal PaymentAmount { get; set; }          // Jumlah uang yang dibayar
+        public decimal Cashback { get; set; }               // Kembalian
+        public string PaymentMethod { get; set; }               // Kembalian
+        
 
-        // Tambahan info transaksi
-        public string GlobalNote { get; set; }         // keterangan umum transaksi
-        public decimal DeliveryAmount { get; set; }         // keterangan umum transaksi
-        public string DeliveryName { get; set; }       // nama penerima
-        public string DeliveryAddress { get; set; }    // alamat pengiriman
-        public string DeliveryMethod { get; set; }     // kurir, ambil sendiri, dsb
-        public string DeliveryPhone { get; set; }      // no HP penerima
+        // Informasi tambahan transaksi
+        public string GlobalNote { get; set; }              // Catatan global transaksi
+        public string DeliveryName { get; set; }            // Nama penerima
+        public string DeliveryAddress { get; set; }         // Alamat pengiriman
+        public string DeliveryMethod { get; set; }          // Kurir / Ambil sendiri / dll
+        public string DeliveryPhone { get; set; }           // Nomor HP penerima
+
+        // Informasi meta transaksi
+        public string CartSessionCode { get; set; }         // Kode sesi keranjang (tracking internal)
+
+        public int NumOfItems { get; set; }
+        public int IsFromDraft { get; set; }
+        public int IsFromOrders { get; set; }
     }
+
 }

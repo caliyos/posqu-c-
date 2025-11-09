@@ -752,14 +752,14 @@ WHERE items.id = @id";
         ts_method, ts_status, ts_change, ts_internal_note, ts_note, 
         ts_global_discount_amount, ts_grand_total, 
         ts_customer, ts_freename, terminal_id, shift_id, user_id, 
-        created_by, created_at, order_id,ts_delivery_amount
+        created_by, created_at, order_id,ts_delivery_amount,cart_session_code
     ) 
     VALUES (
         @ts_numbering, @ts_code, @ts_total, @ts_payment_amount, @ts_cashback, 
         @ts_method, @ts_status, @ts_change, @ts_internal_note, @ts_note, 
         @ts_global_discount_amount, @ts_grand_total, 
         @ts_customer, @ts_freename, @terminal_id, @shift_id, 
-        @user_id, @created_by, @created_at, @order_id, @ts_delivery_amount
+        @user_id, @created_by, @created_at, @order_id, @ts_delivery_amount,@cart_session_code
     ) 
     RETURNING ts_id";
 
@@ -789,6 +789,7 @@ WHERE items.id = @id";
                     vCmd.Parameters.AddWithValue("@created_at", transaction.CreatedAt);
                     vCmd.Parameters.AddWithValue("@order_id", (object)transaction.OrderId ?? DBNull.Value);
                     vCmd.Parameters.AddWithValue("@ts_delivery_amount", transaction.TsDelivery);
+                    vCmd.Parameters.AddWithValue("@cart_session_code", transaction.CartSessionCode);
 
                     return Convert.ToInt32(vCmd.ExecuteScalar());
                 }
@@ -807,11 +808,11 @@ WHERE items.id = @id";
 INSERT INTO transaction_details (
     ts_id, item_id, tsd_barcode, tsd_sell_price, tsd_quantity, tsd_unit, tsd_note, 
     tsd_discount_per_item, tsd_discount_percentage, tsd_discount_total, 
-    tsd_tax, tsd_total, tsd_conversion_rate, tsd_price_per_unit, tsd_unit_variant, created_by, created_at) 
+    tsd_tax, tsd_total, tsd_conversion_rate, tsd_price_per_unit, tsd_unit_variant, created_by, created_at,cart_session_code) 
 VALUES (
     @ts_id, @item_id, @tsd_barcode, @tsd_sell_price, @tsd_quantity, @tsd_unit, @tsd_note, 
     @tsd_discount_per_item, @tsd_discount_percentage, @tsd_discount_total, 
-    @tsd_tax, @tsd_total, @tsd_conversion_rate, @tsd_price_per_unit,@tsd_unit_variant, @created_by, @created_at)";
+    @tsd_tax, @tsd_total, @tsd_conversion_rate, @tsd_price_per_unit,@tsd_unit_variant, @created_by, @created_at, @cart_session_code)";
 
                 foreach (var detail in details)
                 {
@@ -834,6 +835,7 @@ VALUES (
                         vCmd.Parameters.AddWithValue("@tsd_unit_variant", detail.TsdUnitVariant);
                         vCmd.Parameters.AddWithValue("@created_by", detail.CreatedBy);
                         vCmd.Parameters.AddWithValue("@created_at", detail.CreatedAt);
+                        vCmd.Parameters.AddWithValue("@cart_session_code", detail.CartSessionCode);
 
                         vCmd.ExecuteNonQuery();
                     }
@@ -903,32 +905,36 @@ VALUES (
             }
         }
         public bool AddPendingTransaction(
-        int terminalId,
-        int cashierId,
-        int itemId,
-        string barcode,
-        string unit,
-        decimal quantity,
-        decimal sellPrice,
-        decimal discountPercentage,
-        decimal discountTotal,
-        decimal tax,
-        decimal total,
-        string note,
-        string cartSessionCode)
+      int terminalId,
+      int cashierId,
+      int itemId,
+      string barcode,
+      string unit,
+      decimal quantity,
+      decimal sellPrice,
+      decimal discountPercentage,
+      decimal discountTotal,
+      decimal tax,
+      decimal total,
+      string note,
+      string cartSessionCode,
+      decimal conversionRate // ✅ kolom baru
+  )
         {
-            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+            using (var vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
                 string query = @"
 INSERT INTO pending_transactions 
-    (terminal_id, cashier_id, item_id, barcode, unit, quantity, sell_price, discount_percentage, discount_total, tax, total, note, cart_session_code)
+    (terminal_id, cashier_id, item_id, barcode, unit, quantity, sell_price, discount_percentage, 
+     discount_total, tax, total, note, cart_session_code, tsd_conversion_rate)
 VALUES 
-    (@terminalId, @cashierId, @itemId, @barcode, @unit, @quantity, @sellPrice, @discountPercentage, @discountTotal, @tax, @total, @note, @cartSessionCode)
+    (@terminalId, @cashierId, @itemId, @barcode, @unit, @quantity, @sellPrice, @discountPercentage,
+     @discountTotal, @tax, @total, @note, @cartSessionCode, @conversionRate)
 RETURNING pt_id;
 ";
 
-                using (NpgsqlCommand cmd = new NpgsqlCommand(query, vCon))
+                using (var cmd = new NpgsqlCommand(query, vCon))
                 {
                     cmd.Parameters.AddWithValue("@terminalId", terminalId);
                     cmd.Parameters.AddWithValue("@cashierId", cashierId);
@@ -943,6 +949,7 @@ RETURNING pt_id;
                     cmd.Parameters.AddWithValue("@total", total);
                     cmd.Parameters.AddWithValue("@note", note ?? (object)DBNull.Value);
                     cmd.Parameters.AddWithValue("@cartSessionCode", cartSessionCode ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@conversionRate", conversionRate); // ✅ tambahan
 
                     return cmd.ExecuteScalar() != null;
                 }
@@ -1026,55 +1033,110 @@ WHERE terminal_id = @terminalId
         }
 
 
-        public bool DeletePendingTransaction(int terminalId, int itemId)
+        //public bool DeletePendingTransaction(int terminalId, int itemId, string cart_session_code)
+        //{
+        //    using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+        //    {
+        //        vCon.Open();
+
+        //        string query = @"
+        //    DELETE FROM pending_transactions 
+        //    WHERE terminal_id = @terminalId 
+        //      AND item_id = @itemId 
+        //      AND cart_session_code = @cart_session_code";
+
+        //        using (NpgsqlCommand cmd = new NpgsqlCommand(query, vCon))
+        //        {
+        //            cmd.Parameters.AddWithValue("@terminalId", terminalId);
+        //            cmd.Parameters.AddWithValue("@itemId", itemId);
+        //            cmd.Parameters.AddWithValue("@cart_session_code", cart_session_code);
+
+        //            return cmd.ExecuteNonQuery() > 0;
+        //        }
+        //    }
+        //}
+
+        public bool DeletePendingTransaction(int terminalId, int userId, int itemId, string cart_session_code)
         {
             using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
-                string query = "DELETE FROM pending_transactions WHERE terminal_id = @terminalId AND item_id = @itemId";
+
+                string query = @"
+            DELETE FROM pending_transactions 
+            WHERE terminal_id = @terminalId 
+              AND item_id = @itemId
+              AND cashier_id = @userId
+              AND cart_session_code = @cart_session_code";
 
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, vCon))
                 {
                     cmd.Parameters.AddWithValue("@terminalId", terminalId);
+                    cmd.Parameters.AddWithValue("@userId", userId);
                     cmd.Parameters.AddWithValue("@itemId", itemId);
+                    cmd.Parameters.AddWithValue("@cart_session_code", cart_session_code);
+
                     return cmd.ExecuteNonQuery() > 0;
                 }
             }
         }
 
-        public bool UpdatePendingTransactionNote(int terminalId, int itemId, string note)
+
+        public bool UpdatePendingTransactionNote(int terminalId, int userId,int itemId, string cart_session_code, string note)
         {
             using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
-                string query = "UPDATE pending_transactions SET note = @note, updated_at = CURRENT_TIMESTAMP WHERE terminal_id = @terminalId AND item_id = @itemId";
+                string query = @"
+            UPDATE pending_transactions 
+            SET note = @note, 
+                updated_at = CURRENT_TIMESTAMP 
+            WHERE terminal_id = @terminalId 
+              AND item_id = @itemId
+               AND  cashier_id = @userId
+              AND cart_session_code = @cart_session_code";
 
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, vCon))
                 {
-                    cmd.Parameters.AddWithValue("@note", note ?? (object)DBNull.Value);
+                    cmd.Parameters.AddWithValue("@note", string.IsNullOrEmpty(note) ? (object)DBNull.Value : note);
+                    cmd.Parameters.AddWithValue("@userId", userId);
                     cmd.Parameters.AddWithValue("@terminalId", terminalId);
                     cmd.Parameters.AddWithValue("@itemId", itemId);
+                    cmd.Parameters.AddWithValue("@cart_session_code", cart_session_code);
+
                     return cmd.ExecuteNonQuery() > 0;
                 }
             }
         }
 
-        public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal discountPercentage)
+
+        public bool UpdatePendingTransactionDiscount(int terminalId, int userId, int itemId, string cart_session_code, decimal discountPercentage)
         {
             using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
-                string query = "UPDATE pending_transactions SET discount_percentage = @discountPercentage, updated_at = CURRENT_TIMESTAMP WHERE terminal_id = @terminalId AND item_id = @itemId";
+                string query = @"
+            UPDATE pending_transactions 
+            SET discount_percentage = @discountPercentage,
+                updated_at = CURRENT_TIMESTAMP 
+            WHERE terminal_id = @terminalId 
+            AND cashier_id = @userId
+              AND item_id = @itemId
+              AND cart_session_code = @cart_session_code";
 
                 using (NpgsqlCommand cmd = new NpgsqlCommand(query, vCon))
                 {
                     cmd.Parameters.AddWithValue("@discountPercentage", discountPercentage);
                     cmd.Parameters.AddWithValue("@terminalId", terminalId);
                     cmd.Parameters.AddWithValue("@itemId", itemId);
+                    cmd.Parameters.AddWithValue("@userId", userId);
+                    cmd.Parameters.AddWithValue("@cart_session_code", cart_session_code);
+
                     return cmd.ExecuteNonQuery() > 0;
                 }
             }
         }
+
 
         //////////////////////////////////////////////////////////////////
 
@@ -1272,6 +1334,88 @@ WHERE terminal_id = @terminalId
         }
 
 
+        public bool UpdateDraftPayment(int poId, string status = "done")
+        {
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                conn.Open();
+                using (var transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        // 1️⃣ Update status draft jadi done + isi payment_method
+                        string sqlUpdateOrder = @"
+UPDATE pending_orders
+SET 
+    status = @status,
+    updated_at = NOW()
+WHERE po_id = @po_id";
+
+                        using (var cmd = new NpgsqlCommand(sqlUpdateOrder, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@status", status);
+                            cmd.Parameters.AddWithValue("@po_id", poId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+
+                        transaction.Commit();
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        MessageBox.Show("Failed to update draft payment: " + ex.Message);
+                        return false;
+                    }
+                }
+            }
+        }
+
+
+
+
+
+        public bool UpdateOrderStatus(int oId, int status)
+        {
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                conn.Open();
+                using (var transaction = conn.BeginTransaction())
+                {
+                    try
+                    {
+                        // 1️⃣ Update status draft jadi done + isi payment_method
+                        string sqlUpdateOrder = @"
+UPDATE orders
+SET 
+    status = @status,
+    updated_at = NOW()
+WHERE order_id = @oId";
+
+                        using (var cmd = new NpgsqlCommand(sqlUpdateOrder, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@status", status);
+                            cmd.Parameters.AddWithValue("@oId", oId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+
+                        transaction.Commit();
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        MessageBox.Show("Failed to update order status: " + ex.Message);
+                        return false;
+                    }
+                }
+            }
+        }
+
+
+
 
         public int SaveDraftOrder(int terminalId, int cashierId, string customerName, string note, decimal total, decimal globalDiscount = 0, string csc = null)
         {
@@ -1330,6 +1474,205 @@ WHERE terminal_id = @terminal_id AND cashier_id = @cashier_id AND cart_session_c
                 }
             }
         }
+
+        // 🔹 Ambil semua draft dari pending_orders
+        public DataTable GetDraftOrders()
+        {
+            using (var vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                vCon.Open();
+                string query = @"
+                SELECT 
+                    po_id,
+                    terminal_id,
+                    cashier_id,
+                    customer_name,
+                    note,
+                    total,
+                    global_discount,
+                    status,
+                    created_at,
+                    expired_at,
+                    po_cart_session_code
+                FROM pending_orders
+                WHERE status = 'draft'
+                ORDER BY created_at DESC;
+            ";
+
+                using (var da = new NpgsqlDataAdapter(query, vCon))
+                {
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+                    return dt;
+                }
+            }
+        }
+
+        // 🔹 Ambil 1 draft berdasarkan po_id
+        public DataRow GetDraftOrderById(int poId)
+        {
+            using (var vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                vCon.Open();
+                string query = "SELECT * FROM pending_orders WHERE po_id = @poId";
+
+                using (var da = new NpgsqlDataAdapter(query, vCon))
+                {
+                    da.SelectCommand.Parameters.AddWithValue("@poId", poId);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+                    if (dt.Rows.Count > 0)
+                        return dt.Rows[0];
+                    return null;
+                }
+            }
+        }
+
+        // 🔹 Hapus draft
+        public bool DeleteDraftOrder(int poId)
+        {
+            using (var vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                vCon.Open();
+                string query = "DELETE FROM pending_orders WHERE po_id = @poId";
+
+                using (var cmd = new NpgsqlCommand(query, vCon))
+                {
+                    cmd.Parameters.AddWithValue("@poId", poId);
+                    return cmd.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
+        public DataTable GetPendingTransactionsBySession(string sessionCode)
+        {
+            MessageBox.Show("GetPendingTransactionsBySession " + sessionCode);
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                conn.Open();
+                string query = @"
+            SELECT 
+                pt.item_id,
+                i.name AS item_name,
+                pt.barcode,
+                pt.quantity,
+                pt.unit,
+                pt.sell_price,
+                pt.discount_total,
+                pt.tax,
+                pt.total,
+                pt.note,
+                pt.tsd_conversion_rate
+            FROM pending_transactions pt
+            JOIN items i ON i.id = pt.item_id
+            WHERE pt.cart_session_code = @sessionCode
+            ORDER BY pt.created_at;";
+
+                using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("@sessionCode", sessionCode);
+                    using (var da = new NpgsqlDataAdapter(cmd))
+                    {
+                        var dt = new DataTable();
+                        da.Fill(dt);
+                        return dt;
+                    }
+                }
+            }
+        }
+
+
+
+        public bool CancelDraftOrder(int poId)
+        {
+            using (var vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                vCon.Open();
+                using (var tx = vCon.BeginTransaction())
+                {
+                    try
+                    {
+                        // 1️⃣ Ambil semua item di draft
+                        string getItemsQuery = "SELECT item_id, quantity FROM pending_transactions WHERE po_id = @poId";
+                        var items = new List<(int itemId, decimal qty)>();
+                        using (var cmd = new NpgsqlCommand(getItemsQuery, vCon, tx))
+                        {
+                            cmd.Parameters.AddWithValue("@poId", poId);
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                    items.Add((reader.GetInt32(0), reader.GetDecimal(1)));
+                            }
+                        }
+
+                        // 2️⃣ Update stok (kembalikan stock dan reserved_stock)
+                        foreach (var (itemId, qty) in items)
+                        {
+                            string stockUpdate = @"
+                        UPDATE items
+                        SET stock = stock + @qty,
+                            reserved_stock = reserved_stock - @qty,
+                            updated_at = CURRENT_TIMESTAMP
+                        WHERE id = @itemId;
+                    ";
+
+                            using (var cmd = new NpgsqlCommand(stockUpdate, vCon, tx))
+                            {
+                                cmd.Parameters.AddWithValue("@qty", qty);
+                                cmd.Parameters.AddWithValue("@itemId", itemId);
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        // 3️⃣ Hapus detail pending_transactions
+                        string delPendingTrans = "DELETE FROM pending_transactions WHERE po_id = @poId";
+                        using (var cmd = new NpgsqlCommand(delPendingTrans, vCon, tx))
+                        {
+                            cmd.Parameters.AddWithValue("@poId", poId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        // 4️⃣ Update status pending_orders jadi cancelled
+                        string updateOrder = @"
+                    UPDATE pending_orders
+                    SET status = 'cancelled', updated_at = CURRENT_TIMESTAMP
+                    WHERE po_id = @poId;
+                ";
+                        using (var cmd = new NpgsqlCommand(updateOrder, vCon, tx))
+                        {
+                            cmd.Parameters.AddWithValue("@poId", poId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        tx.Commit();
+                        return true;
+                    }
+                    catch (Exception)
+                    {
+                        tx.Rollback();
+                        return false;
+                    }
+                }
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
     }

@@ -47,5 +47,8 @@ namespace POS_qu.Models
         public DateTime? DeletedAt { get; set; } // deleted_at (nullable)
 
         public int? OrderId { get; set; } // yang melakukan transaksi
+
+        public string CartSessionCode { get; set; } // ✅ Optional kalau mau simpan juga di transactions
+
     }
 }

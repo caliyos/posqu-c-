@@ -16,6 +16,9 @@
     <Compile Update="Casher-POS.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="FormListDraft.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="Helpers\RoundedPanel.cs">
       <SubType>Component</SubType>
     </Compile>

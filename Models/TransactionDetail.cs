@@ -33,5 +33,7 @@ namespace POS_qu.Models
         public DateTime? UpdatedAt { get; set; } // Timestamp for updates
         public int? DeletedBy { get; set; } // Nullable, in case of deletion
         public DateTime? DeletedAt { get; set; } // Timestamp for deletion
+
+        public string CartSessionCode { get; set; } // ✅ Tambahan baru
     }
 }

@@ -30,13 +30,14 @@
         {
             dgvOrders = new DataGridView();
             btnAddToCart = new Button();
+            buttonDelOrder = new Button();
             ((System.ComponentModel.ISupportInitialize)dgvOrders).BeginInit();
             SuspendLayout();
             // 
             // dgvOrders
             // 
             dgvOrders.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvOrders.Location = new Point(16, 32);
+            dgvOrders.Location = new Point(32, 256);
             dgvOrders.Name = "dgvOrders";
             dgvOrders.RowHeadersWidth = 62;
             dgvOrders.Size = new Size(1440, 464);
@@ -44,19 +45,30 @@
             // 
             // btnAddToCart
             // 
-            btnAddToCart.Location = new Point(1240, 520);
+            btnAddToCart.Location = new Point(32, 192);
             btnAddToCart.Name = "btnAddToCart";
-            btnAddToCart.Size = new Size(192, 88);
+            btnAddToCart.Size = new Size(160, 56);
             btnAddToCart.TabIndex = 1;
             btnAddToCart.Text = "ADDTOCART";
             btnAddToCart.UseVisualStyleBackColor = true;
             btnAddToCart.Click += btnAddToCart_Click;
             // 
+            // buttonDelOrder
+            // 
+            buttonDelOrder.Location = new Point(208, 192);
+            buttonDelOrder.Name = "buttonDelOrder";
+            buttonDelOrder.Size = new Size(160, 56);
+            buttonDelOrder.TabIndex = 1;
+            buttonDelOrder.Text = "DELETE_ORDER";
+            buttonDelOrder.UseVisualStyleBackColor = true;
+            buttonDelOrder.Click += btnDelOrder_Click;
+            // 
             // OrderLIst
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1487, 626);
+            ClientSize = new Size(1487, 737);
+            Controls.Add(buttonDelOrder);
             Controls.Add(btnAddToCart);
             Controls.Add(dgvOrders);
             Name = "OrderLIst";
@@ -70,5 +82,6 @@
 
         private DataGridView dgvOrders;
         private Button btnAddToCart;
+        private Button buttonDelOrder;
     }
 }
