@@ -213,6 +213,167 @@ ORDER BY created_at DESC
 
 
 
+        public bool UpdateExistingOrder(
+            int orderId,
+            int terminalId,
+            int cashierId,
+            out string errorMessage)
+        {
+            errorMessage = string.Empty;
+
+            using (var vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                vCon.Open();
+                using (var trans = vCon.BeginTransaction())
+                {
+                    try
+                    {
+                        // ============================
+                        // 1️⃣ UPDATE HEADER ORDER
+                        // ============================
+
+                        string updateOrder = @"
+                    UPDATE orders
+                    SET updated_at = NOW(),
+                        terminal_id = @terminal_id,
+                        user_id = @user_id
+                    WHERE order_id = @order_id;
+                ";
+
+                        using (var cmd = new NpgsqlCommand(updateOrder, vCon, trans))
+                        {
+                            cmd.Parameters.AddWithValue("terminal_id", terminalId);
+                            cmd.Parameters.AddWithValue("user_id", cashierId);
+                            cmd.Parameters.AddWithValue("order_id", orderId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        // ============================
+                        // 2️⃣ AMBIL pending_transactions (CART AKTIF)
+                        // ============================
+
+                        string getPendingItems = @"
+                    SELECT item_id, barcode, quantity, unit, sell_price,
+                           discount_percentage, discount_total, tax, total, note
+                    FROM pending_transactions
+                    WHERE terminal_id = @terminal_id AND cashier_id = @cashier_id;
+                ";
+
+                        var pendingItems = new List<PendingTransaction>();
+                        using (var cmd = new NpgsqlCommand(getPendingItems, vCon, trans))
+                        {
+                            cmd.Parameters.AddWithValue("terminal_id", terminalId);
+                            cmd.Parameters.AddWithValue("cashier_id", cashierId);
+
+                            using (var reader = cmd.ExecuteReader())
+                            {
+                                while (reader.Read())
+                                {
+                                    pendingItems.Add(new PendingTransaction
+                                    {
+                                        ItemId = reader.GetInt32(0),
+                                        Barcode = reader.GetString(1),
+                                        Quantity = reader.GetDecimal(2),
+                                        Unit = reader.GetString(3),
+                                        SellPrice = reader.GetDecimal(4),
+                                        DiscountPercentage = reader.GetDecimal(5),
+                                        DiscountTotal = reader.GetDecimal(6),
+                                        Tax = reader.GetDecimal(7),
+                                        Total = reader.GetDecimal(8),
+                                        Note = reader.IsDBNull(9) ? "" : reader.GetString(9)
+                                    });
+                                }
+                            }
+                        }
+
+                        // ============================
+                        // 3️⃣ DELETE ORDER_DETAILS LAMA
+                        // ============================
+
+                        string deleteOldDetails = @"
+                    DELETE FROM order_details
+                    WHERE order_id = @order_id;
+                ";
+
+                        using (var cmd = new NpgsqlCommand(deleteOldDetails, vCon, trans))
+                        {
+                            cmd.Parameters.AddWithValue("order_id", orderId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        // ============================
+                        // 4️⃣ INSERT DETAIL BARU DARI pending_transactions
+                        // ============================
+
+                        string insertDetails = @"
+                    INSERT INTO order_details (
+                        order_id, item_id, od_barcode, od_quantity, od_unit,
+                        od_price_per_unit, od_sell_price, od_total,
+                        od_discount_percentage, od_discount_total, od_tax, od_note
+                    ) VALUES (
+                        @order_id, @item_id, @od_barcode, @od_quantity, @od_unit,
+                        @od_price_per_unit, @od_sell_price, @od_total,
+                        @od_discount_percentage, @od_discount_total, @od_tax, @od_note
+                    );
+                ";
+
+                        foreach (var item in pendingItems)
+                        {
+                            using (var cmd = new NpgsqlCommand(insertDetails, vCon, trans))
+                            {
+                                cmd.Parameters.AddWithValue("order_id", orderId);
+                                cmd.Parameters.AddWithValue("item_id", item.ItemId);
+                                cmd.Parameters.AddWithValue("od_barcode", item.Barcode);
+                                cmd.Parameters.AddWithValue("od_quantity", item.Quantity);
+                                cmd.Parameters.AddWithValue("od_unit", item.Unit);
+                                cmd.Parameters.AddWithValue("od_price_per_unit", item.SellPrice);
+                                cmd.Parameters.AddWithValue("od_sell_price", item.SellPrice * item.Quantity);
+                                cmd.Parameters.AddWithValue("od_total", item.Total);
+                                cmd.Parameters.AddWithValue("od_discount_percentage", item.DiscountPercentage);
+                                cmd.Parameters.AddWithValue("od_discount_total", item.DiscountTotal);
+                                cmd.Parameters.AddWithValue("od_tax", item.Tax);
+                                cmd.Parameters.AddWithValue("od_note", item.Note ?? "");
+                                cmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        // ============================
+                        // 5️⃣ DELETE PENDING_CART (BERSIHKAN CART)
+                        // ============================
+
+                        string deletePending = @"
+                    DELETE FROM pending_transactions
+                    WHERE terminal_id = @terminal_id AND cashier_id = @cashier_id;
+                ";
+
+                        using (var cmd = new NpgsqlCommand(deletePending, vCon, trans))
+                        {
+                            cmd.Parameters.AddWithValue("terminal_id", terminalId);
+                            cmd.Parameters.AddWithValue("cashier_id", cashierId);
+                            cmd.ExecuteNonQuery();
+                        }
+
+                        // ============================
+                        // 6️⃣ COMMIT
+                        // ============================
+
+                        trans.Commit();
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        trans.Rollback();
+                        errorMessage = ex.Message;
+                        return false;
+                    }
+                }
+            }
+        }
+
+
+
+
+
         public bool SaveOrderWithDetails(Orders order, int terminalId, int cashierId, out string errorMessage)
         {
             errorMessage = string.Empty;

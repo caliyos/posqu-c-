@@ -13,7 +13,7 @@ using POS_qu.Helpers;
 
 namespace POS_qu.Controllers
 {
-    class ItemController
+    public class ItemController
     {
         //private string vStrConnection = "Host=localhost;Port=5433;Username=postgres;Password=postgres11;Database=posqu";
 
@@ -1334,7 +1334,7 @@ WHERE terminal_id = @terminalId
         }
 
 
-        public bool UpdateDraftPayment(int poId, string status = "done")
+        public bool DeleteDraftPayment(int poId)
         {
             using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
@@ -1343,21 +1343,15 @@ WHERE terminal_id = @terminalId
                 {
                     try
                     {
-                        // 1️⃣ Update status draft jadi done + isi payment_method
-                        string sqlUpdateOrder = @"
-UPDATE pending_orders
-SET 
-    status = @status,
-    updated_at = NOW()
+                        string sqlDeleteOrder = @"
+DELETE FROM pending_orders
 WHERE po_id = @po_id";
 
-                        using (var cmd = new NpgsqlCommand(sqlUpdateOrder, conn))
+                        using (var cmd = new NpgsqlCommand(sqlDeleteOrder, conn))
                         {
-                            cmd.Parameters.AddWithValue("@status", status);
                             cmd.Parameters.AddWithValue("@po_id", poId);
                             cmd.ExecuteNonQuery();
                         }
-
 
                         transaction.Commit();
                         return true;
@@ -1365,7 +1359,7 @@ WHERE po_id = @po_id";
                     catch (Exception ex)
                     {
                         transaction.Rollback();
-                        MessageBox.Show("Failed to update draft payment: " + ex.Message);
+                        MessageBox.Show("Failed to delete draft payment: " + ex.Message);
                         return false;
                     }
                 }
@@ -1385,11 +1379,11 @@ WHERE po_id = @po_id";
                 {
                     try
                     {
-                        // 1️⃣ Update status draft jadi done + isi payment_method
                         string sqlUpdateOrder = @"
 UPDATE orders
 SET 
-    status = @status,
+    order_status = @status,
+    deleted_at = NOW(),
     updated_at = NOW()
 WHERE order_id = @oId";
 
@@ -1399,7 +1393,6 @@ WHERE order_id = @oId";
                             cmd.Parameters.AddWithValue("@oId", oId);
                             cmd.ExecuteNonQuery();
                         }
-
 
                         transaction.Commit();
                         return true;
@@ -1413,6 +1406,7 @@ WHERE order_id = @oId";
                 }
             }
         }
+
 
 
 

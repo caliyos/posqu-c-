@@ -18,6 +18,7 @@ using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using System.Data;
 using OxyPlot;
+using POS_qu.services;
 
 namespace POS_qu
 {
@@ -34,6 +35,7 @@ namespace POS_qu
         private string cart_session_code;
 
         private InvoiceData currentInvoice;
+        private CartService _cartService; 
 
         public Casher_POS()
         {
@@ -49,6 +51,7 @@ namespace POS_qu
 
             // Inject the FileLogger into ActivityService
             activityService = new ActivityService(flogger, dlogger);
+            _cartService = new CartService(itemController, activityService);
             //activityService.LogAction(ActivityType.Print.ToString(), "Printing preview", new { ItemCode = "A123", Quantity = 2 });
             // Example of logging an action
 
@@ -361,19 +364,6 @@ namespace POS_qu
                     receipt.AppendLine($"  Catatan: {item.Note}");
             }
 
-            //receipt.AppendLine("------------------------------");
-
-            //// === 5️⃣ Global note & delivery info ===
-            //if (!string.IsNullOrEmpty(invoice.GlobalNote))
-            //    receipt.AppendLine($"Global Note: {invoice.GlobalNote}");
-            //if (!string.IsNullOrEmpty(invoice.DeliveryName))
-            //    receipt.AppendLine($"Delivery   : {invoice.DeliveryName}");
-            //if (!string.IsNullOrEmpty(invoice.DeliveryAddress))
-            //    receipt.AppendLine($"Alamat     : {invoice.DeliveryAddress}");
-            //if (!string.IsNullOrEmpty(invoice.DeliveryMethod))
-            //    receipt.AppendLine($"Metode     : {invoice.DeliveryMethod}");
-            //if (!string.IsNullOrEmpty(invoice.DeliveryPhone))
-            //    receipt.AppendLine($"Telp       : {invoice.DeliveryPhone}");
 
 
             // === 6️⃣ Ringkasan totals ===
@@ -497,7 +487,7 @@ namespace POS_qu
                     int? draftId = SelectedDraftId > 0 ? SelectedDraftId : null;
                     if (draftId.HasValue)
                     {
-                        itemController.UpdateDraftPayment(draftId.Value);
+                        itemController.DeleteDraftPayment(draftId.Value);
                     }
 
                     currentInvoice.PaymentMethod = paymentModal.PaymentMethod;
@@ -592,36 +582,7 @@ namespace POS_qu
                     // Print
                     print(transaction, currentInvoice);
 
-                    // ✅ Trigger event UserDeletingRow untuk setiap baris agar logika delete tetap sama
-                    while (dataGridViewCart4.Rows.Count > 0)
-                    {
-                        var row = dataGridViewCart4.Rows[0];
-
-                        // 🚫 Lewati baris kosong atau baris input baru
-                        if (row.IsNewRow) break;
-                        if (row.Cells["barcode"].Value == null || string.IsNullOrWhiteSpace(row.Cells["barcode"].Value.ToString()))
-                        {
-                            dataGridViewCart4.Rows.Remove(row);
-                            continue;
-                        }
-
-                        // ✅ Buat argumen event manual
-                        var args = new DataGridViewRowCancelEventArgs(row);
-
-                        // 🔹 Trigger event UserDeletingRow (supaya logika hapus tetap sama)
-                        dataGridViewCart4_UserDeletingRow(dataGridViewCart4, args);
-
-                        // 🔹 Kalau tidak dibatalkan, hapus baris
-                        if (!args.Cancel)
-                        {
-                            dataGridViewCart4.Rows.Remove(row);
-                        }
-                        else
-                        {
-                            // Kalau event batalkan delete (misalnya gagal DB)
-                            break;
-                        }
-                    }
+                    deletecartbyrows("payment");
 
 
 
@@ -655,6 +616,47 @@ namespace POS_qu
             }
         }
 
+
+
+        private void deletecartbyrows(string mode = null)
+        {
+
+            ////////////////////////////////////////// TRIGGER DELETE DATAGRID EVENT /////////////// 
+
+            // ✅ Trigger event UserDeletingRow untuk setiap baris agar logika delete tetap sama
+            while (dataGridViewCart4.Rows.Count > 0)
+            {
+                var row = dataGridViewCart4.Rows[0];
+
+                // 🚫 Lewati baris kosong atau baris input baru
+                if (row.IsNewRow) break;
+                if (row.Cells["barcode"].Value == null || string.IsNullOrWhiteSpace(row.Cells["barcode"].Value.ToString()))
+                {
+                    dataGridViewCart4.Rows.Remove(row);
+                    continue;
+                }
+
+                // ✅ Buat argumen event manual
+                var args = new DataGridViewRowCancelEventArgs(row);
+
+                // 🔹 Trigger event UserDeletingRow (supaya logika hapus tetap sama)
+                dataGridViewCart4_UserDeletingRow(dataGridViewCart4, args);
+
+                // 🔹 Kalau tidak dibatalkan, hapus baris
+                if (!args.Cancel)
+                {
+                    dataGridViewCart4.Rows.Remove(row);
+                }
+                else
+                {
+                    // Kalau event batalkan delete (misalnya gagal DB)
+                    break;
+                }
+            }
+
+            ////////////////////////////////////////// END TRIGGER DELETE DATAGRID EVENT /////////////// 
+
+        }
 
         private void ResetInvoice()
         {
@@ -734,8 +736,6 @@ namespace POS_qu
                 invoice.GlobalDiscountValue = totalCart * (GlobalDiscountPercent / 100);
                 invoice.GlobalDiscountPercent = GlobalDiscountPercent;
             }
-
-
 
 
             invoice.GrandTotal = totalCart - invoice.GlobalDiscountValue;
@@ -914,14 +914,6 @@ namespace POS_qu
                 if (invoice.DeliveryAmount > 0)
                     flowLayoutPanel.Controls.Add(new Label { Text = $"Delivery : {invoice.DeliveryAmount:N0}", AutoSize = true, Padding = new Padding(5, 2, 5, 2) });
 
-                //if (!string.IsNullOrEmpty(invoice.DeliveryAddress))
-                //    flowLayoutPanel.Controls.Add(new Label { Text = $"Alamat     : {invoice.DeliveryAddress}", AutoSize = true, Padding = new Padding(5, 2, 5, 2) });
-
-                //if (!string.IsNullOrEmpty(invoice.DeliveryMethod))
-                //    flowLayoutPanel.Controls.Add(new Label { Text = $"Metode     : {invoice.DeliveryMethod}", AutoSize = true, Padding = new Padding(5, 2, 5, 2) });
-
-                //if (!string.IsNullOrEmpty(invoice.DeliveryPhone))
-                //    flowLayoutPanel.Controls.Add(new Label { Text = $"Telp       : {invoice.DeliveryPhone}", AutoSize = true, Padding = new Padding(5, 2, 5, 2) });
             }
 
             // ================= Update label utama =================
@@ -1036,36 +1028,21 @@ namespace POS_qu
         }
 
 
-
-
-        //private void GetRandomItemByBarcode()
-        //{
-        //    // Your logic here, for example:
-        //    Item randomItem = itemController.GetItemByBarcode();
-        //    if (randomItem != null)
-        //    {
-        //        MessageBox.Show($"Found item: {randomItem.name} - {randomItem.barcode}");
-        //    }
-        //    else
-        //    {
-        //        MessageBox.Show("No item found!");
-        //    }
-        //}
         private void TxtCariBarang_KeyDown(object sender, KeyEventArgs e)
         {
             try
             {
-                if (e.KeyCode == Keys.Enter)
-                {
-                    e.SuppressKeyPress = true;
+                //if (e.KeyCode == Keys.Enter)
+                //{
+                //    e.SuppressKeyPress = true;
 
-                    string barcode = txtCariBarang.Text.Trim();
-                    if (!string.IsNullOrEmpty(barcode))
-                    {
-                        ProcessItem(barcode);
-                        txtCariBarang.Clear(); // Bersihkan agar siap untuk scan berikut
-                    }
-                }
+                //    string barcode = txtCariBarang.Text.Trim();
+                //    if (!string.IsNullOrEmpty(barcode))
+                //    {
+                //        ProcessItem(barcode);
+                //        txtCariBarang.Clear(); // Bersihkan agar siap untuk scan berikut
+                //    }
+                //}
 
                 if (e.Control && e.KeyCode == Keys.S)
                 {
@@ -1118,40 +1095,40 @@ namespace POS_qu
         }
 
 
-        private void ProcessItem(string barcode)
-        {
-            var randomItem = itemController.GetItemByBarcode(barcode);
-            if (randomItem == null)
-            {
-                MessageBox.Show("No random item found.");
-                return;
-            }
+        //private void ProcessItem(string barcode)
+        //{
+        //    var randomItem = itemController.GetItemByBarcode(barcode);
+        //    if (randomItem == null)
+        //    {
+        //        MessageBox.Show("No random item found.");
+        //        return;
+        //    }
 
-            // Try to update existing row
-            if (UpdateExistingItem(randomItem))
-            {
-                // Hanya update UI baru
-                UpdateInvoiceUI(currentInvoice);
-                return;
-            }
+        //    //// Try to update existing row
+        //    if (UpdateExistingItem(randomItem))
+        //    {
+        //        // Hanya update UI baru
+        //        UpdateInvoiceUI(currentInvoice);
+        //        return;
+        //    }
 
-            // Insert new pending transaction
-            if (InsertPendingTransaction(randomItem))
-            {
-                // Add to DataGridView
-                AddNewItemToGrid(randomItem);
+        //    // Insert new pending transaction
+        //    if (InsertPendingTransaction(randomItem))
+        //    {
+        //        // Add to DataGridView
+        //        AddNewItemToGrid(randomItem);
 
-            }else
-            {
-                MessageBox.Show("Failed to insert random item transaction.");
-                return;
-            }
+        //    }else
+        //    {
+        //        MessageBox.Show("Failed to insert random item transaction.");
+        //        return;
+        //    }
 
 
 
-                // Update UI baru
-                UpdateInvoiceUI(currentInvoice);
-        }
+        //        // Update UI baru
+        //        UpdateInvoiceUI(currentInvoice);
+        //}
 
 
         private void ProcessRandomItem()
@@ -1491,29 +1468,45 @@ namespace POS_qu
         private void DataGridViewCart4_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
             if (isProgrammaticChange) return;
+
+            // Hanya tangani kolom "stock"
             if (e.RowIndex < 0 || e.ColumnIndex != dataGridViewCart4.Columns["stock"].Index) return;
 
+            var row = dataGridViewCart4.Rows[e.RowIndex];
+            int enteredStock = 0;
+
+            // Cek apakah input valid dan lebih besar dari 0
+            if (!int.TryParse(row.Cells["stock"].Value?.ToString(), out enteredStock) || enteredStock <= 0)
+            {
+                MessageBox.Show("Stock must be at least 1. Cannot enter 0.");
+
+                // Restore ke nilai lama yang tersimpan di Tag
+                isProgrammaticChange = true;
+                row.Cells["stock"].Value = row.Cells["stock"].Tag ?? 1;
+                isProgrammaticChange = false;
+
+                return; // keluar dari event, jangan lanjut kalkulasi
+            }
+
+            // Input valid, lanjut proses update
             try
             {
-                var row = dataGridViewCart4.Rows[e.RowIndex];
-                int manualInput = Convert.ToInt32(row.Cells["stock"].Value);
-                ProcessItemStockUpdate(row, manualInput, allowAppend: false);
-
-                // Ganti CalculateAllTotals() dengan UpdateInvoiceUI()
+                ProcessItemStockUpdate(row, enteredStock, allowAppend: false);
                 UpdateInvoiceUI(currentInvoice);
             }
             catch (InvalidOperationException ex)
             {
                 MessageBox.Show(ex.Message);
-                var row = dataGridViewCart4.Rows[e.RowIndex];
+                isProgrammaticChange = true;
                 row.Cells["stock"].Value = row.Cells["stock"].Tag ?? 1;
+                isProgrammaticChange = false;
             }
         }
 
 
         private bool UpdateExistingItem(dynamic selectedItem)
         {
-           
+
             foreach (DataGridViewRow row in dataGridViewCart4.Rows)
             {
                 if (row.Cells["id"].Value != null && Convert.ToInt32(row.Cells["id"].Value) == selectedItem.id && row.Cells["unit"].Value.ToString() == selectedItem.unit)
@@ -1529,118 +1522,160 @@ namespace POS_qu
 
         private bool isProgrammaticChange = false;
 
+        // additionalQuantity khusus dari searchfromrandomitem atau dari barcode
+        // newQty kalau ini kan di ambil lansung dari user edit qty dari dataqrid
+
         private bool ProcessItemStockUpdate(DataGridViewRow row, int additionalQuantity, bool allowAppend)
         {
-            //MessageBox.Show("ProcessItemStockUpdate");
-            if (row.Cells["id"].Value == null) return false;
 
+            if (row.Cells["id"].Value == null) return false;
+            //var row = dataGridViewCart4.Rows[e.RowIndex];
             int itemId = Convert.ToInt32(row.Cells["id"].Value);
             string barcode = row.Cells["barcode"].Value.ToString();
             string unit = row.Cells["unit"].Value.ToString();
-            string discount = row.Cells["discount"].Value.ToString();
-            string note = row.Cells["note"].Value.ToString();
+            decimal price = Convert.ToDecimal(row.Cells["sell_price"].Value);
+            int prevQty = Convert.ToInt32(row.Cells["stock"].Tag ?? row.Cells["stock"].Value);
+            int newQty = Convert.ToInt32(row.Cells["stock"].Value);
+            //bool allowAppend = false; // atau true jika append dari search
 
-            // untuk case edit qty dari cart
-            int previousQuantity = row.Cells["stock"].Tag != null ? Convert.ToInt32(row.Cells["stock"].Tag) : 0;
-
-            // jika allowAppend true.. (berarti tambahkan dari qty yg di ambil cari searchforitem)
-            // jika false berarti user ganti dari dlm car
-            int enteredQuantity = 0;
-            if (allowAppend)
-            {
-                enteredQuantity = Convert.ToInt32(row.Cells["stock"].Value) + additionalQuantity;
-            }
-            else
-            {
-                enteredQuantity = additionalQuantity;
-            }
-
-            if (enteredQuantity <= 0)
-            {
-                MessageBox.Show("Quantity must be at least 1.");
-                return false;
-            }
-
-            int conversionRate = 1;
-            if (row.Cells["conversion"].Value != null && int.TryParse(row.Cells["conversion"].Value.ToString(), out int conv))
-            {
-                if (conv > 0) conversionRate = conv;
-            }
-
-            int stockNeededOld = previousQuantity * conversionRate;
-            int stockNeededNew = enteredQuantity * conversionRate;
-
-            int currentStock = itemController.GetItemStock(barcode);
-
-            int reservedStock = itemController.GetItemReservedStock(barcode);
-            int newReservedStock = 0;
-            // jika ditambahkan dari searchforitem..
-            // bukan di edit qtynya lansung dari cart
-            if (allowAppend == true)
-            {
-                newReservedStock = reservedStock;
-            }
-            else
-            {
-                newReservedStock = reservedStock - stockNeededOld + stockNeededNew;
-            }
-
-            if (newReservedStock > currentStock)
-            {
-                MessageBox.Show("Stock tidak cukup. Jumlah ini melebihi sisa stock yang tersedia.");
-                return false;
-            }
-
-            decimal pricePerUnit = Convert.ToDecimal(row.Cells["sell_price"].Value);
-            decimal calculatedTotal = enteredQuantity * pricePerUnit;
-
-            // update berdasarkan satuan yang sama
-            //MessageBox.Show("about to UpdatePendingTransactionSto ck");
-            bool updateSuccess = itemController.UpdatePendingTransactionStock(SessionUser.GetCurrentUser().TerminalId, itemId, enteredQuantity, calculatedTotal, unit,cart_session_code);
-            if (!updateSuccess)
-            {
-                MessageBox.Show("Failed to update stock in pending transactions.");
-                return false;
-            }
-   
-            itemController.UpdateReservedStock(barcode, newReservedStock);
-
-            isProgrammaticChange = true;
-            row.Cells["stock"].Value = enteredQuantity;
-            row.Cells["total"].Value = calculatedTotal;
-            isProgrammaticChange = false;
-
-            row.Cells["stock"].Tag = enteredQuantity;
-
-            activityService.LogAction(
-            userId: SessionUser.GetCurrentUser().UserId.ToString(),
-            actionType: ActivityType.Cart.ToString(),
-                referenceId: null,
-                desc: $"Successfully update Item in cart: {itemId} CSC {cart_session_code} newreqstock : {newReservedStock}, prevreservedstock: {stockNeededOld}",
-                details: new
-                {
-                    loginId = SessionUser.GetCurrentUser().LoginId,
-                    itemId = itemId,
-                    adjustmentType = "UPDATE_ITEM_IN_CART",
-                    reason = "default reason",
-                    referenceTable = "items",
-                    terminal = SessionUser.GetCurrentUser().TerminalId,
-                    shiftId = SessionUser.GetCurrentUser().ShiftId,
-                    IpAddress = NetworkHelper.GetLocalIPAddress(),
-                    UserAgent = GlobalContext.getAppVersion(),
-                    Discount = discount,
-                    Note = note,
-                    cart_session_code = cart_session_code
-                    //TsCode = transaction.TsCode,
-                    //TotalAmount = transaction.TsTotal,
-                    //PaymentMethod = transaction.TsMethod,
-                    //OrderId = transaction.OrderId
-                }
+            var result = _cartService.UpdateCartItemStock(
+                itemId, barcode, unit, price, newQty, prevQty, allowAppend,
+                row.Cells["discount"].Value.ToString(),
+                row.Cells["note"].Value.ToString(),
+                conversionRate: 1,
+                cart_session_code: cart_session_code, additionalQuantity
             );
 
-            UpdateInvoiceUI(currentInvoice);
-            MessageBox.Show("done ProcessItemStockUpdate about to return true");
+            if (!result.Success)
+            {
+                MessageBox.Show(result.ErrorMessage);
+                row.Cells["stock"].Value = prevQty; // restore
+            }
+            else
+            {
+
+                // MENCEGAH DI PANGGIL BERULANG>>> KARNA MERUBAH SROCK BERARTI MEMANGGIL EVENT CELL EDIT
+                // DAN AKAN MEMANGGIL FUNGSI INI LAGI
+                isProgrammaticChange = true;
+                row.Cells["stock"].Value = result.EnteredQuantity;
+                row.Cells["total"].Value = result.Total;
+                row.Cells["stock"].Tag = result.EnteredQuantity;
+                isProgrammaticChange = false;
+            }
             return true;
+
+            //////////////////////////////////////////////////////////////////////
+
+            ////MessageBox.Show("ProcessItemStockUpdate");
+            //if (row.Cells["id"].Value == null) return false;
+
+            //int itemId = Convert.ToInt32(row.Cells["id"].Value);
+            //string barcode = row.Cells["barcode"].Value.ToString();
+            //string unit = row.Cells["unit"].Value.ToString();
+            //string discount = row.Cells["discount"].Value.ToString();
+            //string note = row.Cells["note"].Value.ToString();
+
+            //// untuk case edit qty dari cart
+            //int previousQuantity = row.Cells["stock"].Tag != null ? Convert.ToInt32(row.Cells["stock"].Tag) : 0;
+
+            //// jika allowAppend true.. (berarti tambahkan dari qty yg di ambil cari searchforitem)
+            //// jika false berarti user ganti dari dlm car
+            //int enteredQuantity = 0;
+            //if (allowAppend)
+            //{
+            //    enteredQuantity = Convert.ToInt32(row.Cells["stock"].Value) + additionalQuantity;
+            //}
+            //else
+            //{
+            //    enteredQuantity = additionalQuantity;
+            //}
+
+            //if (enteredQuantity <= 0)
+            //{
+            //    MessageBox.Show("Quantity must be at least 1.");
+            //    return false;
+            //}
+
+            //int conversionRate = 1;
+            //if (row.Cells["conversion"].Value != null && int.TryParse(row.Cells["conversion"].Value.ToString(), out int conv))
+            //{
+            //    if (conv > 0) conversionRate = conv;
+            //}
+
+            //int stockNeededOld = previousQuantity * conversionRate;
+            //int stockNeededNew = enteredQuantity * conversionRate;
+
+            //int currentStock = itemController.GetItemStock(barcode);
+
+            //int reservedStock = itemController.GetItemReservedStock(barcode);
+            //int newReservedStock = 0;
+            //// jika ditambahkan dari searchforitem..
+            //// bukan di edit qtynya lansung dari cart
+            //if (allowAppend == true)
+            //{
+            //    newReservedStock = reservedStock;
+            //}
+            //else
+            //{
+            //    newReservedStock = reservedStock - stockNeededOld + stockNeededNew;
+            //}
+
+            //if (newReservedStock > currentStock)
+            //{
+            //    MessageBox.Show("Stock tidak cukup. Jumlah ini melebihi sisa stock yang tersedia.");
+            //    return false;
+            //}
+
+            //decimal pricePerUnit = Convert.ToDecimal(row.Cells["sell_price"].Value);
+            //decimal calculatedTotal = enteredQuantity * pricePerUnit;
+
+            //// update berdasarkan satuan yang sama
+            ////MessageBox.Show("about to UpdatePendingTransactionSto ck");
+            //bool updateSuccess = itemController.UpdatePendingTransactionStock(SessionUser.GetCurrentUser().TerminalId, itemId, enteredQuantity, calculatedTotal, unit,cart_session_code);
+            //if (!updateSuccess)
+            //{
+            //    MessageBox.Show("Failed to update stock in pending transactions.");
+            //    return false;
+            //}
+
+            //itemController.UpdateReservedStock(barcode, newReservedStock);
+
+            //isProgrammaticChange = true;
+            //row.Cells["stock"].Value = enteredQuantity;
+            //row.Cells["total"].Value = calculatedTotal;
+            //isProgrammaticChange = false;
+
+            //row.Cells["stock"].Tag = enteredQuantity;
+
+            //activityService.LogAction(
+            //userId: SessionUser.GetCurrentUser().UserId.ToString(),
+            //actionType: ActivityType.Cart.ToString(),
+            //    referenceId: null,
+            //    desc: $"Successfully update Item in cart: {itemId} CSC {cart_session_code} newreqstock : {newReservedStock}, prevreservedstock: {stockNeededOld}",
+            //    details: new
+            //    {
+            //        loginId = SessionUser.GetCurrentUser().LoginId,
+            //        itemId = itemId,
+            //        adjustmentType = "UPDATE_ITEM_IN_CART",
+            //        reason = "default reason",
+            //        referenceTable = "items",
+            //        terminal = SessionUser.GetCurrentUser().TerminalId,
+            //        shiftId = SessionUser.GetCurrentUser().ShiftId,
+            //        IpAddress = NetworkHelper.GetLocalIPAddress(),
+            //        UserAgent = GlobalContext.getAppVersion(),
+            //        Discount = discount,
+            //        Note = note,
+            //        cart_session_code = cart_session_code
+            //        //TsCode = transaction.TsCode,
+            //        //TotalAmount = transaction.TsTotal,
+            //        //PaymentMethod = transaction.TsMethod,
+            //        //OrderId = transaction.OrderId
+            //    }
+            //);
+
+            //UpdateInvoiceUI(currentInvoice);
+            //MessageBox.Show("done ProcessItemStockUpdate about to return true");
+            //return true;
         }
 
 
@@ -1654,10 +1689,9 @@ namespace POS_qu
                 decimal discountPercentage = Convert.ToDecimal(row.Cells["discount"].Value);
                 int itemId = Convert.ToInt32(row.Cells["id"].Value);
 
-                bool updateSuccess = itemController.UpdatePendingTransactionDiscount(SessionUser.GetCurrentUser().TerminalId, SessionUser.GetCurrentUser().UserId, itemId, cart_session_code,discountPercentage);
-                if (updateSuccess)
+                //bool updateSuccess = itemController.UpdatePendingTransactionDiscount(SessionUser.GetCurrentUser().TerminalId, SessionUser.GetCurrentUser().UserId, itemId, cart_session_code,discountPercentage);
+                if (_cartService.UpdateCartItemDiscount(itemId, discountPercentage, cart_session_code))
                 {
-                    RecalculateTotalForRow(row);
                     UpdateInvoiceUI(currentInvoice);
                 }
                 else
@@ -1670,16 +1704,9 @@ namespace POS_qu
                 string note = row.Cells["note"].Value.ToString();
                 int itemId = Convert.ToInt32(row.Cells["id"].Value);
 
-                bool updateSuccess = itemController.UpdatePendingTransactionNote(SessionUser.GetCurrentUser().TerminalId, SessionUser.GetCurrentUser().UserId, itemId, cart_session_code,note);
-                if (!updateSuccess)
-                {
-                    MessageBox.Show("Failed to update note in database.");
-                }
-                else
-                {
-                    RecalculateTotalForRow(row);
-                    UpdateInvoiceUI(currentInvoice);
-                }
+                //bool updateSuccess = itemController.UpdatePendingTransactionNote(SessionUser.GetCurrentUser().TerminalId, SessionUser.GetCurrentUser().UserId, itemId, cart_session_code,note);
+                _cartService.UpdateCartItemNote(itemId, note, cart_session_code);
+                UpdateInvoiceUI(currentInvoice);
             }
             if (dataGridViewCart4.Columns[e.ColumnIndex].Name == "stock")
             {
@@ -1725,59 +1752,6 @@ namespace POS_qu
             txtCariBarang.Focus();
         }
 
-        private bool DeleteCartItem(int itemId, string barcode, int qty, int conversionRate, string reason = "DELETE_ITEM_FROM_CART")
-        {
-            try
-            {
-                int stockNeeded = qty * conversionRate;
-
-                // 🔹 Delete dari pending_transactions
-                bool deleteSuccess = itemController.DeletePendingTransaction(SessionUser.GetCurrentUser().TerminalId, SessionUser.GetCurrentUser().UserId, itemId, cart_session_code);
-                //bool deleteSuccess = itemController.DeletePendingTransaction(SessionUser.GetCurrentUser().TerminalId, itemId);
-                if (!deleteSuccess)
-                {
-                    MessageBox.Show("Failed to delete item from pending transactions.");
-                    return false;
-                }
-
-                // 🔹 Update reserved stock
-                int reservedStock = itemController.GetItemReservedStock(barcode);
-                int newReservedStock = reservedStock - stockNeeded;
-                if (newReservedStock < 0) newReservedStock = 0;
-
-                itemController.UpdateReservedStock(barcode, newReservedStock);
-
-                // 🔹 Log aktivitas
-                var session = SessionUser.GetCurrentUser();
-                activityService.LogAction(
-                    userId: session.UserId.ToString(),
-                    actionType: ActivityType.Cart.ToString(),
-                    referenceId: null,
-                    desc: $"Deleted item from cart: {itemId}",
-                    details: new
-                    {
-                        itemId = itemId,
-                        adjustmentType = reason,
-                        referenceTable = "items",
-                        terminal = session.TerminalId,
-                        shiftId = session.ShiftId,
-                        IpAddress = NetworkHelper.GetLocalIPAddress(),
-                        UserAgent = GlobalContext.getAppVersion(),
-                        loginId = session.LoginId,
-                        cart_session_code = cart_session_code
-                    }
-                );
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error deleting item: " + ex.Message);
-                return false;
-            }
-        }
-
-
 
         private void dataGridViewCart4_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
         {
@@ -1799,7 +1773,7 @@ namespace POS_qu
                 if (conv > 0) conversionRate = conv;
 
             // 🔹 Panggil method umum
-            bool success = DeleteCartItem(itemId, barcode, qty, conversionRate);
+            bool success = _cartService.DeleteCartItem(itemId, barcode, qty, conversionRate, "deletingrow", cart_session_code);
 
             if (!success)
             {
@@ -1808,21 +1782,6 @@ namespace POS_qu
             else
             {
                 //MessageBox.Show("Item deleted and reserved stock updated.");
-            }
-        }
-
-
-
-        private void RecalculateTotalForRow(DataGridViewRow row)
-        {
-            if (int.TryParse(row.Cells["stock"].Value.ToString(), out int qty) &&
-                decimal.TryParse(row.Cells["sell_price"].Value.ToString(), out decimal price))
-            {
-                decimal discount = row.Cells["discount"].Value != null ? Convert.ToDecimal(row.Cells["discount"].Value) : 0;
-                decimal tax = row.Cells["tax"].Value != null ? Convert.ToDecimal(row.Cells["tax"].Value) : 0;
-
-                decimal total = (qty * price) * (1 - discount / 100) + ((qty * price) * (tax / 100));
-                row.Cells["total"].Value = total;
             }
         }
 
@@ -1858,7 +1817,55 @@ namespace POS_qu
                 return;
             }
 
-            // ✅ Lanjut jika cart tidak kosong
+            // ================================
+            // 🔥 MODE UPDATE ORDER
+            // ================================
+            if (isEditingOrder && currentOrderId.HasValue)
+            {
+                var confirmUpdate = MessageBox.Show(
+                    "Anda sedang mengedit Order.\nApakah yakin ingin menyimpan perubahan?",
+                    "Konfirmasi Update",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (confirmUpdate == DialogResult.No)
+                    return;
+
+                OrderController controller = new OrderController();
+
+                if (controller.UpdateExistingOrder(
+                        currentOrderId.Value,
+                        SessionUser.GetCurrentUser().TerminalId,
+                        SessionUser.GetCurrentUser().UserId,
+                        out string updateErr))
+                {
+                    MessageBox.Show("Order berhasil diperbarui!", "Sukses",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    // reset state
+                    isEditingOrder = false;
+                    currentOrderId = null;
+
+                    dataGridViewCart4.Rows.Clear();
+                    label2.Text = "0.00";
+                    txtCariBarang.Focus();
+
+                    UpdateOrderBadge();
+                }
+                else
+                {
+                    MessageBox.Show("Gagal update order: " + updateErr, "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+
+                return;
+            }
+
+
+            // ================================
+            // 🔥 MODE NEW ORDER (Default)
+            // ================================
+
             var result = MessageBox.Show("Apakah Anda ingin menyimpan data sebagai Pesanan/Bon/Utang/Nota ?",
                 "Konfirmasi", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
 
@@ -1867,18 +1874,19 @@ namespace POS_qu
                 return; // Batalkan
             }
 
-            // Kalau No, bisa diarahkan ke mode input manual (jika kamu punya logika khusus)
             using (OrderForm orderModal = new OrderForm())
             {
                 if (orderModal.ShowDialog() == DialogResult.OK)
                 {
-                    // Ambil data order dari form
                     Orders order = orderModal.GetOrder();
 
                     OrderController controller = new OrderController();
-                    if (controller.SaveOrderWithDetails(order, SessionUser.GetCurrentUser().TerminalId , SessionUser.GetCurrentUser().UserId, out string errMsg))
+                    if (controller.SaveOrderWithDetails(
+                        order,
+                        SessionUser.GetCurrentUser().TerminalId,
+                        SessionUser.GetCurrentUser().UserId,
+                        out string errMsg))
                     {
-                        // Bersihkan cart
                         dataGridViewCart4.Rows.Clear();
                         label2.Text = "0.00";
                         txtCariBarang.Focus();
@@ -1886,7 +1894,6 @@ namespace POS_qu
                         MessageBox.Show("Order berhasil disimpan!", "Sukses",
                             MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                        // Refresh badge/order list jika perlu
                         UpdateOrderBadge();
                     }
                     else
@@ -1900,118 +1907,17 @@ namespace POS_qu
 
 
 
-
-        //    private void LoadOrderToCart(int orderId, bool isReadOnly = false)
-        //    {
-
-        //        // delete dari order detail
-        //        // insert ke pending orders
-        //        // test save dlu pake order baru
-
-        //        var randomItem = itemController.GetRandomItemByBarcode();
-        //        if (randomItem == null)
-        //        {
-        //            MessageBox.Show("No random item found.");
-        //            return;
-        //        }
-
-        //        bool isExistingUpdated = UpdateExistingItem(randomItem);
-
-
-        //        //MessageBox.Show("isExistingUpdated outside" + isExistingUpdated);
-
-        //        if (!isExistingUpdated)
-        //        {
-        //            //MessageBox.Show("isExistingUpdated" + isExistingUpdated);
-        //            // Hanya insert baru jika item belum ada
-        //            bool insertSuccess = InsertPendingTransaction(randomItem);
-        //            if (insertSuccess)
-        //            {
-        //                AddNewItemToGrid(randomItem); // tambah row baru
-        //            }
-
-        //            ///////////////////////////////////////
-
-        //            string query = @"
-        //    SELECT 
-        //        od.item_id,
-        //        od.od_barcode,
-        //        i.name,
-        //        od.od_quantity,
-        //        od.od_unit,
-        //        od.od_conversion_rate,
-        //        od.od_price_per_unit,
-        //        (od.od_price_per_unit / NULLIF(od.od_conversion_rate,1)) AS price_per_pcs,
-        //        (i.sell_price / NULLIF(od.od_conversion_rate,1)) AS price_per_pcs_asli,
-        //        od.od_discount_percentage,
-        //        od.od_tax,
-        //        od.od_total,
-        //        od.od_note
-        //    FROM order_details od
-        //    JOIN items i ON i.id = od.item_id
-        //    WHERE od.order_id = @order_id
-        //    ORDER BY od.order_detail_id ASC;
-        //";
-
-        //        using (var vCon = new NpgsqlConnection(DbConfig.ConnectionString))
-        //        {
-        //            vCon.Open();
-        //            using (var cmd = new NpgsqlCommand(query, vCon))
-        //            {
-        //                cmd.Parameters.AddWithValue("order_id", orderId);
-
-        //                using (var reader = cmd.ExecuteReader())
-        //                {
-        //                    dataGridViewCart4.Rows.Clear();
-
-        //                    while (reader.Read())
-        //                    {
-        //                        dataGridViewCart4.Rows.Add(
-        //                            reader["item_id"],                // id
-        //                            reader["od_barcode"],             // barcode
-        //                            reader["name"],                   // Nama Barang
-        //                            reader["od_quantity"],            // qty
-        //                            reader["od_unit"],                // Satuan
-        //                            reader["od_conversion_rate"],     // Conversion
-        //                            reader["od_price_per_unit"],      // Harga/Unit
-        //                            reader["price_per_pcs"],          // Harga/Satuan Utama
-        //                            reader["price_per_pcs_asli"],     // Harga/Satuan Utama Asli
-        //                            reader["od_discount_percentage"], // Pot(%)
-        //                            reader["od_tax"],                 // Pajak
-        //                            reader["od_total"],               // Total
-        //                            reader["od_note"],                // Keterangan Per Item
-        //                            reader["od_conversion_rate"]      // conversion
-        //                        );
-        //                    }
-        //                }
-        //            }
-        //        }
-
-        //        UpdateInvoiceUI();
-
-        //        // 🔒 Jika mode readonly aktif
-        //        if (isReadOnly)
-        //        {
-        //            foreach (DataGridViewColumn col in dataGridViewCart4.Columns)
-        //            {
-        //                col.ReadOnly = true;
-        //                col.DefaultCellStyle.BackColor = System.Drawing.Color.LightGray; // opsional: biar kelihatan beda
-        //            }
-
-        //            dataGridViewCart4.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.LightGray;
-        //            dataGridViewCart4.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
-        //        }
-
-        //        OrderController controller = new OrderController();
-        //        bool pendingOrders = controller.DeleteOrderDetail(orderId);
-
-        //    }
-
-
-        private void LoadOrderToCart(int orderId, bool isReadOnly = false)
+        private bool isEditingOrder = false;
+        private int? currentOrderId = null;
+        private void LoadOrderToCart(int orderId, bool isReadOnly = false, string mode = null)
         {
             try
             {
+                // 🔥 Tambahkan ini
+                isEditingOrder = true;
+                currentOrderId = orderId;
+
+
                 string query = @"
             SELECT 
                 od.item_id,
@@ -2079,29 +1985,33 @@ namespace POS_qu
                     {
                         AddNewItemToGrid(item);
                     }
-                }
 
+                }
                 // 🔹 Update tampilan invoice
                 UpdateInvoiceUI(currentInvoice);
 
-                // 🔹 (Opsional) Hapus detail order lama agar tidak dobel
-                OrderController controller = new OrderController();
-                bool deleted = controller.DeleteOrderDetail(orderId);
 
-                // 🔒 Set cart readonly jika diperlukan
-                if (isReadOnly)
+                if (mode == "delete")
                 {
-                    foreach (DataGridViewColumn col in dataGridViewCart4.Columns)
+                    deletecartbyrows();
+
+                }else
+                {
+                    if (isReadOnly)
                     {
-                        col.ReadOnly = true;
-                        col.DefaultCellStyle.BackColor = System.Drawing.Color.LightGray;
+                        foreach (DataGridViewColumn col in dataGridViewCart4.Columns)
+                        {
+                            col.ReadOnly = true;
+                            col.DefaultCellStyle.BackColor = System.Drawing.Color.LightGray;
+                        }
+                        dataGridViewCart4.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.LightGray;
+                        dataGridViewCart4.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
                     }
-                    dataGridViewCart4.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.LightGray;
-                    dataGridViewCart4.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
                 }
 
-                MessageBox.Show("Order berhasil dimuat dan disalin ke pending transaction.",
-                    "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    MessageBox.Show("Order berhasil dimuat dan disalin ke pending transaction.",
+                        "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -2313,40 +2223,7 @@ Ctrl+S - Search Random Item
                         return;
 
                     // 🔹 Load order ke cart seperti biasa
-                    LoadOrderToCart(frm.SelectedOrderId, true);
-
-
-                    //// ✅ Trigger event UserDeletingRow untuk setiap baris agar logika delete tetap sama
-                    //while (dataGridViewCart4.Rows.Count > 0)
-                    //{
-                    //    var row = dataGridViewCart4.Rows[0];
-
-                    //    // 🚫 Lewati baris kosong atau baris input baru
-                    //    if (row.IsNewRow) break;
-                    //    if (row.Cells["barcode"].Value == null || string.IsNullOrWhiteSpace(row.Cells["barcode"].Value.ToString()))
-                    //    {
-                    //        dataGridViewCart4.Rows.Remove(row);
-                    //        continue;
-                    //    }
-
-                    //    // ✅ Buat argumen event manual
-                    //    var args = new DataGridViewRowCancelEventArgs(row);
-
-                    //    // 🔹 Trigger event UserDeletingRow (supaya logika hapus tetap sama)
-                    //    dataGridViewCart4_UserDeletingRow(dataGridViewCart4, args);
-
-                    //    // 🔹 Kalau tidak dibatalkan, hapus baris
-                    //    if (!args.Cancel)
-                    //    {
-                    //        dataGridViewCart4.Rows.Remove(row);
-                    //    }
-                    //    else
-                    //    {
-                    //        // Kalau event batalkan delete (misalnya gagal DB)
-                    //        break;
-                    //    }
-                    //}
-
+                    LoadOrderToCart(frm.SelectedOrderId, true,"delete");
 
 
                     int? orderId = SelectedOrderId > 0 ? SelectedOrderId : null;
@@ -2378,8 +2255,6 @@ Ctrl+S - Search Random Item
 
                     if (form.ActionType == "load")
                     {
-
-
                         // 🔹 Ambil data draft dari database
                         var draft = itemController.GetDraftOrderById(poId);
                         SelectedDraftId = poId;
@@ -2391,7 +2266,7 @@ Ctrl+S - Search Random Item
 
                         // 🔹 Muat cart draft ke tampilan
                         LoadCartFromSession(sessionCode);
-
+            
                         MessageBox.Show($"Draft #{poId} berhasil dimuat ke cart!",
                             "Draft Loaded", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
@@ -2414,45 +2289,15 @@ Ctrl+S - Search Random Item
                         MessageBox.Show($"Draft #{poId} berhasil dimuat ke cart!",
                             "Draft Loaded", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                        // ✅ Trigger event UserDeletingRow untuk setiap baris agar logika delete tetap sama
-                        while (dataGridViewCart4.Rows.Count > 0)
-                        {
-                            var row = dataGridViewCart4.Rows[0];
-
-                            // 🚫 Lewati baris kosong atau baris input baru
-                            if (row.IsNewRow) break;
-                            if (row.Cells["barcode"].Value == null || string.IsNullOrWhiteSpace(row.Cells["barcode"].Value.ToString()))
-                            {
-                                dataGridViewCart4.Rows.Remove(row);
-                                continue;
-                            }
-
-                            // ✅ Buat argumen event manual
-                            var args = new DataGridViewRowCancelEventArgs(row);
-
-                            // 🔹 Trigger event UserDeletingRow (supaya logika hapus tetap sama)
-                            dataGridViewCart4_UserDeletingRow(dataGridViewCart4, args);
-
-                            // 🔹 Kalau tidak dibatalkan, hapus baris
-                            if (!args.Cancel)
-                            {
-                                dataGridViewCart4.Rows.Remove(row);
-                            }
-                            else
-                            {
-                                // Kalau event batalkan delete (misalnya gagal DB)
-                                break;
-                            }
-                        }
+                        //TRIGGER DELETE EVENT
+                        deletecartbyrows();
 
 
-
-                        int? draftId = SelectedDraftId > 0 ? SelectedDraftId : null;
-                        if (draftId.HasValue)
-                        {
-                            itemController.UpdateDraftPayment(draftId.Value,"deleted");
-                        }
-
+                    }
+                    int? draftId = SelectedDraftId > 0 ? SelectedDraftId : null;
+                    if (draftId.HasValue)
+                    {
+                        itemController.DeleteDraftPayment(draftId.Value);
                     }
 
                 }
