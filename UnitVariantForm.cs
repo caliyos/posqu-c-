@@ -16,15 +16,24 @@ namespace POS_qu
     public partial class UnitVariantForm : Form
     {
         private ItemController itemController;
-        public List<UnitVariant> UnitVariants { get; private set; } = new List<UnitVariant>();
+      
         private string baseUnitName;
+        public Item _item;
 
-        public UnitVariantForm(int id, string baseUnit, List<UnitVariant> existingVariants = null)
+        public UnitVariantForm(Item item, List<UnitVariant> existingVariants = null)
         {
             InitializeComponent();
-            baseUnitName = baseUnit;
-            UnitVariants = existingVariants ?? new List<UnitVariant>();
+            _item = item;
+            baseUnitName = _item.unit;
+
+            if (existingVariants != null && existingVariants.Count > 0)
+            {
+                _item.UnitVariants = existingVariants; // hanya assign kalau memang ada
+            }
+
+            StartPosition = FormStartPosition.CenterScreen;
         }
+
 
         private void UnitVariantForm_Load(object sender, EventArgs e)
         {
@@ -37,10 +46,11 @@ namespace POS_qu
 
             lblConvertionRate.Text = baseUnitName;
 
-            foreach (var variant in UnitVariants)
+            foreach (var variant in _item.UnitVariants)
             {
                 AddVariantToPanel(variant);
             }
+            
         }
 
         private void BtnSaveVariant_Click(object sender, EventArgs e)
@@ -57,32 +67,45 @@ namespace POS_qu
                 return;
             }
 
-            decimal.TryParse(txtProfit.Text, out decimal profit);
+            //decimal.TryParse(txtProfit.Text, out decimal profit);
 
-            if (cmbUnitVariant.SelectedValue == null)
-            {
-                MessageBox.Show("Please select a unit.");
-                return;
-            }
+            //if (cmbUnitVariant.SelectedValue == null)
+            //{
+            //    MessageBox.Show("Please select a unit.");
+            //    return;
+            //}
+            decimal actualSellPrice = _item.sell_price * conversion;
+            decimal profit = sellingPrice - actualSellPrice;
 
             int unitId = Convert.ToInt32(cmbUnitVariant.SelectedValue);
             string unitName = cmbUnitVariant.Text;
+
+            decimal MinQty;
+            if (!decimal.TryParse(txtMinQty.Text, out MinQty))
+            {
+                // Input bukan angka, beri default atau tampilkan pesan error
+                MinQty = 0; // contoh default
+                MessageBox.Show("Masukkan angka yang valid untuk MinQty.");
+            }
+
 
             var variant = new UnitVariant
             {
                 UnitId = unitId,
                 UnitName = unitName,
                 Conversion = conversion,
+                actualSellPrice = actualSellPrice,
                 SellPrice = sellingPrice,
-                Profit = profit
+                Profit = profit,
+                MinQty = MinQty
             };
 
-            UnitVariants.Add(variant);
+            _item.UnitVariants.Add(variant);
             AddVariantToPanel(variant);
 
             txtConvertionRate.Text = "";
             txtSellingPrice.Text = "";
-            txtProfit.Text = "";
+            txtMinQty.Text = "";
             cmbUnitVariant.SelectedIndex = -1;
         }
 
@@ -102,9 +125,34 @@ namespace POS_qu
                 AutoSize = true
             };
 
+
+            var labelMinQty = new Label
+            {
+                Text = $"Minimal Qty: {variant.MinQty}",
+                AutoSize = true
+
+            };
+            var labelConversion = new Label
+            {
+                Text = $"Konversi: {variant.Conversion}",
+                AutoSize = true
+            };
+
+            var labelhargabeli = new Label
+            {
+                Text = $"Harga Beli Produk: {_item.sell_price}",
+                AutoSize = true
+            };
+
+            var labelActualSelling = new Label
+            {
+                Text = $"Harga Jual Normal: {variant.actualSellPrice}",
+                AutoSize = true
+            };
+
             var labelSelling = new Label
             {
-                Text = $"Selling Price: {variant.SellPrice}",
+                Text = $"Harga Jual Variant: {variant.SellPrice}",
                 AutoSize = true
             };
 
@@ -130,7 +178,7 @@ namespace POS_qu
                 if (result == DialogResult.Yes)
                 {
                     UnitVariant toRemove = (UnitVariant)btnDelete.Tag;
-                    UnitVariants.Remove(toRemove);
+                    _item.UnitVariants.Remove(toRemove);
                     flpVariantLog.Controls.Remove(panel);
                 }
             };
@@ -143,6 +191,10 @@ namespace POS_qu
             };
 
             contentLayout.Controls.Add(labelEquation);
+            contentLayout.Controls.Add(labelMinQty); 
+            contentLayout.Controls.Add(labelConversion);
+            contentLayout.Controls.Add(labelActualSelling); 
+            contentLayout.Controls.Add(labelhargabeli);
             contentLayout.Controls.Add(labelSelling);
             contentLayout.Controls.Add(labelProfit);
 

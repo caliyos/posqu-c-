@@ -9,10 +9,14 @@ namespace POS_qu.Models
     public class UnitVariant
     {
         public int UnitId { get; set; }
+        public int ItemId { get; set; }
         public string UnitName { get; set; } = "";
         public int Conversion { get; set; }
         public decimal SellPrice { get; set; }
         public decimal Profit { get; set; }
+
+        public decimal MinQty { get; set; }
+        public decimal actualSellPrice { get; set; }
 
         //public override string ToString()
         //{

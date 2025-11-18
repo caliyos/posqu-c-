@@ -78,11 +78,11 @@ namespace POS_qu
 
         private void LoadSuppliers()
         {
-            DataTable dt = ItemController.GetSuppliers();
-            cmbSupplier.DataSource = dt;
-            cmbSupplier.DisplayMember = "name";
-            cmbSupplier.ValueMember = "id";
-            cmbSupplier.SelectedIndex = -1; // default kosong
+            //DataTable dt = ItemController.GetSuppliers();
+            //cmbSupplier.DataSource = dt;
+            //cmbSupplier.DisplayMember = "name";
+            //cmbSupplier.ValueMember = "id";
+            //cmbSupplier.SelectedIndex = -1; // default kosong
 
 
         }

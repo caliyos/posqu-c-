@@ -3,11 +3,15 @@ using POS_qu.Core;
 using POS_qu.Helpers;
 using POS_qu.Models;
 
+
+// DATAGRID SYNCHRONIZATION WITH PENDING TRANSACTIONS IN DB
 public class CartService
+
 {
     private ItemController _itemController;
     private readonly IActivityService _activityService;
 
+    public bool IsPaymentMode { get; set; } = false;
     public CartService(ItemController itemController, IActivityService activityService)
     {
         _itemController = itemController;
@@ -15,7 +19,7 @@ public class CartService
     }
 
     // =================== DELETE ITEM ===================
-    public bool DeleteCartItem(int itemId, string barcode, int qty, int conversionRate, string reason = "DELETE_ITEM_FROM_CART", string cart_session_code = null)
+    public bool DeleteCartItem(int itemId, string barcode, int qty, int conversionRate, string reason = "DELETE_ITEM_FROM_CART", string cart_session_code = null, bool isPaymentMode = false)
     {
         try
         {
@@ -31,16 +35,30 @@ public class CartService
 
             if (!deleteSuccess)
             {
-                MessageBox.Show("Failed to delete item from pending transactions.");
+                throw new InvalidOperationException("Failed to delete item from pending transactions.");
                 return false;
             }
 
-            // Update reserved stock
-            int reservedStock = _itemController.GetItemReservedStock(barcode);
-            int newReservedStock = reservedStock - stockNeeded;
-            if (newReservedStock < 0) newReservedStock = 0;
-
-            _itemController.UpdateReservedStock(barcode, newReservedStock);
+            if (!isPaymentMode)
+            {
+                // Update reserved stock hanya kalau bukan mode payment
+                int reservedStock = _itemController.GetItemReservedStock(barcode);
+                int newReservedStock = reservedStock - stockNeeded;
+                if (newReservedStock < 0) newReservedStock = 0;
+                _itemController.UpdateReservedStock(barcode, newReservedStock);
+            }
+            else
+            {
+                int reservedStock = _itemController.GetItemReservedStock(barcode);
+                int newReservedStock = reservedStock - stockNeeded;
+                if (newReservedStock < 0) newReservedStock = 0;
+                _itemController.UpdateReservedStock(barcode, newReservedStock);
+                // Mode payment: kurangi stock permanen
+                int currentStock = _itemController.GetItemStock(barcode);
+                int newStock = currentStock - stockNeeded;
+                if (newStock < 0) newStock = 0;
+                _itemController.UpdateItemStock(barcode, newStock);
+            }
 
             // Log aktivitas
             var session = SessionUser.GetCurrentUser();
@@ -59,7 +77,8 @@ public class CartService
                     IpAddress = NetworkHelper.GetLocalIPAddress(),
                     UserAgent = GlobalContext.getAppVersion(),
                     loginId = session.LoginId,
-                    cart_session_code = cart_session_code
+                    cart_session_code = cart_session_code,
+                    isPaymentMode
                 }
             );
 
@@ -71,6 +90,7 @@ public class CartService
             return false;
         }
     }
+
 
     // =================== UPDATE DISCOUNT ===================
     public bool UpdateCartItemDiscount(int itemId, decimal discountPercentage, string cart_session_code)

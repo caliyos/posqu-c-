@@ -35,8 +35,8 @@
             lblConvertionRate = new Label();
             label2 = new Label();
             txtSellingPrice = new TextBox();
-            label3 = new Label();
-            txtProfit = new TextBox();
+            minStock = new Label();
+            txtMinQty = new TextBox();
             flpVariantLog = new FlowLayoutPanel();
             btnSaveVariant = new Button();
             btnDone = new Button();
@@ -65,7 +65,7 @@
             txtConvertionRate.Location = new Point(208, 56);
             txtConvertionRate.Name = "txtConvertionRate";
             txtConvertionRate.Size = new Size(96, 31);
-            txtConvertionRate.TabIndex = 0;
+            txtConvertionRate.TabIndex = 1;
             txtConvertionRate.KeyPress += TxtConvertionRate_KeyPress;
             // 
             // cmbUnitVariant
@@ -74,7 +74,7 @@
             cmbUnitVariant.Location = new Point(64, 56);
             cmbUnitVariant.Name = "cmbUnitVariant";
             cmbUnitVariant.Size = new Size(96, 33);
-            cmbUnitVariant.TabIndex = 3;
+            cmbUnitVariant.TabIndex = 0;
             // 
             // lblConvertionRate
             // 
@@ -90,42 +90,42 @@
             label2.AutoSize = true;
             label2.Location = new Point(24, 112);
             label2.Name = "label2";
-            label2.Size = new Size(106, 25);
+            label2.Size = new Size(94, 25);
             label2.TabIndex = 5;
-            label2.Text = "Selling Price";
+            label2.Text = "Harga Jual";
             // 
             // txtSellingPrice
             // 
             txtSellingPrice.Location = new Point(152, 112);
             txtSellingPrice.Name = "txtSellingPrice";
             txtSellingPrice.Size = new Size(150, 31);
-            txtSellingPrice.TabIndex = 6;
+            txtSellingPrice.TabIndex = 2;
             // 
-            // label3
+            // minStock
             // 
-            label3.AutoSize = true;
-            label3.Location = new Point(384, 112);
-            label3.Name = "label3";
-            label3.Size = new Size(55, 25);
-            label3.TabIndex = 7;
-            label3.Text = "Profit";
-            label3.TextAlign = ContentAlignment.MiddleCenter;
+            minStock.AutoSize = true;
+            minStock.Location = new Point(384, 112);
+            minStock.Name = "minStock";
+            minStock.Size = new Size(123, 25);
+            minStock.TabIndex = 7;
+            minStock.Text = "Minimal Stock";
+            minStock.TextAlign = ContentAlignment.MiddleCenter;
             // 
-            // txtProfit
+            // txtMinQty
             // 
-            txtProfit.Location = new Point(456, 112);
-            txtProfit.Name = "txtProfit";
-            txtProfit.Size = new Size(150, 31);
-            txtProfit.TabIndex = 8;
+            txtMinQty.Location = new Point(520, 112);
+            txtMinQty.Name = "txtMinQty";
+            txtMinQty.Size = new Size(150, 31);
+            txtMinQty.TabIndex = 3;
             // 
             // flpVariantLog
             // 
             flpVariantLog.AutoScroll = true;
             flpVariantLog.FlowDirection = FlowDirection.TopDown;
-            flpVariantLog.Location = new Point(24, 180);
+            flpVariantLog.Location = new Point(24, 192);
             flpVariantLog.Name = "flpVariantLog";
-            flpVariantLog.Size = new Size(740, 240);
-            flpVariantLog.TabIndex = 0;
+            flpVariantLog.Size = new Size(740, 416);
+            flpVariantLog.TabIndex = 6;
             flpVariantLog.WrapContents = false;
             // 
             // btnSaveVariant
@@ -133,7 +133,7 @@
             btnSaveVariant.Location = new Point(672, 112);
             btnSaveVariant.Name = "btnSaveVariant";
             btnSaveVariant.Size = new Size(72, 32);
-            btnSaveVariant.TabIndex = 1;
+            btnSaveVariant.TabIndex = 4;
             btnSaveVariant.Text = "Save Variant";
             btnSaveVariant.Click += BtnSaveVariant_Click;
             // 
@@ -142,38 +142,21 @@
             btnDone.Location = new Point(672, 144);
             btnDone.Name = "btnDone";
             btnDone.Size = new Size(112, 34);
-            btnDone.TabIndex = 9;
+            btnDone.TabIndex = 5;
             btnDone.Text = "Done";
             btnDone.UseVisualStyleBackColor = true;
             btnDone.Click += btnDone_Click;
             // 
             // UnitVariantForm
             // 
-
-            // Conversion area
-            txtConvertionRate.TabIndex = 1;
-            cmbUnitVariant.TabIndex = 0;
-
-            // Selling/Profit
-            txtSellingPrice.TabIndex = 2;
-            txtProfit.TabIndex = 3;
-
-            // Buttons
-            btnSaveVariant.TabIndex = 4;
-            btnDone.TabIndex = 5;
-
-            // Log Panel (not focusable in usual flow, set last just in case)
-            flpVariantLog.TabIndex = 6;
-
-
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(800, 450);
+            ClientSize = new Size(799, 651);
             Controls.Add(btnDone);
             Controls.Add(flpVariantLog);
             Controls.Add(btnSaveVariant);
-            Controls.Add(txtProfit);
-            Controls.Add(label3);
+            Controls.Add(txtMinQty);
+            Controls.Add(minStock);
             Controls.Add(txtSellingPrice);
             Controls.Add(label2);
             Controls.Add(lblConvertionRate);
@@ -197,8 +180,8 @@
         private Label lblConvertionRate;
         private Label label2;
         private TextBox txtSellingPrice;
-        private Label label3;
-        private TextBox txtProfit;
+        private Label minStock;
+        private TextBox txtMinQty;
         private Button btnSaveVariant;
         private Button btnDone;
     }

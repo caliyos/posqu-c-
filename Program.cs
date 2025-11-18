@@ -44,16 +44,19 @@ namespace POS_qu
             try
             {
 
+                //Application.Run(new Casher());
                 //Application.Run(new Form2_crud());
                 //Application.Run(new Roles());
                 //Application.Run(new Terminal());
                 //Application.Run(new MenuNative());
-                Application.Run(new Login());
+                //Application.Run(new Login());
 
                 //Application.Run(new Casher_POS());
                 //Application.Run(new SalesReports());
                 //Application.Run(new StockReports());
-                //Application.Run(new ProductPage());
+                //Application.Run(new CategoryForm());
+                //Application.Run(new SupplierForm());
+                Application.Run(new ProductPage());
                 //Application.Run(new TokoSetting());
                 //Application.Run(new StrukSetting());
                 //Application.Run(new DatabaseSetting());

@@ -1,74 +1,599 @@
-﻿using Npgsql;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿    using Npgsql;
+    using System;
+    using System.Collections.Generic;
+    using System.Data;
+    using System.Linq;
+    using System.Text;
+    using System.Threading.Tasks;
 
-using POS_qu.Models;
-using System.Transactions;
-using Microsoft.VisualBasic.Devices;
-using POS_qu.Helpers;
+    using POS_qu.Models;
+    using System.Transactions;
+    using Microsoft.VisualBasic.Devices;
+    using POS_qu.Helpers;
 
-namespace POS_qu.Controllers
-{
-    public class ItemController
+    namespace POS_qu.Controllers
     {
-        //private string vStrConnection = "Host=localhost;Port=5433;Username=postgres;Password=postgres11;Database=posqu";
-
-        public static DataTable GetSuppliers()
+        public class ItemController
         {
-            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
-            conn.Open();
+            //private string vStrConnection = "Host=localhost;Port=5433;Username=postgres;Password=postgres11;Database=posqu";
 
-            string sql = "SELECT id, name FROM suppliers ORDER BY name";
-            using var cmd = new NpgsqlCommand(sql, conn);
-            using var reader = cmd.ExecuteReader();
 
-            DataTable dt = new DataTable();
-            dt.Load(reader); // <- ini penting, biar hasil query masuk ke DataTable
 
-            return dt;
+
+            ///////////////////////////////////////////////// NEW /////////////////////////////////////////////////////
+            ///
+            /// 
+
+
+            public List<Item> GetItemsNew(string searchTerm = null)
+            {
+                List<Item> items = new List<Item>();
+
+                string sql = @"
+                SELECT
+                    items.id,
+                    items.name,
+                    items.barcode,
+                    items.buy_price,
+                    items.sell_price,
+                    items.stock,
+                    items.reserved_stock,
+                    units.name AS unit
+                FROM items
+                LEFT JOIN units ON items.unit = units.id
+                WHERE items.deleted_at IS NULL";
+
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    sql += " AND items.name ILIKE @searchTerm";
+                }
+
+                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+                {
+                    vCon.Open();
+                    using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
+                    {
+                        if (!string.IsNullOrEmpty(searchTerm))
+                        {
+                            vCmd.Parameters.AddWithValue("@searchTerm", "%" + searchTerm + "%");
+                        }
+
+                        using (NpgsqlDataReader dr = vCmd.ExecuteReader())
+                        {
+                            while (dr.Read())
+                            {
+                                var item = new Item
+                                {
+                                    id = dr.GetInt32(dr.GetOrdinal("id")),
+                                    name = dr.GetString(dr.GetOrdinal("name")),
+                                    barcode = dr.GetString(dr.GetOrdinal("barcode")),
+                                    buy_price = dr.GetDecimal(dr.GetOrdinal("buy_price")),
+                                    sell_price = dr.GetDecimal(dr.GetOrdinal("sell_price")),
+                                    stock = dr.GetInt32(dr.GetOrdinal("stock")),
+                                    reserved_stock = dr.GetInt32(dr.GetOrdinal("reserved_stock")),
+                                    unit = dr.IsDBNull(dr.GetOrdinal("unit")) ? null : dr.GetString(dr.GetOrdinal("unit"))
+                                };
+
+                                items.Add(item);
+                            }
+                        }
+                    }
+                }
+
+                return items;
+            }
+
+
+        /// <summary>
+        /// ////////////////////////////////////////////// END NEW /////////////////////////////////////
+        /// </summary>
+        /// <returns></returns>
+        //public static DataTable GetSuppliers()
+        //{
+        //    using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+        //    conn.Open();
+
+        //    string sql = "SELECT id, name FROM suppliers ORDER BY name";
+        //    using var cmd = new NpgsqlCommand(sql, conn);
+        //    using var reader = cmd.ExecuteReader();
+
+        //    DataTable dt = new DataTable();
+        //    dt.Load(reader); // <- ini penting, biar hasil query masuk ke DataTable
+
+        //    return dt;
+        //}
+
+        public List<UnitVariant> GetUnitVariants(int itemId)
+        {
+            List<UnitVariant> variants = new List<UnitVariant>();
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                conn.Open();
+                string sql = @"SELECT uv.id, uv.unit_id, u.name AS unit_name, uv.conversion, uv.sell_price, uv.profit, uv.minqty
+                       FROM unit_variants uv
+                       JOIN units u ON uv.unit_id = u.id
+                       WHERE uv.item_id = @item_id";
+                using (var cmd = new NpgsqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@item_id", itemId);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            variants.Add(new UnitVariant
+                            {
+                                UnitId = reader.GetInt32(0),
+                                ItemId = reader.GetInt32(1),
+                                UnitName = reader.GetString(2),
+                                Conversion = reader.GetInt32(3),
+                                SellPrice = reader.GetDecimal(4),
+                                Profit = reader.GetDecimal(5),
+                                MinQty = reader.GetDecimal(6)
+                            });
+                        }
+                    }
+                }
+            }
+            return variants;
         }
+
+        public Item GetItemById(int id)
+        {
+            using (var conn = new Npgsql.NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                conn.Open();
+                string query = "SELECT * FROM items WHERE id = @id LIMIT 1";
+                using (var cmd = new Npgsql.NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("id", id);
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            return new Item
+                            {
+                                id = reader.GetInt32(reader.GetOrdinal("id")),
+                                name = reader.GetString(reader.GetOrdinal("name")),
+                                buy_price = reader.GetDecimal(reader.GetOrdinal("buy_price")),
+                                sell_price = reader.GetDecimal(reader.GetOrdinal("sell_price")),
+                                barcode = reader.GetString(reader.GetOrdinal("barcode")),
+
+                                // stock dan reserved_stock numeric → convert ke int
+                                stock = Convert.ToInt32(reader.GetDouble(reader.GetOrdinal("stock"))),
+                                reserved_stock = Convert.ToInt32(reader.GetDouble(reader.GetOrdinal("reserved_stock"))),
+
+                                // unit numeric di DB tapi di class string → convert
+                                unit = reader.GetDecimal(reader.GetOrdinal("unit")).ToString(),
+                                //unitid = reader.GetInt32(reader.GetOrdinal("unit_id")),
+                                category_id = reader.IsDBNull(reader.GetOrdinal("category_id")) ? 0 : reader.GetInt32(reader.GetOrdinal("category_id")),
+                                supplier_id = reader.IsDBNull(reader.GetOrdinal("supplier_id")) ? 0 : reader.GetInt32(reader.GetOrdinal("supplier_id")),
+                                note = reader.IsDBNull(reader.GetOrdinal("note")) ? "" : reader.GetString(reader.GetOrdinal("note")),
+                                picture = reader.IsDBNull(reader.GetOrdinal("picture")) ? "" : reader.GetString(reader.GetOrdinal("picture")),
+                                created_at = reader.GetDateTime(reader.GetOrdinal("created_at")),
+                                updated_at = reader.GetDateTime(reader.GetOrdinal("updated_at")),
+                                deleted_at = reader.IsDBNull(reader.GetOrdinal("deleted_at")) ? null : reader.GetDateTime(reader.GetOrdinal("deleted_at")),
+                                flag = reader.IsDBNull(reader.GetOrdinal("flag")) ? 0 : reader.GetInt32(reader.GetOrdinal("flag")),
+
+                                // SETTINGS
+                                is_inventory_p = reader.GetBoolean(reader.GetOrdinal("is_inventory_p")),
+                                IsPurchasable = reader.GetBoolean(reader.GetOrdinal("is_purchasable")),
+                                IsSellable = reader.GetBoolean(reader.GetOrdinal("is_sellable")),
+                                RequireNotePayment = reader.GetBoolean(reader.GetOrdinal("is_note_payment")),
+                                is_changeprice_p = reader.GetBoolean(reader.GetOrdinal("is_changeprice_p")),
+                                HasMaterials = reader.GetBoolean(reader.GetOrdinal("is_have_bahan")),
+                                IsPackage = reader.GetBoolean(reader.GetOrdinal("is_box")),
+                                IsProduced = reader.GetBoolean(reader.GetOrdinal("is_produksi")),
+                                discount_formula = reader.IsDBNull(reader.GetOrdinal("discount_formula")) ? "" : reader.GetString(reader.GetOrdinal("discount_formula"))
+                            };
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+
+
+
+        public int? InsertItem(Item item)
+        {
+            try
+            {
+                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+                {
+                    vCon.Open();
+                    using (var tran = vCon.BeginTransaction())
+                    {
+                        // ----------------------
+                        // Insert item utama
+                        // ----------------------
+                        string sql = @"
+                    INSERT INTO items (
+                        name,
+                        buy_price,
+                        sell_price,
+                        barcode,
+                        stock,
+                        unit,
+                        category_id,
+                        supplier_id,
+                        is_inventory_p,
+                        is_purchasable,
+                        is_sellable,
+                        discount_formula,
+                        note,
+                        created_at,
+                        updated_at
+                    )
+                    VALUES (
+                        @name,
+                        @buy_price,
+                        @sell_price,
+                        @barcode,
+                        @stock,
+                        @unit,
+                        @category_id,
+                        @supplier_id,
+                        @is_inventory_p,
+                        @is_purchasable,
+                        @is_sellable,
+                        @discount_formula,
+                        @note,
+                        NOW(),
+                        NOW()
+                    )
+                    RETURNING id;
+                ";
+
+                        int newItemId;
+                        using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon, tran))
+                        {
+                            vCmd.Parameters.AddWithValue("@name", item.name);
+                            vCmd.Parameters.AddWithValue("@buy_price", item.buy_price);
+                            vCmd.Parameters.AddWithValue("@sell_price", item.sell_price);
+                            vCmd.Parameters.AddWithValue("@barcode", item.barcode ?? "");
+                            vCmd.Parameters.AddWithValue("@stock", item.stock);
+                            vCmd.Parameters.AddWithValue("@unit", item.unitid);
+                            vCmd.Parameters.AddWithValue("@category_id", item.category_id);
+                            vCmd.Parameters.AddWithValue("@supplier_id", item.supplier_id);
+                            vCmd.Parameters.AddWithValue("@is_inventory_p", item.is_inventory_p);
+                            vCmd.Parameters.AddWithValue("@is_purchasable", item.IsPurchasable);
+                            vCmd.Parameters.AddWithValue("@is_sellable", item.IsSellable);
+                            vCmd.Parameters.AddWithValue("@discount_formula", item.discount_formula);
+                            vCmd.Parameters.AddWithValue("@note", item.note ?? "");
+
+                            object result = vCmd.ExecuteScalar();
+                            if (result == null) throw new Exception("Gagal insert item");
+                            newItemId = Convert.ToInt32(result);
+                        }
+
+                        // ----------------------
+                        // Insert item_prices
+                        // ----------------------
+                        if (item.Prices != null && item.Prices.Count > 0)
+                        {
+                            string insertPriceSql = @"
+                        INSERT INTO item_prices (item_id, min_qty, price, created_at)
+                        VALUES (@item_id, @min_qty, @price, NOW());
+                    ";
+
+                            foreach (var price in item.Prices)
+                            {
+                                using (var cmd = new NpgsqlCommand(insertPriceSql, vCon, tran))
+                                {
+                                    cmd.Parameters.AddWithValue("@item_id", newItemId);
+                                    cmd.Parameters.AddWithValue("@min_qty", price.MinQty);
+                                    cmd.Parameters.AddWithValue("@price", price.Price);
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+
+
+                        ///////////////////////// UNIT VARIANT //////////////////
+                        ///if (item.UnitVariants != null && item.UnitVariants.Count > 0)
+                        {
+                            // Hapus dulu variant lama untuk item ini
+                            string deleteVariantSql = "DELETE FROM unit_variants WHERE item_id = @item_id;";
+                            using (var deleteCmd = new NpgsqlCommand(deleteVariantSql, vCon, tran))
+                            {
+                                deleteCmd.Parameters.AddWithValue("@item_id", newItemId);
+                                deleteCmd.ExecuteNonQuery();
+                            }
+
+                            // Insert variant baru
+                            string insertVariantSql = @"
+                                INSERT INTO unit_variants (
+                                    item_id,
+                                    unit_id,
+                                    conversion,
+                                    sell_price,
+                                    profit,
+                                    minqty,
+                                    is_base_unit
+                                )
+                                VALUES (
+                                    @item_id, @unit_id, @conversion, @sell_price, @profit, @minqty, @is_base_unit
+                                );
+                            ";
+
+                            foreach (var variant in item.UnitVariants)
+                            {
+                                using (var cmd = new NpgsqlCommand(insertVariantSql, vCon, tran))
+                                {
+                                    cmd.Parameters.AddWithValue("@item_id", newItemId);
+                                    cmd.Parameters.AddWithValue("@unit_id", variant.UnitId);
+                                    cmd.Parameters.AddWithValue("@conversion", variant.Conversion);
+                                    cmd.Parameters.AddWithValue("@sell_price", variant.SellPrice);
+                                    cmd.Parameters.AddWithValue("@profit", variant.Profit);
+                                    cmd.Parameters.AddWithValue("@minqty", variant.MinQty);
+                                    cmd.Parameters.AddWithValue("@is_base_unit", false);
+
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+
+
+                        tran.Commit();
+                        return newItemId;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error inserting item: " + ex.Message);
+                return null;
+            }
+        }
+
+
+
+        public bool UpdateItem(Item item)
+        {
+            try
+            {
+                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+                {
+                    vCon.Open();
+                    using (var tran = vCon.BeginTransaction())
+                    {
+                        // ----------------------
+                        // Update item utama
+                        // ----------------------
+                        string sql = @"
+                UPDATE items SET
+                    name = @name,
+                    buy_price = @buy_price,
+                    sell_price = @sell_price,
+                    barcode = @barcode,
+                    stock = @stock,
+                    unit = @unit,
+                    category_id = @category_id,
+                    supplier_id = @supplier_id,
+                    is_inventory_p = @is_inventory_p,
+                    is_purchasable = @is_purchasable,
+                    is_sellable = @is_sellable,
+                    discount_formula = @discount_formula,
+                    note = @note,
+                    updated_at = NOW()
+                WHERE id = @id
+                ";
+
+                        using (var vCmd = new NpgsqlCommand(sql, vCon, tran))
+                        {
+                            vCmd.Parameters.AddWithValue("@id", item.id);
+                            vCmd.Parameters.AddWithValue("@name", item.name);
+                            vCmd.Parameters.AddWithValue("@buy_price", item.buy_price);
+                            vCmd.Parameters.AddWithValue("@sell_price", item.sell_price);
+                            vCmd.Parameters.AddWithValue("@barcode", item.barcode ?? "");
+                            vCmd.Parameters.AddWithValue("@stock", item.stock);
+                            vCmd.Parameters.AddWithValue("@unit", item.unitid);
+                            vCmd.Parameters.AddWithValue("@category_id", item.category_id);
+                            vCmd.Parameters.AddWithValue("@supplier_id", item.supplier_id);
+                            vCmd.Parameters.AddWithValue("@is_inventory_p", item.is_inventory_p);
+                            vCmd.Parameters.AddWithValue("@is_purchasable", item.IsPurchasable);
+                            vCmd.Parameters.AddWithValue("@is_sellable", item.IsSellable);
+                            vCmd.Parameters.AddWithValue("@discount_formula", item.discount_formula);
+                            vCmd.Parameters.AddWithValue("@note", item.note ?? "");
+
+                            vCmd.ExecuteNonQuery();
+                        }
+
+                        // ----------------------
+                        // Hapus item_prices lama
+                        // ----------------------
+                        string deletePriceSql = "DELETE FROM item_prices WHERE item_id = @item_id";
+                        using (var delCmd = new NpgsqlCommand(deletePriceSql, vCon, tran))
+                        {
+                            delCmd.Parameters.AddWithValue("@item_id", item.id);
+                            delCmd.ExecuteNonQuery();
+                        }
+
+                        // ----------------------
+                        // Insert item_prices baru
+                        // ----------------------
+                        if (item.Prices != null && item.Prices.Count > 0)
+                        {
+                            string insertPriceSql = @"
+                        INSERT INTO item_prices (item_id, min_qty, price, created_at)
+                        VALUES (@item_id, @min_qty, @price, NOW());
+                    ";
+
+                            foreach (var price in item.Prices)
+                            {
+                                using (var cmd = new NpgsqlCommand(insertPriceSql, vCon, tran))
+                                {
+                                    cmd.Parameters.AddWithValue("@item_id", item.id);
+                                    cmd.Parameters.AddWithValue("@min_qty", price.MinQty);
+                                    cmd.Parameters.AddWithValue("@price", price.Price);
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+
+                        // ----------------------
+                        // Update UnitVariants
+                        // ----------------------
+                        if (item.UnitVariants != null && item.UnitVariants.Count > 0)
+                        {
+                            // Hapus variant lama
+                            string deleteVariantSql = "DELETE FROM unit_variants WHERE item_id = @item_id;";
+                            using (var deleteCmd = new NpgsqlCommand(deleteVariantSql, vCon, tran))
+                            {
+                                deleteCmd.Parameters.AddWithValue("@item_id", item.id);
+                                deleteCmd.ExecuteNonQuery();
+                            }
+
+                            // Insert variant baru
+                            string insertVariantSql = @"
+                        INSERT INTO unit_variants (
+                            item_id,
+                            unit_id,
+                            conversion,
+                            sell_price,
+                            profit,
+                            minqty,
+                            is_base_unit
+                        )
+                        VALUES (
+                            @item_id, @unit_id, @conversion, @sell_price, @profit, @minqty, @is_base_unit
+                        );
+                    ";
+
+                            foreach (var variant in item.UnitVariants)
+                            {
+                                using (var cmd = new NpgsqlCommand(insertVariantSql, vCon, tran))
+                                {
+                                    cmd.Parameters.AddWithValue("@item_id", item.id);
+                                    cmd.Parameters.AddWithValue("@unit_id", variant.UnitId);
+                                    cmd.Parameters.AddWithValue("@conversion", variant.Conversion);
+                                    cmd.Parameters.AddWithValue("@sell_price", variant.SellPrice);
+                                    cmd.Parameters.AddWithValue("@profit", variant.Profit);
+                                    cmd.Parameters.AddWithValue("@minqty", variant.MinQty);
+                                    cmd.Parameters.AddWithValue("@is_base_unit", false);
+
+                                    cmd.ExecuteNonQuery();
+                                }
+                            }
+                        }
+
+                        tran.Commit();
+                        return true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error updating item: " + ex.Message);
+                return false;
+            }
+        }
+
+
 
         public DataTable GetItems()
         {
-            //MessageBox.Show("GetItems no param called.");
             DataTable dt = new DataTable();
+
             using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
+
                 string sql = @"
             SELECT 
-                items.id, 
-                items.name, 
-                items.barcode, 
-                items.buy_price, 
-                items.sell_price, 
-                items.stock, 
-                units.name AS unit, 
-                items.unit AS unit_id, 
-                items.group, 
-                items.note,   
-                items.picture, 
-                items.reserved_stock
-            FROM 
-                items
-            LEFT JOIN 
-                units ON items.unit = units.id
-            WHERE 
-                items.deleted_at IS NULL
-            ORDER BY items.id DESC 
+                items.id,
+                items.name,
+                items.barcode,
+                items.buy_price,
+                items.sell_price,
+                items.stock,
+                items.reserved_stock,
+
+                items.unit AS unit_id,
+                units.name AS unit_name,
+
+                items.category_id,
+                categories.name AS category_name,
+
+                items.note,
+                items.picture,
+
+                -- BOOLEAN FLAGS
+                items.is_inventory_p,
+                items.is_purchasable,
+                items.is_sellable,
+                items.is_note_payment,
+                items.is_changeprice_p,
+                items.is_have_bahan,
+                items.is_box,
+                items.is_produksi,
+
+                items.discount_formula,
+
+                items.supplier_id,
+                suppliers.name AS supplier_name,
+
+                items.flag,
+                items.created_at,
+                items.updated_at
+            FROM items
+            LEFT JOIN units       ON items.unit = units.id
+            LEFT JOIN categories  ON items.category_id = categories.id
+            LEFT JOIN suppliers   ON items.supplier_id = suppliers.id
+            WHERE items.deleted_at IS NULL
+            ORDER BY items.id DESC
         ";
+
                 using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
                 {
-                    NpgsqlDataReader dr = vCmd.ExecuteReader();
-                    dt.Load(dr);
+                    using (NpgsqlDataReader dr = vCmd.ExecuteReader())
+                    {
+                        dt.Load(dr);
+                    }
                 }
             }
+
             return dt;
         }
+
+      
+
+        public DataTable GetItemPrices(int itemId)
+        {
+            DataTable dt = new DataTable();
+
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                vCon.Open();
+
+                string sql = @"
+            SELECT 
+                id,
+                item_id,
+                min_qty,
+                price
+            FROM item_prices
+            WHERE item_id = @item_id
+            ORDER BY min_qty ASC
+        ";
+
+                using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
+                {
+                    vCmd.Parameters.AddWithValue("@item_id", itemId);
+
+                    using (NpgsqlDataReader dr = vCmd.ExecuteReader())
+                    {
+                        dt.Load(dr);
+                    }
+                }
+            }
+
+            return dt;
+        }
+
+
+
 
         public DataTable GetAvailableItems()
         {
@@ -222,7 +747,7 @@ namespace POS_qu.Controllers
                 id, 
                 name || ' (' || abbr || ')' AS display 
             FROM units 
-            ORDER BY name";
+            ORDER BY id ASC";
 
                 using (NpgsqlCommand cmd = new NpgsqlCommand(sql, vCon))
                 {
@@ -233,28 +758,95 @@ namespace POS_qu.Controllers
             return dt;
         }
 
-        public DataTable GetGroups()
+        public DataTable GetCategories()
         {
             DataTable dt = new DataTable();
+            dt.Columns.Add("id", typeof(int));
+            dt.Columns.Add("display", typeof(string));
+
+            List<Category> categories = new List<Category>();
+
             using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
-                string sql = @"
-            SELECT 
-                id, 
-                groupname || ' (' || groupshortname || ')' AS display 
-            FROM groups 
-            ORDER BY groupname";
-
+                string sql = "SELECT id, name, kode, parent_id FROM categories ORDER BY name";
                 using (NpgsqlCommand cmd = new NpgsqlCommand(sql, vCon))
+                using (var dr = cmd.ExecuteReader())
                 {
-                    NpgsqlDataReader dr = cmd.ExecuteReader();
-                    dt.Load(dr);
+                    while (dr.Read())
+                    {
+                        categories.Add(new Category
+                        {
+                            Id = dr.GetInt32(dr.GetOrdinal("id")),
+                            Name = dr.GetString(dr.GetOrdinal("name")),
+                            Kode = dr.GetString(dr.GetOrdinal("kode")),
+                            ParentId = dr.IsDBNull(dr.GetOrdinal("parent_id")) ? (int?)null : dr.GetInt32(dr.GetOrdinal("parent_id"))
+                        });
+                    }
                 }
             }
+
+            // Build hierarchical display (parent → child)
+            foreach (var cat in categories)
+            {
+                string display = cat.Name;
+                if (cat.ParentId.HasValue)
+                {
+                    var parent = categories.FirstOrDefault(x => x.Id == cat.ParentId.Value);
+                    if (parent != null)
+                    {
+                        display = parent.Name + " → " + display;
+                    }
+                }
+                display += " (" + cat.Kode + ")";
+                dt.Rows.Add(cat.Id, display);
+            }
+
             return dt;
         }
 
+        public DataTable GetSuppliers()
+        {
+            DataTable dt = new DataTable();
+            dt.Columns.Add("id", typeof(long));
+            dt.Columns.Add("display", typeof(string));
+
+            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                vCon.Open();
+
+                string sql = @"
+            SELECT id, name, kode, phone
+            FROM suppliers
+            ORDER BY name
+        ";
+
+                using (NpgsqlCommand cmd = new NpgsqlCommand(sql, vCon))
+                using (var dr = cmd.ExecuteReader())
+                {
+                    while (dr.Read())
+                    {
+                        long id = dr.GetInt64(dr.GetOrdinal("id"));
+                        string name = dr["name"].ToString();
+                        string kode = dr["kode"] == DBNull.Value ? "" : dr["kode"].ToString();
+                        string phone = dr["phone"] == DBNull.Value ? "" : dr["phone"].ToString();
+
+                        // contoh display: "Indofood (IF01) - 08123456789"
+                        string display = name;
+
+                        if (!string.IsNullOrEmpty(kode))
+                            display += $" ({kode})";
+
+                        if (!string.IsNullOrEmpty(phone))
+                            display += $" - {phone}";
+
+                        dt.Rows.Add(id, display);
+                    }
+                }
+            }
+
+            return dt;
+        }
 
 
         public int GetItemStock(string barcode)
@@ -560,141 +1152,7 @@ WHERE items.id = @id";
         }
 
 
-        public int? InsertItem(Item item)
-        {
-            try
-            {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
-                {
-                    vCon.Open();
-                    string sql = @"
-                INSERT INTO items (
-                    name, buy_price, sell_price, barcode, stock, reserved_stock, unit, ""group"", 
-                    is_inventory_p, is_changeprice_p, materials, note, picture, created_at, 
-                    updated_at, deleted_at, supplier_id, flag
-                ) VALUES (
-                    @name, @buy_price, @sell_price, @barcode, @stock, @reserved_stock, @unit, @group, 
-                    @is_inventory_p, @is_changeprice_p, @materials, @note, @picture, @created_at, 
-                    @updated_at, @deleted_at, @supplier_id, @flag
-                )
-                RETURNING id;"; // 👈 This returns the newly inserted item's ID
 
-                    using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
-                    {
-                        vCmd.Parameters.AddWithValue("@name", item.name);
-                        vCmd.Parameters.AddWithValue("@buy_price", item.buy_price);
-                        vCmd.Parameters.AddWithValue("@sell_price", item.sell_price);
-                        vCmd.Parameters.AddWithValue("@barcode", item.barcode ?? "");
-                        vCmd.Parameters.AddWithValue("@stock", item.stock);
-                        vCmd.Parameters.AddWithValue("@reserved_stock", item.reserved_stock);
-                        vCmd.Parameters.AddWithValue("@unit", item.unitid);
-                        vCmd.Parameters.AddWithValue("@group", item.group);
-                        vCmd.Parameters.AddWithValue("@is_inventory_p", item.is_inventory_p ?? "Y");
-                        vCmd.Parameters.AddWithValue("@is_changeprice_p", item.is_changeprice_p ?? "N");
-                        vCmd.Parameters.AddWithValue("@materials", item.materials ?? "");
-                        vCmd.Parameters.AddWithValue("@note", item.note ?? "");
-                        vCmd.Parameters.AddWithValue("@picture", item.picture ?? "");
-                        vCmd.Parameters.AddWithValue("@created_at", item.created_at);
-                        vCmd.Parameters.AddWithValue("@updated_at", item.updated_at);
-                        vCmd.Parameters.AddWithValue("@deleted_at", (object)item.deleted_at ?? DBNull.Value);
-                        vCmd.Parameters.AddWithValue("@supplier_id", item.supplier_id);
-                        vCmd.Parameters.AddWithValue("@flag", item.flag);
-
-                        // Execute and return the inserted ID
-                        object result = vCmd.ExecuteScalar();
-                        return result != null ? Convert.ToInt32(result) : null;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error inserting item: " + ex.Message);
-                return null;
-            }
-        }
-
-
-
-        public bool UpdateItem(Item item)
-        {
-
-            try
-            {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
-                {
-                    vCon.Open();
-                    string sql = @"
-                UPDATE items SET 
-                    name = @name,
-                    buy_price = @buy_price,
-                    sell_price = @sell_price,
-                    barcode = @barcode,
-                    stock = @stock,
-                    reserved_stock = @reserved_stock,
-                    unit = @unit,
-                    ""group"" = @group,
-                    is_inventory_p = @is_inventory_p,
-                    is_changeprice_p = @is_changeprice_p,
-                    materials = @materials,
-                    note = @note,
-                    picture = @picture,
-                    updated_at = @updated_at,
-                    deleted_at = @deleted_at,
-                    supplier_id = @supplier_id,
-                    flag = @flag
-                WHERE id = @id";
-
-                    using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
-                    {
-                        vCmd.Parameters.AddWithValue("@id", item.id);
-                        vCmd.Parameters.AddWithValue("@name", item.name);
-                        vCmd.Parameters.AddWithValue("@buy_price", item.buy_price);
-                        vCmd.Parameters.AddWithValue("@sell_price", item.sell_price);
-                        vCmd.Parameters.AddWithValue("@barcode", item.barcode ?? "");
-                        vCmd.Parameters.AddWithValue("@stock", item.stock);
-                        vCmd.Parameters.AddWithValue("@reserved_stock", item.reserved_stock);
-                        vCmd.Parameters.AddWithValue("@unit", item.unitid);
-                        vCmd.Parameters.AddWithValue("@group", item.group);
-                        vCmd.Parameters.AddWithValue("@is_inventory_p", item.is_inventory_p ?? "Y");
-                        vCmd.Parameters.AddWithValue("@is_changeprice_p", item.is_changeprice_p ?? "N");
-                        vCmd.Parameters.AddWithValue("@materials", item.materials ?? "");
-                        vCmd.Parameters.AddWithValue("@note", item.note ?? "");
-                        vCmd.Parameters.AddWithValue("@picture", item.picture ?? "");
-                        vCmd.Parameters.AddWithValue("@updated_at", item.updated_at);
-                        vCmd.Parameters.AddWithValue("@deleted_at", (object)item.deleted_at ?? DBNull.Value);
-                        vCmd.Parameters.AddWithValue("@supplier_id", item.supplier_id);
-                        vCmd.Parameters.AddWithValue("@flag", item.flag);
-
-                        vCmd.ExecuteNonQuery();
-                    }
-                }
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error updating item: " + ex.Message);
-                return false;
-            }
-        }
-
-
-
-        //public void UpdateItem(Item item)
-        //{
-        //    using (NpgsqlConnection vCon = new NpgsqlConnection(vStrConnection))
-        //    {
-        //        vCon.Open();
-        //        string sql = "UPDATE items SET name = @name, buy_price = @buy_price WHERE id = @id";
-        //        using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
-        //        {
-        //            vCmd.Parameters.AddWithValue("@name", item.Name);
-        //            vCmd.Parameters.AddWithValue("@buy_price", item.Price);
-        //            vCmd.Parameters.AddWithValue("@id", item.Id);
-        //            vCmd.ExecuteNonQuery();
-        //        }
-        //    }
-        //}
 
         public bool DeleteItem(int id)
         {

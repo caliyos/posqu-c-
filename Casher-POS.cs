@@ -55,13 +55,6 @@ namespace POS_qu
             //activityService.LogAction(ActivityType.Print.ToString(), "Printing preview", new { ItemCode = "A123", Quantity = 2 });
             // Example of logging an action
 
-            //string terminal = SessionUser.TerminalId(pcId);
-            //string shift = Utility.GetCurrentShift();
-
-            //string pcId = Utility.GetPcId();
-            //string terminal = Utility.GetTerminalName(pcId);
-            //string shift = Utility.GetCurrentShift();
-
 
             var user = SessionUser.GetCurrentUser();
             string pcId = Utility.GetPcId();
@@ -582,7 +575,13 @@ namespace POS_qu
                     // Print
                     print(transaction, currentInvoice);
 
+                    _cartService.IsPaymentMode = true;
+
+                    // Hapus semua item dari cart (trigger event UserDeletingRow)
                     deletecartbyrows("payment");
+
+                    // RESET MODE PAYMENT
+                    _cartService.IsPaymentMode = false;
 
 
 
@@ -1363,6 +1362,12 @@ namespace POS_qu
         "Pajak", "Total", "Keterangan Per Item","conversion"
     };
 
+    //        string[] columnNames = {
+    //    "id", "barcode", "Nama Barang", "qty", "Satuan",
+    //    "Conversion", "Harga/Unit", "Harga/Satuan Utama","Harga/Satuan Utama Asli", "Pot(%)",
+    //    "Pajak", "Total", "Keterangan Per Item","conversion"
+    //};
+
             string[] propertyNames = {
         "id", "barcode", "name", "stock", "unit",
         "conversion_info", "sell_price", "price_per_pcs","price_per_pcs_asli", "discount",
@@ -1564,118 +1569,6 @@ namespace POS_qu
             }
             return true;
 
-            //////////////////////////////////////////////////////////////////////
-
-            ////MessageBox.Show("ProcessItemStockUpdate");
-            //if (row.Cells["id"].Value == null) return false;
-
-            //int itemId = Convert.ToInt32(row.Cells["id"].Value);
-            //string barcode = row.Cells["barcode"].Value.ToString();
-            //string unit = row.Cells["unit"].Value.ToString();
-            //string discount = row.Cells["discount"].Value.ToString();
-            //string note = row.Cells["note"].Value.ToString();
-
-            //// untuk case edit qty dari cart
-            //int previousQuantity = row.Cells["stock"].Tag != null ? Convert.ToInt32(row.Cells["stock"].Tag) : 0;
-
-            //// jika allowAppend true.. (berarti tambahkan dari qty yg di ambil cari searchforitem)
-            //// jika false berarti user ganti dari dlm car
-            //int enteredQuantity = 0;
-            //if (allowAppend)
-            //{
-            //    enteredQuantity = Convert.ToInt32(row.Cells["stock"].Value) + additionalQuantity;
-            //}
-            //else
-            //{
-            //    enteredQuantity = additionalQuantity;
-            //}
-
-            //if (enteredQuantity <= 0)
-            //{
-            //    MessageBox.Show("Quantity must be at least 1.");
-            //    return false;
-            //}
-
-            //int conversionRate = 1;
-            //if (row.Cells["conversion"].Value != null && int.TryParse(row.Cells["conversion"].Value.ToString(), out int conv))
-            //{
-            //    if (conv > 0) conversionRate = conv;
-            //}
-
-            //int stockNeededOld = previousQuantity * conversionRate;
-            //int stockNeededNew = enteredQuantity * conversionRate;
-
-            //int currentStock = itemController.GetItemStock(barcode);
-
-            //int reservedStock = itemController.GetItemReservedStock(barcode);
-            //int newReservedStock = 0;
-            //// jika ditambahkan dari searchforitem..
-            //// bukan di edit qtynya lansung dari cart
-            //if (allowAppend == true)
-            //{
-            //    newReservedStock = reservedStock;
-            //}
-            //else
-            //{
-            //    newReservedStock = reservedStock - stockNeededOld + stockNeededNew;
-            //}
-
-            //if (newReservedStock > currentStock)
-            //{
-            //    MessageBox.Show("Stock tidak cukup. Jumlah ini melebihi sisa stock yang tersedia.");
-            //    return false;
-            //}
-
-            //decimal pricePerUnit = Convert.ToDecimal(row.Cells["sell_price"].Value);
-            //decimal calculatedTotal = enteredQuantity * pricePerUnit;
-
-            //// update berdasarkan satuan yang sama
-            ////MessageBox.Show("about to UpdatePendingTransactionSto ck");
-            //bool updateSuccess = itemController.UpdatePendingTransactionStock(SessionUser.GetCurrentUser().TerminalId, itemId, enteredQuantity, calculatedTotal, unit,cart_session_code);
-            //if (!updateSuccess)
-            //{
-            //    MessageBox.Show("Failed to update stock in pending transactions.");
-            //    return false;
-            //}
-
-            //itemController.UpdateReservedStock(barcode, newReservedStock);
-
-            //isProgrammaticChange = true;
-            //row.Cells["stock"].Value = enteredQuantity;
-            //row.Cells["total"].Value = calculatedTotal;
-            //isProgrammaticChange = false;
-
-            //row.Cells["stock"].Tag = enteredQuantity;
-
-            //activityService.LogAction(
-            //userId: SessionUser.GetCurrentUser().UserId.ToString(),
-            //actionType: ActivityType.Cart.ToString(),
-            //    referenceId: null,
-            //    desc: $"Successfully update Item in cart: {itemId} CSC {cart_session_code} newreqstock : {newReservedStock}, prevreservedstock: {stockNeededOld}",
-            //    details: new
-            //    {
-            //        loginId = SessionUser.GetCurrentUser().LoginId,
-            //        itemId = itemId,
-            //        adjustmentType = "UPDATE_ITEM_IN_CART",
-            //        reason = "default reason",
-            //        referenceTable = "items",
-            //        terminal = SessionUser.GetCurrentUser().TerminalId,
-            //        shiftId = SessionUser.GetCurrentUser().ShiftId,
-            //        IpAddress = NetworkHelper.GetLocalIPAddress(),
-            //        UserAgent = GlobalContext.getAppVersion(),
-            //        Discount = discount,
-            //        Note = note,
-            //        cart_session_code = cart_session_code
-            //        //TsCode = transaction.TsCode,
-            //        //TotalAmount = transaction.TsTotal,
-            //        //PaymentMethod = transaction.TsMethod,
-            //        //OrderId = transaction.OrderId
-            //    }
-            //);
-
-            //UpdateInvoiceUI(currentInvoice);
-            //MessageBox.Show("done ProcessItemStockUpdate about to return true");
-            //return true;
         }
 
 
@@ -1773,7 +1666,7 @@ namespace POS_qu
                 if (conv > 0) conversionRate = conv;
 
             // 🔹 Panggil method umum
-            bool success = _cartService.DeleteCartItem(itemId, barcode, qty, conversionRate, "deletingrow", cart_session_code);
+            bool success = _cartService.DeleteCartItem(itemId, barcode, qty, conversionRate, reason: _cartService.IsPaymentMode ? "PAYMENT_COMPLETED" : "DELETE_ITEM_FROM_CART", cart_session_code, isPaymentMode: _cartService.IsPaymentMode);
 
             if (!success)
             {
@@ -2368,14 +2261,5 @@ Ctrl+S - Search Random Item
         }
 
 
-
-
-
-
-
-        private void panelBottom_Paint(object sender, PaintEventArgs e)
-        {
-
-        }
     }
 }

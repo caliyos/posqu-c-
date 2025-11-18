@@ -50,16 +50,17 @@ namespace POS_qu
                 Directory.CreateDirectory(imageFolder);
             }
 
+            chkSelectAll.CheckedChanged += chkSelectAll_CheckedChanged;
 
         }
 
-        private void SetFormMode(bool isEditing)
-        {
-            btnSave.Enabled = !isEditing;
-            btnUpdate.Enabled = isEditing;
-            btnDelete.Enabled = isEditing;
+        //private void SetFormMode(bool isEditing)
+        //{
+        //    btnSave.Enabled = !isEditing;
+        //    btnUpdate.Enabled = isEditing;
+        //    btnDelete.Enabled = isEditing;
 
-        }
+        //}
         private void TxtBuyPrice_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar))
@@ -123,11 +124,10 @@ namespace POS_qu
         private void ProductPage_Load(object sender, EventArgs e)
         {
             this.WindowState = FormWindowState.Maximized; // Fullscreen
-            this.FormBorderStyle = FormBorderStyle.None; // Optional: Hide title bar
+            //this.FormBorderStyle = FormBorderStyle.None; // Optional: Hide title bar
 
             // Position the close button top-right after full size is known
-            btnClose.Location = new Point(this.ClientSize.Width - btnClose.Width - 10, 10);
-            btnClose.BringToFront();
+
             //CUSTOM BUTTON CLOSE
             //Close Button
             //btnClose = new Button();
@@ -143,12 +143,187 @@ namespace POS_qu
             //btnClose.Click += BtnClose_Click;
             //inputPanel.Controls.Add(btnClose);
             //this.Controls.Add(btnClose);
-            dataGridView1.CellClick += DataGridView1_CellClick;
-            pictureBox.SizeMode = PictureBoxSizeMode.StretchImage;
+            dataGridView1.CellClick += dataGridView1_CellClick;
+
 
             LoadItems();
 
         }
+
+        private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return; // header diklik
+
+            DataGridViewRow row = dataGridView1.Rows[e.RowIndex];
+
+            // jika kolom checkbox diklik, toggle value
+            if (dataGridView1.Columns[e.ColumnIndex].Name == "chkSelect")
+            {
+                bool isChecked = Convert.ToBoolean(row.Cells["chkSelect"].Value);
+                row.Cells["chkSelect"].Value = !isChecked;
+            }
+            else
+            {
+                // klik row selain checkbox -> toggle checkbox juga
+                bool isChecked = Convert.ToBoolean(row.Cells["chkSelect"].Value ?? false);
+                row.Cells["chkSelect"].Value = !isChecked;
+            }
+        }
+
+
+        private void btnEdit_Click(object sender, EventArgs e)
+        {
+            // Ambil semua item yang dicentang
+            var selectedRows = new List<DataGridViewRow>();
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (Convert.ToBoolean(row.Cells["chkSelect"].Value))
+                    selectedRows.Add(row);
+            }
+
+            if (selectedRows.Count == 0)
+            {
+                MessageBox.Show("Pilih item dulu untuk diedit.");
+                return;
+            }
+            else if (selectedRows.Count > 1)
+            {
+                MessageBox.Show("Edit hanya bisa dilakukan 1 item sekaligus.");
+                return;
+            }
+
+            // Ambil row tunggal yang dicentang
+            DataGridViewRow rowSelected = selectedRows[0];
+            int itemId = Convert.ToInt32(rowSelected.Cells["id"].Value);
+
+            // Mapping manual dari DataGridView ke Item seperti sebelumnya
+            Item selectedItem = new Item
+            {
+                id = itemId,
+                name = rowSelected.Cells["name"].Value.ToString(),
+                buy_price = Convert.ToDecimal(rowSelected.Cells["buy_price"].Value),
+                sell_price = Convert.ToDecimal(rowSelected.Cells["sell_price"].Value),
+                stock = Convert.ToInt32(rowSelected.Cells["stock"].Value),
+                barcode = rowSelected.Cells["barcode"].Value.ToString(),
+                unitid = Convert.ToInt32(rowSelected.Cells["unit_id"].Value),
+                unit = rowSelected.Cells["unit_name"].Value.ToString(),
+                category_id = Convert.ToInt32(rowSelected.Cells["category_id"].Value),
+                supplier_id = Convert.ToInt32(rowSelected.Cells["supplier_id"].Value),
+                note = rowSelected.Cells["note"].Value.ToString(),
+                picture = rowSelected.Cells["picture"].Value?.ToString(),
+                is_inventory_p = Convert.ToBoolean(rowSelected.Cells["is_inventory_p"].Value),
+                IsPurchasable = Convert.ToBoolean(rowSelected.Cells["is_purchasable"].Value),
+                IsSellable = Convert.ToBoolean(rowSelected.Cells["is_sellable"].Value),
+                RequireNotePayment = Convert.ToBoolean(rowSelected.Cells["is_note_payment"].Value),
+                is_changeprice_p = Convert.ToBoolean(rowSelected.Cells["is_changeprice_p"].Value),
+                discount_formula = rowSelected.Cells["discount_formula"].Value.ToString(),
+                HasMaterials = Convert.ToBoolean(rowSelected.Cells["is_have_bahan"].Value),
+                IsPackage = Convert.ToBoolean(rowSelected.Cells["is_box"].Value),
+                IsProduced = Convert.ToBoolean(rowSelected.Cells["is_produksi"].Value)
+            };
+
+            selectedItem.UnitVariants = itemController.GetUnitVariants(itemId);
+
+            using (var detailForm = new ItemDetailForm(selectedItem))
+            {
+                if (detailForm.ShowDialog() == DialogResult.OK)
+                    LoadItems(); // reload grid setelah edit
+            }
+        }
+
+
+        private void btnDelete_Click_1(object sender, EventArgs e)
+        {
+            var selectedItems = new List<int>();
+
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (Convert.ToBoolean(row.Cells["chkSelect"].Value))
+                    selectedItems.Add(Convert.ToInt32(row.Cells["id"].Value));
+            }
+
+            if (selectedItems.Count == 0)
+            {
+                MessageBox.Show("Pilih item dulu untuk dihapus.");
+                return;
+            }
+
+            if (MessageBox.Show($"Hapus {selectedItems.Count} item terpilih?", "Konfirmasi", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                foreach (int id in selectedItems)
+                {
+                    itemController.DeleteItem(id);
+                }
+                LoadItems(); // reload grid
+            }
+        }
+
+        //private void DataGridView1_CellClick(object? sender, DataGridViewCellEventArgs e)
+        //{
+        //    if (e.RowIndex < 0 || e.ColumnIndex < 0) return; // header diklik
+
+        //    dataGridView1.ReadOnly = true;
+
+        //    DataGridViewRow row = dataGridView1.Rows[e.RowIndex];
+        //    int itemId = Convert.ToInt32(row.Cells["id"].Value);
+
+        //    // cek apakah tombol variant diklik
+        //    if (dataGridView1.Columns[e.ColumnIndex].Name == "btnVariantButton")
+        //    {
+        //        //// Ambil item & variants
+        //        //Item selectedItem = itemController.GetItemById(itemId);
+        //        //selectedItem.UnitVariants = itemController.GetUnitVariants(itemId);
+
+        //        //// Bisa tampilkan di modal khusus variant
+        //        //using (var variantForm = new UnitVariantForm(selectedItem))
+        //        //{
+        //        //    if (variantForm.ShowDialog() == DialogResult.OK)
+        //        //    {
+        //        //        // jika ada perubahan variant, reload item grid
+        //        //        LoadItems();
+        //        //    }
+        //        //}
+        //    }
+        //    else
+        //    {
+        //        // klik row biasa -> buka detail form seperti biasa
+        //        Item selectedItem = new Item
+        //        {
+        //            id = itemId,
+        //            name = row.Cells["name"].Value.ToString(),
+        //            buy_price = Convert.ToDecimal(row.Cells["buy_price"].Value),
+        //            sell_price = Convert.ToDecimal(row.Cells["sell_price"].Value),
+        //            stock = Convert.ToInt32(row.Cells["stock"].Value),
+        //            barcode = row.Cells["barcode"].Value.ToString(),
+        //            unitid = Convert.ToInt32(row.Cells["unit_id"].Value),
+        //            unit = row.Cells["unit_name"].Value.ToString(),
+        //            category_id = Convert.ToInt32(row.Cells["category_id"].Value),
+        //            supplier_id = Convert.ToInt32(row.Cells["supplier_id"].Value),
+        //            note = row.Cells["note"].Value.ToString(),
+        //            picture = row.Cells["picture"].Value?.ToString(),
+        //            is_inventory_p = Convert.ToBoolean(row.Cells["is_inventory_p"].Value),
+        //            IsPurchasable = Convert.ToBoolean(row.Cells["is_purchasable"].Value),
+        //            IsSellable = Convert.ToBoolean(row.Cells["is_sellable"].Value),
+        //            RequireNotePayment = Convert.ToBoolean(row.Cells["is_note_payment"].Value),
+        //            is_changeprice_p = Convert.ToBoolean(row.Cells["is_changeprice_p"].Value),
+        //            discount_formula = row.Cells["discount_formula"].Value.ToString(),
+        //            HasMaterials = Convert.ToBoolean(row.Cells["is_have_bahan"].Value),
+        //            IsPackage = Convert.ToBoolean(row.Cells["is_box"].Value),
+        //            IsProduced = Convert.ToBoolean(row.Cells["is_produksi"].Value)
+        //        };
+        //        selectedItem.UnitVariants = itemController.GetUnitVariants(itemId);
+
+        //        using (var detailForm = new ItemDetailForm(selectedItem))
+        //        {
+        //            if (detailForm.ShowDialog() == DialogResult.OK)
+        //            {
+        //                LoadItems(); // reload grid setelah simpan
+        //            }
+        //        }
+        //    }
+        //}
+
+
         // CUSTOM BUTTON CLOSE
         private void BtnClose_Click(object sender, EventArgs e)
         {
@@ -162,450 +337,94 @@ namespace POS_qu
 
         private void LoadItems()
         {
-            //DataTable dt = itemController.GetItems();
-            //dataGridView1.DataSource = dt;
-
-
-            dataGridView1.ReadOnly = true; // 🔒 Membuat seluruh grid hanya bisa dibaca
-            dataGridView1.AllowUserToAddRows = false; // optional: cegah baris kosong di akhir
-            dataGridView1.AllowUserToDeleteRows = false; // optional: cegah hapus manual
-            dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect; // klik 1 baris penuh
-            dataGridView1.MultiSelect = false; // hanya bisa pilih satu baris
+            dataGridView1.ReadOnly = true;
+            dataGridView1.AllowUserToAddRows = false;
+            dataGridView1.AllowUserToDeleteRows = false;
+            dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dataGridView1.MultiSelect = false;
 
             itemController = new ItemController();
             DataTable dt = itemController.GetItems();
+
+            // Tambahkan kolom dummy untuk variant
+            if (!dt.Columns.Contains("btnVariant"))
+                dt.Columns.Add("btnVariant", typeof(string));
+
+            // 1️⃣ Tambahkan kolom dummy di DataTable
+            if (!dt.Columns.Contains("UnitVariant"))
+                dt.Columns.Add("UnitVariant", typeof(string));
+
+            // 2️⃣ Isi "+" jika item punya variant
+            foreach (DataRow row in dt.Rows)
+            {
+                int itemId = Convert.ToInt32(row["id"]);
+                var variants = itemController.GetUnitVariants(itemId);
+                row["UnitVariant"] = variants.Count > 0 ? "+" : "";
+            }
+
+
+
+            // 3️⃣ Bind ke DataGridView
+            dataGridView1.DataSource = dt;
+
+            // 4️⃣ Pindahkan kolom UnitVariant ke posisi pertama
+            if (dataGridView1.Columns.Contains("UnitVariant"))
+                dataGridView1.Columns["UnitVariant"].DisplayIndex = 1;
+
+            if (!dataGridView1.Columns.Contains("chkSelect"))
+            {
+                var chkColumn = new DataGridViewCheckBoxColumn();
+                chkColumn.Name = "chkSelect";
+                chkColumn.HeaderText = ""; // bisa tambahkan "Pilih"
+                chkColumn.Width = 30;
+                dataGridView1.Columns.Insert(0, chkColumn);
+            }
+
             dgvManager = new DataGridViewManager(dataGridView1, dt, 10);
             dgvManager.PagingInfoLabel = lblPagingInfo;
             dgvManager.LoadPage();
+
             cmbPageSize.Items.AddRange(new object[] { "10", "50", "100", "200", "500", "1000" });
-            cmbPageSize.SelectedIndex = 0; // Default to 10
+            cmbPageSize.SelectedIndex = 0;
 
 
-            DataTable unitTable = itemController.GetUnits();
-            cmbUnit.DataSource = unitTable;
-            cmbUnit.DisplayMember = "display"; // this shows e.g. "pieces (pcs)"
-            cmbUnit.ValueMember = "id";        // this stores the unit ID
-            cmbUnit.SelectedIndex = -1;        // optional: makes sure nothing is selected by default
-
-            DataTable groupTable = itemController.GetGroups();
-            cmbGroup.DataSource = groupTable;
-            cmbGroup.DisplayMember = "display"; // this shows e.g. "pieces (pcs)"
-            cmbGroup.ValueMember = "id";        // this stores the unit ID
-            cmbGroup.SelectedIndex = -1;        // optional: makes sure nothing is selected by default
-
-            SetFormMode(false); // Ensure buttons are reset
-            // fill cmbunits
-            // fill groups
         }
 
-        private void btnSave_Click(object sender, EventArgs e)
+
+        private void chkSelectAll_CheckedChanged(object sender, EventArgs e)
         {
-            try
+            bool checkAll = chkSelectAll.Checked;
+            foreach (DataGridViewRow row in dataGridView1.Rows)
             {
-
-
-                // 1️⃣ Validasi dulu
-                if (string.IsNullOrWhiteSpace(txtName.Text))
-                {
-                    MessageBox.Show("Nama produk harus diisi!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    txtName.Focus();
-                    return;
-                }
-
-                if (!decimal.TryParse(txtBuyPrice.Text, out decimal buyPrice))
-                {
-                    MessageBox.Show("Harga beli harus diisi dengan angka yang valid!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    txtBuyPrice.Focus();
-                    return;
-                }
-
-                if (!decimal.TryParse(txtSellPrice.Text, out decimal sellPrice))
-                {
-                    MessageBox.Show("Harga jual harus diisi dengan angka yang valid!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    txtSellPrice.Focus();
-                    return;
-                }
-
-                if (!int.TryParse(txtStock.Text, out int stock))
-                {
-                    MessageBox.Show("Stok harus diisi dengan angka yang valid!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    txtStock.Focus();
-                    return;
-                }
-
-                if (string.IsNullOrWhiteSpace(txtBarcode.Text))
-                {
-                    MessageBox.Show("Barcode harus diisi!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    txtBarcode.Focus();
-                    return;
-                }
-
-                if (cmbUnit.SelectedValue == null || Convert.ToInt32(cmbUnit.SelectedValue) <= 0)
-                {
-                    MessageBox.Show("Unit harus dipilih!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    cmbUnit.Focus();
-                    return;
-                }
-
-                if (cmbGroup.SelectedValue == null || Convert.ToInt32(cmbGroup.SelectedValue) <= 0)
-                {
-                    MessageBox.Show("Group harus dipilih!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    cmbGroup.Focus();
-                    return;
-                }
-
-                // 2️⃣ Baru isi variabel setelah semua validasi lolos
-                string name = txtName.Text.Trim();
-                string barcode = txtBarcode.Text.Trim();
-                string description = txtDescription.Text.Trim();
-                int unitId = Convert.ToInt32(cmbUnit.SelectedValue);
-                int groupId = Convert.ToInt32(cmbGroup.SelectedValue);
-
-
-                Item item = new Item
-                {
-                    name = name,
-                    buy_price = buyPrice,
-                    sell_price = sellPrice,
-                    stock = stock,
-                    barcode = barcode,
-                    unit = cmbUnit.SelectedValue?.ToString(),
-                    group = groupId,
-                    note = description,
-                    unitid = unitId,
-
-                    reserved_stock = 0,
-                    is_inventory_p = "Y",
-                    is_changeprice_p = "N",
-                    materials = "",
-                    picture = selectedImagePath,
-                    created_at = DateTime.Now,
-                    updated_at = DateTime.Now,
-                    deleted_at = null,
-                    supplier_id = 1,
-                    flag = 1
-                };
-
-                int? insertedItemId = itemController.InsertItem(item);
-
-
-                if (insertedItemId == null)
-                {
-                    MessageBox.Show("Failed to save item.");
-                    return;
-                }
-
-
-                // Insert unit variants
-                foreach (UnitVariant variant in unitVariantsFromForm)
-                {
-                    bool variantResult = itemController.InsertUnitVariant(insertedItemId.Value, variant);
-                    if (!variantResult)
-                    {
-                        MessageBox.Show("Failed to insert one of the unit variants.");
-                    }
-                }
-
-
-                // 3️⃣ log stock adjustment untuk produk baru
-                _stockService.LogAdjustment(
-                    itemId: insertedItemId.Value,
-                    adjustmentType: "NEW_ITEM",
-                    oldStock: 0,
-                    newStock: stock,
-                    reason: "New product created",
-                    referenceId: insertedItemId.Value,
-                    referenceTable: "items",
-                    userId: 1 // ganti dengan user login
-                );
-
-                _activityService.LogAction(
-                userId: SessionUser.GetCurrentUser().UserId.ToString(),
-                actionType: "ADD_ITEM",
-                    referenceId: null,
-                    details: new
-                    {
-                        itemId = insertedItemId.Value,
-                        adjustmentType = "ADD_ITEM",
-                        reason = "default reason",
-                        referenceId = insertedItemId.Value,
-                        referenceTable = "items",
-                        terminal = SessionUser.GetCurrentUser().TerminalId,
-                        shiftId = SessionUser.GetCurrentUser().ShiftId,
-                        IpAddress = NetworkHelper.GetLocalIPAddress(),
-                        UserAgent = GlobalContext.getAppVersion(),
-                        userId = SessionUser.GetCurrentUser().UserId.ToString(),
-
-                        //TsCode = transaction.TsCode,
-                        //TotalAmount = transaction.TsTotal,
-                        //PaymentMethod = transaction.TsMethod,
-                        //OrderId = transaction.OrderId
-                    }
-                );
-
-
-                MessageBox.Show("Item and unit variants saved successfully!");
-                LoadItems();
-                ClearInputs();
-                unitVariantsFromForm.Clear(); // Clear after saving
-
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error: " + ex.Message);
+                row.Cells["chkSelect"].Value = checkAll;
             }
         }
 
+        //private void chkSelectAll_CheckedChanged(object sender, EventArgs e)
+        //{
+        //    bool checkAll = chkSelectAll.Checked;
+        //    foreach (DataGridViewRow row in dataGridView1.Rows)
+        //    {
+        //        row.Cells["chkSelect"].Value = checkAll;
+        //    }
+        //}
 
 
-        private void btnUpdate_Click(object sender, EventArgs e)
-        {
+        //private void ClearInputs()
+        //{
+        //    txtName.Clear();
+        //    txtBuyPrice.Clear();
+        //    txtSellPrice.Clear();
+        //    txtStock.Clear();
+        //    txtBarcode.Clear();
+        //    cmbUnit.SelectedIndex = -1;
+        //    cmbCategory.SelectedIndex = -1;
+        //    txtDescription.Clear();
+        //    pictureBox.Image = null;
+        //    selectedImagePath = "";
 
-            try
-            {
-                var sessionUser = SessionUser.GetCurrentUser();
-                if (dataGridView1.CurrentRow == null) return;
-
-                int id = Convert.ToInt32(dataGridView1.CurrentRow.Cells["id"].Value);
-
-                // simpan stok lama buat perbandingan
-                int oldStock = Convert.ToInt32(dataGridView1.CurrentRow.Cells["stock"].Value);
-
-                string name = txtName.Text.Trim();
-                decimal buyPrice = decimal.Parse(txtBuyPrice.Text);
-                decimal sellPrice = decimal.Parse(txtSellPrice.Text);
-                int stock = int.Parse(txtStock.Text);
-                string barcode = txtBarcode.Text.Trim();
-                int unitId = Convert.ToInt32(cmbUnit.SelectedValue);
-                int groupId = Convert.ToInt32(cmbGroup.SelectedValue);
-                string description = txtDescription.Text.Trim();
-
-                bool result = itemController.UpdateItem(new Item
-                {
-                    id = id,
-                    name = name,
-                    buy_price = buyPrice,
-                    sell_price = sellPrice,
-                    stock = stock,
-                    barcode = barcode,
-                    unitid = unitId,
-                    group = groupId,
-                    note = description,
-                    reserved_stock = 0,
-                    is_inventory_p = "Y",
-                    is_changeprice_p = "N",
-                    materials = "",
-                    picture = selectedImagePath,
-                    updated_at = DateTime.Now,
-                    deleted_at = null,
-                    supplier_id = 0,
-                    flag = 1
-                });
-
-                if (result)
-                {
-                    // 1️⃣ catat ke stock_adjustment (kalau ada perubahan stok)
-                    if (oldStock != stock)
-                    {
-                        _stockService.LogAdjustment(
-                            itemId: id,
-                            adjustmentType: "UPDATE_ITEM",
-                            oldStock: oldStock,
-                            newStock: stock,
-                            reason: "Admin update product",
-                            referenceId: id,
-                            referenceTable: "items",
-                            userId: sessionUser.UserId
-                        );
-                    }
-
-
-                    
-                    _activityService.LogAction(
-                   userId: sessionUser.UserId.ToString(),
-                   actionType: "ITEM_UPDATE",
-                   referenceId: id,
-                   details: new
-                   {
-                       itemId = id,
-                       adjustmentType = "UPDATE_ITEM",
-                       oldStock =  oldStock,
-                       newStock =  stock,
-                       reason =  "default reason",
-                       referenceId = id,
-                       referenceTable = "items",
-                       terminal = sessionUser.TerminalId,
-                       shiftId = sessionUser.ShiftId,
-                       IpAddress = NetworkHelper.GetLocalIPAddress(),
-                       UserAgent = GlobalContext.getAppVersion(),
-                       userId = sessionUser.UserId.ToString(),
-
-                       //TsCode = transaction.TsCode,
-                       //TotalAmount = transaction.TsTotal,
-                       //PaymentMethod = transaction.TsMethod,
-                       //OrderId = transaction.OrderId
-                   }
-               );
-
-                    // Delete all previous variants
-                    itemController.DeleteUnitVariantsByItemId(id);
-
-                    // Re-insert updated variants
-                    foreach (UnitVariant variant in unitVariantsFromForm)
-                    {
-                        itemController.InsertUnitVariant(id, variant);
-                    }
-
-                    MessageBox.Show("Item updated successfully!");
-                    LoadItems();
-                    ClearInputs();
-                }
-                else
-                {
-                    MessageBox.Show("Failed to update item.");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error: " + ex.Message);
-            }
-        }
-
-
-
-        private void btnDelete_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                if (dataGridView1.CurrentRow == null) return;
-
-                int id = Convert.ToInt32(dataGridView1.CurrentRow.Cells["id"].Value);
-
-                var confirm = MessageBox.Show("Are you sure to delete this item?", "Confirm", MessageBoxButtons.YesNo);
-                if (confirm != DialogResult.Yes) return;
-
-                bool result = itemController.DeleteItem(id);
-
-                if (result)
-                {
-                    MessageBox.Show("Item deleted.");
-
-                    _activityService.LogAction(
-                        userId: SessionUser.GetCurrentUser().UserId.ToString(),
-                        actionType: "DELETE_ITEM",
-                        referenceId: id,
-                        details: new
-                        {
-                            itemId = id,
-                            adjustmentType = "DELETE_ITEM",
-                            reason = "default reason",
-                            referenceId = id,
-                            referenceTable = "items",
-                            terminal = SessionUser.GetCurrentUser().TerminalId,
-                            shiftId = SessionUser.GetCurrentUser().ShiftId,
-                            IpAddress = NetworkHelper.GetLocalIPAddress(),
-                            UserAgent = GlobalContext.getAppVersion(),
-                            userId = SessionUser.GetCurrentUser().UserId.ToString(),
-
-                            //TsCode = transaction.TsCode,
-                            //TotalAmount = transaction.TsTotal,
-                            //PaymentMethod = transaction.TsMethod,
-                            //OrderId = transaction.OrderId
-                        }
-                    );
-                    // Kalau mau, bisa juga catat adjustment = stock menjadi 0
-                    _stockService.LogAdjustment(
-                        itemId: id,
-                        adjustmentType: "DELETE_ITEM",
-                        oldStock: Convert.ToInt32(dataGridView1.CurrentRow.Cells["stock"].Value),
-                        newStock: 0,
-                        reason: "Product deleted",
-                        referenceId: id,
-                        referenceTable: "items",
-                        userId: 1 // ganti dengan user login
-                    );
-
-
-                    LoadItems();
-                    ClearInputs();
-                }
-                else
-                {
-                    MessageBox.Show("Failed to delete item.");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error: " + ex.Message);
-            }
-        }
-
-
-
-        private void DataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex >= 0)
-            {
-                DataGridViewRow row = dataGridView1.Rows[e.RowIndex];
-
-                txtName.Text = row.Cells["name"].Value.ToString();
-                txtBuyPrice.Text = row.Cells["buy_price"].Value.ToString();
-                txtSellPrice.Text = row.Cells["sell_price"].Value.ToString();
-                txtStock.Text = row.Cells["stock"].Value.ToString();
-                txtBarcode.Text = row.Cells["barcode"].Value.ToString();
-                cmbUnit.SelectedValue = Convert.ToInt32(row.Cells["unit_id"].Value);
-                cmbGroup.SelectedValue = row.Cells["group"].Value;
-                txtDescription.Text = row.Cells["note"].Value.ToString();
-
-                // Load image from saved path
-                string pictureFile = row.Cells["picture"].Value?.ToString();
-
-                if (!string.IsNullOrEmpty(pictureFile))
-                {
-                    string imagePath = Path.Combine(Application.StartupPath, pictureFile); // pictureFile should already include "images/filename.jpg"
-
-                    if (File.Exists(imagePath))
-                    {
-                        pictureBox.Image = Image.FromFile(imagePath);
-                    }
-                    else
-                    {
-                        pictureBox.Image = null;
-                    }
-                }
-                else
-                {
-                    pictureBox.Image = null;
-                }
-
-
-                int itemid = Convert.ToInt32(row.Cells["id"].Value);
-
-                // get unit variant
-                unitVariantsFromForm = itemController.GetUnitVariant(itemid);
-
-                SetFormMode(true); // You're now in 'edit' mode
-
-            }
-        }
-
-
-
-        private void ClearInputs()
-        {
-            txtName.Clear();
-            txtBuyPrice.Clear();
-            txtSellPrice.Clear();
-            txtStock.Clear();
-            txtBarcode.Clear();
-            cmbUnit.SelectedIndex = -1;
-            cmbGroup.SelectedIndex = -1;
-            txtDescription.Clear();
-            pictureBox.Image = null;
-            selectedImagePath = "";
-
-            SetFormMode(false); // Set to 'new entry' mode
-        }
+        //    SetFormMode(false); // Set to 'new entry' mode
+        //}
 
         private void btnUploadImage_Click(object sender, EventArgs e)
         {
@@ -627,7 +446,7 @@ namespace POS_qu
                 selectedImagePath = Path.Combine("images", newFileName);
 
                 // Preview
-                pictureBox.Image = Image.FromFile(destinationPath);
+                //pictureBox.Image = Image.FromFile(destinationPath);
             }
         }
 
@@ -641,35 +460,35 @@ namespace POS_qu
         //}
 
 
-        private void btnUnitVariant_Click(object sender, EventArgs e)
-        {
-            bool isItemNameValid = !string.IsNullOrWhiteSpace(txtName.Text);
-            bool isUnitSelected = cmbUnit.SelectedIndex >= 0;
+        //private void btnUnitVariant_Click(object sender, EventArgs e)
+        //{
+        //    bool isItemNameValid = !string.IsNullOrWhiteSpace(txtName.Text);
+        //    bool isUnitSelected = cmbUnit.SelectedIndex >= 0;
 
-            if (!isItemNameValid || !isUnitSelected)
-            {
-                btnUnitVariant.Cursor = Cursors.No; // Stop sign cursor
-                MessageBox.Show("Please enter item name and select a unit first.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+        //    if (!isItemNameValid || !isUnitSelected)
+        //    {
+        //        btnUnitVariant.Cursor = Cursors.No; // Stop sign cursor
+        //        MessageBox.Show("Please enter item name and select a unit first.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        //        return;
+        //    }
 
-            btnUnitVariant.Cursor = Cursors.Default;
+        //    btnUnitVariant.Cursor = Cursors.Default;
 
-            int itemId = 2; // Replace with how you actually get it
-            string baseUnitName = cmbUnit.Text; // get selected base unit name
-            using (var variantForm = new UnitVariantForm(itemId, baseUnitName, unitVariantsFromForm))
-            {
-                var result = variantForm.ShowDialog();
-                if (result == DialogResult.OK)
-                {
-                    unitVariantsFromForm = variantForm.UnitVariants;
-                }
-            }
-        }
+        //    int itemId = 2; // Replace with how you actually get it
+        //    string baseUnitName = cmbUnit.Text; // get selected base unit name
+        //    using (var variantForm = new UnitVariantForm(itemId, baseUnitName, unitVariantsFromForm))
+        //    {
+        //        var result = variantForm.ShowDialog();
+        //        if (result == DialogResult.OK)
+        //        {
+        //            unitVariantsFromForm = variantForm.UnitVariants;
+        //        }
+        //    }
+        //}
 
         private void btnCancelEdit_Click(object sender, EventArgs e)
         {
-            ClearInputs(); // Clears form & resets mode
+            //ClearInputs(); // Clears form & resets mode
             dataGridView1.ClearSelection(); // Deselect any selected row
         }
 
@@ -980,6 +799,23 @@ namespace POS_qu
             //}
         }
 
+        private void btnAddProduct_Click(object sender, EventArgs e)
+        {
+            using (var form = new ItemDetailForm())
+            {
+                if (form.ShowDialog() == DialogResult.OK)
+                {
+                    LoadItems(); // hanya reload setelah simpan
+                }
+            }
+        }
+
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            LoadItems();
+        }
+
+     
 
         //private void ImportItemsFromExcel(string filePath)
         //{

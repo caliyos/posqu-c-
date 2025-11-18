@@ -32,6 +32,7 @@
             dataGridViewCart4 = new DataGridView();
             panelBottom = new Panel();
             lblOrderBadge = new Label();
+            button1 = new Button();
             labelKembalian = new Label();
             label2 = new Label();
             buttonListOrders = new Button();
@@ -39,7 +40,6 @@
             btnPay = new Button();
             infoPanel = new Panel();
             infoLabel = new Label();
-            button1 = new Button();
             panelTop.SuspendLayout();
             panelMid.SuspendLayout();
             panel1.SuspendLayout();
@@ -186,7 +186,7 @@
             // 
             // dataGridViewCart4
             // 
-            dataGridViewCart4.BackgroundColor = Color.LightGray;
+            dataGridViewCart4.BackgroundColor = Color.White;
             dataGridViewCart4.BorderStyle = BorderStyle.None;
             dataGridViewCart4.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dataGridViewCart4.Dock = DockStyle.Left;
@@ -213,7 +213,7 @@
             panelBottom.Padding = new Padding(20);
             panelBottom.Size = new Size(2244, 120);
             panelBottom.TabIndex = 1;
-            panelBottom.Paint += panelBottom_Paint;
+            //panelBottom.Paint += panelBottom_Paint;
             // 
             // lblOrderBadge
             // 
@@ -223,6 +223,22 @@
             lblOrderBadge.Size = new Size(59, 25);
             lblOrderBadge.TabIndex = 0;
             lblOrderBadge.Text = "label3";
+            // 
+            // button1
+            // 
+            button1.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
+            button1.BackColor = Color.FromArgb(0, 123, 255);
+            button1.FlatAppearance.BorderSize = 0;
+            button1.FlatStyle = FlatStyle.Flat;
+            button1.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            button1.ForeColor = Color.White;
+            button1.Location = new Point(1328, 32);
+            button1.Name = "button1";
+            button1.Size = new Size(176, 40);
+            button1.TabIndex = 1;
+            button1.Text = "List Draft";
+            button1.UseVisualStyleBackColor = false;
+            button1.Click += buttonListDraft_Click;
             // 
             // labelKembalian
             // 
@@ -313,22 +329,6 @@
             infoLabel.TabIndex = 0;
             infoLabel.Text = "Shortcut List:\nF12     - Bayar\nCtrl+P  - Print\nCtrl+N  - Add Item\nCtrl+E  - Edit Item\nDel     - Delete Item\nF5      - Refresh Data\n";
             infoLabel.TextAlign = ContentAlignment.MiddleLeft;
-            // 
-            // button1
-            // 
-            button1.Anchor = AnchorStyles.Bottom | AnchorStyles.Right;
-            button1.BackColor = Color.FromArgb(0, 123, 255);
-            button1.FlatAppearance.BorderSize = 0;
-            button1.FlatStyle = FlatStyle.Flat;
-            button1.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            button1.ForeColor = Color.White;
-            button1.Location = new Point(1328, 32);
-            button1.Name = "button1";
-            button1.Size = new Size(176, 40);
-            button1.TabIndex = 1;
-            button1.Text = "List Draft";
-            button1.UseVisualStyleBackColor = false;
-            button1.Click += buttonListDraft_Click;
             // 
             // Casher_POS
             // 
