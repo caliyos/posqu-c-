@@ -19,6 +19,7 @@ using QuestPDF.Helpers;
 using System.Data;
 using OxyPlot;
 using POS_qu.services;
+using POS_qu.DTO;
 
 namespace POS_qu
 {
@@ -424,8 +425,7 @@ namespace POS_qu
                 using (PaymentModalForm paymentModal = new PaymentModalForm(totalAmount))
                 {
 
-               
-       
+              
                     // Event saat jumlah pembayaran berubah
                     paymentModal.PaymentAmountChanged += (paymentAmount) =>
                     {
@@ -539,7 +539,9 @@ namespace POS_qu
                         TsId = transactionId,
                         ItemId = i.ItemId,
                         Barcode = i.Barcode,
+                        Name = i.Name,
                         TsdSellPrice = i.Price,
+                        TsdBuyPrice = i.CostPrice,
                         TsdQuantity = i.Qty,
                         TsdUnit = i.Unit,
                         TsdConversionRate = i.ConversionRate,
@@ -695,6 +697,7 @@ namespace POS_qu
                 int conversionRate = row.Cells["conversion"] != null && int.TryParse(row.Cells["conversion"].Value?.ToString(), out int conv) ? conv : 1;
                 int qty = Convert.ToInt32(row.Cells["stock"].Value ?? 0);
                 decimal price = Convert.ToDecimal(row.Cells["sell_price"].Value ?? 0);
+                decimal buy_price = Convert.ToDecimal(row.Cells["buy_price"].Value ?? 0);
                 decimal discountPercent = Convert.ToDecimal(row.Cells["discount"].Value ?? 0);
                 decimal tax = Convert.ToDecimal(row.Cells["tax"]?.Value ?? 0);
                 string note = row.Cells["note"]?.Value?.ToString()?.Trim() ?? "";
@@ -718,6 +721,7 @@ namespace POS_qu
                     ConversionRate = conversionRate,
                     Qty = qty,
                     Price = price,
+                    CostPrice = buy_price,
                     DiscountPercent = discountPercent,
                     DiscountAmount = discountAmount,
                     Tax = tax,
@@ -1052,7 +1056,6 @@ namespace POS_qu
 
                 if (e.Control && e.KeyCode == Keys.F)
                 {
-                    MessageBox.Show("");
                     SearchAndAddItem();
                 }
                 if (e.Control && e.KeyCode == Keys.I)
@@ -1168,14 +1171,14 @@ namespace POS_qu
 
         private void SearchAndAddItem()
         {
-            string searchTerm = txtCariBarang.Text.Trim();
-            if (string.IsNullOrEmpty(searchTerm))
-            {
-                MessageBox.Show("Please enter a search term.");
-                return;
-            }
+            //string searchTerm = txtCariBarang.Text.Trim();
+            //if (string.IsNullOrEmpty(searchTerm))
+            //{
+            //    MessageBox.Show("Please enter a search term.");
+            //    return;
+            //}
 
-            using (var searchForm = new SearchFormItem(searchTerm))
+            using (var searchForm = new SearchFormItem(""))
             {
                 if (searchForm.ShowDialog() == DialogResult.OK && searchForm.SelectedItem != null)
                 {
@@ -1226,6 +1229,7 @@ namespace POS_qu
                     selectedItem.unit,
                     selectedItem.stock,
                     selectedItem.sell_price,
+                    selectedItem.buy_price,
                     0,  // discountPercentage
                     0,  // discountTotal
                     0,  // tax
@@ -1310,15 +1314,18 @@ namespace POS_qu
                 selectedItem.name,
                 selectedItem.stock,                             // Qty (misal 2 dus)
                 selectedItem.unit,                              // Dus
-                $"{selectedItem.unit} = {selectedItem.conversion} pcs",  // Kolom tambahan info konversi
-                selectedItem.sell_price,                        // Harga per dus
+                $"{selectedItem.unit} = {selectedItem.conversion}",  // Kolom tambahan info konversi
+                selectedItem.sell_price,
+
                 selectedItem.price_per_pcs,                     // Harga per pcs
                 selectedItem.price_per_pcs_asli,
                 0,                                              // Diskon
                 0,                                              // Pajak
                 selectedItem.stock * selectedItem.sell_price,   // Total
                 "",                                              // Note
-                selectedItem.conversion
+                selectedItem.conversion,
+                                selectedItem.buy_price   // Harga Beli
+
 
             );
 
@@ -1359,7 +1366,7 @@ namespace POS_qu
             string[] columnNames = {
         "id", "barcode", "Nama Barang", "qty", "Satuan",
         "Conversion", "Harga/Unit", "Harga/Satuan Utama","Harga/Satuan Utama Asli", "Pot(%)",
-        "Pajak", "Total", "Keterangan Per Item","conversion"
+        "Pajak", "Total", "Keterangan Per Item","conversion","Harga Beli"
     };
 
     //        string[] columnNames = {
@@ -1370,14 +1377,14 @@ namespace POS_qu
 
             string[] propertyNames = {
         "id", "barcode", "name", "stock", "unit",
-        "conversion_info", "sell_price", "price_per_pcs","price_per_pcs_asli", "discount",
-        "tax", "total", "note","conversion"
+        "conversion_info", "sell_price","price_per_pcs","price_per_pcs_asli", "discount",
+        "tax", "total", "note","conversion","buy_price"
     };
 
             bool[] readOnlyColumns = {
         true, true, true, false, true,
         true, true, true, true, false,
-        true, true, false, true
+        true, true, false, true,true
     };
 
             for (int i = 0; i < columnNames.Length; i++)
@@ -1409,7 +1416,9 @@ namespace POS_qu
                 if (columnName == "sell_price" ||
                     columnName == "price_per_pcs" ||
                     columnName == "price_per_pcs_asli" ||
-                    columnName == "total")
+                    columnName == "total"||
+                      columnName == "buy_price" 
+                    )
                 {
                     if (e.Value != null && decimal.TryParse(e.Value.ToString(), out decimal number))
                     {
@@ -1534,27 +1543,41 @@ namespace POS_qu
         {
 
             if (row.Cells["id"].Value == null) return false;
-            //var row = dataGridViewCart4.Rows[e.RowIndex];
-            int itemId = Convert.ToInt32(row.Cells["id"].Value);
-            string barcode = row.Cells["barcode"].Value.ToString();
-            string unit = row.Cells["unit"].Value.ToString();
-            decimal price = Convert.ToDecimal(row.Cells["sell_price"].Value);
-            int prevQty = Convert.ToInt32(row.Cells["stock"].Tag ?? row.Cells["stock"].Value);
-            int newQty = Convert.ToInt32(row.Cells["stock"].Value);
-            //bool allowAppend = false; // atau true jika append dari search
+            ////var row = dataGridViewCart4.Rows[e.RowIndex];
+            //int itemId = Convert.ToInt32(row.Cells["id"].Value);
+            //string barcode = row.Cells["barcode"].Value.ToString();
+            //string unit = row.Cells["unit"].Value.ToString();
+            //decimal price = Convert.ToDecimal(row.Cells["sell_price"].Value);
+            //decimal buy_price = Convert.ToDecimal(row.Cells["buy_price"].Value);
+            //int prevQty = Convert.ToInt32(row.Cells["stock"].Tag ?? row.Cells["stock"].Value);
+            //int newQty = Convert.ToInt32(row.Cells["stock"].Value);
+            ////bool allowAppend = false; // atau true jika append dari search
+
+            var req = new UpdateCartItemRequest
+            {
+                ItemId = Convert.ToInt32(row.Cells["id"].Value),
+                Barcode = row.Cells["barcode"].Value.ToString(),
+                Unit = row.Cells["unit"].Value.ToString(),
+                PricePerUnit = Convert.ToDecimal(row.Cells["sell_price"].Value),
+                PreviousQuantity = Convert.ToInt32(row.Cells["stock"].Tag ?? row.Cells["stock"].Value),
+                EnteredQuantity = Convert.ToInt32(row.Cells["stock"].Value),
+                AllowAppend = allowAppend,
+                Discount = row.Cells["discount"].Value.ToString(),
+                Note = row.Cells["note"].Value.ToString(),
+                ConversionRate = 1,
+                CartSessionCode = cart_session_code,
+                AdditionalQuantity = additionalQuantity
+            };
+
 
             var result = _cartService.UpdateCartItemStock(
-                itemId, barcode, unit, price, newQty, prevQty, allowAppend,
-                row.Cells["discount"].Value.ToString(),
-                row.Cells["note"].Value.ToString(),
-                conversionRate: 1,
-                cart_session_code: cart_session_code, additionalQuantity
+               req
             );
 
             if (!result.Success)
             {
                 MessageBox.Show(result.ErrorMessage);
-                row.Cells["stock"].Value = prevQty; // restore
+                row.Cells["stock"].Value = req.PreviousQuantity; // restore
             }
             else
             {
@@ -1565,6 +1588,7 @@ namespace POS_qu
                 row.Cells["stock"].Value = result.EnteredQuantity;
                 row.Cells["total"].Value = result.Total;
                 row.Cells["stock"].Tag = result.EnteredQuantity;
+                row.Cells["sell_price"].Value = result.PricePerUnit;
                 isProgrammaticChange = false;
             }
             return true;

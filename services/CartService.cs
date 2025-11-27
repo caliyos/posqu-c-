@@ -1,5 +1,6 @@
 ﻿using POS_qu.Controllers;
 using POS_qu.Core;
+using POS_qu.DTO;
 using POS_qu.Helpers;
 using POS_qu.Models;
 
@@ -156,21 +157,18 @@ public class CartService
         public int EnteredQuantity { get; set; }
         public decimal Total { get; set; }
         public string ErrorMessage { get; set; }
+        public decimal PricePerUnit { get; set; }
     }
 
+    private decimal DecideMultiPrice(int itemId, int qty)
+    {
+       return _itemController.DecideMultiPriceFromDb(itemId, qty);
+    }
+
+
     public UpdateStockResult UpdateCartItemStock(
-        int itemId,
-        string barcode,
-        string unit,
-        decimal pricePerUnit,
-        int enteredQuantity,
-        int previousQuantity,
-        bool allowAppend,
-        string discount,
-        string note,
-        int conversionRate = 1,
-        string cart_session_code = null,
-        int additionalQuantity = 0)
+
+       UpdateCartItemRequest req)
     {
 
 
@@ -179,24 +177,24 @@ public class CartService
         MessageBox.Show("CALLED ");
         var result = new UpdateStockResult();
 
-        int stockNeededOld = previousQuantity * conversionRate;
-        int stockNeededNew = enteredQuantity * conversionRate;
+        int stockNeededOld = req.PreviousQuantity * req.ConversionRate;
+        int stockNeededNew = req.EnteredQuantity * req.ConversionRate;
 
-        int currentStock = _itemController.GetItemStock(barcode);
-        int reservedStock = _itemController.GetItemReservedStock(barcode);
+        int currentStock = _itemController.GetItemStock(req.Barcode);
+        int reservedStock = _itemController.GetItemReservedStock(req.Barcode);
 
-        int newReservedStock = allowAppend ? reservedStock : reservedStock - stockNeededOld + stockNeededNew;
+        int newReservedStock = req.AllowAppend ? reservedStock : reservedStock - stockNeededOld + stockNeededNew;
 
         // jika allowAppend true.. (berarti tambahkan dari qty yg di ambil cari searchforitem)
         // jika false berarti user ganti dari dlm car
         //int enteredQuantity = 0;
-        if (allowAppend)
+        if (req.AllowAppend)
         {
-            enteredQuantity = enteredQuantity + additionalQuantity;
+            req.EnteredQuantity = req.EnteredQuantity + req.AdditionalQuantity;
         }
         else
         {
-            enteredQuantity = additionalQuantity;
+            req.EnteredQuantity = req.AdditionalQuantity;
         }
         if (newReservedStock > currentStock)
         {
@@ -205,14 +203,17 @@ public class CartService
             return result;
         }
 
-        decimal total = enteredQuantity * pricePerUnit;
+        var finalPrice = DecideMultiPrice(req.ItemId, req.EnteredQuantity);
+        req.PricePerUnit = finalPrice;
+
+        decimal total = req.EnteredQuantity * req.PricePerUnit;
         bool updateSuccess = _itemController.UpdatePendingTransactionStock(
             SessionUser.GetCurrentUser().TerminalId,
-            itemId,
-            enteredQuantity,
+            req.ItemId,
+            req.EnteredQuantity,
             total,
-            unit,
-            cart_session_code
+            req.Unit,
+            req.CartSessionCode
         );
 
         if (!updateSuccess)
@@ -222,18 +223,18 @@ public class CartService
             return result;
         }
 
-        _itemController.UpdateReservedStock(barcode, newReservedStock);
+        _itemController.UpdateReservedStock(req.Barcode, newReservedStock);
 
          //Logging
         _activityService.LogAction(
             userId: SessionUser.GetCurrentUser().UserId.ToString(),
             actionType: ActivityType.Cart.ToString(),
             referenceId: null,
-            desc: $"Updated Item in cart: {itemId}, new reserved stock: {newReservedStock}, prev reserved stock: {stockNeededOld}",
+            desc: $"Updated Item in cart: {req.ItemId}, new reserved stock: {newReservedStock}, prev reserved stock: {stockNeededOld}",
             details: new
             {
                 loginId = SessionUser.GetCurrentUser().LoginId,
-                itemId = itemId,
+                itemId = req.ItemId,
                 adjustmentType = "UPDATE_ITEM_IN_CART",
                 reason = "default reason",
                 referenceTable = "items",
@@ -241,16 +242,17 @@ public class CartService
                 shiftId = SessionUser.GetCurrentUser().ShiftId,
                 IpAddress = NetworkHelper.GetLocalIPAddress(),
                 UserAgent = GlobalContext.getAppVersion(),
-                Discount = discount,
-                Note = note,
-                cart_session_code = cart_session_code
+                Discount = req.Discount,
+                Note = req.Note,
+                cart_session_code = req.CartSessionCode
             }
         );
 
 
         result.Success = true;
-        result.EnteredQuantity = enteredQuantity;
+        result.EnteredQuantity = req.EnteredQuantity;
         result.Total = total;
+        result.PricePerUnit = req.PricePerUnit;
         return result;
     }
 

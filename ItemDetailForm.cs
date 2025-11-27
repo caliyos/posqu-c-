@@ -22,6 +22,10 @@ namespace POS_qu
             StartPosition = FormStartPosition.CenterScreen;
             InitializeComponent();
             itemController = new ItemController();
+            // MODE TAMBAH
+            label8.Text = "Stock Awal";     // ✅
+            txtStock.Enabled = true;       // ✅ BISA INPUT
+            txtStock.ReadOnly = false;
 
             InitializeForm();
             ResetForm(); // Mode Tambah
@@ -33,6 +37,10 @@ namespace POS_qu
             InitializeComponent();
             itemController = new ItemController();
             editingItemId = item.id;
+            // DISABLE STOK DI MODE EDIT
+            txtStock.Enabled = false;     // ✅ yang benar
+            txtStock.ReadOnly = true;     // ✅ tambahan safety
+            label8.Text = "Stock Sekarang";
 
             InitializeForm();
             LoadItem(item); // Mode Edit

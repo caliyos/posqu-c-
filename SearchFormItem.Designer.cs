@@ -50,7 +50,7 @@
             dataGridViewSearchResults.Location = new Point(40, 80);
             dataGridViewSearchResults.Name = "dataGridViewSearchResults";
             dataGridViewSearchResults.RowHeadersWidth = 62;
-            dataGridViewSearchResults.Size = new Size(1320, 560);
+            dataGridViewSearchResults.Size = new Size(2016, 680);
             dataGridViewSearchResults.TabIndex = 2;
             // 
             // txtSearch
@@ -79,14 +79,14 @@
             // cmbPageSize
             // 
             cmbPageSize.FormattingEnabled = true;
-            cmbPageSize.Location = new Point(40, 696);
+            cmbPageSize.Location = new Point(48, 816);
             cmbPageSize.Name = "cmbPageSize";
             cmbPageSize.Size = new Size(182, 40);
             cmbPageSize.TabIndex = 17;
             // 
             // btnFirstPage
             // 
-            btnFirstPage.Location = new Point(608, 680);
+            btnFirstPage.Location = new Point(616, 800);
             btnFirstPage.Name = "btnFirstPage";
             btnFirstPage.Size = new Size(112, 34);
             btnFirstPage.TabIndex = 15;
@@ -96,7 +96,7 @@
             // lblPagingInfo
             // 
             lblPagingInfo.AutoSize = true;
-            lblPagingInfo.Location = new Point(32, 664);
+            lblPagingInfo.Location = new Point(40, 784);
             lblPagingInfo.Name = "lblPagingInfo";
             lblPagingInfo.Size = new Size(135, 32);
             lblPagingInfo.TabIndex = 13;
@@ -105,7 +105,7 @@
             // lblPageNumber
             // 
             lblPageNumber.AutoSize = true;
-            lblPageNumber.Location = new Point(296, 672);
+            lblPageNumber.Location = new Point(304, 792);
             lblPageNumber.Name = "lblPageNumber";
             lblPageNumber.Size = new Size(181, 32);
             lblPageNumber.TabIndex = 13;
@@ -113,7 +113,7 @@
             // 
             // btnNext
             // 
-            btnNext.Location = new Point(896, 680);
+            btnNext.Location = new Point(904, 800);
             btnNext.Name = "btnNext";
             btnNext.Size = new Size(112, 34);
             btnNext.TabIndex = 15;
@@ -122,7 +122,7 @@
             // 
             // btnPrevious
             // 
-            btnPrevious.Location = new Point(752, 680);
+            btnPrevious.Location = new Point(760, 800);
             btnPrevious.Name = "btnPrevious";
             btnPrevious.Size = new Size(112, 34);
             btnPrevious.TabIndex = 15;
@@ -131,7 +131,7 @@
             // 
             // btnLastPage
             // 
-            btnLastPage.Location = new Point(1048, 680);
+            btnLastPage.Location = new Point(1056, 800);
             btnLastPage.Name = "btnLastPage";
             btnLastPage.Size = new Size(112, 34);
             btnLastPage.TabIndex = 15;
@@ -141,7 +141,7 @@
             // SearchFormItem
             // 
             BackColor = Color.White;
-            ClientSize = new Size(1400, 800);
+            ClientSize = new Size(2081, 1207);
             Controls.Add(cmbPageSize);
             Controls.Add(btnLastPage);
             Controls.Add(btnPrevious);

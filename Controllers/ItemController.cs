@@ -1264,11 +1264,11 @@ WHERE items.id = @id";
                 vCon.Open();
                 string sql = @"
 INSERT INTO transaction_details (
-    ts_id, item_id, tsd_barcode, tsd_sell_price, tsd_quantity, tsd_unit, tsd_note, 
+    ts_id, item_id, tsd_name, tsd_barcode,tsd_buy_price, tsd_sell_price, tsd_quantity, tsd_unit, tsd_note, 
     tsd_discount_per_item, tsd_discount_percentage, tsd_discount_total, 
     tsd_tax, tsd_total, tsd_conversion_rate, tsd_price_per_unit, tsd_unit_variant, created_by, created_at,cart_session_code) 
 VALUES (
-    @ts_id, @item_id, @tsd_barcode, @tsd_sell_price, @tsd_quantity, @tsd_unit, @tsd_note, 
+    @ts_id, @item_id,@tsd_name, @tsd_barcode, @tsd_buy_price,@tsd_sell_price, @tsd_quantity, @tsd_unit, @tsd_note, 
     @tsd_discount_per_item, @tsd_discount_percentage, @tsd_discount_total, 
     @tsd_tax, @tsd_total, @tsd_conversion_rate, @tsd_price_per_unit,@tsd_unit_variant, @created_by, @created_at, @cart_session_code)";
 
@@ -1278,8 +1278,11 @@ VALUES (
                     {
                         vCmd.Parameters.AddWithValue("@ts_id", detail.TsId);
                         vCmd.Parameters.AddWithValue("@item_id", detail.ItemId);
+                        vCmd.Parameters.AddWithValue("@tsd_name", detail.Name);
                         vCmd.Parameters.AddWithValue("@tsd_barcode", detail.Barcode);
+                        vCmd.Parameters.AddWithValue("@tsd_buy_price", detail.TsdBuyPrice);
                         vCmd.Parameters.AddWithValue("@tsd_sell_price", detail.TsdSellPrice);
+                        
                         vCmd.Parameters.AddWithValue("@tsd_quantity", detail.TsdQuantity);
                         vCmd.Parameters.AddWithValue("@tsd_unit", detail.TsdUnit);
                         vCmd.Parameters.AddWithValue("@tsd_note", detail.TsdNote);
@@ -1370,6 +1373,7 @@ VALUES (
       string unit,
       decimal quantity,
       decimal sellPrice,
+      decimal buyPrice,
       decimal discountPercentage,
       decimal discountTotal,
       decimal tax,
@@ -1384,10 +1388,10 @@ VALUES (
                 vCon.Open();
                 string query = @"
 INSERT INTO pending_transactions 
-    (terminal_id, cashier_id, item_id, barcode, unit, quantity, sell_price, discount_percentage, 
+    (terminal_id, cashier_id, item_id, barcode, unit, quantity,buy_price, sell_price, discount_percentage, 
      discount_total, tax, total, note, cart_session_code, tsd_conversion_rate)
 VALUES 
-    (@terminalId, @cashierId, @itemId, @barcode, @unit, @quantity, @sellPrice, @discountPercentage,
+    (@terminalId, @cashierId, @itemId, @barcode, @unit, @quantity, @buy_price, @sellPrice, @discountPercentage,
      @discountTotal, @tax, @total, @note, @cartSessionCode, @conversionRate)
 RETURNING pt_id;
 ";
@@ -1401,6 +1405,7 @@ RETURNING pt_id;
                     cmd.Parameters.AddWithValue("@unit", unit);
                     cmd.Parameters.AddWithValue("@quantity", quantity);
                     cmd.Parameters.AddWithValue("@sellPrice", sellPrice);
+                    cmd.Parameters.AddWithValue("@buy_price", buyPrice); 
                     cmd.Parameters.AddWithValue("@discountPercentage", discountPercentage);
                     cmd.Parameters.AddWithValue("@discountTotal", discountTotal);
                     cmd.Parameters.AddWithValue("@tax", tax);
@@ -1668,6 +1673,37 @@ WHERE terminal_id = @terminalId
         }
 
 
+        public decimal DecideMultiPriceFromDb(int itemId, int qty)
+        {
+            using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                con.Open();
+
+                string sql = @"
+            SELECT price
+            FROM item_prices
+            WHERE item_id = @itemId
+            AND min_qty <= @qty
+            ORDER BY min_qty DESC
+            LIMIT 1
+        ";
+
+                using (var cmd = new NpgsqlCommand(sql, con))
+                {
+                    cmd.Parameters.AddWithValue("@itemId", itemId);
+                    cmd.Parameters.AddWithValue("@qty", qty);
+
+                    var result = cmd.ExecuteScalar();
+
+                    if (result != null)
+                        return Convert.ToDecimal(result);
+                }
+            }
+
+            // fallback ke harga normal jika tidak ada multi harga
+            return GetItemPrice(itemId);
+        }
+
 
         //// RANDOM BARCODE
         public Item GetRandomItemByBarcode()
@@ -1701,7 +1737,7 @@ WHERE terminal_id = @terminalId
                 // Step 4: Get item by barcode
 
 
-                string itemSql = "SELECT items.id,items.name,items.barcode, items.sell_price,items.stock, units.name as unitname FROM items LEFT JOIN units units ON items.unit = units.id WHERE barcode = @barcode";
+                string itemSql = "SELECT items.id,items.name,items.barcode,items.buy_price, items.sell_price,items.stock, units.name as unitname FROM items LEFT JOIN units units ON items.unit = units.id WHERE barcode = @barcode";
                 using (var itemCmd = new NpgsqlCommand(itemSql, con))
                 {
                     itemCmd.Parameters.AddWithValue("@barcode", randomBarcode);
@@ -1710,6 +1746,7 @@ WHERE terminal_id = @terminalId
                     {
                         if (itemReader.Read())
                         {
+                            var buyPrice = itemReader.GetDecimal(itemReader.GetOrdinal("buy_price"));
                             var sellPrice = itemReader.GetDecimal(itemReader.GetOrdinal("sell_price"));
                             int productId = itemReader.GetInt32(itemReader.GetOrdinal("id"));
                             string name = itemReader.GetString(itemReader.GetOrdinal("name"));
@@ -1746,6 +1783,7 @@ WHERE terminal_id = @terminalId
                                 unit = unitName,
                                 conversion = conversion,
                                 sell_price = sellPrice,
+                                buy_price = buyPrice,
                                 price_per_pcs = Math.Round(sellPrice / conversion, 2),
                                 price_per_pcs_asli = realprice
                             };

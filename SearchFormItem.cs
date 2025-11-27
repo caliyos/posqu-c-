@@ -21,13 +21,13 @@ namespace POS_qu
             InitializeComponent();
             itemController = new ItemController();
 
-            // Calculate 90% of the screen width
-            int screenWidth = Screen.PrimaryScreen.WorkingArea.Width;
-            this.Width = (int)(screenWidth * 0.9); // Set the form width to 90% of the screen width
+            //// Calculate 90% of the screen width
+            //int screenWidth = Screen.PrimaryScreen.WorkingArea.Width;
+            //this.Width = (int)(screenWidth * 0.9); // Set the form width to 90% of the screen width
 
-            // Optionally, set the height if needed. For example, 80% of the screen height.
-            int screenHeight = Screen.PrimaryScreen.WorkingArea.Height;
-            this.Height = (int)(screenHeight * 0.8); // Adjust the height as needed
+            //// Optionally, set the height if needed. For example, 80% of the screen height.
+            //int screenHeight = Screen.PrimaryScreen.WorkingArea.Height;
+            //this.Height = (int)(screenHeight * 0.8); // Adjust the height as needed
 
             // Dapatkan data dari database
             itemsDataTable = itemController.GetItems(searchTerm);
@@ -68,6 +68,7 @@ namespace POS_qu
                 FormatCurrencyColumns();
                 SetColumnWidths();
             };
+            StartPosition = FormStartPosition.CenterScreen;
         }
 
 
@@ -123,7 +124,9 @@ namespace POS_qu
             //dataGridViewSearchResults.Columns["barcode"].Width = 250;
             //dataGridViewSearchResults.Columns["stock"].Width = 100;
             //dataGridViewSearchResults.Columns["reserved_stock"].Width = 100;
-            dataGridViewSearchResults.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+            //dataGridViewSearchResults.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+            dataGridViewSearchResults.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
 
         }
 

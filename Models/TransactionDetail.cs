@@ -12,8 +12,11 @@ namespace POS_qu.Models
         public int TsdId { get; set; } // Primary Key
         public int TsId { get; set; } // Foreign Key to Transactions
         public int ItemId { get; set; } // Foreign Key to Items
+       
+        public string Name { get; set; }
         public string Barcode { get; set; } 
         public decimal TsdSellPrice { get; set; } // Price of the item at purchase time
+        public decimal TsdBuyPrice { get; set; } // Cost of the item at purchase time
         public decimal TsdQuantity { get; set; } // Quantity of the item
         public string TsdUnit { get; set; } // Unit of measurement (e.g., kg, pcs)
         public string TsdNote { get; set; } // Additional notes

@@ -70,14 +70,14 @@
             txtSellPrice = new TextBox();
             txtBuyPrice = new TextBox();
             txtStock = new TextBox();
+            tabPageUnitVariant = new TabPage();
+            btnUnitVariant = new Button();
             BoxOrPaket = new TabPage();
             Bahan = new TabPage();
-            tabPageUnitVariant = new TabPage();
             txtNote = new TextBox();
             label7 = new Label();
             btnCancel = new Button();
             btnSimpan = new Button();
-            btnUnitVariant = new Button();
             panel1.SuspendLayout();
             tabHarga.SuspendLayout();
             Harga.SuspendLayout();
@@ -492,6 +492,26 @@
             txtStock.Size = new Size(272, 31);
             txtStock.TabIndex = 16;
             // 
+            // tabPageUnitVariant
+            // 
+            tabPageUnitVariant.Controls.Add(btnUnitVariant);
+            tabPageUnitVariant.Location = new Point(4, 34);
+            tabPageUnitVariant.Name = "tabPageUnitVariant";
+            tabPageUnitVariant.Size = new Size(960, 634);
+            tabPageUnitVariant.TabIndex = 3;
+            tabPageUnitVariant.Text = "UnitVariant";
+            tabPageUnitVariant.UseVisualStyleBackColor = true;
+            // 
+            // btnUnitVariant
+            // 
+            btnUnitVariant.Location = new Point(24, 24);
+            btnUnitVariant.Name = "btnUnitVariant";
+            btnUnitVariant.Size = new Size(192, 34);
+            btnUnitVariant.TabIndex = 0;
+            btnUnitVariant.Text = "Set Up Unit Variant ";
+            btnUnitVariant.UseVisualStyleBackColor = true;
+            btnUnitVariant.Click += btnUnitVariant_Click;
+            // 
             // BoxOrPaket
             // 
             BoxOrPaket.Location = new Point(4, 34);
@@ -510,16 +530,6 @@
             Bahan.TabIndex = 2;
             Bahan.Text = "Item Berbahan";
             Bahan.UseVisualStyleBackColor = true;
-            // 
-            // tabPageUnitVariant
-            // 
-            tabPageUnitVariant.Controls.Add(btnUnitVariant);
-            tabPageUnitVariant.Location = new Point(4, 34);
-            tabPageUnitVariant.Name = "tabPageUnitVariant";
-            tabPageUnitVariant.Size = new Size(960, 634);
-            tabPageUnitVariant.TabIndex = 3;
-            tabPageUnitVariant.Text = "UnitVariant";
-            tabPageUnitVariant.UseVisualStyleBackColor = true;
             // 
             // txtNote
             // 
@@ -557,16 +567,6 @@
             btnSimpan.Text = "simpan";
             btnSimpan.UseVisualStyleBackColor = true;
             btnSimpan.Click += btnSimpan_Click;
-            // 
-            // btnUnitVariant
-            // 
-            btnUnitVariant.Location = new Point(24, 24);
-            btnUnitVariant.Name = "btnUnitVariant";
-            btnUnitVariant.Size = new Size(192, 34);
-            btnUnitVariant.TabIndex = 0;
-            btnUnitVariant.Text = "Set Up Unit Variant ";
-            btnUnitVariant.UseVisualStyleBackColor = true;
-            btnUnitVariant.Click += btnUnitVariant_Click;
             // 
             // ItemDetailForm
             // 

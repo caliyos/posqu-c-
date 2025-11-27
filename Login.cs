@@ -13,11 +13,12 @@ using System.Windows.Forms;
 
 namespace POS_qu
 {
-    public partial class Login: Form
+    public partial class Login : Form
     {
         public Login()
         {
             InitializeComponent();
+            this.StartPosition = FormStartPosition.CenterScreen;
         }
         // Click event for Login button
         private void buttonLogin_Click(object sender, EventArgs e)
@@ -36,7 +37,7 @@ namespace POS_qu
 
             if (user != null)
             {
-               
+
                 MessageBox.Show(
                     $"Login successful!\n\nUsername: {user.Username}\nRole: {user.RoleName}\nTerminal: {user.TerminalName}",
                     "Welcome",
@@ -56,6 +57,14 @@ namespace POS_qu
             }
         }
 
+        private void Exit_Click(object sender, EventArgs e)
+        {
+            Application.Exit();
+        }
 
+        private void Login_Load(object sender, EventArgs e)
+        {
+
+        }
     }
 }

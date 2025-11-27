@@ -182,11 +182,6 @@ namespace POSqu_menu
         private void produkToolStripMenuItem_Click(object sender, EventArgs e)
         {
 
-            ProductPage p = new ProductPage();
-            this.Hide();  // Sembunyikan MenuNative sementara
-
-            p.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative
-            p.Show();
         }
 
         private void reportsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -287,6 +282,50 @@ namespace POSqu_menu
         }
 
         private void pengeluaranToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void manajemenProdukToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            ProductPage p = new ProductPage();
+            this.Hide();  // Sembunyikan MenuNative sementara
+
+            p.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative
+            p.Show();
+
+        }
+
+        private void pelangganCustomerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            //ProductPage f = new ();
+            //this.Hide();  // Sembunyikan MenuNative sementara
+
+            //f.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative
+            //f.Show();
+        }
+
+        private void kategoriBarangToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CategoryForm f = new CategoryForm();
+            this.Hide();  // Sembunyikan MenuNative sementara
+
+            f.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative
+            f.Show();
+
+        }
+
+        private void supplierToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SupplierForm f = new SupplierForm();
+            this.Hide();  // Sembunyikan MenuNative sementara
+
+            f.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative
+            f.Show();
+        }
+
+        private void unitSatuanToolStripMenuItem_Click(object sender, EventArgs e)
         {
 
         }

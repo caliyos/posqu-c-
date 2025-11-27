@@ -13,6 +13,7 @@ namespace POS_qu.Models
         public int ConversionRate { get; set; }     // konversi unit varian ke unit utama
         public int Qty { get; set; }                // jumlah dalam unit varian
         public decimal Price { get; set; }          // harga per unit
+        public decimal CostPrice { get; set; }          // cost per unit
         public decimal DiscountPercent { get; set; } // persen diskon per item
         public decimal DiscountAmount { get; set; }  // total diskon per item
         public decimal Tax { get; set; }             // pajak per item

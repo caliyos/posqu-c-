@@ -23,7 +23,11 @@
             label1 = new Label();
             menuStrip1 = new MenuStrip();
             masterToolStripMenuItem = new ToolStripMenuItem();
+            pelangganCustomerToolStripMenuItem = new ToolStripMenuItem();
+            supplierToolStripMenuItem = new ToolStripMenuItem();
+            kategoriBarangToolStripMenuItem = new ToolStripMenuItem();
             productToolStripMenuItem = new ToolStripMenuItem();
+            manajemenProdukToolStripMenuItem = new ToolStripMenuItem();
             casherToolStripMenuItem = new ToolStripMenuItem();
             pembelianToolStripMenuItem = new ToolStripMenuItem();
             daftarPembelianToolStripMenuItem = new ToolStripMenuItem();
@@ -40,14 +44,15 @@
             tokoSettingToolStripMenuItem = new ToolStripMenuItem();
             terminalToolStripMenuItem = new ToolStripMenuItem();
             rolesToolStripMenuItem = new ToolStripMenuItem();
+            manajemenRolesPermissionsToolStripMenuItem = new ToolStripMenuItem();
+            usersToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
+            licensesToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
             panel2 = new Panel();
             logoPictureBox = new PictureBox();
             copyrightLabel = new Label();
-            manajemenRolesPermissionsToolStripMenuItem = new ToolStripMenuItem();
-            usersToolStripMenuItem = new ToolStripMenuItem();
-            licensesToolStripMenuItem = new ToolStripMenuItem();
+            unitSatuanToolStripMenuItem = new ToolStripMenuItem();
             panel1.SuspendLayout();
             panelWelcome.SuspendLayout();
             menuStrip1.SuspendLayout();
@@ -111,17 +116,47 @@
             // 
             // masterToolStripMenuItem
             // 
+            masterToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { pelangganCustomerToolStripMenuItem, supplierToolStripMenuItem, kategoriBarangToolStripMenuItem, unitSatuanToolStripMenuItem });
             masterToolStripMenuItem.Name = "masterToolStripMenuItem";
             masterToolStripMenuItem.Size = new Size(124, 29);
             masterToolStripMenuItem.Text = "Master Data";
             masterToolStripMenuItem.Click += masterToolStripMenuItem_Click;
             // 
+            // pelangganCustomerToolStripMenuItem
+            // 
+            pelangganCustomerToolStripMenuItem.Name = "pelangganCustomerToolStripMenuItem";
+            pelangganCustomerToolStripMenuItem.Size = new Size(280, 34);
+            pelangganCustomerToolStripMenuItem.Text = "Pelanggan/Customer";
+            pelangganCustomerToolStripMenuItem.Click += pelangganCustomerToolStripMenuItem_Click;
+            // 
+            // supplierToolStripMenuItem
+            // 
+            supplierToolStripMenuItem.Name = "supplierToolStripMenuItem";
+            supplierToolStripMenuItem.Size = new Size(280, 34);
+            supplierToolStripMenuItem.Text = "Supplier";
+            supplierToolStripMenuItem.Click += supplierToolStripMenuItem_Click;
+            // 
+            // kategoriBarangToolStripMenuItem
+            // 
+            kategoriBarangToolStripMenuItem.Name = "kategoriBarangToolStripMenuItem";
+            kategoriBarangToolStripMenuItem.Size = new Size(280, 34);
+            kategoriBarangToolStripMenuItem.Text = "Kategori Barang";
+            kategoriBarangToolStripMenuItem.Click += kategoriBarangToolStripMenuItem_Click;
+            // 
             // productToolStripMenuItem
             // 
+            productToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { manajemenProdukToolStripMenuItem });
             productToolStripMenuItem.Name = "productToolStripMenuItem";
             productToolStripMenuItem.Size = new Size(90, 29);
             productToolStripMenuItem.Text = "Product";
             productToolStripMenuItem.Click += produkToolStripMenuItem_Click;
+            // 
+            // manajemenProdukToolStripMenuItem
+            // 
+            manajemenProdukToolStripMenuItem.Name = "manajemenProdukToolStripMenuItem";
+            manajemenProdukToolStripMenuItem.Size = new Size(268, 34);
+            manajemenProdukToolStripMenuItem.Text = "Manajemen Produk";
+            manajemenProdukToolStripMenuItem.Click += manajemenProdukToolStripMenuItem_Click;
             // 
             // casherToolStripMenuItem
             // 
@@ -141,7 +176,7 @@
             // daftarPembelianToolStripMenuItem
             // 
             daftarPembelianToolStripMenuItem.Name = "daftarPembelianToolStripMenuItem";
-            daftarPembelianToolStripMenuItem.Size = new Size(270, 34);
+            daftarPembelianToolStripMenuItem.Size = new Size(249, 34);
             daftarPembelianToolStripMenuItem.Text = "Daftar Pembelian";
             daftarPembelianToolStripMenuItem.Click += daftarPembelianToolStripMenuItem_Click;
             // 
@@ -189,48 +224,60 @@
             // logoToolStripMenuItem
             // 
             logoToolStripMenuItem.Name = "logoToolStripMenuItem";
-            logoToolStripMenuItem.Size = new Size(270, 34);
+            logoToolStripMenuItem.Size = new Size(351, 34);
             logoToolStripMenuItem.Text = "App Data";
             // 
             // networkingToolStripMenuItem
             // 
             networkingToolStripMenuItem.Name = "networkingToolStripMenuItem";
-            networkingToolStripMenuItem.Size = new Size(270, 34);
+            networkingToolStripMenuItem.Size = new Size(351, 34);
             networkingToolStripMenuItem.Text = "Printer";
             // 
             // databaseToolStripMenuItem
             // 
             databaseToolStripMenuItem.Name = "databaseToolStripMenuItem";
-            databaseToolStripMenuItem.Size = new Size(270, 34);
+            databaseToolStripMenuItem.Size = new Size(351, 34);
             databaseToolStripMenuItem.Text = "Database";
             // 
             // strukSettingToolStripMenuItem
             // 
             strukSettingToolStripMenuItem.Name = "strukSettingToolStripMenuItem";
-            strukSettingToolStripMenuItem.Size = new Size(270, 34);
+            strukSettingToolStripMenuItem.Size = new Size(351, 34);
             strukSettingToolStripMenuItem.Text = "Struk Setting";
             strukSettingToolStripMenuItem.Click += strukSettingToolStripMenuItem_Click;
             // 
             // tokoSettingToolStripMenuItem
             // 
             tokoSettingToolStripMenuItem.Name = "tokoSettingToolStripMenuItem";
-            tokoSettingToolStripMenuItem.Size = new Size(270, 34);
+            tokoSettingToolStripMenuItem.Size = new Size(351, 34);
             tokoSettingToolStripMenuItem.Text = "Toko Setting";
             tokoSettingToolStripMenuItem.Click += tokoSettingToolStripMenuItem_Click;
             // 
             // terminalToolStripMenuItem
             // 
             terminalToolStripMenuItem.Name = "terminalToolStripMenuItem";
-            terminalToolStripMenuItem.Size = new Size(270, 34);
+            terminalToolStripMenuItem.Size = new Size(351, 34);
             terminalToolStripMenuItem.Text = "Terminal";
             terminalToolStripMenuItem.Click += terminalToolStripMenuItem_Click;
             // 
             // rolesToolStripMenuItem
             // 
             rolesToolStripMenuItem.Name = "rolesToolStripMenuItem";
-            rolesToolStripMenuItem.Size = new Size(270, 34);
+            rolesToolStripMenuItem.Size = new Size(351, 34);
             rolesToolStripMenuItem.Text = "Roles";
             rolesToolStripMenuItem.Click += rolesToolStripMenuItem_Click;
+            // 
+            // manajemenRolesPermissionsToolStripMenuItem
+            // 
+            manajemenRolesPermissionsToolStripMenuItem.Name = "manajemenRolesPermissionsToolStripMenuItem";
+            manajemenRolesPermissionsToolStripMenuItem.Size = new Size(351, 34);
+            manajemenRolesPermissionsToolStripMenuItem.Text = "Manajemen Roles Permissions";
+            // 
+            // usersToolStripMenuItem
+            // 
+            usersToolStripMenuItem.Name = "usersToolStripMenuItem";
+            usersToolStripMenuItem.Size = new Size(351, 34);
+            usersToolStripMenuItem.Text = "Users";
             // 
             // helpToolStripMenuItem
             // 
@@ -238,6 +285,12 @@
             helpToolStripMenuItem.Name = "helpToolStripMenuItem";
             helpToolStripMenuItem.Size = new Size(65, 29);
             helpToolStripMenuItem.Text = "Help";
+            // 
+            // licensesToolStripMenuItem
+            // 
+            licensesToolStripMenuItem.Name = "licensesToolStripMenuItem";
+            licensesToolStripMenuItem.Size = new Size(264, 34);
+            licensesToolStripMenuItem.Text = "Licenses/Activation";
             // 
             // aboutToolStripMenuItem
             // 
@@ -270,23 +323,12 @@
             copyrightLabel.Size = new Size(100, 23);
             copyrightLabel.TabIndex = 3;
             // 
-            // manajemenRolesPermissionsToolStripMenuItem
+            // unitSatuanToolStripMenuItem
             // 
-            manajemenRolesPermissionsToolStripMenuItem.Name = "manajemenRolesPermissionsToolStripMenuItem";
-            manajemenRolesPermissionsToolStripMenuItem.Size = new Size(351, 34);
-            manajemenRolesPermissionsToolStripMenuItem.Text = "Manajemen Roles Permissions";
-            // 
-            // usersToolStripMenuItem
-            // 
-            usersToolStripMenuItem.Name = "usersToolStripMenuItem";
-            usersToolStripMenuItem.Size = new Size(351, 34);
-            usersToolStripMenuItem.Text = "Users";
-            // 
-            // licensesToolStripMenuItem
-            // 
-            licensesToolStripMenuItem.Name = "licensesToolStripMenuItem";
-            licensesToolStripMenuItem.Size = new Size(270, 34);
-            licensesToolStripMenuItem.Text = "Licenses/Activation";
+            unitSatuanToolStripMenuItem.Name = "unitSatuanToolStripMenuItem";
+            unitSatuanToolStripMenuItem.Size = new Size(280, 34);
+            unitSatuanToolStripMenuItem.Text = "Unit/Satuan";
+            unitSatuanToolStripMenuItem.Click += unitSatuanToolStripMenuItem_Click;
             // 
             // MenuNative
             // 
@@ -345,5 +387,10 @@
         private ToolStripMenuItem manajemenRolesPermissionsToolStripMenuItem;
         private ToolStripMenuItem usersToolStripMenuItem;
         private ToolStripMenuItem licensesToolStripMenuItem;
+        private ToolStripMenuItem pelangganCustomerToolStripMenuItem;
+        private ToolStripMenuItem supplierToolStripMenuItem;
+        private ToolStripMenuItem manajemenProdukToolStripMenuItem;
+        private ToolStripMenuItem kategoriBarangToolStripMenuItem;
+        private ToolStripMenuItem unitSatuanToolStripMenuItem;
     }
 }
