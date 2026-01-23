@@ -299,35 +299,36 @@ namespace POSqu_menu
 
         private void pelangganCustomerToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            //ProductPage f = new ();
-            //this.Hide();  // Sembunyikan MenuNative sementara
-
-            //f.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative
-            //f.Show();
+            using (CustomerForm f = new CustomerForm())
+            {
+                f.ShowDialog(this); // owner = form utama
+            }
         }
 
         private void kategoriBarangToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            CategoryForm f = new CategoryForm();
-            this.Hide();  // Sembunyikan MenuNative sementara
-
-            f.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative
-            f.Show();
+            using (CategoryForm f = new CategoryForm())
+            {
+                f.ShowDialog(this); // owner = form utama
+            }
 
         }
 
         private void supplierToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            SupplierForm f = new SupplierForm();
-            this.Hide();  // Sembunyikan MenuNative sementara
-
-            f.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative
-            f.Show();
+            using (SupplierForm f = new SupplierForm())
+            {
+                f.ShowDialog(this); // owner = form utama
+            }
         }
 
         private void unitSatuanToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            using (UnitForm f = new UnitForm())
+            {
+                f.ShowDialog(this); // owner = form utama
+            }
         }
+
     }
 }

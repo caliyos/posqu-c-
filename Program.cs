@@ -65,6 +65,9 @@ namespace POS_qu
                 //Application.Run(new PurchaseOrderForm());
                 //Application.Run(new PurchaseOrderListForm());
 
+                //Application.Run(new UnitForm());
+                //Application.Run(new CustomerForm());
+
             }
             catch (Exception ex)
             {
