@@ -28,7 +28,7 @@ namespace POS_qu
 
             if (existingVariants != null && existingVariants.Count > 0)
             {
-                _item.UnitVariants = existingVariants; // hanya assign kalau memang ada
+                _item.UnitVariants = existingVariants; 
             }
 
             StartPosition = FormStartPosition.CenterScreen;
@@ -140,13 +140,13 @@ namespace POS_qu
 
             var labelhargabeli = new Label
             {
-                Text = $"Harga Beli Produk: {_item.sell_price}",
+                Text = $"Harga Jual Produk: {_item.sell_price}",
                 AutoSize = true
             };
 
             var labelActualSelling = new Label
             {
-                Text = $"Harga Jual Normal: {variant.actualSellPrice}",
+                Text = $"Total Harga Jual: {variant.actualSellPrice}",
                 AutoSize = true
             };
 

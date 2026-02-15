@@ -21,8 +21,6 @@
         // panel card
         private Label lblCardNumber;
         private TextBox txtCardNumber;
-        private Label lblCardHolder;
-        private TextBox txtCardHolder;
         private Label lblExpiry;
         private TextBox txtExpiry;
 
@@ -70,8 +68,6 @@
             panelCardDetails = new Panel();
             lblCardNumber = new Label();
             txtCardNumber = new TextBox();
-            lblCardHolder = new Label();
-            txtCardHolder = new TextBox();
             lblExpiry = new Label();
             txtExpiry = new TextBox();
             panelEwalletDetails = new Panel();
@@ -178,8 +174,6 @@
             // 
             panelCardDetails.Controls.Add(lblCardNumber);
             panelCardDetails.Controls.Add(txtCardNumber);
-            panelCardDetails.Controls.Add(lblCardHolder);
-            panelCardDetails.Controls.Add(txtCardHolder);
             panelCardDetails.Controls.Add(lblExpiry);
             panelCardDetails.Controls.Add(txtExpiry);
             panelCardDetails.Location = new Point(420, 30);
@@ -200,27 +194,12 @@
             // 
             txtCardNumber.Location = new Point(160, 10);
             txtCardNumber.Name = "txtCardNumber";
-            txtCardNumber.Size = new Size(100, 31);
+            txtCardNumber.Size = new Size(224, 31);
             txtCardNumber.TabIndex = 1;
-            // 
-            // lblCardHolder
-            // 
-            lblCardHolder.Location = new Point(10, 50);
-            lblCardHolder.Name = "lblCardHolder";
-            lblCardHolder.Size = new Size(100, 23);
-            lblCardHolder.TabIndex = 2;
-            lblCardHolder.Text = "Card Holder:";
-            // 
-            // txtCardHolder
-            // 
-            txtCardHolder.Location = new Point(160, 50);
-            txtCardHolder.Name = "txtCardHolder";
-            txtCardHolder.Size = new Size(100, 31);
-            txtCardHolder.TabIndex = 3;
             // 
             // lblExpiry
             // 
-            lblExpiry.Location = new Point(10, 90);
+            lblExpiry.Location = new Point(8, 56);
             lblExpiry.Name = "lblExpiry";
             lblExpiry.Size = new Size(100, 23);
             lblExpiry.TabIndex = 4;
@@ -228,9 +207,9 @@
             // 
             // txtExpiry
             // 
-            txtExpiry.Location = new Point(160, 90);
+            txtExpiry.Location = new Point(158, 56);
             txtExpiry.Name = "txtExpiry";
-            txtExpiry.Size = new Size(100, 31);
+            txtExpiry.Size = new Size(234, 31);
             txtExpiry.TabIndex = 5;
             // 
             // panelEwalletDetails

@@ -67,6 +67,9 @@ namespace POS_qu
 
                 //Application.Run(new UnitForm());
                 //Application.Run(new CustomerForm());
+                //Application.Run(new StockAdjustment());
+                //Application.Run(new CasherNew());
+
 
             }
             catch (Exception ex)

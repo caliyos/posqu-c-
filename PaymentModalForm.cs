@@ -99,18 +99,9 @@ namespace POS_qu
 
         private void txtPaymentAmount_TextChanged(object sender, EventArgs e)
         {
-            //if (decimal.TryParse(txtPaymentAmount.Text, out decimal paymentAmount))
-            //{
-            //    decimal total = GrandTotal > 0 ? GrandTotal : totalAmount;
-            //    decimal cashback = paymentAmount - total;
-            //    txtCashback.Text = cashback > 0 ? cashback.ToString("C") : "$0.00";
-            //}
-            //else
-            //{
-            //    txtCashback.Text = "$0.00";
-            //}
 
             PaymentAmountChanged?.Invoke(PaymentAmount);
+            UpdatePayButtonState();
         }
 
         private void cmbPaymentMethod_SelectedIndexChanged(object sender, EventArgs e)
@@ -137,6 +128,7 @@ namespace POS_qu
                     panelSplitPayment.Visible = true;
                     break;
             }
+            UpdatePayButtonState();
         }
 
         private void txtGlobalDiscountPercent_TextChanged(object sender, EventArgs e)
@@ -150,16 +142,11 @@ namespace POS_qu
                 txtGlobalDiscountPercent.Text = "100";
             }
 
-            decimal discountedTotal = totalAmount - (totalAmount * discountPercent / 100);
-
             GlobalDiscountPercent = discountPercent;
-            GrandTotal = discountedTotal;
 
             GlobalDiscountChanged?.Invoke(discountPercent);
-
-            //lblGrandTotal.Text = "Grand Total: " + discountedTotal.ToString("C");
-
         }
+
 
         // ✅ NEW: Global Note change event
         private void txtGlobalNote_TextChanged(object sender, EventArgs e)
@@ -180,6 +167,17 @@ namespace POS_qu
         {
             // Optional initialization
         }
+
+        private void UpdatePayButtonState()
+        {
+            decimal payment = PaymentAmount;
+            decimal change = payment - totalAmount;
+
+            bool valid = change > 0 && cmbPaymentMethod.SelectedItem != null;
+
+            btnPay.Enabled = valid;
+        }
+
     }
 }
 

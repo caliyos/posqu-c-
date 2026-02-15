@@ -36,6 +36,7 @@ namespace POS_qu
             btnPrevious = new Button();
             btnNext = new Button();
             dataGridView1 = new DataGridView();
+            btnStockAdjs = new Button();
             tablePanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
@@ -46,6 +47,7 @@ namespace POS_qu
             tablePanel.Controls.Add(btnDelete);
             tablePanel.Controls.Add(btnEdit);
             tablePanel.Controls.Add(chkSelectAll);
+            tablePanel.Controls.Add(btnStockAdjs);
             tablePanel.Controls.Add(btnRefresh);
             tablePanel.Controls.Add(btnAddProduct);
             tablePanel.Controls.Add(label10);
@@ -240,6 +242,16 @@ namespace POS_qu
             dataGridView1.Size = new Size(2136, 1000);
             dataGridView1.TabIndex = 0;
             // 
+            // btnStockAdjs
+            // 
+            btnStockAdjs.Location = new Point(1432, 184);
+            btnStockAdjs.Name = "btnStockAdjs";
+            btnStockAdjs.Size = new Size(176, 34);
+            btnStockAdjs.TabIndex = 25;
+            btnStockAdjs.Text = "Stock Adjustment";
+            btnStockAdjs.UseVisualStyleBackColor = true;
+            btnStockAdjs.Click += btnStockAdjs_Click;
+            // 
             // ProductPage
             // 
             ClientSize = new Size(2184, 1370);
@@ -272,6 +284,7 @@ namespace POS_qu
         private CheckBox chkSelectAll;
         private Button btnDelete;
         private Button btnEdit;
+        private Button btnStockAdjs;
 
         //private void SetupLabelAndControl(string labelText, Control control, int y)
         //{

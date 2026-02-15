@@ -1,6 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Compile Update="CasherNew.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="CategoryForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -23,6 +26,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="FormListDraft.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="FormUpdateItem.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="Helpers\RoundedPanel.cs">
@@ -74,6 +80,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="SearchFormItem.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="StockAdjustment.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="StockReports.cs">

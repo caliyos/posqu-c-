@@ -22,6 +22,10 @@ namespace POS_qu.Helpers
                                        && nic.NetworkInterfaceType != NetworkInterfaceType.Loopback)?
                 .GetPhysicalAddress().ToString();
         }
+        public static string GenerateTransactionNumber()
+        {
+            return "TRX-" + DateTime.Now.ToString("yyyyMMddHHmmss");
+        }
         public static string GetCurrentShift()
         {
             var hour = DateTime.Now.Hour;

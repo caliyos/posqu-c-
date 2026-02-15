@@ -1,85 +1,421 @@
-﻿using POS_qu.Controllers;
+﻿using DocumentFormat.OpenXml.Wordprocessing;
+using Npgsql;
+using PdfSharp.Drawing.BarCodes;
+using POS_qu.Controllers;
 using POS_qu.Core;
 using POS_qu.DTO;
 using POS_qu.Helpers;
 using POS_qu.Models;
+using POS_qu.Repositories;
+using static POS_qu.Repositories.CartActivity;
+
+
+public class AddToCartRequest
+{
+    public int ItemVariantId { get; set; }
+    public string PriceType { get; set; }
+    public int Quantity { get; set; }
+}
+
+public class ItemWithVariants
+{
+    public Item Item { get; set; }
+    public List<UnitVariant> Variants { get; set; } = new();
+}
+
 
 
 // DATAGRID SYNCHRONIZATION WITH PENDING TRANSACTIONS IN DB
 public class CartService
 
 {
-    private ItemController _itemController;
+    //private CartActivity _repo;
     private readonly IActivityService _activityService;
 
     public bool IsPaymentMode { get; set; } = false;
-    public CartService(ItemController itemController, IActivityService activityService)
+
+    private CartActivity _repo = new CartActivity();
+
+    
+
+
+    private InvoiceItem MapToInvoiceItem(Item product)
     {
-        _itemController = itemController;
+        return new InvoiceItem
+        {
+            ItemId = product.id,
+            Barcode = product.barcode,
+            Name = product.name,
+            Unit = product.unit,
+            UnitId = product.unitid,
+            UnitVariant = product.unit, // default sama
+            ConversionRate = 1,
+            Qty = 1,
+            Price = product.sell_price,
+            CostPrice = product.buy_price,
+            DiscountPercent = 0,
+            DiscountAmount = 0,
+            Tax = 0,
+            Total = product.sell_price,
+            Note = "",
+            IsEditMode = false,
+            AdditionalQuantity = 0
+        };
+    }
+
+    private InvoiceItem MapVariantToInvoiceItem(UnitVariant variant, Item item, int qty = 1)
+    {
+        var total = variant.SellPrice * qty;
+
+        return new InvoiceItem
+        {
+            ItemId = item.id,
+            Barcode = item.barcode,
+            Name = item.name,
+
+            Unit = variant.UnitName,                 // base unit (pcs)
+            UnitId = variant.UnitId,
+            UnitVariant = variant.UnitName,   // dus / box / dll
+            ConversionRate = variant.Conversion,
+
+            Qty = qty,
+            Price = variant.SellPrice,
+            CostPrice = variant.SellPrice - variant.Profit,
+
+            DiscountPercent = 0,
+            DiscountAmount = 0,
+            Tax = 0,
+
+            Total = total,
+
+            IsEditMode = false,
+            AdditionalQuantity = qty,
+            PreviousQuantity = 0,
+            EnteredQuantity = qty
+        };
+    }
+
+    public ItemWithVariants cekUnitVariant(string keyword)
+    {
+        var item = _repo.GetSingleItemByName(keyword);
+
+        if (item == null)
+            return null;
+
+        var variants = _repo.GetVariantsByItemId(item.id);
+
+        return new ItemWithVariants
+        {
+            Item = item,
+            Variants = variants
+        };
+    }
+
+
+    public Item GetItemByName(string keyword)
+    {
+       return _repo.GetSingleItemByName(keyword); 
+    }
+
+    public InvoiceData AddItemByVariant(
+    InvoiceData currentInvoice,
+    int variantId,
+    int qty)
+    {
+        var variant = _repo.GetVariantById(variantId);
+
+        if (variant == null)
+            throw new Exception("Variant tidak ditemukan");
+
+        var item = _repo.GetItemById(variant.ItemId);
+
+        if (item == null)
+            throw new Exception("Produk tidak ditemukan");
+
+        var invoiceItem = MapVariantToInvoiceItem(variant, item, qty);
+
+        invoiceItem.IsEditMode = false;
+        invoiceItem.AdditionalQuantity = qty;
+
+        // CORE
+        currentInvoice = UpdateCartItemStock(invoiceItem, currentInvoice);
+
+        var rows = _repo.GetPendingItems(Session.CartSessionCode);
+
+        var updatedInvoice = InvoiceBuilder.FromPending(rows);
+
+        currentInvoice.Items = updatedInvoice.Items;
+        currentInvoice.NumOfItems = updatedInvoice.NumOfItems;
+        currentInvoice.Subtotal = updatedInvoice.Subtotal;
+        currentInvoice.TotalDiscount = updatedInvoice.TotalDiscount;
+        currentInvoice.GrandTotal = updatedInvoice.GrandTotal;
+
+        return currentInvoice;
+    }
+
+
+    public InvoiceData AddItemByName(
+     InvoiceData currentInvoice,
+     string name,
+     int qty)
+    {
+        Item product = _repo.GetSingleItemByName(name);
+
+        if (product == null)
+            throw new Exception("Produk tidak ditemukan");
+
+        var invoiceItem = MapToInvoiceItem(product);
+
+        invoiceItem.IsEditMode = false;
+        invoiceItem.AdditionalQuantity = qty;
+
+        // CORE
+        currentInvoice = UpdateCartItemStock(invoiceItem, currentInvoice);
+
+        var rows = _repo.GetPendingItems(Session.CartSessionCode);
+
+        // 🔥 Build invoice baru dari DB
+        // 
+        var updatedInvoice = InvoiceBuilder.FromPending(rows);
+
+
+        currentInvoice.Items = updatedInvoice.Items;
+        currentInvoice.NumOfItems = updatedInvoice.NumOfItems;
+        currentInvoice.Subtotal = updatedInvoice.Subtotal;
+        currentInvoice.TotalDiscount = updatedInvoice.TotalDiscount;
+        currentInvoice.GrandTotal = updatedInvoice.GrandTotal;
+
+        return currentInvoice;
+    }
+
+
+
+    public InvoiceData UpdateItemQty(string itemName, int newQty, InvoiceData invoice)
+    {
+        var product = _repo.GetSingleItemByName(itemName);
+        if (product == null)
+            throw new Exception("Produk tidak ditemukan");
+
+
+        var invoiceItem = MapToInvoiceItem(product);
+        invoiceItem.IsEditMode = true;
+        invoiceItem.EnteredQuantity = newQty;
+        invoiceItem.PreviousQuantity = 0;
+        invoiceItem.AdditionalQuantity = newQty;
+        var _invoice = UpdateCartItemStock(invoiceItem, invoice);
+
+        var rows = _repo.GetPendingItems(Session.CartSessionCode);
+        return InvoiceBuilder.FromPending(rows);
+
+
+    }
+
+
+
+
+
+    public InvoiceData UpdateCartItemStock(InvoiceItem item,InvoiceData invoice)
+    {
+        //var result = new UpdateStockResult();
+        var session = SessionUser.GetCurrentUser();
+
+        //  TRANSACTION
+        using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+        conn.Open();
+        using var tran = conn.BeginTransaction(); // START TRANSACTION
+
+        try
+        {
+            // 🔥 1. Ambil qty lama
+            int existingQty = _repo.GetPendingItemQty(
+                session.TerminalId,
+                item.ItemId,
+                item.UnitId,
+                invoice.CartSessionCode
+            );
+
+            int newQty;
+
+            if (item.IsEditMode)
+                newQty = item.AdditionalQuantity;              // replace
+            else
+                newQty = existingQty + item.AdditionalQuantity; // tambah
+
+            int qtyDiff = newQty - existingQty;
+
+            int stockAdjustment = qtyDiff * item.ConversionRate;
+            // ===============================
+            // 🔥 2. Update reserved dulu (ATOMIC)
+            // ===============================
+            if (qtyDiff != 0)
+            {
+                bool reservedUpdated = _repo.TryUpdateReservedStock(
+                    conn, tran,
+                    item.ItemId,
+                    stockAdjustment
+                );
+
+                if (!reservedUpdated)
+                {
+                    throw new InvalidOperationException("Stock tidak cukup.");
+                }
+            }
+
+            // ===============================
+            // 🔥 3. Hitung nulti harga
+            // ===============================
+            var priceResult = DecideMultiPrice(
+                item.ItemId,
+                item.UnitId,
+                newQty);
+            decimal price;
+
+            if (priceResult.HasMultiPrice)
+            {
+                // Multi-price → total harga langsung pakai price dari tabel
+                price = priceResult.Price;
+                item.IsMultiPrice = 1;
+            }
+            else
+            {
+                // Harga biasa → total = qty * harga per unit
+                price = priceResult.Price;
+                item.IsMultiPrice = 0;
+            }
+
+            decimal total = priceResult.HasMultiPrice ? price : price * newQty;
+
+            bool updateSuccess;
+
+            if (existingQty == 0)
+            {
+                updateSuccess = _repo.UpsertPendingItem(
+                    conn, tran,
+                    invoice.CartSessionCode,
+                    item.ItemId,
+                    newQty,
+                    item.Unit,
+                    item.UnitId,
+                    price,
+                    total,
+                    item.ConversionRate
+                );
+            }
+            else
+            {
+                updateSuccess = _repo.UpdatePendingTransactionStock(
+                    conn, 
+                    tran,
+                    session.TerminalId,
+                    item.ItemId,
+                    newQty,
+                    total,
+                    item.Unit,
+                    price,
+                    invoice.CartSessionCode
+                );
+            }
+
+
+
+            if (!updateSuccess)
+                throw new Exception("Gagal update pending_transactions.");
+
+            tran.Commit();
+            return invoice;
+        }
+        catch (Exception ex)
+        {
+            tran.Rollback();
+            throw new Exception("ERROR." + ex.Message + " : " + ex.ToString());
+        }
+    }
+
+
+
+    public InvoiceData RemoveItem(int itemId, int unitid, InvoiceData invoice, bool isPaymentMode = false)
+    {
+        // Ambil item dari pending
+        var request = _repo.GetPendingItemById(Session.CartSessionCode, itemId, unitid);
+
+        if (request == null)
+            throw new Exception("Item tidak ditemukan di cart.");
+
+        // Set mode payment kalau perlu
+        request.IsPaymentMode = isPaymentMode;
+
+        // Jalankan delete (anggap method ini throw kalau gagal)
+        DeleteCartItem(request);
+
+        // Reload cart
+        var rows = _repo.GetPendingItems(Session.CartSessionCode);
+
+        return InvoiceBuilder.FromPending(rows);
+    }
+
+
+ 
+
+
+
+
+    public CartService(CartActivity cartrepo, IActivityService activityService)
+    {
+        _repo = cartrepo;
         _activityService = activityService;
     }
 
     // =================== DELETE ITEM ===================
-    public bool DeleteCartItem(int itemId, string barcode, int qty, int conversionRate, string reason = "DELETE_ITEM_FROM_CART", string cart_session_code = null, bool isPaymentMode = false)
+    public bool DeleteCartItem(DeleteCartItemRequest request)
     {
         try
         {
-            int stockNeeded = qty * conversionRate;
+            var session = SessionUser.GetCurrentUser();
 
-            // Delete dari pending_transactions
-            bool deleteSuccess = _itemController.DeletePendingTransaction(
-                SessionUser.GetCurrentUser().TerminalId,
-                SessionUser.GetCurrentUser().UserId,
-                itemId,
-                cart_session_code
+            int stockNeeded = request.Quantity * request.ConversionRate;
+
+            // Delete pending
+            bool deleteSuccess = _repo.DeletePendingTransaction(
+                session.TerminalId,
+                session.UserId,
+                request.ItemId,
+                request.UnitId,
+                request.CartSessionCode
             );
 
             if (!deleteSuccess)
-            {
                 throw new InvalidOperationException("Failed to delete item from pending transactions.");
-                return false;
-            }
 
-            if (!isPaymentMode)
+            // Update reserved stock
+            int reservedStock = _repo.GetItemReservedStock(request.Barcode);
+            int newReservedStock = Math.Max(0, reservedStock - stockNeeded);
+            _repo.UpdateReservedStock(request.Barcode, newReservedStock);
+
+            if (request.IsPaymentMode)
             {
-                // Update reserved stock hanya kalau bukan mode payment
-                int reservedStock = _itemController.GetItemReservedStock(barcode);
-                int newReservedStock = reservedStock - stockNeeded;
-                if (newReservedStock < 0) newReservedStock = 0;
-                _itemController.UpdateReservedStock(barcode, newReservedStock);
-            }
-            else
-            {
-                int reservedStock = _itemController.GetItemReservedStock(barcode);
-                int newReservedStock = reservedStock - stockNeeded;
-                if (newReservedStock < 0) newReservedStock = 0;
-                _itemController.UpdateReservedStock(barcode, newReservedStock);
                 // Mode payment: kurangi stock permanen
-                int currentStock = _itemController.GetItemStock(barcode);
-                int newStock = currentStock - stockNeeded;
-                if (newStock < 0) newStock = 0;
-                _itemController.UpdateItemStock(barcode, newStock);
+                int currentStock = _repo.GetItemStock(request.Barcode);
+                int newStock = Math.Max(0, currentStock - stockNeeded);
+                _repo.UpdateItemStock(request.Barcode, newStock);
             }
 
             // Log aktivitas
-            var session = SessionUser.GetCurrentUser();
             _activityService.LogAction(
                 userId: session.UserId.ToString(),
                 actionType: ActivityType.Cart.ToString(),
                 referenceId: null,
-                desc: $"Deleted item from cart: {itemId}",
+                desc: $"Deleted item from cart: {request.ItemId}",
                 details: new
                 {
-                    itemId = itemId,
-                    adjustmentType = reason,
-                    referenceTable = "items",
+                    request.ItemId,
+                    request.Reason,
                     terminal = session.TerminalId,
                     shiftId = session.ShiftId,
                     IpAddress = NetworkHelper.GetLocalIPAddress(),
                     UserAgent = GlobalContext.getAppVersion(),
                     loginId = session.LoginId,
-                    cart_session_code = cart_session_code,
-                    isPaymentMode
+                    request.CartSessionCode,
+                    request.IsPaymentMode
                 }
             );
 
@@ -87,64 +423,65 @@ public class CartService
         }
         catch (Exception ex)
         {
-            MessageBox.Show("Error deleting item: " + ex.Message);
-            return false;
+            throw new InvalidOperationException("Failed to delete item from cart.", ex);
+       
         }
     }
 
 
-    // =================== UPDATE DISCOUNT ===================
-    public bool UpdateCartItemDiscount(int itemId, decimal discountPercentage, string cart_session_code)
-    {
-        bool success = _itemController.UpdatePendingTransactionDiscount(
-            SessionUser.GetCurrentUser().TerminalId,
-            SessionUser.GetCurrentUser().UserId,
-            itemId,
-            cart_session_code,
-            discountPercentage
-        );
 
-        if (!success) MessageBox.Show("Failed to update discount in database.");
-        return success;
-    }
+    //// =================== UPDATE DISCOUNT ===================
+    //public bool UpdateCartItemDiscount(int itemId, decimal discountPercentage, string cart_session_code)
+    //{
+    //    bool success = _repo.UpdatePendingTransactionDiscount(
+    //        SessionUser.GetCurrentUser().TerminalId,
+    //        SessionUser.GetCurrentUser().UserId,
+    //        itemId,
+    //        cart_session_code,
+    //        discountPercentage
+    //    );
 
-    // =================== UPDATE NOTE ===================
-    public bool UpdateCartItemNote(int itemId, string note, string cart_session_code)
-    {
-        bool success = _itemController.UpdatePendingTransactionNote(
-            SessionUser.GetCurrentUser().TerminalId,
-            SessionUser.GetCurrentUser().UserId,
-            itemId,
-            cart_session_code,
-            note
-        );
+    //    if (!success) MessageBox.Show("Failed to update discount in database.");
+    //    return success;
+    //}
 
-        if (!success) MessageBox.Show("Failed to update note in database.");
-        return success;
-    }
+    //// =================== UPDATE NOTE ===================
+    //public bool UpdateCartItemNote(int itemId, string note, string cart_session_code)
+    //{
+    //    bool success = _repo.UpdatePendingTransactionNote(
+    //        SessionUser.GetCurrentUser().TerminalId,
+    //        SessionUser.GetCurrentUser().UserId,
+    //        itemId,
+    //        cart_session_code,
+    //        note
+    //    );
+
+    //    if (!success) MessageBox.Show("Failed to update note in database.");
+    //    return success;
+    //}
 
     // =================== UPDATE QUANTITY / STOCK ===================
-    public bool UpdateCartItemQuantity(int itemId, int newQty, int previousQty, string barcode, string cart_session_code)
-    {
-        if (newQty == 0)
-        {
-            DialogResult result = MessageBox.Show("Are you sure you want to remove this item?", "Confirm", MessageBoxButtons.YesNo);
-            if (result == DialogResult.Yes)
-            {
-                return DeleteCartItem(itemId, barcode, previousQty, 1, "REMOVE_ITEM_FROM_CART", cart_session_code);
-            }
-            else
-            {
-                return false; // cancel, restore value di form
-            }
-        }
-        else
-        {
-            // Bisa update pending stock jika ada method khusus di controller
-            // Misal: _itemController.UpdatePendingTransactionQuantity(...)
-            return true;
-        }
-    }
+    //public bool UpdateCartItemQuantity(int itemId, int newQty, int previousQty, string barcode, string cart_session_code)
+    //{
+    //    if (newQty == 0)
+    //    {
+    //        DialogResult result = MessageBox.Show("Are you sure you want to remove this item?", "Confirm", MessageBoxButtons.YesNo);
+    //        if (result == DialogResult.Yes)
+    //        {
+    //            return DeleteCartItem(itemId, barcode, previousQty, 1, "REMOVE_ITEM_FROM_CART", cart_session_code);
+    //        }
+    //        else
+    //        {
+    //            return false; // cancel, restore value di form
+    //        }
+    //    }
+    //    else
+    //    {
+    //        // Bisa update pending stock jika ada method khusus di controller
+    //        // Misal: _itemController.UpdatePendingTransactionQuantity(...)
+    //        return true;
+    //    }
+    //}
 
 
 
@@ -158,102 +495,17 @@ public class CartService
         public decimal Total { get; set; }
         public string ErrorMessage { get; set; }
         public decimal PricePerUnit { get; set; }
+        public string ExceptionDetail { get; set; }
+
     }
 
-    private decimal DecideMultiPrice(int itemId, int qty)
+
+    private PriceDecisionResult DecideMultiPrice(int itemId, int unitId, int qty)
     {
-       return _itemController.DecideMultiPriceFromDb(itemId, qty);
+        return _repo.DecideMultiPriceFromDb(itemId, unitId, qty);
     }
 
 
-    public UpdateStockResult UpdateCartItemStock(
 
-       UpdateCartItemRequest req)
-    {
-
-
-
-
-        MessageBox.Show("CALLED ");
-        var result = new UpdateStockResult();
-
-        int stockNeededOld = req.PreviousQuantity * req.ConversionRate;
-        int stockNeededNew = req.EnteredQuantity * req.ConversionRate;
-
-        int currentStock = _itemController.GetItemStock(req.Barcode);
-        int reservedStock = _itemController.GetItemReservedStock(req.Barcode);
-
-        int newReservedStock = req.AllowAppend ? reservedStock : reservedStock - stockNeededOld + stockNeededNew;
-
-        // jika allowAppend true.. (berarti tambahkan dari qty yg di ambil cari searchforitem)
-        // jika false berarti user ganti dari dlm car
-        //int enteredQuantity = 0;
-        if (req.AllowAppend)
-        {
-            req.EnteredQuantity = req.EnteredQuantity + req.AdditionalQuantity;
-        }
-        else
-        {
-            req.EnteredQuantity = req.AdditionalQuantity;
-        }
-        if (newReservedStock > currentStock)
-        {
-            result.Success = false;
-            result.ErrorMessage = "Stock tidak cukup. Jumlah ini melebihi sisa stock yang tersedia.";
-            return result;
-        }
-
-        var finalPrice = DecideMultiPrice(req.ItemId, req.EnteredQuantity);
-        req.PricePerUnit = finalPrice;
-
-        decimal total = req.EnteredQuantity * req.PricePerUnit;
-        bool updateSuccess = _itemController.UpdatePendingTransactionStock(
-            SessionUser.GetCurrentUser().TerminalId,
-            req.ItemId,
-            req.EnteredQuantity,
-            total,
-            req.Unit,
-            req.CartSessionCode
-        );
-
-        if (!updateSuccess)
-        {
-            result.Success = false;
-            result.ErrorMessage = "Failed to update stock in pending transactions.";
-            return result;
-        }
-
-        _itemController.UpdateReservedStock(req.Barcode, newReservedStock);
-
-         //Logging
-        _activityService.LogAction(
-            userId: SessionUser.GetCurrentUser().UserId.ToString(),
-            actionType: ActivityType.Cart.ToString(),
-            referenceId: null,
-            desc: $"Updated Item in cart: {req.ItemId}, new reserved stock: {newReservedStock}, prev reserved stock: {stockNeededOld}",
-            details: new
-            {
-                loginId = SessionUser.GetCurrentUser().LoginId,
-                itemId = req.ItemId,
-                adjustmentType = "UPDATE_ITEM_IN_CART",
-                reason = "default reason",
-                referenceTable = "items",
-                terminal = SessionUser.GetCurrentUser().TerminalId,
-                shiftId = SessionUser.GetCurrentUser().ShiftId,
-                IpAddress = NetworkHelper.GetLocalIPAddress(),
-                UserAgent = GlobalContext.getAppVersion(),
-                Discount = req.Discount,
-                Note = req.Note,
-                cart_session_code = req.CartSessionCode
-            }
-        );
-
-
-        result.Success = true;
-        result.EnteredQuantity = req.EnteredQuantity;
-        result.Total = total;
-        result.PricePerUnit = req.PricePerUnit;
-        return result;
-    }
 
 }

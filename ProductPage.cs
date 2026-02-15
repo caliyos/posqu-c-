@@ -810,12 +810,44 @@ namespace POS_qu
             }
         }
 
+        private void btnStockAdjs_Click(object sender, EventArgs e)
+        {
+            var selectedItems = new List<int>();
+
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (Convert.ToBoolean(row.Cells["chkSelect"].Value))
+                    selectedItems.Add(Convert.ToInt32(row.Cells["id"].Value));
+            }
+
+            if (selectedItems.Count == 0)
+            {
+                MessageBox.Show("Pilih item dulu untuk di update stock.");
+                return;
+            }
+
+            if (MessageBox.Show($"Apakah Akan Melakukan update stock pada  {selectedItems.Count} item terpilih?", "Konfirmasi", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            {
+                foreach (int id in selectedItems)
+                {
+                    using (StockAdjustment f = new StockAdjustment(id))
+                    {
+                        f.ShowDialog(); // owner = form utama
+                    }
+
+                }
+                LoadItems();
+            }
+        }
+
         private void btnRefresh_Click(object sender, EventArgs e)
         {
             LoadItems();
         }
 
-     
+      
+
+
 
         //private void ImportItemsFromExcel(string filePath)
         //{

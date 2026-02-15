@@ -182,89 +182,89 @@ namespace POS_qu
         // Event Handler for selecting a row and opening QuantityForm
         private void DataGridViewSearchResults_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode != Keys.Enter) return;
+            //if (e.KeyCode != Keys.Enter) return;
 
-            if (dataGridViewSearchResults.SelectedRows.Count == 0)
-            {
-                MessageBox.Show("Please select a row.");
-                return;
-            }
+            //if (dataGridViewSearchResults.SelectedRows.Count == 0)
+            //{
+            //    MessageBox.Show("Please select a row.");
+            //    return;
+            //}
 
-            var selectedRow = dataGridViewSearchResults.SelectedRows[0];
-            var dataRowView = selectedRow.DataBoundItem as DataRowView;
+            //var selectedRow = dataGridViewSearchResults.SelectedRows[0];
+            //var dataRowView = selectedRow.DataBoundItem as DataRowView;
 
-            if (dataRowView == null)
-            {
-                MessageBox.Show("No valid row selected.");
-                return;
-            }
+            //if (dataRowView == null)
+            //{
+            //    MessageBox.Show("No valid row selected.");
+            //    return;
+            //}
 
-            try
-            {
-                int productId = Convert.ToInt32(dataRowView["id"]);
-                int stock = Convert.ToInt32(dataRowView["stock"]);
-                string mainunit = dataRowView["unit"].ToString();
-                string name = dataRowView["name"].ToString();
-                List<UnitVariant> unitVariants = itemController.GetUnitVariant(productId);
+            //try
+            //{
+            //    int productId = Convert.ToInt32(dataRowView["id"]);
+            //    int stock = Convert.ToInt32(dataRowView["stock"]);
+            //    string mainunit = dataRowView["unit"].ToString();
+            //    string name = dataRowView["name"].ToString();
+            //    List<UnitVariant> unitVariants = itemController.GetUnitVariant(productId);
 
-                using (var quantityForm = new QuantityForm(stock, unitVariants, mainunit))
-                {
-                    if (unitVariants == null || unitVariants.Count == 0)
-                        quantityForm.ShowNoUnitVariantMessage();
-                    else
-                        quantityForm.ShowUnitVariants(unitVariants);
+            //    using (var quantityForm = new QuantityForm(stock, unitVariants, mainunit))
+            //    {
+            //        if (unitVariants == null || unitVariants.Count == 0)
+            //            quantityForm.ShowNoUnitVariantMessage();
+            //        else
+            //            quantityForm.ShowUnitVariants(unitVariants);
 
-                    if (quantityForm.ShowDialog() != DialogResult.OK) return;
+            //        if (quantityForm.ShowDialog() != DialogResult.OK) return;
 
-                    int quantity = quantityForm.Quantity;
-                    UnitVariant selectedUnit = quantityForm.SelectedUnitVariant;
+            //        int quantity = quantityForm.Quantity;
+            //        UnitVariant selectedUnit = quantityForm.SelectedUnitVariant;
 
-                    // Hitung total stock yang dibutuhkan
-                    int stockNeeded = quantity * (selectedUnit?.Conversion ?? 1);
+            //        // Hitung total stock yang dibutuhkan
+            //        int stockNeeded = quantity * (selectedUnit?.Conversion ?? 1);
 
-                    if (stockNeeded > stock)
-                        throw new InvalidOperationException("Insufficient stock. Cannot proceed with the transaction.");
+            //        if (stockNeeded > stock)
+            //            throw new InvalidOperationException("Insufficient stock. Cannot proceed with the transaction.");
 
-                    string barcode = dataRowView["barcode"].ToString();
-                    int reserved_stock = itemController.GetItemReservedStock(barcode);
+            //        string barcode = dataRowView["barcode"].ToString();
+            //        int reserved_stock = itemController.GetItemReservedStock(barcode);
 
-                    int new_reserved_stock = reserved_stock + stockNeeded;
-                    if (new_reserved_stock > stock)
-                        throw new InvalidOperationException("Stock sudah terpakai.");
+            //        int new_reserved_stock = reserved_stock + stockNeeded;
+            //        if (new_reserved_stock > stock)
+            //            throw new InvalidOperationException("Stock sudah terpakai.");
 
-                    itemController.UpdateReservedStock(barcode, new_reserved_stock);
+            //        itemController.UpdateReservedStock(barcode, new_reserved_stock);
 
-                    // Get harga asli dari database
-                    decimal realprice = itemController.GetItemPrice(productId);
+            //        // Get harga asli dari database
+            //        decimal realprice = itemController.GetItemPrice(productId);
 
-                    // Buat object Item untuk transaksi
-                    SelectedItem = new Item
-                    {
-                        id = productId,
-                        barcode = barcode,
-                        name = name,
-                        stock = quantity,                                      // jumlah qty yang dipilih user
-                        unit = selectedUnit?.UnitName ?? mainunit,               // unit variant atau 'pcs'
-                        conversion = selectedUnit?.Conversion ?? 1,           // default 1 kalau tidak ada unit variant
-                        sell_price = selectedUnit?.SellPrice ?? Convert.ToDecimal(dataRowView["sell_price"]),
-                        price_per_pcs = selectedUnit != null
-                            ? Math.Round(selectedUnit.SellPrice / selectedUnit.Conversion, 2)
-                            : Convert.ToDecimal(dataRowView["sell_price"]),  // base price kalau tidak ada variant
-                        price_per_pcs_asli = realprice
-                    };
+            //        // Buat object Item untuk transaksi
+            //        SelectedItem = new Item
+            //        {
+            //            id = productId,
+            //            barcode = barcode,
+            //            name = name,
+            //            stock = quantity,                                      // jumlah qty yang dipilih user
+            //            unit = selectedUnit?.UnitName ?? mainunit,               // unit variant atau 'pcs'
+            //            conversion = selectedUnit?.Conversion ?? 1,           // default 1 kalau tidak ada unit variant
+            //            sell_price = selectedUnit?.SellPrice ?? Convert.ToDecimal(dataRowView["sell_price"]),
+            //            price_per_pcs = selectedUnit != null
+            //                ? Math.Round(selectedUnit.SellPrice / selectedUnit.Conversion, 2)
+            //                : Convert.ToDecimal(dataRowView["sell_price"]),  // base price kalau tidak ada variant
+            //            price_per_pcs_asli = realprice
+            //        };
 
-                    this.DialogResult = DialogResult.OK;
-                    this.Close();
-                }
-            }
-            catch (InvalidOperationException ex)
-            {
-                MessageBox.Show(ex.Message, "Stock Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            //        this.DialogResult = DialogResult.OK;
+            //        this.Close();
+            //    }
+            //}
+            //catch (InvalidOperationException ex)
+            //{
+            //    MessageBox.Show(ex.Message, "Stock Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            //}
+            //catch (Exception ex)
+            //{
+            //    MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            //}
         }
 
     }

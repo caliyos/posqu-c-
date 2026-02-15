@@ -12,6 +12,8 @@ namespace POS_qu.Core
         private readonly List<ILogger> _loggers;
 
         // constructor terima 1..n logger
+
+
         public ActivityService(params ILogger[] loggers)
         {
             _loggers = new List<ILogger>(loggers);

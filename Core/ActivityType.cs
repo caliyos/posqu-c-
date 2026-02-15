@@ -15,6 +15,7 @@ namespace POS_qu.Core
         Transaction,
         System,
         Print,
-        Other
+        Other,
+        StockAdjusment
     }
 }

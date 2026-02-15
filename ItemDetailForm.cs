@@ -61,6 +61,7 @@ namespace POS_qu
 
             // DataGridView harga bertingkat
             dgvMultiPrice.DataSource = new BindingList<ItemPrice>();
+     
             dgvMultiPrice.Hide();
             dgvMultiPrice.ReadOnly = true;
         }
@@ -134,28 +135,7 @@ namespace POS_qu
             chk_IsPackage.Checked = _item.IsPackage;
             chk_IsProduced.Checked = _item.IsProduced;
 
-            // Ambil harga bertingkat
-            DataTable dt = itemController.GetItemPrices(_item.id);
-
-            // Convert DataTable ke BindingList<ItemPrice>
-            var pricesList = new BindingList<ItemPrice>();
-            if (dt != null && dt.Rows.Count > 0)
-            {
-                foreach (DataRow row in dt.Rows)
-                {
-                    pricesList.Add(new ItemPrice
-                    {
-                        Id = Convert.ToInt32(row["id"]),
-                        ItemId = Convert.ToInt32(row["item_id"]),
-                        MinQty = Convert.ToInt32(row["min_qty"]),
-                        Price = Convert.ToDecimal(row["price"])
-                    });
-                }
-            }
-
-            dgvMultiPrice.DataSource = pricesList;
-
-            txtDiscountFormula.Text = _item.discount_formula;
+            dgvMultiPrice.DataSource = itemController.LoadMultiPrice(_item.id);
         }
 
 

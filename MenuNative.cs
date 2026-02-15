@@ -37,7 +37,7 @@ namespace POSqu_menu
                 {
                     AutoSize = false, // supaya bisa full width
                     ForeColor = Color.White,
-                    BackColor = Color.FromArgb(30, 30, 30),
+                    BackColor = Color.IndianRed,
                     Font = new Font("Segoe UI", 12, FontStyle.Bold),
                     Height = 30, // tinggi label
                     Dock = DockStyle.Bottom,
@@ -206,7 +206,7 @@ namespace POSqu_menu
         private void casherToolStripMenuItem_Click(object sender, EventArgs e)
         {
 
-            Casher_POS casherForm = new Casher_POS();
+            CasherNew casherForm = new CasherNew();
             this.Hide();  // Sembunyikan MenuNative sementara
 
             casherForm.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative

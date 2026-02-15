@@ -26,6 +26,7 @@
             pelangganCustomerToolStripMenuItem = new ToolStripMenuItem();
             supplierToolStripMenuItem = new ToolStripMenuItem();
             kategoriBarangToolStripMenuItem = new ToolStripMenuItem();
+            unitSatuanToolStripMenuItem = new ToolStripMenuItem();
             productToolStripMenuItem = new ToolStripMenuItem();
             manajemenProdukToolStripMenuItem = new ToolStripMenuItem();
             casherToolStripMenuItem = new ToolStripMenuItem();
@@ -50,14 +51,10 @@
             licensesToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
             panel2 = new Panel();
-            logoPictureBox = new PictureBox();
             copyrightLabel = new Label();
-            unitSatuanToolStripMenuItem = new ToolStripMenuItem();
             panel1.SuspendLayout();
             panelWelcome.SuspendLayout();
             menuStrip1.SuspendLayout();
-            panel2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)logoPictureBox).BeginInit();
             SuspendLayout();
             // 
             // panel1
@@ -68,7 +65,7 @@
             panel1.ForeColor = SystemColors.ControlDark;
             panel1.Location = new Point(0, 33);
             panel1.Name = "panel1";
-            panel1.Size = new Size(1560, 910);
+            panel1.Size = new Size(1560, 1337);
             panel1.TabIndex = 0;
             // 
             // panelWelcome
@@ -142,6 +139,13 @@
             kategoriBarangToolStripMenuItem.Size = new Size(280, 34);
             kategoriBarangToolStripMenuItem.Text = "Kategori Barang";
             kategoriBarangToolStripMenuItem.Click += kategoriBarangToolStripMenuItem_Click;
+            // 
+            // unitSatuanToolStripMenuItem
+            // 
+            unitSatuanToolStripMenuItem.Name = "unitSatuanToolStripMenuItem";
+            unitSatuanToolStripMenuItem.Size = new Size(280, 34);
+            unitSatuanToolStripMenuItem.Text = "Unit/Satuan";
+            unitSatuanToolStripMenuItem.Click += unitSatuanToolStripMenuItem_Click;
             // 
             // productToolStripMenuItem
             // 
@@ -289,7 +293,7 @@
             // licensesToolStripMenuItem
             // 
             licensesToolStripMenuItem.Name = "licensesToolStripMenuItem";
-            licensesToolStripMenuItem.Size = new Size(264, 34);
+            licensesToolStripMenuItem.Size = new Size(270, 34);
             licensesToolStripMenuItem.Text = "Licenses/Activation";
             // 
             // aboutToolStripMenuItem
@@ -301,20 +305,11 @@
             // panel2
             // 
             panel2.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            panel2.BackColor = SystemColors.Control;
-            panel2.Controls.Add(logoPictureBox);
+            panel2.BackColor = Color.Gainsboro;
             panel2.Location = new Point(1560, 33);
             panel2.Name = "panel2";
             panel2.Size = new Size(322, 910);
             panel2.TabIndex = 0;
-            // 
-            // logoPictureBox
-            // 
-            logoPictureBox.Location = new Point(200, 100);
-            logoPictureBox.Name = "logoPictureBox";
-            logoPictureBox.Size = new Size(100, 50);
-            logoPictureBox.TabIndex = 0;
-            logoPictureBox.TabStop = false;
             // 
             // copyrightLabel
             // 
@@ -323,19 +318,12 @@
             copyrightLabel.Size = new Size(100, 23);
             copyrightLabel.TabIndex = 3;
             // 
-            // unitSatuanToolStripMenuItem
-            // 
-            unitSatuanToolStripMenuItem.Name = "unitSatuanToolStripMenuItem";
-            unitSatuanToolStripMenuItem.Size = new Size(280, 34);
-            unitSatuanToolStripMenuItem.Text = "Unit/Satuan";
-            unitSatuanToolStripMenuItem.Click += unitSatuanToolStripMenuItem_Click;
-            // 
             // MenuNative
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.ControlLight;
-            ClientSize = new Size(1882, 943);
+            ClientSize = new Size(1882, 1370);
             Controls.Add(panel2);
             Controls.Add(panel1);
             Controls.Add(menuStrip1);
@@ -348,8 +336,6 @@
             panelWelcome.PerformLayout();
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
-            panel2.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)logoPictureBox).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -370,7 +356,6 @@
         private ToolStripMenuItem databaseToolStripMenuItem;
         private ToolStripMenuItem aboutToolStripMenuItem;
         private Label label1;
-        private PictureBox logoPictureBox;
         private Label copyrightLabel;
         private Panel panelWelcome;
         private Label label2;

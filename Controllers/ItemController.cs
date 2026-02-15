@@ -10,6 +10,9 @@
     using System.Transactions;
     using Microsoft.VisualBasic.Devices;
     using POS_qu.Helpers;
+using System.Data.Common;
+using POS_qu.DTO;
+using System.ComponentModel;
 
     namespace POS_qu.Controllers
     {
@@ -25,64 +28,7 @@
             /// 
 
 
-            public List<Item> GetItemsNew(string searchTerm = null)
-            {
-                List<Item> items = new List<Item>();
-
-                string sql = @"
-                SELECT
-                    items.id,
-                    items.name,
-                    items.barcode,
-                    items.buy_price,
-                    items.sell_price,
-                    items.stock,
-                    items.reserved_stock,
-                    units.name AS unit
-                FROM items
-                LEFT JOIN units ON items.unit = units.id
-                WHERE items.deleted_at IS NULL";
-
-                if (!string.IsNullOrEmpty(searchTerm))
-                {
-                    sql += " AND items.name ILIKE @searchTerm";
-                }
-
-                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
-                {
-                    vCon.Open();
-                    using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
-                    {
-                        if (!string.IsNullOrEmpty(searchTerm))
-                        {
-                            vCmd.Parameters.AddWithValue("@searchTerm", "%" + searchTerm + "%");
-                        }
-
-                        using (NpgsqlDataReader dr = vCmd.ExecuteReader())
-                        {
-                            while (dr.Read())
-                            {
-                                var item = new Item
-                                {
-                                    id = dr.GetInt32(dr.GetOrdinal("id")),
-                                    name = dr.GetString(dr.GetOrdinal("name")),
-                                    barcode = dr.GetString(dr.GetOrdinal("barcode")),
-                                    buy_price = dr.GetDecimal(dr.GetOrdinal("buy_price")),
-                                    sell_price = dr.GetDecimal(dr.GetOrdinal("sell_price")),
-                                    stock = dr.GetInt32(dr.GetOrdinal("stock")),
-                                    reserved_stock = dr.GetInt32(dr.GetOrdinal("reserved_stock")),
-                                    unit = dr.IsDBNull(dr.GetOrdinal("unit")) ? null : dr.GetString(dr.GetOrdinal("unit"))
-                                };
-
-                                items.Add(item);
-                            }
-                        }
-                    }
-                }
-
-                return items;
-            }
-
+           
 
         /// <summary>
         /// ////////////////////////////////////////////// END NEW /////////////////////////////////////
@@ -559,38 +505,6 @@
 
       
 
-        public DataTable GetItemPrices(int itemId)
-        {
-            DataTable dt = new DataTable();
-
-            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
-            {
-                vCon.Open();
-
-                string sql = @"
-            SELECT 
-                id,
-                item_id,
-                min_qty,
-                price
-            FROM item_prices
-            WHERE item_id = @item_id
-            ORDER BY min_qty ASC
-        ";
-
-                using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
-                {
-                    vCmd.Parameters.AddWithValue("@item_id", itemId);
-
-                    using (NpgsqlDataReader dr = vCmd.ExecuteReader())
-                    {
-                        dt.Load(dr);
-                    }
-                }
-            }
-
-            return dt;
-        }
 
 
 
@@ -849,54 +763,9 @@
         }
 
 
-        public int GetItemStock(string barcode)
-        {
-            try
-            {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
-                {
-                    vCon.Open();
-                    string sql = "SELECT stock FROM items WHERE barcode = @barcode";
-                    using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
-                    {
-                        vCmd.Parameters.AddWithValue("@barcode", barcode);
+     
 
-                        var result = vCmd.ExecuteScalar();
-                        return result != null ? Convert.ToInt32(result) : 0; // Return the current stock, or 0 if not found
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error retrieving stock: {ex.Message}");
-                return 0;
-            }
-        }
-
-        public decimal GetItemPrice(int id)
-        {
-            try
-            {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
-                {
-                    vCon.Open();
-                    string sql = "SELECT sell_price FROM items WHERE id = @id";
-                    using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
-                    {
-                        vCmd.Parameters.AddWithValue("@id", id);
-
-                        var result = vCmd.ExecuteScalar();
-                        return result != null ? Convert.ToInt32(result) : 0; // Return the current stock, or 0 if not found
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error retrieving stock: {ex.Message}");
-                return 0;
-            }
-        }
-
+      
         public string GetItemUnit(int id)
         {
             try
@@ -924,54 +793,10 @@ WHERE items.id = @id";
             }
         }
 
-        public int GetItemReservedStock(string barcode)
-        {
-            try
-            {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
-                {
-                    vCon.Open();
-                    string sql = "SELECT reserved_stock FROM items WHERE barcode = @barcode";
-                    using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
-                    {
-                        vCmd.Parameters.AddWithValue("@barcode", barcode);
-
-                        var result = vCmd.ExecuteScalar();
-                        return result != null ? Convert.ToInt32(result) : 0; // Return the current stock, or 0 if not found
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error retrieving stock: {ex.Message}");
-                return 0;
-            }
-        }
+      
 
 
-        public int GetItemStock(int id)
-        {
-            try
-            {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
-                {
-                    vCon.Open();
-                    string sql = "SELECT stock FROM items WHERE id = @id";
-                    using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
-                    {
-                        vCmd.Parameters.AddWithValue("@id", id);
-
-                        var result = vCmd.ExecuteScalar();
-                        return result != null ? Convert.ToInt32(result) : 0; // Return the current stock, or 0 if not found
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error retrieving stock: {ex.Message}");
-                return 0;
-            }
-        }
+       
         public int GetItemReservedStock(int id)
         {
             try
@@ -998,30 +823,7 @@ WHERE items.id = @id";
         }
 
 
-        public bool UpdateItemStock(string barcode, int newStock)
-        {
-            try
-            {
-                using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
-                {
-                    vCon.Open();
-                    string sql = "UPDATE items SET stock = @stock WHERE barcode = @barcode";
-                    using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
-                    {
-                        vCmd.Parameters.AddWithValue("@stock", newStock);
-                        vCmd.Parameters.AddWithValue("@barcode", barcode);
-                        int rowsAffected = vCmd.ExecuteNonQuery();
-                        return rowsAffected > 0;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error: {ex.Message}");
-                return false;
-            }
-        }
-
+    
         public bool UpdateItemStockAndReservedStock(int id, int newStock, int rStock)
         {
             try
@@ -1350,21 +1152,7 @@ VALUES (
             }
         }
 
-        public void UpdateReservedStock(string barcode, int newReservedStock)
-        {
-            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
-            {
-                vCon.Open();
-                string sql = "UPDATE items SET reserved_stock = @reservedStock WHERE barcode = @barcode";
-
-                using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
-                {
-                    vCmd.Parameters.AddWithValue("@reservedStock", newReservedStock);
-                    vCmd.Parameters.AddWithValue("@barcode", barcode);
-                    vCmd.ExecuteNonQuery();
-                }
-            }
-        }
+   
         public bool AddPendingTransaction(
       int terminalId,
       int cashierId,
@@ -1438,62 +1226,37 @@ RETURNING pt_id;
     }
 }
 
-public bool UpdatePendingTransactionDiscount(int terminalId, int itemId, decimal discountPercentage, decimal discountTotal)
-{
-    using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
-    {
-        vCon.Open();
-        string query = "UPDATE pending_transactions SET discount_percentage = @discountPercentage, discount_total = @discountTotal, updated_at = CURRENT_TIMESTAMP WHERE terminal_id = @terminalId AND item_id = @itemId";
 
-        using (NpgsqlCommand cmd = new NpgsqlCommand(query, vCon))
+
+      
+
+        public bool PendingItemExists(
+    int terminalId,
+    int itemId,
+    string unit,
+    string cartSessionCode)
         {
-            cmd.Parameters.AddWithValue("@discountPercentage", discountPercentage);
-            cmd.Parameters.AddWithValue("@discountTotal", discountTotal);
-            cmd.Parameters.AddWithValue("@terminalId", terminalId);
-            cmd.Parameters.AddWithValue("@itemId", itemId);
-            return cmd.ExecuteNonQuery() > 0;
-        }
-    }
-}
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
 
-
-
-
-        public bool UpdatePendingTransactionStock(
-          int terminalId,
-          int itemId,
-          decimal newQuantity,
-          decimal newTotal,
-          string unit,
-          string cartSessionCode
-      )
-        {
-            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
-            {
-                vCon.Open();
-                string query = @"
-UPDATE pending_transactions
-SET quantity = @newQuantity,
-    total = @newTotal,
-    updated_at = CURRENT_TIMESTAMP
+            string sql = @"
+SELECT 1 FROM pending_transactions
 WHERE terminal_id = @terminalId
   AND item_id = @itemId
   AND unit = @unit
-  AND cart_session_code = @cartSessionCode"; // 🔹 filter by cart session
+  AND cart_session_code = @cartSessionCode
+LIMIT 1";
 
-                using (NpgsqlCommand cmd = new NpgsqlCommand(query, vCon))
-                {
-                    cmd.Parameters.AddWithValue("@newQuantity", newQuantity);
-                    cmd.Parameters.AddWithValue("@newTotal", newTotal);
-                    cmd.Parameters.AddWithValue("@terminalId", terminalId);
-                    cmd.Parameters.AddWithValue("@itemId", itemId);
-                    cmd.Parameters.AddWithValue("@unit", unit);
-                    cmd.Parameters.AddWithValue("@cartSessionCode", cartSessionCode);
+            using var cmd = new NpgsqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@terminalId", terminalId);
+            cmd.Parameters.AddWithValue("@itemId", itemId);
+            cmd.Parameters.AddWithValue("@unit", unit);
+            cmd.Parameters.AddWithValue("@cartSessionCode", cartSessionCode);
 
-                    return cmd.ExecuteNonQuery() > 0;
-                }
-            }
+            return cmd.ExecuteScalar() != null;
         }
+
+
 
 
         //public bool DeletePendingTransaction(int terminalId, int itemId, string cart_session_code)
@@ -1519,31 +1282,7 @@ WHERE terminal_id = @terminalId
         //    }
         //}
 
-        public bool DeletePendingTransaction(int terminalId, int userId, int itemId, string cart_session_code)
-        {
-            using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
-            {
-                vCon.Open();
-
-                string query = @"
-            DELETE FROM pending_transactions 
-            WHERE terminal_id = @terminalId 
-              AND item_id = @itemId
-              AND cashier_id = @userId
-              AND cart_session_code = @cart_session_code";
-
-                using (NpgsqlCommand cmd = new NpgsqlCommand(query, vCon))
-                {
-                    cmd.Parameters.AddWithValue("@terminalId", terminalId);
-                    cmd.Parameters.AddWithValue("@userId", userId);
-                    cmd.Parameters.AddWithValue("@itemId", itemId);
-                    cmd.Parameters.AddWithValue("@cart_session_code", cart_session_code);
-
-                    return cmd.ExecuteNonQuery() > 0;
-                }
-            }
-        }
-
+      
 
         public bool UpdatePendingTransactionNote(int terminalId, int userId,int itemId, string cart_session_code, string note)
         {
@@ -1605,195 +1344,11 @@ WHERE terminal_id = @terminalId
 
 
         //get item by barcode
-        public Item GetItemByBarcode(string barcode)
-        {
-            using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
-            {
-                con.Open();
-
-                string itemSql = @"
-            SELECT items.id, items.name, items.barcode, items.sell_price, items.stock,
-                   units.name as unitname
-            FROM items
-            LEFT JOIN units ON items.unit = units.id
-            WHERE items.barcode = @barcode AND items.deleted_at IS NULL
-            LIMIT 1";
-
-                using (var cmd = new NpgsqlCommand(itemSql, con))
-                {
-                    cmd.Parameters.AddWithValue("@barcode", barcode);
-
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        if (reader.Read())
-                        {
-                            int productId = reader.GetInt32(reader.GetOrdinal("id"));
-                            string name = reader.GetString(reader.GetOrdinal("name"));
-                            string barcodeVal = reader.GetString(reader.GetOrdinal("barcode"));
-                            double stock = reader.GetDouble(reader.GetOrdinal("stock"));
-                            string unitName = reader.GetString(reader.GetOrdinal("unitname"));
-                            decimal sellPrice = reader.GetDecimal(reader.GetOrdinal("sell_price"));
-                            int conversion = 1;
-
-                            int reservedStock = GetItemReservedStock(barcodeVal);
-                            int quantity = 1;
-                            int stockNeeded = quantity * conversion;
-
-                            if (stockNeeded > stock)
-                                throw new InvalidOperationException("Stok tidak cukup.");
-
-                            int newReservedStock = reservedStock + stockNeeded;
-                            if (newReservedStock > stock)
-                                throw new InvalidOperationException("Stok sudah penuh oleh reserved stock.");
-
-                            // Update reserved stock
-                            UpdateReservedStock(barcodeVal, newReservedStock);
-
-                            // Hitung harga asli per pcs
-                            decimal realPrice = GetItemPrice(productId);
-
-                            return new Item
-                            {
-                                id = productId,
-                                barcode = barcodeVal,
-                                name = name,
-                                stock = quantity,
-                                unit = unitName,
-                                conversion = conversion,
-                                sell_price = sellPrice,
-                                price_per_pcs = Math.Round(sellPrice / conversion, 2),
-                                price_per_pcs_asli = realPrice
-                            };
-                        }
-                    }
-                }
-            }
-
-            return null;
-        }
+       
 
 
-        public decimal DecideMultiPriceFromDb(int itemId, int qty)
-        {
-            using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
-            {
-                con.Open();
+       
 
-                string sql = @"
-            SELECT price
-            FROM item_prices
-            WHERE item_id = @itemId
-            AND min_qty <= @qty
-            ORDER BY min_qty DESC
-            LIMIT 1
-        ";
-
-                using (var cmd = new NpgsqlCommand(sql, con))
-                {
-                    cmd.Parameters.AddWithValue("@itemId", itemId);
-                    cmd.Parameters.AddWithValue("@qty", qty);
-
-                    var result = cmd.ExecuteScalar();
-
-                    if (result != null)
-                        return Convert.ToDecimal(result);
-                }
-            }
-
-            // fallback ke harga normal jika tidak ada multi harga
-            return GetItemPrice(itemId);
-        }
-
-
-        //// RANDOM BARCODE
-        public Item GetRandomItemByBarcode()
-        {
-            List<string> barcodes = new List<string>();
-
-            using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
-            {
-                con.Open();
-
-                // Step 1: Get all barcodes
-                string barcodeSql = "SELECT barcode FROM items WHERE deleted_at IS NULL";
-                using (var cmd = new NpgsqlCommand(barcodeSql, con))
-                using (var reader = cmd.ExecuteReader())
-                {
-                    while (reader.Read())
-                    {
-                        barcodes.Add(reader.GetString(0));
-                    }
-                }
-
-                // Step 2: Check if we got any
-                if (barcodes.Count == 0)
-                    return null;
-
-                // Step 3: Pick a random barcode
-                var random = new Random();
-                int index = random.Next(barcodes.Count);
-                string randomBarcode = barcodes[index];
-
-                // Step 4: Get item by barcode
-
-
-                string itemSql = "SELECT items.id,items.name,items.barcode,items.buy_price, items.sell_price,items.stock, units.name as unitname FROM items LEFT JOIN units units ON items.unit = units.id WHERE barcode = @barcode";
-                using (var itemCmd = new NpgsqlCommand(itemSql, con))
-                {
-                    itemCmd.Parameters.AddWithValue("@barcode", randomBarcode);
-
-                    using (var itemReader = itemCmd.ExecuteReader())
-                    {
-                        if (itemReader.Read())
-                        {
-                            var buyPrice = itemReader.GetDecimal(itemReader.GetOrdinal("buy_price"));
-                            var sellPrice = itemReader.GetDecimal(itemReader.GetOrdinal("sell_price"));
-                            int productId = itemReader.GetInt32(itemReader.GetOrdinal("id"));
-                            string name = itemReader.GetString(itemReader.GetOrdinal("name"));
-                            string barcode = itemReader.GetString(itemReader.GetOrdinal("barcode"));
-                            double stock = itemReader.GetDouble(itemReader.GetOrdinal("stock"));
-                            string unitName = itemReader.GetString(itemReader.GetOrdinal("unitname"));
-                            int conversion = 1;
-
-                            int reservedStock = GetItemReservedStock(barcode);
-                            int quantity = 1;  // assume 1 by default
-                            int stockNeeded = quantity * conversion;
-
-
-                            if (stockNeeded > stock)
-                                throw new InvalidOperationException("Insufficient stock for random item.");
-
-                            int newReservedStock = reservedStock + stockNeeded;
-                            if (newReservedStock > stock)
-                                throw new InvalidOperationException("Stock already reserved for random item.");
-
-                            // Step 5: Update reserved stock
-                            UpdateReservedStock(barcode, newReservedStock);
-
-                            // Step 6: Get real price
-                            decimal realprice = GetItemPrice(productId);
-
-                            // Step 7: Build item object
-                            return new Item
-                            {
-                                id = productId,
-                                barcode = barcode,
-                                name = name,
-                                stock = quantity,
-                                unit = unitName,
-                                conversion = conversion,
-                                sell_price = sellPrice,
-                                buy_price = buyPrice,
-                                price_per_pcs = Math.Round(sellPrice / conversion, 2),
-                                price_per_pcs_asli = realprice
-                            };
-                        }
-                    }
-                }
-            }
-
-            return null; // fallback if not found
-        }
 
 
         public bool UpdateOrderPayment(int orderId, int newStatus, string paymentMethod)
@@ -2145,6 +1700,112 @@ WHERE terminal_id = @terminal_id AND cashier_id = @cashier_id AND cart_session_c
                 }
             }
         }
+
+
+        public void AdjustStock(int itemId, int stokSistem, int selisih, string metode,
+                        int? stokFisik, string alasan, string catatan, int userId, int loginId)
+        {
+            using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                con.Open();
+                using (var tran = con.BeginTransaction())
+                {
+                    try
+                    {
+                        int stokAkhir = stokSistem + selisih;
+
+                        // 1️⃣ Update stok item
+                        var cmdUpdate = new NpgsqlCommand(
+                            "UPDATE items SET stock = @stokAkhir, updated_at = NOW() WHERE id = @id",
+                            con, tran);
+                        cmdUpdate.Parameters.AddWithValue("@stokAkhir", stokAkhir);
+                        cmdUpdate.Parameters.AddWithValue("@id", itemId);
+                        cmdUpdate.ExecuteNonQuery();
+
+                        // 2️⃣ Insert log adjustment
+                        var cmdInsert = new NpgsqlCommand(@"
+                    INSERT INTO stock_adjustments_logs
+                    (product_id, stok_sistem, metode_adjustment, stok_fisik, selisih, alasan, catatan, adjusted_by, login_id)
+                    VALUES
+                    (@product_id, @stok_sistem, @metode, @stok_fisik, @selisih, @alasan, @catatan, @userId, @loginId)",
+                            con, tran);
+
+                        cmdInsert.Parameters.AddWithValue("@product_id", itemId);
+                        cmdInsert.Parameters.AddWithValue("@stok_sistem", stokSistem);
+                        cmdInsert.Parameters.AddWithValue("@metode", metode);
+                        cmdInsert.Parameters.AddWithValue("@stok_fisik", (object?)stokFisik ?? DBNull.Value);
+                        cmdInsert.Parameters.AddWithValue("@selisih", selisih);
+                        cmdInsert.Parameters.AddWithValue("@alasan", alasan);
+                        cmdInsert.Parameters.AddWithValue("@catatan", catatan ?? "");
+                        cmdInsert.Parameters.AddWithValue("@userId", userId);
+                        cmdInsert.Parameters.AddWithValue("@loginId", loginId);
+
+                        cmdInsert.ExecuteNonQuery();
+
+                        tran.Commit();
+                    }
+                    catch
+                    {
+                        tran.Rollback();
+                        throw;
+                    }
+                }
+            }
+        }
+
+        public BindingList<ItemPrice> LoadMultiPrice(int itemId)
+        {
+            var prices = new BindingList<ItemPrice>();
+
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                conn.Open();
+                using (var cmd = new NpgsqlCommand("SELECT min_qty, price FROM item_prices WHERE item_id = @id ORDER BY min_qty", conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", itemId);
+
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            prices.Add(new ItemPrice
+                            {
+                                MinQty = reader.GetInt32(0),
+                                Price = reader.GetDecimal(1)
+                            });
+                        }
+                    }
+                }
+            }
+
+            return prices;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

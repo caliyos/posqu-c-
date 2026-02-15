@@ -8,6 +8,7 @@ namespace POS_qu.Models
 {
     public class UnitVariant
     {
+        public int Id { get; set; }
         public int UnitId { get; set; }
         public int ItemId { get; set; }
         public string UnitName { get; set; } = "";
@@ -18,12 +19,22 @@ namespace POS_qu.Models
         public decimal MinQty { get; set; }
         public decimal actualSellPrice { get; set; }
 
+       public bool IsBaseUnit { get; set; }
+        
+
+        public string BarcodeSuffix { get; set; }
+
         //public override string ToString()
         //{
         //    return $"{UnitName} (x{Conversion}) - Rp {SellPrice:N0}";
 
-        //}
+            //}
         public string DisplayText => $"{UnitName} (x{Conversion}) - Rp {SellPrice:N0}";
+        public override string ToString()
+        {
+            return $"{UnitName} - {SellPrice:N0}";
+        }
+
     }
 
 }

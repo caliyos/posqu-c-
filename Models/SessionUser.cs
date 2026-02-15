@@ -12,7 +12,7 @@ namespace POS_qu.Models
 
         public int UserId { get; private set; }
 
-        public long LoginId { get; private set; }
+        public int LoginId { get; private set; }
         public string Username { get; private set; }
         public int RoleId { get; private set; }
         public string RoleName { get; private set; }
