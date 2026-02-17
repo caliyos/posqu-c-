@@ -73,6 +73,8 @@
             button2 = new Button();
             button3 = new Button();
             panel7 = new Panel();
+            button4 = new Button();
+            button5 = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridViewCart4).BeginInit();
             panel1.SuspendLayout();
             panel2.SuspendLayout();
@@ -139,7 +141,7 @@
             // 
             label3.AutoSize = true;
             label3.Font = new Font("Microsoft Sans Serif", 10F);
-            label3.Location = new Point(1368, 176);
+            label3.Location = new Point(1392, 176);
             label3.Name = "label3";
             label3.Size = new Size(144, 25);
             label3.TabIndex = 5;
@@ -579,6 +581,7 @@
             button2.TabIndex = 2;
             button2.Text = "Draft";
             button2.UseVisualStyleBackColor = false;
+            button2.Click += button2_Click;
             // 
             // button3
             // 
@@ -591,6 +594,7 @@
             button3.TabIndex = 2;
             button3.Text = "Bon";
             button3.UseVisualStyleBackColor = false;
+            button3.Click += button3_Click;
             // 
             // panel7
             // 
@@ -603,12 +607,34 @@
             panel7.Size = new Size(642, 81);
             panel7.TabIndex = 10;
             // 
+            // button4
+            // 
+            button4.Location = new Point(1136, 168);
+            button4.Name = "button4";
+            button4.Size = new Size(112, 34);
+            button4.TabIndex = 11;
+            button4.Text = "Lihat Draft";
+            button4.UseVisualStyleBackColor = true;
+            button4.Click += button4_Click;
+            // 
+            // button5
+            // 
+            button5.Location = new Point(1256, 168);
+            button5.Name = "button5";
+            button5.Size = new Size(112, 34);
+            button5.TabIndex = 11;
+            button5.Text = "Lihat Bon";
+            button5.UseVisualStyleBackColor = true;
+            button5.Click += button5_Click;
+            // 
             // CasherNew
             // 
             AutoScaleDimensions = new SizeF(11F, 23F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.ControlLightLight;
             ClientSize = new Size(2244, 1260);
+            Controls.Add(button5);
+            Controls.Add(button4);
             Controls.Add(panel7);
             Controls.Add(button3);
             Controls.Add(button2);
@@ -689,5 +715,7 @@
         private Label label23;
         private Label Kembalian;
         private Panel panel7;
+        private Button button4;
+        private Button button5;
     }
 }

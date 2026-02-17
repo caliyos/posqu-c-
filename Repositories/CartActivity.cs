@@ -895,8 +895,256 @@ AND uv.is_active = TRUE";
 
 
 
+        /////////////////////////////////////////////// ORDER ////////////////////////////////////
+        ///// Ambil total dan diskon
+        public (decimal GrandTotal, decimal TotalDiscount, int TotalItems) GetPendingTotals(string sessionCode, int terminalId, int cashierId)
+        {
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+            string sql = @"
+SELECT 
+    COALESCE(SUM(total),0) AS grand_total,
+    COALESCE(SUM(discount_total),0) AS total_discount,
+    COUNT(*) AS total_items
+FROM pending_transactions
+WHERE cart_session_code = @sessionCode AND terminal_id = @terminalId AND cashier_id = @cashierId";
+
+            using var cmd = new NpgsqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@sessionCode", sessionCode);
+            cmd.Parameters.AddWithValue("@terminalId", terminalId);
+            cmd.Parameters.AddWithValue("@cashierId", cashierId);
+
+            using var reader = cmd.ExecuteReader();
+            if (reader.Read())
+            {
+                return (
+                    GrandTotal: Convert.ToDecimal(reader["grand_total"]),
+                    TotalDiscount: Convert.ToDecimal(reader["total_discount"]),
+                    TotalItems: Convert.ToInt32(reader["total_items"])
+                );
+            }
+            return (0, 0, 0);
+        }
+
+        // Insert pending_orders
+        public int InsertPendingOrder(int terminalId, int cashierId, string customerName, string note, decimal total, decimal discount, string cartSessionCode, NpgsqlConnection conn, NpgsqlTransaction tran)
+        {
+            string sql = @"
+INSERT INTO pending_orders(
+    terminal_id, cashier_id, customer_name, note, total, global_discount, status, po_cart_session_code
+) VALUES (
+    @terminalId, @cashierId, @customerName, @note, @total, @discount, 'draft', @cartCode
+) RETURNING po_id";
+
+            using var cmd = new NpgsqlCommand(sql, conn, tran);
+            cmd.Parameters.AddWithValue("@terminalId", terminalId);
+            cmd.Parameters.AddWithValue("@cashierId", cashierId);
+            cmd.Parameters.AddWithValue("@customerName", customerName);
+            cmd.Parameters.AddWithValue("@note", note);
+            cmd.Parameters.AddWithValue("@total", total);
+            cmd.Parameters.AddWithValue("@discount", discount);
+            cmd.Parameters.AddWithValue("@cartCode", cartSessionCode);
+
+            return Convert.ToInt32(cmd.ExecuteScalar());
+        }
+
+        // Link pending_transactions ke pending_orders
+        public void LinkPendingTransactionsToOrder(int poId, string cartSessionCode, int terminalId, int cashierId, NpgsqlConnection conn, NpgsqlTransaction tran)
+        {
+            string sql = @"
+UPDATE pending_transactions
+SET po_id = @poId, updated_at = CURRENT_TIMESTAMP
+WHERE cart_session_code = @cartCode AND terminal_id = @terminalId AND cashier_id = @cashierId";
+
+            using var cmd = new NpgsqlCommand(sql, conn, tran);
+            cmd.Parameters.AddWithValue("@poId", poId);
+            cmd.Parameters.AddWithValue("@cartCode", cartSessionCode);
+            cmd.Parameters.AddWithValue("@terminalId", terminalId);
+            cmd.Parameters.AddWithValue("@cashierId", cashierId);
+
+            cmd.ExecuteNonQuery();
+        }
+
+        public List<PendingOrderDto> GetDraftOrders(int terminalId, int cashierId)
+        {
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+
+            string sql = @"
+SELECT 
+    po_id,
+    po_cart_session_code,
+    customer_name,   -- tambahin
+    note,            -- tambahin
+    total,
+    global_discount,
+    created_at
+FROM pending_orders
+WHERE terminal_id = @terminalId
+  AND cashier_id = @cashierId
+  AND status = 'draft'
+ORDER BY created_at DESC";
+
+            using var cmd = new NpgsqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@terminalId", terminalId);
+            cmd.Parameters.AddWithValue("@cashierId", cashierId);
+
+            var list = new List<PendingOrderDto>();
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                list.Add(new PendingOrderDto
+                {
+                    PoId = reader.GetInt32(0),
+                    CartSessionCode = reader.GetString(1),
+
+                    CustomerName = reader.IsDBNull(2)
+                        ? null
+                        : reader.GetString(2),
+
+                    Note = reader.IsDBNull(3)
+                        ? null
+                        : reader.GetString(3),
+
+                    Total = reader.GetDecimal(4),
+                    Discount = reader.GetDecimal(5),
+                    CreatedAt = reader.GetDateTime(6)
+                });
+            }
+
+            return list;
+        }
+
+        public string GetCartSessionCodeByPoId(int poId)
+        {
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+
+            string sql = @"
+SELECT po_cart_session_code
+FROM pending_orders
+WHERE po_id = @poId
+LIMIT 1";
+
+            using var cmd = new NpgsqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@poId", poId);
+
+            var result = cmd.ExecuteScalar();
+            return result?.ToString();
+        }
 
 
+
+
+
+
+        ///////////////////////////////////////////////END ORDER //////////////////////////////////
+
+
+
+        ////////////////////////////////// INSTALLMENTS////////////////////////////////
+
+        public bool PayInstallmentDb(
+            string cartSessionCode,
+            decimal amount,
+            string customerName,
+            string note,
+            int userId
+        )
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            using var tran = conn.BeginTransaction();
+
+            try
+            {
+                int tsId;
+                decimal dueAmount;
+
+                // 1️⃣ ambil transaksi berdasarkan cart_session_code + lock
+                using (var cmd = new NpgsqlCommand(@"
+            SELECT ts_id, ts_due_amount
+            FROM transactions
+            WHERE cart_session_code = @code
+            FOR UPDATE
+        ", conn, tran))
+                {
+                    cmd.Parameters.AddWithValue("@code", cartSessionCode);
+
+                    using var reader = cmd.ExecuteReader();
+
+                    if (!reader.Read())
+                        throw new Exception("Transaksi tidak ditemukan.");
+
+                    tsId = reader.GetInt32(0);
+                    dueAmount = reader.GetDecimal(1);
+                }
+
+                if (dueAmount <= 0)
+                    throw new InvalidOperationException("Transaksi sudah lunas.");
+
+                if (amount > dueAmount)
+                    throw new InvalidOperationException("Pembayaran melebihi sisa tagihan.");
+
+                decimal newDue = dueAmount - amount;
+
+                // 2️⃣ insert cicilan
+                using (var cmd = new NpgsqlCommand(@"
+            INSERT INTO transaction_installments
+            (transaction_id, amount, note, created_by, created_at)
+            VALUES (@tsId, @amount, @note, @userId, NOW())
+        ", conn, tran))
+                {
+                    cmd.Parameters.AddWithValue("@tsId", tsId);
+                    cmd.Parameters.AddWithValue("@amount", amount);
+                    cmd.Parameters.AddWithValue("@note",
+                        string.IsNullOrWhiteSpace(note) ? (object)DBNull.Value : note);
+                    cmd.Parameters.AddWithValue("@userId", userId);
+
+                    cmd.ExecuteNonQuery();
+                }
+
+                short newStatus = newDue == 0
+                    ? (short)TransactionStatus.Paid
+                    : (short)TransactionStatus.Partial;
+
+                // 3️⃣ update transaksi
+                using (var cmd = new NpgsqlCommand(@"
+            UPDATE transactions
+            SET 
+                ts_due_amount = @due,
+                ts_status = @status,
+                ts_freename = COALESCE(@customer, ts_freename),
+                ts_note = COALESCE(@note, ts_note),
+                updated_at = NOW()
+            WHERE ts_id = @id
+        ", conn, tran))
+                {
+                    cmd.Parameters.AddWithValue("@due", newDue);
+                    cmd.Parameters.AddWithValue("@status", newStatus);
+                    cmd.Parameters.AddWithValue("@customer",
+                        string.IsNullOrWhiteSpace(customerName) ? (object)DBNull.Value : customerName);
+                    cmd.Parameters.AddWithValue("@note",
+                        string.IsNullOrWhiteSpace(note) ? (object)DBNull.Value : note);
+                    cmd.Parameters.AddWithValue("@id", tsId);
+
+                    cmd.ExecuteNonQuery();
+                }
+
+                tran.Commit();
+                return true;
+            }
+            catch
+            {
+                tran.Rollback();
+                throw;
+            }
+        }
+
+
+        ////////////////////////////////// END INSTALLMENTS ///////////////////////////
 
 
 

@@ -7,6 +7,13 @@ using System.Threading.Tasks;
 
 namespace POS_qu.Models
 {
+    public enum TransactionStatus
+    {
+        Paid = 1,
+        Unpaid = 2,
+        Partial = 3
+    }
+
     public class Transactions
     {
         public int TsId { get; set; }  // ts_id
@@ -21,7 +28,7 @@ namespace POS_qu.Models
         public decimal TsPaymentAmount { get; set; } // ✅ Add this property
         public decimal TsCashback { get; set; } = 0; // ts_cashback
         public string TsMethod { get; set; } // ts_method
-        public short TsStatus { get; set; } // ts_status (1: paid, 2: unpaid/utang, 3: cancelled)
+        //public short TsStatus { get; set; } // ts_status (1: paid, 2: unpaid/utang, 3: cancelled)
         public decimal TsChange { get; set; } = 0; // ts_change
         public string TsInternalNote { get; set; } // ts_internal_note
         public string TsNote { get; set; } // ts_note
@@ -49,6 +56,9 @@ namespace POS_qu.Models
         public int? OrderId { get; set; } // yang melakukan transaksi
 
         public string CartSessionCode { get; set; } // ✅ Optional kalau mau simpan juga di transactions
+
+        public TransactionStatus TsStatus { get; set; }
+        public decimal TsDueAmount { get; set; }
 
     }
 }

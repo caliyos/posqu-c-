@@ -75,5 +75,50 @@ namespace POS_qu.Helpers
             return terminalName;
         }
 
+        // 🔥 Helper baru: ambil nama user dari userId
+        public static string GetUserName(int userId)
+        {
+            string userName = "Unknown";
+
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                try
+                {
+                    conn.Open();
+                    string query = "SELECT name FROM users WHERE id = @id LIMIT 1";
+                    using (var cmd = new NpgsqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@id", userId);
+
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                userName = reader.GetString(reader.GetOrdinal("name"));
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Error fetching user name: " + ex.Message);
+                }
+            }
+
+            return userName;
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }

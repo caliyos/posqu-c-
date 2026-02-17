@@ -1,6 +1,7 @@
 ﻿using Npgsql;
 using POS_qu.Helpers;
 using POS_qu.Models;
+using POS_qu.DTO;
 using System;
 using System.Collections.Generic;
 
@@ -19,14 +20,16 @@ INSERT INTO transactions (
     ts_method, ts_status, ts_change, ts_internal_note, ts_note, 
     ts_global_discount_amount, ts_grand_total, 
     ts_customer, ts_freename, terminal_id, shift_id, user_id, 
-    created_by, created_at, order_id, ts_delivery_amount, cart_session_code
+    created_by, created_at, order_id, ts_delivery_amount, cart_session_code,
+    ts_due_amount
 ) 
 VALUES (
     @ts_numbering, @ts_code, @ts_total, @ts_payment_amount, @ts_cashback, 
     @ts_method, @ts_status, @ts_change, @ts_internal_note, @ts_note, 
     @ts_global_discount_amount, @ts_grand_total, 
     @ts_customer, @ts_freename, @terminal_id, @shift_id, 
-    @user_id, @created_by, @created_at, @order_id, @ts_delivery_amount, @cart_session_code
+    @user_id, @created_by, @created_at, @order_id, @ts_delivery_amount, @cart_session_code,
+    @ts_due_amount
 ) 
 RETURNING ts_id";
 
@@ -38,7 +41,7 @@ RETURNING ts_id";
                 cmd.Parameters.AddWithValue("@ts_payment_amount", transaction.TsPaymentAmount);
                 cmd.Parameters.AddWithValue("@ts_cashback", transaction.TsCashback);
                 cmd.Parameters.AddWithValue("@ts_method", transaction.TsMethod);
-                cmd.Parameters.AddWithValue("@ts_status", transaction.TsStatus);
+                cmd.Parameters.AddWithValue("@ts_status", (int)transaction.TsStatus);
                 cmd.Parameters.AddWithValue("@ts_change", transaction.TsChange);
                 cmd.Parameters.AddWithValue("@ts_internal_note", transaction.TsInternalNote ?? "");
                 cmd.Parameters.AddWithValue("@ts_note", transaction.TsNote ?? "");
@@ -61,6 +64,9 @@ RETURNING ts_id";
 
                 cmd.Parameters.AddWithValue("@ts_delivery_amount", transaction.TsDelivery);
                 cmd.Parameters.AddWithValue("@cart_session_code", transaction.CartSessionCode ?? "");
+                cmd.Parameters.AddWithValue("@ts_delivery_amount", transaction.TsDelivery);
+                cmd.Parameters.AddWithValue("@ts_due_amount", transaction.TsDueAmount);
+                
 
                 return Convert.ToInt32(cmd.ExecuteScalar());
             }
@@ -208,8 +214,83 @@ VALUES (
 
 
 
-      
-        
+        ////////////////////// CICILAN ///////////////////////////
+        public void InsertInstallment(
+    NpgsqlConnection con,
+    NpgsqlTransaction tran,
+    int transactionId,
+    decimal amount,
+    string note,
+    int userId)
+        {
+            using var cmd = new NpgsqlCommand(@"
+        INSERT INTO transaction_installments
+        (transaction_id, amount, note, created_by, created_at)
+        VALUES (@tsId, @amount, @note, @userId, NOW())
+    ", con, tran);
+
+            cmd.Parameters.AddWithValue("@tsId", transactionId);
+            cmd.Parameters.AddWithValue("@amount", amount);
+            cmd.Parameters.AddWithValue("@note",
+                string.IsNullOrWhiteSpace(note) ? (object)DBNull.Value : note);
+            cmd.Parameters.AddWithValue("@userId", userId);
+
+            cmd.ExecuteNonQuery();
+        }
+
+
+
+
+        public TransactionDto GetTransactionById(int transactionId)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+            using var cmd = new NpgsqlCommand("SELECT ts_id, ts_total, ts_payment_amount, ts_due_amount, ts_status, ts_numbering FROM transactions WHERE ts_id=@id", conn);
+            cmd.Parameters.AddWithValue("@id", transactionId);
+            using var reader = cmd.ExecuteReader();
+            if (reader.Read())
+            {
+                return new TransactionDto
+                {
+                    Id = reader.GetInt32(0),
+                    TotalAmount = reader.GetDecimal(1),
+                    AmountPaid = reader.GetDecimal(2),
+                    DueAmount = reader.GetDecimal(3),
+                    Status = reader.GetInt16(4),
+                    TransactionNumber = reader.GetString(5)
+                };
+            }
+            return null;
+        }
+
+        public void InsertInstallment(int transactionId, decimal amount, string note, int userId)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+            using var cmd = new NpgsqlCommand(
+                "INSERT INTO transaction_installments (transaction_id, amount, note, created_by) VALUES (@txId, @amt, @note, @userId)", conn);
+            cmd.Parameters.AddWithValue("@txId", transactionId);
+            cmd.Parameters.AddWithValue("@amt", amount);
+            cmd.Parameters.AddWithValue("@note", note ?? "");
+            cmd.Parameters.AddWithValue("@userId", userId);
+            cmd.ExecuteNonQuery();
+        }
+
+        public void UpdateTransactionPayment(int transactionId, decimal amountPaid, decimal dueAmount, TransactionStatus status)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+            using var cmd = new NpgsqlCommand(
+                "UPDATE transactions SET ts_payment_amount=@paid, ts_due_amount=@due, ts_status=@status, updated_at=NOW() WHERE ts_id=@txId", conn);
+            cmd.Parameters.AddWithValue("@paid", amountPaid);
+            cmd.Parameters.AddWithValue("@due", dueAmount);
+            cmd.Parameters.AddWithValue("@status", (int)status);
+            cmd.Parameters.AddWithValue("@txId", transactionId);
+            cmd.ExecuteNonQuery();
+        }
+
+        ///////////////// END CICILAN /////////////////////////////
+
 
 
 

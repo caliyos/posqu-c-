@@ -365,6 +365,179 @@ public class CartService
         _activityService = activityService;
     }
 
+    public bool SaveCartAsDraft(string? customerName = null, string? note = null)
+    {
+        var session = SessionUser.GetCurrentUser();
+
+        using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+        conn.Open();
+        using var tran = conn.BeginTransaction();
+
+        try
+        {
+            // 1️⃣ Hitung total & diskon
+            var totals = _repo.GetPendingTotals(
+                Session.CartSessionCode,
+                session.TerminalId,
+                session.UserId
+            );
+
+            if (totals.TotalItems == 0)
+                throw new InvalidOperationException("Cart kosong, tidak bisa disimpan sebagai draft.");
+
+            // 2️⃣ Insert pending_orders
+            int poId = _repo.InsertPendingOrder(
+                terminalId: session.TerminalId,
+                cashierId: session.UserId,
+                customerName: customerName,   // 👈 kirim nullable
+                note: note,                   // 👈 kirim nullable
+                total: totals.GrandTotal,
+                discount: totals.TotalDiscount,
+                cartSessionCode: Session.CartSessionCode,
+                conn: conn,
+                tran: tran
+            );
+
+            // 3️⃣ Link item ke order
+            _repo.LinkPendingTransactionsToOrder(
+                poId,
+                Session.CartSessionCode,
+                session.TerminalId,
+                session.UserId,
+                conn,
+                tran
+            );
+
+            tran.Commit();
+
+            _activityService.LogAction(
+                userId: session.UserId.ToString(),
+                actionType: ActivityType.Cart.ToString(),
+                referenceId: poId,
+                desc: "Cart disimpan sebagai draft",
+                details: new { Session.CartSessionCode, totals.GrandTotal, totals.TotalDiscount, customerName, note }
+            );
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            tran.Rollback();
+            throw new InvalidOperationException("Gagal menyimpan cart sebagai draft: " + ex.Message, ex);
+        }
+    }
+
+
+
+
+    public List<InvoiceItem> GetDraftItems(int poId)
+        {
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+
+            string sql = @"
+SELECT 
+    item_id,
+    barcode,
+    quantity,
+    sell_price,
+    total,
+    unitid
+FROM pending_transactions
+WHERE po_id = @poId";
+
+            using var cmd = new NpgsqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@poId", poId);
+
+            var items = new List<InvoiceItem>();
+
+            using var reader = cmd.ExecuteReader();
+            while (reader.Read())
+            {
+                items.Add(new InvoiceItem
+                {
+                    ItemId = reader.GetInt32(0),
+                    Barcode = reader.GetString(1),
+                    Qty = reader.GetInt32(2),
+                    Price = reader.GetDecimal(3),
+                    Total = reader.GetDecimal(4),
+                    UnitId = reader.GetInt32(5)
+                });
+            }
+
+            return items;
+        }
+
+    public InvoiceData LoadDraftToInvoice(int poId)
+    {
+        var session = SessionUser.GetCurrentUser();
+
+        // 1️⃣ Ambil cart_session_code dari pending_orders
+        string cartCode = _repo.GetCartSessionCodeByPoId(poId);
+
+        if (string.IsNullOrEmpty(cartCode))
+            throw new Exception("Draft tidak ditemukan.");
+
+        // 2️⃣ Set session cart ke draft itu
+        Session.CartSessionCode = cartCode;
+
+        // 3️⃣ Ambil item pending dari DB
+        var rows = _repo.GetPendingItems(cartCode);
+
+       
+            if (rows == null || rows.Rows.Count == 0)
+                throw new Exception("Draft kosong atau sudah tidak valid.");
+
+        // 4️⃣ Build invoice dari pending_transactions
+        var invoice = InvoiceBuilder.FromPending(rows);
+
+        return invoice;
+    }
+
+    public List<PendingOrderDto> GetDraftOrders()
+    {
+        var session = SessionUser.GetCurrentUser();
+        return _repo.GetDraftOrders(session.TerminalId, session.UserId);
+    }
+
+
+
+
+
+
+    ///////////////////////INSTALLMETNS////////////////////////////
+
+    public bool PayInstallment(
+     string cartSessionCode,
+     decimal amount,
+     string customerName,
+     string note
+ )
+    {
+        if (amount <= 0)
+            throw new InvalidOperationException("Nominal harus lebih besar dari 0.");
+
+        if (string.IsNullOrWhiteSpace(cartSessionCode))
+            throw new InvalidOperationException("Cart tidak valid.");
+
+        var session = SessionUser.GetCurrentUser();
+
+        return _repo.PayInstallmentDb(
+            cartSessionCode,
+            amount,
+            customerName,
+            note,
+            session.UserId
+        );
+    }
+
+
+
+
+    ///////////////////////INSTALLMENTS//////////////////////////
+
+
+
     // =================== DELETE ITEM ===================
     public bool DeleteCartItem(DeleteCartItemRequest request)
     {

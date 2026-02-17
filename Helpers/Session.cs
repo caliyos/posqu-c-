@@ -8,7 +8,7 @@ namespace POS_qu.Helpers
 {
     public static class Session
     {
-        public static string CartSessionCode { get; private set; }
+        public static string CartSessionCode { get;  set; }
 
         public static void StartNewCart()
         {
