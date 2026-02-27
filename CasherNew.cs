@@ -735,30 +735,48 @@ namespace POS_qu
         {
             using (Form modal = new Form())
             {
-                modal.Text = "Informasi Draft";
-                modal.Width = 450;
-                modal.Height = 270;
+                modal.Text = "Informasi Draft Transaksi";
+                modal.Size = new Size(400, 380);
                 modal.StartPosition = FormStartPosition.CenterParent;
                 modal.FormBorderStyle = FormBorderStyle.FixedDialog;
+                modal.MaximizeBox = false;
+                modal.MinimizeBox = false;
+                modal.Padding = new Padding(20);
+
+                Label lblTitle = new Label
+                {
+                    Text = "Simpan Draft",
+                    Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                    Dock = DockStyle.Top,
+                    Height = 35,
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
+
+                Panel pnlMain = new Panel { Dock = DockStyle.Fill, Padding = new Padding(5) };
 
                 Label lblCustomer = new Label
                 {
-                    Text = "Nama Customer",
+                    Text = "Nama Customer:",
                     Dock = DockStyle.Top,
+                    Height = 25,
                     TabIndex = 0,
-                    TabStop = false // label tidak perlu fokus
+                    TabStop = false
                 };
 
                 TextBox txtCustomer = new TextBox
                 {
                     Dock = DockStyle.Top,
-                    TabIndex = 1
+                    TabIndex = 1,
+                    Font = new Font("Segoe UI", 10)
                 };
+
+                Panel spacer1 = new Panel { Dock = DockStyle.Top, Height = 15 };
 
                 Label lblNote = new Label
                 {
-                    Text = "Catatan",
+                    Text = "Catatan / Keterangan:",
                     Dock = DockStyle.Top,
+                    Height = 25,
                     TabIndex = 2,
                     TabStop = false
                 };
@@ -768,20 +786,30 @@ namespace POS_qu
                     Dock = DockStyle.Top,
                     TabIndex = 3,
                     Multiline = true,
-                    Height = 60
+                    Height = 80,
+                    Font = new Font("Segoe UI", 10)
                 };
+
+                Panel pnlButtons = new Panel { Dock = DockStyle.Bottom, Height = 60, Padding = new Padding(0, 10, 0, 0) };
 
                 Button btnOk = new Button
                 {
                     Text = "Simpan Draft",
-                    Dock = DockStyle.Bottom,
+                    Size = new Size(150, 45),
+                    Location = new Point(190, 10),
+                    BackColor = Color.Orange,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 10, FontStyle.Bold),
                     TabIndex = 4
                 };
 
                 Button btnCancel = new Button
                 {
                     Text = "Batal",
-                    Dock = DockStyle.Bottom,
+                    Size = new Size(100, 45),
+                    Location = new Point(80, 10),
+                    FlatStyle = FlatStyle.Flat,
                     TabIndex = 5
                 };
 
@@ -796,17 +824,22 @@ namespace POS_qu
 
                 btnCancel.Click += (s, e) => modal.Close();
 
-                modal.Controls.Add(txtNote);
-                modal.Controls.Add(lblNote);
-                modal.Controls.Add(txtCustomer);
-                modal.Controls.Add(lblCustomer);
-                modal.Controls.Add(btnOk);
-                modal.Controls.Add(btnCancel);
+                pnlMain.Controls.Add(txtNote);
+                pnlMain.Controls.Add(lblNote);
+                pnlMain.Controls.Add(spacer1);
+                pnlMain.Controls.Add(txtCustomer);
+                pnlMain.Controls.Add(lblCustomer);
 
-                // 🔥 letakkan di sini
-                modal.AcceptButton = btnOk;     // Enter = klik Simpan
-                modal.CancelButton = btnCancel; // Esc = klik Batal
-                txtCustomer.Focus();            // fokus awal di customer
+                pnlButtons.Controls.Add(btnOk);
+                pnlButtons.Controls.Add(btnCancel);
+
+                modal.Controls.Add(pnlMain);
+                modal.Controls.Add(lblTitle);
+                modal.Controls.Add(pnlButtons);
+
+                modal.AcceptButton = btnOk;
+                modal.CancelButton = btnCancel;
+                txtCustomer.Focus();
 
                 modal.ShowDialog();
                 return result;
@@ -924,24 +957,71 @@ namespace POS_qu
 
             using (Form modal = new Form())
             {
-                modal.Text = "Daftar Draft";
-                modal.Width = 800;
-                modal.Height = 500;
+                modal.Text = "Pilih Draft Transaksi";
+                modal.Size = new Size(900, 600);
                 modal.StartPosition = FormStartPosition.CenterParent;
                 modal.FormBorderStyle = FormBorderStyle.FixedDialog;
+                modal.MaximizeBox = false;
+                modal.MinimizeBox = false;
+
+                // Header Panel
+                Panel pnlHeader = new Panel { Dock = DockStyle.Top, Height = 80, Padding = new Padding(15) };
+                
+                Label lblTitle = new Label
+                {
+                    Text = "Daftar Draft Transaksi",
+                    Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                    Dock = DockStyle.Left,
+                    Width = 300,
+                    TextAlign = ContentAlignment.MiddleLeft
+                };
 
                 TextBox txtSearch = new TextBox
                 {
-                    Dock = DockStyle.Top,
-                    PlaceholderText = "Cari total / tanggal..."
+                    PlaceholderText = "🔍 Cari nama customer, catatan, atau tanggal...",
+                    Dock = DockStyle.Right,
+                    Width = 400,
+                    Font = new Font("Segoe UI", 11),
+                    TabIndex = 0
                 };
+                pnlHeader.Controls.Add(lblTitle);
+                pnlHeader.Controls.Add(txtSearch);
 
+                // Footer Panel
+                Panel pnlFooter = new Panel { Dock = DockStyle.Bottom, Height = 70, Padding = new Padding(15) };
+                
                 Label lblTotal = new Label
                 {
-                    Dock = DockStyle.Top,
-                    Height = 25,
-                    TextAlign = ContentAlignment.MiddleLeft
+                    Text = $"Total Draft: {drafts.Count}",
+                    Dock = DockStyle.Left,
+                    Width = 200,
+                    TextAlign = ContentAlignment.MiddleLeft,
+                    Font = new Font("Segoe UI", 10, FontStyle.Italic)
                 };
+
+                Button btnLoad = new Button
+                {
+                    Text = "Muat Draft (Enter)",
+                    Size = new Size(180, 40),
+                    Location = new Point(680, 15),
+                    BackColor = Color.DodgerBlue,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                    TabIndex = 2
+                };
+
+                Button btnCancel = new Button
+                {
+                    Text = "Batal (Esc)",
+                    Size = new Size(120, 40),
+                    Location = new Point(550, 15),
+                    FlatStyle = FlatStyle.Flat,
+                    TabIndex = 3
+                };
+                pnlFooter.Controls.Add(lblTotal);
+                pnlFooter.Controls.Add(btnLoad);
+                pnlFooter.Controls.Add(btnCancel);
 
                 DataGridView grid = new DataGridView
                 {
@@ -949,7 +1029,13 @@ namespace POS_qu
                     ReadOnly = true,
                     SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                     MultiSelect = false,
-                    AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
+                    AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                    BackgroundColor = Color.White,
+                    BorderStyle = BorderStyle.None,
+                    RowHeadersVisible = false,
+                    AllowUserToAddRows = false,
+                    Font = new Font("Segoe UI", 10),
+                    TabIndex = 1
                 };
 
                 grid.Columns.Add("PoId", "ID");
@@ -957,72 +1043,50 @@ namespace POS_qu
                 grid.Columns.Add("Note", "Catatan");
                 grid.Columns.Add("Total", "Total");
                 grid.Columns.Add("CreatedAt", "Tanggal");
-
+                
+                grid.Columns["PoId"].Width = 50;
+                grid.Columns["Total"].DefaultCellStyle.Format = "N0";
+                grid.Columns["Total"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
 
                 void LoadGrid(List<PendingOrderDto> source)
                 {
                     grid.Rows.Clear();
-
                     foreach (var d in source)
                     {
                         grid.Rows.Add(
                             d.PoId,
                             d.CustomerName ?? "-",
                             d.Note ?? "-",
-                            d.Total.ToString("N0"),
-                            d.CreatedAt.ToString("dd-MM-yyyy HH:mm")
+                            d.Total,
+                            d.CreatedAt.ToString("dd MMM yyyy HH:mm")
                         );
                     }
-
                     lblTotal.Text = $"Total Draft: {source.Count}";
                 }
 
                 LoadGrid(drafts);
 
-                // ===== SEARCH =====
                 txtSearch.TextChanged += (s, e) =>
                 {
                     string key = txtSearch.Text.ToLower();
-
-                    var filtered = drafts
-                        .Where(x =>
+                    var filtered = drafts.Where(x =>
                             (x.CustomerName ?? "").ToLower().Contains(key) ||
                             (x.Note ?? "").ToLower().Contains(key) ||
                             x.Total.ToString().Contains(key) ||
                             x.CreatedAt.ToString("dd-MM-yyyy HH:mm").ToLower().Contains(key)
-                        )
-                        .ToList();
-
+                        ).ToList();
                     LoadGrid(filtered);
                 };
 
-
-                // ===== SORT HEADER =====
-                // ===== SORT HEADER =====
                 grid.ColumnHeaderMouseClick += (s, e) =>
                 {
                     switch (e.ColumnIndex)
                     {
-                        case 1: // Customer
-                            drafts = drafts.OrderBy(x => x.CustomerName).ToList();
-                            break;
-
-                        case 3: // Total
-                            drafts = drafts.OrderByDescending(x => x.Total).ToList();
-                            break;
-
-                        case 4: // Tanggal
-                            drafts = drafts.OrderByDescending(x => x.CreatedAt).ToList();
-                            break;
+                        case 1: drafts = drafts.OrderBy(x => x.CustomerName).ToList(); break;
+                        case 3: drafts = drafts.OrderByDescending(x => x.Total).ToList(); break;
+                        case 4: drafts = drafts.OrderByDescending(x => x.CreatedAt).ToList(); break;
                     }
-
                     LoadGrid(drafts);
-                };
-                Button btnLoad = new Button
-                {
-                    Text = "Load Draft",
-                    Dock = DockStyle.Bottom,
-                    Height = 40
                 };
 
                 btnLoad.Click += (s, ev) =>
@@ -1032,28 +1096,20 @@ namespace POS_qu
                         MessageBox.Show("Pilih draft dulu.");
                         return;
                     }
-
                     selectedPoId = Convert.ToInt32(grid.SelectedRows[0].Cells[0].Value);
+                    modal.DialogResult = DialogResult.OK;
                     modal.Close();
-                };
-
-                Button btnCancel = new Button
-                {
-                    Text = "Batal",
-                    Dock = DockStyle.Bottom,
-                    Height = 35
                 };
 
                 btnCancel.Click += (s, ev) => modal.Close();
 
                 modal.Controls.Add(grid);
-                modal.Controls.Add(lblTotal);
-                modal.Controls.Add(txtSearch);
-                modal.Controls.Add(btnLoad);
-                modal.Controls.Add(btnCancel);
+                modal.Controls.Add(pnlHeader);
+                modal.Controls.Add(pnlFooter);
 
                 modal.AcceptButton = btnLoad;
                 modal.CancelButton = btnCancel;
+                
                 txtSearch.Focus();
                 modal.ShowDialog();
             }
@@ -1063,7 +1119,13 @@ namespace POS_qu
 
         private void button3_Click(object sender, EventArgs e)
         {
-            var result = ShowInstallmentModal();
+            if (_currentInvoice.GrandTotal <= 0)
+            {
+                MessageBox.Show("Total belanja kosong.");
+                return;
+            }
+
+            var result = ShowInstallmentModal(_currentInvoice.GrandTotal);
             if (result == null) return;
 
             repo = new TransactionRepo();
@@ -1082,7 +1144,7 @@ namespace POS_qu
                 return;
             }
 
-            MessageBox.Show("Cicilan pertama berhasil disimpan");
+            MessageBox.Show("Transaksi Bon berhasil disimpan");
 
             _currentInvoice = new InvoiceData();
             RenderInvoice(_currentInvoice);
@@ -1091,7 +1153,7 @@ namespace POS_qu
 
 
 
-        private (decimal Amount, string Customer, string Note)? ShowInstallmentModal()
+        private (decimal Amount, string Customer, string Note)? ShowInstallmentModal(decimal totalDue)
         {
             decimal amount = 0;
             string customer = null;
@@ -1099,21 +1161,101 @@ namespace POS_qu
 
             using (Form modal = new Form())
             {
-                modal.Text = "Pembayaran Cicilan";
-                modal.Width = 400;
-                modal.Height = 320;
+                modal.Text = "Pembayaran Bon / Cicilan";
+                modal.Size = new Size(450, 550);
                 modal.StartPosition = FormStartPosition.CenterParent;
                 modal.FormBorderStyle = FormBorderStyle.FixedDialog;
+                modal.MaximizeBox = false;
+                modal.MinimizeBox = false;
+                modal.Padding = new Padding(20);
 
-                Label lblCustomer = new Label { Text = "Nama Customer", Dock = DockStyle.Top };
-                TextBox txtCustomer = new TextBox { Dock = DockStyle.Top };
+                Label lblTitle = new Label
+                {
+                    Text = "Detail Pembayaran Bon",
+                    Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                    Dock = DockStyle.Top,
+                    Height = 40,
+                    TextAlign = ContentAlignment.MiddleCenter
+                };
 
+                Label lblTotalInfo = new Label
+                {
+                    Text = $"Total yang harus dibayar: {totalDue:N0}",
+                    Font = new Font("Segoe UI", 11, FontStyle.Italic),
+                    Dock = DockStyle.Top,
+                    Height = 30,
+                    TextAlign = ContentAlignment.MiddleCenter,
+                    ForeColor = Color.DarkRed
+                };
+
+                Panel pnlMain = new Panel
+                {
+                    Dock = DockStyle.Fill,
+                    Padding = new Padding(10)
+                };
+
+                // Nama Customer
+                Label lblCustomer = new Label { Text = "Nama Customer:", Dock = DockStyle.Top, Height = 25 };
+                TextBox txtCustomer = new TextBox { Dock = DockStyle.Top, TabIndex = 0, Font = new Font("Segoe UI", 11) };
+                
                 Button btnPickCustomer = new Button
                 {
-                    Text = "Pilih Customer",
+                    Text = "🔍 Pilih Customer Exist",
                     Dock = DockStyle.Top,
-                    Height = 30
+                    Height = 35,
+                    TabIndex = 1,
+                    Margin = new Padding(0, 5, 0, 15)
                 };
+
+                // Spacer
+                Panel spacer1 = new Panel { Dock = DockStyle.Top, Height = 15 };
+
+                // Nominal Bayar
+                Label lblAmount = new Label { Text = "Nominal Bayar Sekarang:", Dock = DockStyle.Top, Height = 25 };
+                TextBox txtAmount = new TextBox { 
+                    Dock = DockStyle.Top, 
+                    TabIndex = 2, 
+                    Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                    Text = totalDue.ToString("N0") 
+                };
+
+                // Spacer
+                Panel spacer2 = new Panel { Dock = DockStyle.Top, Height = 15 };
+
+                // Catatan
+                Label lblNote = new Label { Text = "Catatan:", Dock = DockStyle.Top, Height = 25 };
+                TextBox txtNote = new TextBox { 
+                    Dock = DockStyle.Top, 
+                    TabIndex = 3, 
+                    Multiline = true, 
+                    Height = 80,
+                    Font = new Font("Segoe UI", 10)
+                };
+
+                // Bottom Buttons
+                Panel pnlButtons = new Panel { Dock = DockStyle.Bottom, Height = 60, Padding = new Padding(0, 10, 0, 0) };
+                
+                Button btnSave = new Button
+                {
+                    Text = "Simpan Transaksi",
+                    Size = new Size(180, 45),
+                    Location = new Point(220, 10),
+                    TabIndex = 4,
+                    BackColor = Color.DodgerBlue,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 10, FontStyle.Bold)
+                };
+
+                Button btnCancel = new Button
+                {
+                    Text = "Batal",
+                    Size = new Size(120, 45),
+                    Location = new Point(90, 10),
+                    TabIndex = 5,
+                    FlatStyle = FlatStyle.Flat
+                };
+
                 btnPickCustomer.Click += (s, e) =>
                 {
                     var customerDto = ShowCustomerPicker();
@@ -1121,33 +1263,12 @@ namespace POS_qu
                         txtCustomer.Text = customerDto.Name;
                 };
 
-                Label lblAmount = new Label { Text = "Nominal Bayar", Dock = DockStyle.Top };
-                TextBox txtAmount = new TextBox { Dock = DockStyle.Top };
-
-                Label lblNote = new Label { Text = "Catatan", Dock = DockStyle.Top };
-                TextBox txtNote = new TextBox { Dock = DockStyle.Top };
-
-                Button btnSave = new Button
-                {
-                    Text = "Simpan Pembayaran",
-                    Dock = DockStyle.Bottom,
-                    Height = 40
-                };
-
-                Button btnCancel = new Button
-                {
-                    Text = "Batal",
-                    Dock = DockStyle.Bottom
-                };
-
-                modal.AcceptButton = btnSave;
-                modal.CancelButton = btnCancel;
-
                 btnCancel.Click += (s, e) => modal.Close();
 
                 btnSave.Click += (s, e) =>
                 {
-                    if (!decimal.TryParse(txtAmount.Text, out amount))
+                    string rawAmount = txtAmount.Text.Replace(".", "").Replace(",", "");
+                    if (!decimal.TryParse(rawAmount, out amount))
                     {
                         MessageBox.Show("Nominal tidak valid");
                         return;
@@ -1166,15 +1287,27 @@ namespace POS_qu
                     modal.Close();
                 };
 
-                modal.Controls.Add(txtNote);
-                modal.Controls.Add(lblNote);
-                modal.Controls.Add(txtAmount);
-                modal.Controls.Add(lblAmount);
-                modal.Controls.Add(btnPickCustomer);
-                modal.Controls.Add(txtCustomer);
-                modal.Controls.Add(lblCustomer);
-                modal.Controls.Add(btnSave);
-                modal.Controls.Add(btnCancel);
+                modal.AcceptButton = btnSave;
+                modal.CancelButton = btnCancel;
+
+                // Add controls to panel
+                pnlMain.Controls.Add(txtNote);
+                pnlMain.Controls.Add(lblNote);
+                pnlMain.Controls.Add(spacer2);
+                pnlMain.Controls.Add(txtAmount);
+                pnlMain.Controls.Add(lblAmount);
+                pnlMain.Controls.Add(spacer1);
+                pnlMain.Controls.Add(btnPickCustomer);
+                pnlMain.Controls.Add(txtCustomer);
+                pnlMain.Controls.Add(lblCustomer);
+
+                pnlButtons.Controls.Add(btnSave);
+                pnlButtons.Controls.Add(btnCancel);
+
+                modal.Controls.Add(pnlMain);
+                modal.Controls.Add(lblTotalInfo);
+                modal.Controls.Add(lblTitle);
+                modal.Controls.Add(pnlButtons);
 
                 txtCustomer.Focus();
 
@@ -1193,64 +1326,118 @@ namespace POS_qu
 
             using (Form modal = new Form())
             {
-                modal.Text = "Pilih Customer";
-                modal.Width = 350;
-                modal.Height = 400;
+                modal.Text = "Pilih Data Pelanggan";
+                modal.Size = new Size(450, 600);
                 modal.StartPosition = FormStartPosition.CenterParent;
+                modal.FormBorderStyle = FormBorderStyle.FixedDialog;
+                modal.MaximizeBox = false;
+                modal.MinimizeBox = false;
 
+                // Header
+                Panel pnlHeader = new Panel { Dock = DockStyle.Top, Height = 70, Padding = new Padding(15) };
+                Label lblTitle = new Label
+                {
+                    Text = "Database Pelanggan",
+                    Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                    Dock = DockStyle.Fill,
+                    TextAlign = ContentAlignment.MiddleLeft
+                };
+                pnlHeader.Controls.Add(lblTitle);
+
+                // List Container
+                Panel pnlList = new Panel { Dock = DockStyle.Fill, Padding = new Padding(15, 0, 15, 0) };
                 ListBox list = new ListBox
                 {
                     Dock = DockStyle.Fill,
-                    DisplayMember = "Name",   // tampilkan nama
-                    ValueMember = "Id"        // simpan id
+                    DisplayMember = "Name",
+                    ValueMember = "Id",
+                    Font = new Font("Segoe UI", 11),
+                    BorderStyle = BorderStyle.FixedSingle,
+                    TabIndex = 0
                 };
+                pnlList.Controls.Add(list);
 
                 void LoadCustomers()
                 {
+                    var data = _customerService.GetAll();
                     list.DataSource = null;
-                    list.DataSource = _customerService.GetAll();
+                    list.DataSource = data;
                 }
-
                 LoadCustomers();
+
+                // Footer Buttons
+                Panel pnlFooter = new Panel { Dock = DockStyle.Bottom, Height = 120, Padding = new Padding(15) };
+                
+                Button btnOk = new Button
+                {
+                    Text = "Pilih Pelanggan (Enter)",
+                    Dock = DockStyle.Top,
+                    Height = 45,
+                    BackColor = Color.DodgerBlue,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                    TabIndex = 1
+                };
+
+                Panel spacer = new Panel { Dock = DockStyle.Top, Height = 10 };
 
                 Button btnAdd = new Button
                 {
-                    Text = "Tambah Baru",
-                    Dock = DockStyle.Bottom
+                    Text = "+ Tambah Pelanggan Baru",
+                    Dock = DockStyle.Top,
+                    Height = 35,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 9),
+                    TabIndex = 2
                 };
-
-                Button btnOk = new Button
-                {
-                    Text = "Pilih",
-                    Dock = DockStyle.Bottom
-                };
+                
+                pnlFooter.Controls.Add(btnAdd);
+                pnlFooter.Controls.Add(spacer);
+                pnlFooter.Controls.Add(btnOk);
 
                 btnAdd.Click += (s, e) =>
                 {
                     string name = Microsoft.VisualBasic.Interaction.InputBox(
-                        "Nama customer:",
-                        "Tambah Customer"
+                        "Masukkan Nama Pelanggan Baru:",
+                        "Registrasi Pelanggan"
                     );
 
                     if (!string.IsNullOrWhiteSpace(name))
                     {
                         _customerService.Insert(name);
                         LoadCustomers();
+                        // Auto select yang baru ditambah
+                        for (int i = 0; i < list.Items.Count; i++) {
+                            if (((CustomerDto)list.Items[i]).Name == name) {
+                                list.SelectedIndex = i;
+                                break;
+                            }
+                        }
                     }
                 };
 
                 btnOk.Click += (s, e) =>
                 {
-                    if (list.SelectedItem == null) return;
-
+                    if (list.SelectedItem == null) {
+                        MessageBox.Show("Silakan pilih pelanggan terlebih dahulu.");
+                        return;
+                    }
                     selectedCustomer = (CustomerDto)list.SelectedItem;
+                    modal.DialogResult = DialogResult.OK;
                     modal.Close();
                 };
 
-                modal.Controls.Add(list);
-                modal.Controls.Add(btnOk);
-                modal.Controls.Add(btnAdd);
+                // Double click list langsung pilih
+                list.DoubleClick += (s, e) => btnOk.PerformClick();
 
+                modal.Controls.Add(pnlList);
+                modal.Controls.Add(pnlHeader);
+                modal.Controls.Add(pnlFooter);
+
+                modal.AcceptButton = btnOk;
+                
+                list.Focus();
                 modal.ShowDialog();
             }
 
@@ -1265,83 +1452,108 @@ namespace POS_qu
                 repo = new TransactionRepo();
                 _transactionService = new TransactionService(repo, activityService);
 
-                // 1️⃣ Ambil semua transaksi yang punya cicilan (ringkasan)
                 var allInstallments = _transactionService.GetAllInstallments();
-
                 if (allInstallments.Count == 0)
                 {
-                    MessageBox.Show("Belum ada cicilan.");
+                    MessageBox.Show("Belum ada data bon/cicilan.");
                     return;
                 }
 
-                // 2️⃣ Tampilkan daftar transaksi di grid
                 using (Form modal = new Form())
                 {
-                    modal.Text = "Daftar Transaksi Cicilan";
-                    modal.Width = 800;
-                    modal.Height = 450;
+                    modal.Text = "Daftar Piutang / Bon Pelanggan";
+                    modal.Size = new Size(1000, 600);
                     modal.StartPosition = FormStartPosition.CenterParent;
+                    modal.FormBorderStyle = FormBorderStyle.FixedDialog;
+                    modal.MaximizeBox = false;
+                    modal.MinimizeBox = false;
 
+                    // Header
+                    Panel pnlHeader = new Panel { Dock = DockStyle.Top, Height = 60, Padding = new Padding(15, 15, 15, 5) };
+                    Label lblTitle = new Label
+                    {
+                        Text = "Monitoring Piutang (Bon)",
+                        Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                        Dock = DockStyle.Fill
+                    };
+                    pnlHeader.Controls.Add(lblTitle);
+
+                    // Grid
                     DataGridView grid = new DataGridView
                     {
                         Dock = DockStyle.Fill,
                         ReadOnly = true,
                         AutoGenerateColumns = false,
-                        AllowUserToAddRows = false
+                        AllowUserToAddRows = false,
+                        SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                        BackgroundColor = Color.White,
+                        BorderStyle = BorderStyle.None,
+                        RowHeadersVisible = false,
+                        Font = new Font("Segoe UI", 10),
+                        TabIndex = 0
                     };
 
-                    // Tambahkan kolom ringkas
-                    grid.Columns.Add(new DataGridViewTextBoxColumn
-                    {
-                        HeaderText = "ID Transaksi",
-                        DataPropertyName = "TransactionId",
-                        Width = 80
+                    grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "ID", DataPropertyName = "TransactionId", Width = 60 });
+                    grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "No. Transaksi", DataPropertyName = "TransactionNumber", Width = 150 });
+                    grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Pelanggan", DataPropertyName = "CustomerName", Width = 180 });
+                    grid.Columns.Add(new DataGridViewTextBoxColumn { 
+                        HeaderText = "Total Transaksi", 
+                        DataPropertyName = "TotalAmount", 
+                        Width = 130, 
+                        DefaultCellStyle = { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight } 
                     });
-                    grid.Columns.Add(new DataGridViewTextBoxColumn
-                    {
-                        HeaderText = "No. Transaksi",
-                        DataPropertyName = "TransactionNumber",
-                        Width = 120
+                    grid.Columns.Add(new DataGridViewTextBoxColumn { 
+                        HeaderText = "Sisa Piutang", 
+                        DataPropertyName = "DueAmount", 
+                        Width = 130, 
+                        DefaultCellStyle = { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight, ForeColor = Color.Red, Font = new Font("Segoe UI", 10, FontStyle.Bold) } 
                     });
-                    grid.Columns.Add(new DataGridViewTextBoxColumn
-                    {
-                        HeaderText = "Kode",
-                        DataPropertyName = "TransactionCode",
-                        Width = 120
-                    });
-                    grid.Columns.Add(new DataGridViewTextBoxColumn
-                    {
-                        HeaderText = "Total Transaksi",
-                        DataPropertyName = "TotalAmount",
-                        Width = 120,
-                        DefaultCellStyle = { Format = "N0" }
-                    });
-                    grid.Columns.Add(new DataGridViewTextBoxColumn
-                    {
-                        HeaderText = "Sisa Bayar",
-                        DataPropertyName = "DueAmount",
-                        Width = 120,
-                        DefaultCellStyle = { Format = "N0" }
-                    });
+                    grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Terakhir Update", DataPropertyName = "CreatedAt", Width = 150 });
 
-                    // Grup data agar setiap transaksi hanya muncul sekali
                     var transactions = allInstallments
                         .GroupBy(i => i.TransactionId)
                         .Select(g => g.First())
+                        .OrderByDescending(x => x.DueAmount)
                         .ToList();
 
                     grid.DataSource = transactions;
 
-                    // 3️⃣ Event klik row → tampilkan detail cicilan transaksi itu
+                    // Footer
+                    Panel pnlFooter = new Panel { Dock = DockStyle.Bottom, Height = 60, Padding = new Padding(10) };
+                    Label lblInfo = new Label { 
+                        Text = "💡 Double klik pada baris untuk melihat riwayat cicilan atau melakukan pembayaran sisa bon.",
+                        Dock = DockStyle.Fill,
+                        Font = new Font("Segoe UI", 9, FontStyle.Italic),
+                        ForeColor = Color.DimGray,
+                        TextAlign = ContentAlignment.MiddleLeft
+                    };
+                    Button btnClose = new Button {
+                        Text = "Tutup (Esc)",
+                        Dock = DockStyle.Right,
+                        Width = 120,
+                        FlatStyle = FlatStyle.Flat,
+                        TabIndex = 1
+                    };
+                    btnClose.Click += (s, ev) => modal.Close();
+                    pnlFooter.Controls.Add(lblInfo);
+                    pnlFooter.Controls.Add(btnClose);
+
                     grid.CellDoubleClick += (s, ev) =>
                     {
                         if (ev.RowIndex < 0) return;
-
                         var selected = (InstallmentDto)grid.Rows[ev.RowIndex].DataBoundItem;
                         ShowTransactionInstallments(selected.TransactionId, selected.TransactionNumber);
+                        
+                        // Refresh data setelah kembali dari detail (siapa tahu ada bayar)
+                        var refreshed = _transactionService.GetAllInstallments();
+                        grid.DataSource = refreshed.GroupBy(i => i.TransactionId).Select(g => g.First()).OrderByDescending(x => x.DueAmount).ToList();
                     };
 
                     modal.Controls.Add(grid);
+                    modal.Controls.Add(pnlHeader);
+                    modal.Controls.Add(pnlFooter);
+                    modal.CancelButton = btnClose;
+
                     modal.ShowDialog();
                 }
             }
@@ -1354,117 +1566,105 @@ namespace POS_qu
         // Method untuk menampilkan detail cicilan
         private void ShowTransactionInstallments(int transactionId, string transactionNumber)
         {
-            var installments = _transactionService.GetInstallments(transactionId); // cicilan transaksi ini
+            var installments = _transactionService.GetInstallments(transactionId);
 
             if (installments.Count == 0)
             {
-                MessageBox.Show("Belum ada cicilan untuk transaksi ini.");
+                MessageBox.Show("Belum ada riwayat cicilan.");
                 return;
             }
 
             decimal totalPaid = installments.Sum(i => i.Amount);
-            decimal totalDue = installments.First().DueAmount; // sisa cicilan dari ts_due_amount
+            decimal totalDue = installments.First().DueAmount; 
 
-       
             using (Form modal = new Form())
             {
-                modal.Text = $"Detail Cicilan Transaksi #{transactionNumber}";
-                modal.Width = 800;
-                modal.Height = 500;
+                modal.Text = $"Riwayat Cicilan - {transactionNumber}";
+                modal.Size = new Size(850, 550);
                 modal.StartPosition = FormStartPosition.CenterParent;
+                modal.FormBorderStyle = FormBorderStyle.FixedDialog;
+                modal.MaximizeBox = false;
+                modal.MinimizeBox = false;
 
-                // =============================
-                // GRID CICILAN
-                // =============================
+                // Header Info
+                Panel pnlHeader = new Panel { Dock = DockStyle.Top, Height = 80, Padding = new Padding(15), BackColor = Color.GhostWhite };
+                Label lblSummary = new Label
+                {
+                    Dock = DockStyle.Fill,
+                    Text = $"Ringkasan Pembayaran\nTotal Terbayar: Rp {totalPaid:N0}  |  Sisa Piutang: Rp {totalDue:N0}",
+                    Font = new Font("Segoe UI", 11, FontStyle.Bold),
+                    TextAlign = ContentAlignment.MiddleLeft
+                };
+                pnlHeader.Controls.Add(lblSummary);
+
+                // Grid
                 DataGridView grid = new DataGridView
                 {
-                    Dock = DockStyle.Top,
-                    Height = 350,
+                    Dock = DockStyle.Fill,
                     ReadOnly = true,
                     AutoGenerateColumns = false,
                     AllowUserToAddRows = false,
-                    DataSource = installments
+                    BackgroundColor = Color.White,
+                    BorderStyle = BorderStyle.None,
+                    RowHeadersVisible = false,
+                    Font = new Font("Segoe UI", 10),
+                    TabIndex = 2
                 };
 
-                grid.Columns.Add(new DataGridViewTextBoxColumn
-                {
-                    HeaderText = "Nominal Cicilan",
-                    DataPropertyName = "Amount",
-                    Width = 120,
-                    DefaultCellStyle = { Format = "N0" }
+                grid.Columns.Add(new DataGridViewTextBoxColumn { 
+                    HeaderText = "Nominal Bayar", 
+                    DataPropertyName = "Amount", 
+                    Width = 150, 
+                    DefaultCellStyle = { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight, ForeColor = Color.Green, Font = new Font("Segoe UI", 10, FontStyle.Bold) } 
                 });
-                grid.Columns.Add(new DataGridViewTextBoxColumn
-                {
-                    HeaderText = "Catatan Cicilan",
-                    DataPropertyName = "Note",
-                    Width = 200
-                });
-                grid.Columns.Add(new DataGridViewTextBoxColumn
-                {
-                    HeaderText = "Dibuat Oleh",
-                    DataPropertyName = "CreatedByName",
-                    Width = 120
-                });
-                grid.Columns.Add(new DataGridViewTextBoxColumn
-                {
-                    HeaderText = "Tanggal Cicilan",
-                    DataPropertyName = "CreatedAt",
-                    Width = 150
-                });
+                grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Catatan", DataPropertyName = "Note", Width = 250 });
+                grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Kasir", DataPropertyName = "CreatedByName", Width = 120 });
+                grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Tanggal", DataPropertyName = "CreatedAt", Width = 180 });
 
-                // =============================
-                // LABEL TOTAL
-                // =============================
-                Label lblSummary = new Label
-                {
-                    Dock = DockStyle.Top,
-                    Height = 30,
-                    Text = $"Total Dibayar: {totalPaid:N0}, Sisa Cicilan: {totalDue:N0}",
-                    TextAlign = ContentAlignment.MiddleLeft
-                };
+                grid.DataSource = installments;
 
-
-                // =============================
-                // BUTTON PANEL
-                // =============================
-                Panel pnlButtons = new Panel
-                {
-                    Dock = DockStyle.Bottom,
-                    Height = 50
-                };
-
+                // Footer Buttons
+                Panel pnlButtons = new Panel { Dock = DockStyle.Bottom, Height = 70, Padding = new Padding(15) };
+                
                 Button btnPay = new Button
                 {
-                    Text = "Bayar Cicilan",
-                    Width = 120,
-                    Left = 10,
-                    Top = 10
-                };
-                btnPay.Click += (s, e) =>
-                {
-                    modal.Close(); // tutup modal detail
-                                   // panggil form bayar cicilan, misal:
-                    ShowPaymentForm(transactionId, totalDue);
+                    Text = "Bayar Sisa Bon",
+                    Size = new Size(180, 40),
+                    Location = new Point(640, 15),
+                    BackColor = Color.ForestGreen,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                    Visible = totalDue > 0,
+                    TabIndex = 0
                 };
 
                 Button btnClose = new Button
                 {
                     Text = "Tutup",
-                    Width = 120,
-                    Left = 140,
-                    Top = 10
+                    Size = new Size(100, 40),
+                    Location = new Point(530, 15),
+                    FlatStyle = FlatStyle.Flat,
+                    TabIndex = 1
                 };
+
+                btnPay.Click += (s, e) =>
+                {
+                    ShowPaymentForm(transactionId, totalDue);
+                    modal.Close(); // Tutup agar bisa refresh di parent
+                };
+
                 btnClose.Click += (s, e) => modal.Close();
 
                 pnlButtons.Controls.Add(btnPay);
                 pnlButtons.Controls.Add(btnClose);
 
-                // =============================
-                // TAMBAHKAN SEMUA KE MODAL
-                // =============================
                 modal.Controls.Add(grid);
-                modal.Controls.Add(lblSummary);
+                modal.Controls.Add(pnlHeader);
                 modal.Controls.Add(pnlButtons);
+
+                modal.AcceptButton = btnPay;
+                modal.CancelButton = btnClose;
 
                 modal.ShowDialog();
             }
@@ -1474,13 +1674,13 @@ namespace POS_qu
         {
             using (Form modal = new Form())
             {
-                modal.Text = $"Bayar Cicilan Transaksi #{transactionId}";
-                modal.Width = 400;
-                modal.Height = 250;
+                modal.Text = $"Pembayaran Sisa Bon #{transactionId}";
+                modal.Size = new Size(400, 350);
                 modal.StartPosition = FormStartPosition.CenterParent;
                 modal.FormBorderStyle = FormBorderStyle.FixedDialog;
                 modal.MaximizeBox = false;
                 modal.MinimizeBox = false;
+                modal.Padding = new Padding(15);
 
                 // =============================
                 // LABEL DAN TEXTBOX NOMINAL
@@ -1488,17 +1688,18 @@ namespace POS_qu
                 Label lblAmount = new Label
                 {
                     Text = $"Jumlah Bayar (Sisa: {dueAmount:N0}):",
-                    Left = 20,
-                    Top = 20,
-                    Width = 200
+                    Dock = DockStyle.Top,
+                    Height = 25
                 };
                 TextBox txtAmount = new TextBox
                 {
-                    Left = 20,
-                    Top = 50,
-                    Width = 200,
-                    Text = dueAmount.ToString("N0")
+                    Dock = DockStyle.Top,
+                    Text = dueAmount.ToString("N0"),
+                    Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                    TabIndex = 0
                 };
+
+                Panel spacer1 = new Panel { Dock = DockStyle.Top, Height = 15 };
 
                 // =============================
                 // LABEL DAN TEXTBOX CATATAN
@@ -1506,43 +1707,48 @@ namespace POS_qu
                 Label lblNote = new Label
                 {
                     Text = "Catatan:",
-                    Left = 20,
-                    Top = 90,
-                    Width = 100
+                    Dock = DockStyle.Top,
+                    Height = 25
                 };
                 TextBox txtNote = new TextBox
                 {
-                    Left = 20,
-                    Top = 120,
-                    Width = 340
+                    Dock = DockStyle.Top,
+                    Multiline = true,
+                    Height = 80,
+                    TabIndex = 1
                 };
 
                 // =============================
                 // BUTTON PANEL
                 // =============================
+                Panel pnlButtons = new Panel { Dock = DockStyle.Bottom, Height = 60, Padding = new Padding(0, 10, 0, 0) };
+
                 Button btnPay = new Button
                 {
-                    Text = "Bayar",
-                    Width = 100,
-                    Height = 50,
-                    Left = 20,
-                    Top = 160
+                    Text = "Bayar Sekarang",
+                    Size = new Size(150, 45),
+                    Location = new Point(200, 10),
+                    BackColor = Color.ForestGreen,
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                    TabIndex = 2
                 };
 
                 Button btnCancel = new Button
                 {
                     Text = "Batal",
-                    Width = 100,
-                    Height = 50,
-                    Left = 140,
-                    Top = 160
+                    Size = new Size(100, 45),
+                    Location = new Point(90, 10),
+                    FlatStyle = FlatStyle.Flat,
+                    TabIndex = 3
                 };
 
                 btnCancel.Click += (s, e) => modal.Close();
                 btnPay.Click += (s, e) =>
                 {
-                    decimal nominal;
-                    if (!decimal.TryParse(txtAmount.Text, out nominal) || nominal <= 0)
+                    string rawAmount = txtAmount.Text.Replace(".", "").Replace(",", "");
+                    if (!decimal.TryParse(rawAmount, out decimal nominal) || nominal <= 0)
                     {
                         MessageBox.Show("Nominal bayar tidak valid.");
                         return;
@@ -1554,7 +1760,7 @@ namespace POS_qu
                         int userId = SessionUser.GetCurrentUser().UserId;
                         _transactionService.PayInstallment(transactionId, nominal, txtNote.Text, userId);
 
-                        MessageBox.Show($"Bayar cicilan: {nominal:N0}\nCatatan: {txtNote.Text}");
+                        MessageBox.Show($"Berhasil bayar bon: {nominal:N0}");
                         modal.Close();
                     }
                     catch (Exception ex)
@@ -1563,14 +1769,20 @@ namespace POS_qu
                     }
                 };
 
+                pnlButtons.Controls.Add(btnPay);
+                pnlButtons.Controls.Add(btnCancel);
 
-                modal.Controls.Add(lblAmount);
-                modal.Controls.Add(txtAmount);
-                modal.Controls.Add(lblNote);
                 modal.Controls.Add(txtNote);
-                modal.Controls.Add(btnPay);
-                modal.Controls.Add(btnCancel);
+                modal.Controls.Add(lblNote);
+                modal.Controls.Add(spacer1);
+                modal.Controls.Add(txtAmount);
+                modal.Controls.Add(lblAmount);
+                modal.Controls.Add(pnlButtons);
 
+                modal.AcceptButton = btnPay;
+                modal.CancelButton = btnCancel;
+
+                txtAmount.Focus();
                 modal.ShowDialog();
             }
         }
