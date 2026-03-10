@@ -1,4 +1,4 @@
-﻿﻿﻿using Npgsql;
+﻿﻿﻿﻿﻿﻿using Npgsql;
 using POS_qu;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -167,13 +167,22 @@ namespace POSqu_menu
                     };
                 }
                 var miRetur = FindMenuItemByName(menuStrip1.Items, "returBarangToolStripMenuItem");
-                if (miRetur != null)
+                if (miRetur == null)
                 {
-                    miRetur.Click += (s, ev) =>
+                    // inject menu Retur Barang jika tidak ada di designer
+                    var miCasher = FindMenuItemByName(menuStrip1.Items, "casherToolStripMenuItem");
+                    if (miCasher != null)
                     {
-                        MessageBox.Show("Fitur Retur sementara tidak tersedia.", "Info");
-                    };
+                        miRetur = new ToolStripMenuItem
+                        {
+                            Name = "returBarangToolStripMenuItem",
+                            Text = "Retur Barang"
+                        };
+                        miCasher.DropDownItems.Add(miRetur);
+                    }
                 }
+                if (miRetur != null)
+                    miRetur.Click += returBarangToolStripMenuItem_Click;
             }
             catch (Exception ex)
             {
@@ -387,6 +396,12 @@ namespace POSqu_menu
         private void pendingTransaksiAdminToolStripMenuItem_Click(object sender, EventArgs e)
         {
             MessageBox.Show("Manajemen Pending/Draft sementara tidak tersedia.", "Info");
+        }
+
+        private void returBarangToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var frm = new ReturnForm();
+            frm.ShowDialog(this);
         }
 
         private void LoadDashboardSummary()

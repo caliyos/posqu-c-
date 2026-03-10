@@ -89,6 +89,30 @@ namespace POS_qu
             {
                 ((Button)btnPending[0]).Click += btnPendingList_Click;
             }
+            var btnCustom = this.Controls.Find("btnCustomTransaction", true).FirstOrDefault() as Button;
+            if (btnCustom == null)
+            {
+                btnCustom = new Button
+                {
+                    Name = "btnCustomTransaction",
+                    Text = "Custom Transaction",
+                    Width = 160,
+                    Height = 36
+                };
+                if (btnOpenCashier != null)
+                {
+                    btnCustom.Left = btnOpenCashier.Left;
+                    btnCustom.Top = btnOpenCashier.Bottom + 8;
+                }
+                else
+                {
+                    btnCustom.Left = 12;
+                    btnCustom.Top = 12;
+                }
+                btnCustom.Click += BtnCustomTransaction_Click;
+                this.Controls.Add(btnCustom);
+                btnCustom.BringToFront();
+            }
 
             // ===============================
             // 🔹 DATAGRIDVIEW STYLE
@@ -282,6 +306,61 @@ namespace POS_qu
         {
             MessageBox.Show("Daftar Pending Cart sementara tidak tersedia.", "Info");
         }
+        private void BtnCustomTransaction_Click(object? sender, EventArgs e)
+        {
+            using var dlg = new CustomTransactionForm();
+            if (dlg.ShowDialog(this) != DialogResult.OK) return;
+            if (string.IsNullOrEmpty(Session.CartSessionCode))
+            {
+                StartNewTransaction();
+            }
+            try
+            {
+                using var con = new Npgsql.NpgsqlConnection(DbConfig.ConnectionString);
+                con.Open();
+                using var tran = con.BeginTransaction();
+                var repoDraft = new CartActivity();
+                var ok = repoDraft.InsertCustomPendingItem(
+                    con, tran,
+                    Session.CartSessionCode,
+                    dlg.ItemName,
+                    dlg.Unit,
+                    dlg.UnitId,
+                    dlg.Qty,
+                    dlg.Price,
+                    1
+                );
+                tran.Commit();
+                if (!ok)
+                {
+                    MessageBox.Show("Gagal menambahkan custom item ke pending.");
+                    return;
+                }
+                _currentInvoice = _cartService.LoadInvoiceFromCartSession(Session.CartSessionCode);
+                RenderInvoice(_currentInvoice);
+                if (_currentInvoice.Items.Any())
+                {
+                    var lastItem = _currentInvoice.Items.Last();
+                    AddInvoiceItemToPanel(lastItem);
+                }
+                RenderReceiptUI(
+                    _currentInvoice,
+                    SessionUser.GetCurrentUser().TerminalName,
+                    SessionUser.GetCurrentUser().Username,
+                    SessionUser.GetCurrentUser().ShiftId.ToString(),
+                    "Unpaid",
+                    _currentInvoice.GrandTotal.ToString(),
+                    "-",
+                    "0"
+                );
+                UpdateInvoiceSummary();
+                flogger.Log(SessionUser.GetCurrentUser().UserId.ToString(), "CustomTransaction_Add", null, "custom_to_pending", new { name = dlg.ItemName, qty = dlg.Qty, price = dlg.Price }.ToString());
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error custom transaction: " + ex.Message);
+            }
+        }
         private void PromptResumeCartIfAny()
         {
             var session = SessionUser.GetCurrentUser();
@@ -335,8 +414,29 @@ namespace POS_qu
 
         private void UpdateShiftInfoUI()
         {
-            lblShiftInfo.Text = "Shift: status tidak diketahui";
-            lblShiftInfo.ForeColor = Color.DarkOrange;
+            try
+            {
+                var session = SessionUser.GetCurrentUser();
+                var sc = new POS_qu.Controllers.ShiftController();
+                var open = sc.GetOpenShift(session.UserId, session.TerminalId);
+                if (open != null)
+                {
+                    var openedAt = (DateTime)open["opened_at"];
+                    var openingCash = (decimal)open["opening_cash"];
+                    lblShiftInfo.Text = $"Shift aktif: #{open["id"]} • {session.Username} • {session.TerminalName} • {openedAt:dd/MM/yyyy HH:mm} • Saldo Awal: Rp {openingCash:N0}";
+                    lblShiftInfo.ForeColor = Color.DarkGreen;
+                }
+                else
+                {
+                    lblShiftInfo.Text = "Shift: tidak aktif";
+                    lblShiftInfo.ForeColor = Color.Firebrick;
+                }
+            }
+            catch
+            {
+                lblShiftInfo.Text = "Shift: status tidak diketahui";
+                lblShiftInfo.ForeColor = Color.DarkOrange;
+            }
         }
         private void StartNewTransaction()
         {

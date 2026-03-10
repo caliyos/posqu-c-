@@ -171,27 +171,26 @@ namespace POS_qu.services
 
                         foreach (var item in details)
                         {
-                            decimal stockNeeded = item.TsdQuantity * item.TsdConversionRate;
-
-                            int affected = _repo.ReduceStock(con, tran, item.ItemId, stockNeeded);
-
-                            if (affected == 0)
-                                throw new Exception($"Stock update failed for item {item.ItemId}");
-
-                            decimal newStock = _repo.GetCurrentStock(con, tran, item.ItemId);
-
-                            _repo.InsertStockLog(con, tran, new StockLog
+                            if (item.ItemId > 0)
                             {
-                                ProductId = item.ItemId,
-                                TipeTransaksi = "payment",
-                                QtyMasuk = 0,
-                                QtyKeluar = item.TsdQuantity,
-                                SisaStock = newStock,
-                                Keterangan = $"Payment Transaction #{transaction.TsNumbering}",
-                                UserId = sessionUser.UserId,
-                                CreatedAt = DateTime.Now,
-                                LoginId = sessionUser.LoginId
-                            });
+                                decimal stockNeeded = item.TsdQuantity * item.TsdConversionRate;
+                                int affected = _repo.ReduceStock(con, tran, item.ItemId, stockNeeded);
+                                if (affected == 0)
+                                    throw new Exception($"Stock update failed for item {item.ItemId}");
+                                decimal newStock = _repo.GetCurrentStock(con, tran, item.ItemId);
+                                _repo.InsertStockLog(con, tran, new StockLog
+                                {
+                                    ProductId = item.ItemId,
+                                    TipeTransaksi = "payment",
+                                    QtyMasuk = 0,
+                                    QtyKeluar = item.TsdQuantity,
+                                    SisaStock = newStock,
+                                    Keterangan = $"Payment Transaction #{transaction.TsNumbering}",
+                                    UserId = sessionUser.UserId,
+                                    CreatedAt = DateTime.Now,
+                                    LoginId = sessionUser.LoginId
+                                });
+                            }
                         }
 
                         // ===============================
@@ -347,27 +346,30 @@ namespace POS_qu.services
 
                         foreach (var item in details)
                         {
-                            decimal stockNeeded = item.TsdQuantity * item.TsdConversionRate;
-
-                            int affected = _repo.ReduceStock(con, tran, item.ItemId, stockNeeded);
-
-                            if (affected == 0)
-                                throw new Exception($"Stock gagal update item {item.ItemId}");
-
-                            // 🔹 INSERT STOCK LOG
-                            decimal newStock = _repo.GetCurrentStock(con, tran, item.ItemId);
-                            _repo.InsertStockLog(con, tran, new StockLog
+                            if (item.ItemId > 0)
                             {
-                                ProductId = item.ItemId,
-                                TipeTransaksi = "installment",
-                                QtyMasuk = 0,
-                                QtyKeluar = item.TsdQuantity,
-                                SisaStock = newStock,
-                                Keterangan = $"Installment Transaction #{transaction.TsNumbering}",
-                                UserId = sessionUser.UserId,
-                                CreatedAt = DateTime.Now,
-                                LoginId = sessionUser.LoginId
-                            });
+                                decimal stockNeeded = item.TsdQuantity * item.TsdConversionRate;
+    
+                                int affected = _repo.ReduceStock(con, tran, item.ItemId, stockNeeded);
+    
+                                if (affected == 0)
+                                    throw new Exception($"Stock gagal update item {item.ItemId}");
+    
+                                // 🔹 INSERT STOCK LOG
+                                decimal newStock = _repo.GetCurrentStock(con, tran, item.ItemId);
+                                _repo.InsertStockLog(con, tran, new StockLog
+                                {
+                                    ProductId = item.ItemId,
+                                    TipeTransaksi = "installment",
+                                    QtyMasuk = 0,
+                                    QtyKeluar = item.TsdQuantity,
+                                    SisaStock = newStock,
+                                    Keterangan = $"Installment Transaction #{transaction.TsNumbering}",
+                                    UserId = sessionUser.UserId,
+                                    CreatedAt = DateTime.Now,
+                                    LoginId = sessionUser.LoginId
+                                });
+                            }
 
                         }
 
@@ -491,23 +493,26 @@ namespace POS_qu.services
 
                 foreach (var item in details)
                 {
-                    decimal stockNeeded = item.TsdQuantity * item.TsdConversionRate;
-                    int affected = _repo.ReduceStock(con, tran, item.ItemId, stockNeeded);
-                    if (affected == 0)
-                        throw new Exception($"Stock update failed for item {item.ItemId}");
-                    decimal newStock = _repo.GetCurrentStock(con, tran, item.ItemId);
-                    _repo.InsertStockLog(con, tran, new StockLog
+                    if (item.ItemId > 0)
                     {
-                        ProductId = item.ItemId,
-                        TipeTransaksi = "payment",
-                        QtyMasuk = 0,
-                        QtyKeluar = item.TsdQuantity,
-                        SisaStock = newStock,
-                        Keterangan = $"Split Payment #{transaction.TsNumbering}",
-                        UserId = sessionUser.UserId,
-                        CreatedAt = DateTime.Now,
-                        LoginId = sessionUser.LoginId
-                    });
+                        decimal stockNeeded = item.TsdQuantity * item.TsdConversionRate;
+                        int affected = _repo.ReduceStock(con, tran, item.ItemId, stockNeeded);
+                        if (affected == 0)
+                            throw new Exception($"Stock update failed for item {item.ItemId}");
+                        decimal newStock = _repo.GetCurrentStock(con, tran, item.ItemId);
+                        _repo.InsertStockLog(con, tran, new StockLog
+                        {
+                            ProductId = item.ItemId,
+                            TipeTransaksi = "payment",
+                            QtyMasuk = 0,
+                            QtyKeluar = item.TsdQuantity,
+                            SisaStock = newStock,
+                            Keterangan = $"Split Payment #{transaction.TsNumbering}",
+                            UserId = sessionUser.UserId,
+                            CreatedAt = DateTime.Now,
+                            LoginId = sessionUser.LoginId
+                        });
+                    }
                 }
 
                 _repo.DeletePendingTransactions(con, tran, invoice.CartSessionCode);
@@ -519,6 +524,118 @@ namespace POS_qu.services
                     details: new { Invoice = invoice, Parts = parts }
                 );
                 return TransactionResult.Success(invoice.ChangeAmount);
+            }
+            catch (Exception ex)
+            {
+                tran.Rollback();
+                return TransactionResult.Fail(ex.Message);
+            }
+        }
+
+        public TransactionResult ProcessReturnAndSave(InvoiceData invoice, string note = "")
+        {
+            if (invoice == null || !invoice.Items.Any())
+                return TransactionResult.Fail("Daftar retur kosong.");
+
+            var sessionUser = SessionUser.GetCurrentUser();
+
+            decimal totalRefund = invoice.Items.Sum(i => i.Price * i.Qty);
+            decimal grandTotal = totalRefund; // positive sum of items being returned
+
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+            using var tran = con.BeginTransaction();
+            try
+            {
+                Transactions transaction = new Transactions
+                {
+                    TsNumbering = Utility.GenerateTransactionNumber(),
+                    TsCode = Utility.getTrxNumbering(),
+                    TsTotal = -grandTotal,
+                    TsPaymentAmount = 0,
+                    TsCashback = 0,
+                    TsMethod = "RETURN",
+                    TsStatus = TransactionStatus.Paid,
+                    TsChange = 0,
+                    TsInternalNote = "Return Transaction",
+                    TsNote = note ?? (invoice.GlobalNote ?? ""),
+                    TsDiscountTotal = 0,
+                    TsGrandTotal = -grandTotal,
+                    TsCustomer = null,
+                    TsDelivery = 0,
+                    TsFreename = "Guest",
+                    UserId = sessionUser.UserId,
+                    CreatedBy = sessionUser.UserId,
+                    TerminalId = sessionUser.TerminalId,
+                    ShiftId = sessionUser.ShiftId,
+                    CreatedAt = DateTime.Now,
+                    OrderId = null,
+                    CartSessionCode = invoice.CartSessionCode
+                };
+
+                int transactionId = _repo.InsertTransaction(con, tran, transaction);
+                if (transactionId <= 0)
+                    throw new Exception("Gagal membuat transaksi retur.");
+
+                var details = invoice.Items.Select(i => new TransactionDetail
+                {
+                    TsId = transactionId,
+                    ItemId = i.ItemId, // 0 untuk custom
+                    Barcode = i.Barcode,
+                    Name = i.Name,
+                    TsdSellPrice = i.Price,
+                    TsdBuyPrice = i.CostPrice,
+                    TsdQuantity = i.Qty,
+                    TsdUnit = i.Unit ?? "pcs",
+                    TsdConversionRate = i.ConversionRate <= 0 ? 1 : i.ConversionRate,
+                    TsdPricePerUnit = i.Price,
+                    TsdUnitVariant = string.IsNullOrEmpty(i.UnitVariant) ? (i.Unit ?? "pcs") : i.UnitVariant,
+                    TsdDiscountPerItem = 0,
+                    TsdDiscountPercentage = 0,
+                    TsdDiscountTotal = 0,
+                    TsdTax = 0,
+                    TsdTotal = i.Price * i.Qty,
+                    TsdNote = string.IsNullOrWhiteSpace(i.Note) ? "RETURN" : i.Note,
+                    CreatedBy = sessionUser.UserId,
+                    CreatedAt = DateTime.Now,
+                    CartSessionCode = invoice.CartSessionCode
+                }).ToList();
+
+                if (details.Count > 0)
+                    _repo.InsertTransactionDetails(con, tran, details);
+
+                foreach (var d in details)
+                {
+                    if (d.ItemId > 0)
+                    {
+                        decimal stockIn = d.TsdQuantity * d.TsdConversionRate;
+                        int affected = _repo.IncreaseStock(con, tran, d.ItemId, stockIn);
+                        if (affected == 0)
+                            throw new Exception($"Gagal menambah stok item {d.ItemId}");
+                        decimal newStock = _repo.GetCurrentStock(con, tran, d.ItemId);
+                        _repo.InsertStockLog(con, tran, new StockLog
+                        {
+                            ProductId = d.ItemId,
+                            TipeTransaksi = "return",
+                            QtyMasuk = d.TsdQuantity,
+                            QtyKeluar = 0,
+                            SisaStock = newStock,
+                            Keterangan = $"Return Transaction #{transaction.TsNumbering}",
+                            UserId = sessionUser.UserId,
+                            CreatedAt = DateTime.Now,
+                            LoginId = sessionUser.LoginId
+                        });
+                    }
+                }
+
+                tran.Commit();
+                _activityService.LogAction(
+                    userId: sessionUser.UserId.ToString(),
+                    actionType: "Return_Complete",
+                    referenceId: transactionId,
+                    details: new { Invoice = invoice }
+                );
+                return TransactionResult.Success(0);
             }
             catch (Exception ex)
             {

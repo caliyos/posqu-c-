@@ -20,6 +20,10 @@ namespace POS_qu
             this.totalAmount = totalAmount;
 
             //txtCashback.Text = "0";
+            this.Load += (_, __) =>
+            {
+                SafeWireNumericFormatters();
+            };
         }
 
         // ================================
@@ -134,6 +138,7 @@ namespace POS_qu
 
             PaymentAmountChanged?.Invoke(PaymentAmount);
             UpdatePayButtonState();
+            // optional format on leave to avoid caret jump
         }
 
         private void cmbPaymentMethod_SelectedIndexChanged(object sender, EventArgs e)
@@ -202,10 +207,16 @@ namespace POS_qu
 
         private void UpdatePayButtonState()
         {
-            decimal payment = PaymentAmount;
-            decimal change = payment - totalAmount;
+            decimal paid = PaymentAmount;
+            if (IsSplitPayment)
+            {
+                decimal cash = txtCashPart != null ? ParseMoney(txtCashPart.Text) : 0;
+                decimal card = txtCardPart != null ? ParseMoney(txtCardPart.Text) : 0;
+                paid = cash + card;
+            }
+            decimal change = paid - totalAmount;
 
-            bool valid = change > 0 && cmbPaymentMethod.SelectedItem != null;
+            bool valid = paid >= totalAmount && cmbPaymentMethod.SelectedItem != null;
 
             btnPay.Enabled = valid;
         }
@@ -218,6 +229,33 @@ namespace POS_qu
                                .Trim();
             if (decimal.TryParse(clean, out var value)) return value;
             return 0;
+        }
+
+        private void SafeWireNumericFormatters()
+        {
+            if (txtPaymentAmount != null)
+            {
+                txtPaymentAmount.Leave += (s, e) => txtPaymentAmount.Text = FormatN0(txtPaymentAmount.Text);
+            }
+            if (txtCashPart != null)
+            {
+                txtCashPart.Leave += (s, e) => txtCashPart.Text = FormatN0(txtCashPart.Text);
+                txtCashPart.TextChanged += (s, e) => UpdatePayButtonState();
+            }
+            if (txtCardPart != null)
+            {
+                txtCardPart.Leave += (s, e) => txtCardPart.Text = FormatN0(txtCardPart.Text);
+                txtCardPart.TextChanged += (s, e) => UpdatePayButtonState();
+            }
+            if (txtDeliveryAmount != null)
+            {
+                txtDeliveryAmount.Leave += (s, e) => txtDeliveryAmount.Text = FormatN0(txtDeliveryAmount.Text);
+            }
+        }
+        private static string FormatN0(string input)
+        {
+            var v = ParseMoney(input);
+            return v.ToString("N0");
         }
 
     }

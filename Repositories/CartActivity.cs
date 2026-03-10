@@ -342,7 +342,7 @@ SELECT
     pt.pt_id,
     pt.item_id,
     pt.barcode,
-    i.name,
+    COALESCE(i.name, pt.note, pt.barcode) AS name,
     pt.quantity AS qty,
     pt.unit,
     pt.unitid,
@@ -356,7 +356,7 @@ SELECT
     pt.note,
     pt.total
 FROM pending_transactions pt
-LEFT JOIN items i ON i.id = pt.item_id
+LEFT JOIN items i ON i.id = pt.item_id AND pt.item_id > 0
 LEFT JOIN units u ON u.id = i.unit
 WHERE pt.cart_session_code = @session
 ORDER BY pt.created_at;";
@@ -388,6 +388,45 @@ ORDER BY pt.created_at;";
             }
 
             return dt;
+        }
+
+        public bool InsertCustomPendingItem(
+      NpgsqlConnection conn,
+      NpgsqlTransaction tran,
+      string sessionCode,
+      string name,
+      string unit,
+      int unitid,
+      decimal qty,
+      decimal sell_price,
+      decimal conversionRate
+  )
+        {
+            string sql = @"
+INSERT INTO pending_transactions
+(cart_session_code, terminal_id, cashier_id, item_id, barcode,
+ quantity, unitid, unit, sell_price, buy_price, total, tsd_conversion_rate, note)
+VALUES
+(@session, @terminal, @cashier, 0, @barcode,
+ @qty, @unitid, @unit, @sell_price, 0, @total, @conversionRate, @note)";
+
+            using var cmd = new NpgsqlCommand(sql, conn, tran);
+            cmd.Parameters.AddWithValue("@session", sessionCode);
+            cmd.Parameters.AddWithValue("@barcode", $"CUSTOM:{name}");
+            cmd.Parameters.AddWithValue("@qty", qty);
+            cmd.Parameters.AddWithValue("@unitid", unitid);
+            cmd.Parameters.AddWithValue("@unit", unit);
+            cmd.Parameters.AddWithValue("@sell_price", sell_price);
+            cmd.Parameters.AddWithValue("@total", sell_price * qty);
+            cmd.Parameters.AddWithValue("@conversionRate", conversionRate <= 0 ? 1 : conversionRate);
+            cmd.Parameters.AddWithValue("@note", name);
+
+            var session = SessionUser.GetCurrentUser();
+            cmd.Parameters.AddWithValue("@terminal", session.TerminalId);
+            cmd.Parameters.AddWithValue("@cashier", session.UserId);
+
+            int affected = cmd.ExecuteNonQuery();
+            return affected > 0;
         }
 
         public void DeletePendingItem(string sessionCode, int itemId)

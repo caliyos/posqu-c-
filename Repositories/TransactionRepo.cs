@@ -149,6 +149,27 @@ VALUES (
             }
         }
 
+        public int IncreaseStock(
+      NpgsqlConnection con,
+      NpgsqlTransaction tran,
+      int itemId,
+      decimal qty)
+        {
+            string sql = @"
+        UPDATE items
+        SET 
+            stock = stock + @qty
+        WHERE id = @id";
+
+            using (var cmd = new NpgsqlCommand(sql, con, tran))
+            {
+                cmd.Parameters.AddWithValue("@id", itemId);
+                cmd.Parameters.AddWithValue("@qty", qty);
+
+                return cmd.ExecuteNonQuery();
+            }
+        }
+
 
         public decimal GetCurrentStock(
      NpgsqlConnection con,
@@ -291,6 +312,32 @@ VALUES (
 
         ///////////////// END CICILAN /////////////////////////////
 
+        public System.Data.DataTable GetTransactionDetailsByNumber(string tsNumbering)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+            using var cmd = new NpgsqlCommand(@"
+SELECT 
+    td.item_id,
+    i.name,
+    i.barcode,
+    td.tsd_quantity,
+    td.tsd_unit,
+    td.tsd_sell_price,
+    td.tsd_conversion_rate
+FROM transaction_details td
+JOIN transactions t ON t.ts_id = td.ts_id
+LEFT JOIN items i ON i.id = td.item_id
+WHERE t.ts_numbering = @num
+ORDER BY td.tsd_id
+", conn);
+            cmd.Parameters.AddWithValue("@num", tsNumbering);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new System.Data.DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
 
 
 
@@ -307,5 +354,3 @@ VALUES (
 
     }
 }
-
-
