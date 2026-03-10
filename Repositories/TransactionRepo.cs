@@ -4,6 +4,7 @@ using POS_qu.Models;
 using POS_qu.DTO;
 using System;
 using System.Collections.Generic;
+using System.Data;
 
 namespace POS_qu.services
 {
@@ -336,6 +337,63 @@ ORDER BY td.tsd_id
             var dt = new System.Data.DataTable();
             da.Fill(dt);
             return dt;
+        }
+
+        public DataTable GetPaidTransactions()
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+            using var cmd = new NpgsqlCommand(@"
+SELECT ts_id, ts_numbering, ts_grand_total, ts_method, created_at, user_id
+FROM transactions
+WHERE ts_status = 1 AND deleted_at IS NULL
+ORDER BY created_at DESC
+", conn);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        public DataTable GetTransactionDetailsById(int tsId)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+            using var cmd = new NpgsqlCommand(@"
+SELECT 
+    td.tsd_id,
+    td.item_id,
+    COALESCE(i.name, td.tsd_name) AS name,
+    COALESCE(i.barcode, td.tsd_barcode) AS barcode,
+    td.tsd_unit,
+    td.tsd_quantity,
+    td.tsd_sell_price,
+    td.tsd_total,
+    td.tsd_discount_total,
+    td.tsd_tax,
+    COALESCE(td.tsd_conversion_rate, 1) AS tsd_conversion_rate,
+    td.tsd_note
+FROM transaction_details td
+LEFT JOIN items i ON i.id = td.item_id AND td.item_id > 0
+WHERE td.ts_id = @id
+ORDER BY td.tsd_id
+", conn);
+            cmd.Parameters.AddWithValue("@id", tsId);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        public void SoftCancelTransaction(NpgsqlConnection con, NpgsqlTransaction tran, int tsId)
+        {
+            using var cmd = new NpgsqlCommand(@"
+UPDATE transactions
+SET deleted_at = NOW(), updated_at = NOW()
+WHERE ts_id = @id AND deleted_at IS NULL
+", con, tran);
+            cmd.Parameters.AddWithValue("@id", tsId);
+            cmd.ExecuteNonQuery();
         }
 
 

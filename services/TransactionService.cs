@@ -692,6 +692,63 @@ namespace POS_qu.services
             return list;
         }
 
+        public TransactionResult CancelTransaction(int tsId)
+        {
+            var sessionUser = SessionUser.GetCurrentUser();
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+            using var tran = con.BeginTransaction();
+            try
+            {
+                var txInfo = _repo.GetTransactionById(tsId);
+                if (txInfo == null)
+                    return TransactionResult.Fail("Transaksi tidak ditemukan.");
+
+                var details = _repo.GetTransactionDetailsById(tsId);
+                foreach (System.Data.DataRow r in details.Rows)
+                {
+                    int itemId = r["item_id"] == DBNull.Value ? 0 : Convert.ToInt32(r["item_id"]);
+                    if (itemId > 0)
+                    {
+                        decimal qty = Convert.ToDecimal(r["tsd_quantity"]);
+                        decimal conv = r["tsd_conversion_rate"] == DBNull.Value ? 1 : Convert.ToDecimal(r["tsd_conversion_rate"]);
+                        decimal stockIn = qty * conv;
+                        int affected = _repo.IncreaseStock(con, tran, itemId, stockIn);
+                        if (affected == 0)
+                            throw new Exception($"Gagal menambah stok item {itemId}");
+                        decimal newStock = _repo.GetCurrentStock(con, tran, itemId);
+                        _repo.InsertStockLog(con, tran, new StockLog
+                        {
+                            ProductId = itemId,
+                            TipeTransaksi = "cancel",
+                            QtyMasuk = qty,
+                            QtyKeluar = 0,
+                            SisaStock = newStock,
+                            Keterangan = $"Cancel Transaction #{txInfo.TransactionNumber}",
+                            UserId = sessionUser.UserId,
+                            CreatedAt = DateTime.Now,
+                            LoginId = sessionUser.LoginId
+                        });
+                    }
+                }
+
+                _repo.SoftCancelTransaction(con, tran, tsId);
+                tran.Commit();
+                _activityService.LogAction(
+                    userId: sessionUser.UserId.ToString(),
+                    actionType: "Transaction_Cancelled",
+                    referenceId: tsId,
+                    details: new { TransactionId = tsId }
+                );
+                return TransactionResult.Success(0);
+            }
+            catch (Exception ex)
+            {
+                tran.Rollback();
+                return TransactionResult.Fail(ex.Message);
+            }
+        }
+
         public List<InstallmentDto> GetInstallments(int transactionId)
         {
             var list = new List<InstallmentDto>();
