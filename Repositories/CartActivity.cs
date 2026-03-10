@@ -1,4 +1,4 @@
-﻿using Npgsql;
+using Npgsql;
 using POS_qu.DTO;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -184,6 +184,95 @@ LIMIT 1";
         }
 
 
+        public Item GetSinglePendingItemById(int pt_id)
+        {
+            string sql = @"
+SELECT 
+    i.id, 
+    i.name, 
+    i.barcode, 
+    i.sell_price, 
+    i.buy_price, 
+    i.stock, 
+    i.reserved_stock, 
+    pt.unitid AS unit_id,
+    pt.unit AS unit_name,
+    i.category_id, 
+    i.note, 
+    i.picture, 
+    i.is_inventory_p, 
+    i.is_purchasable, 
+    i.is_sellable,
+    i.is_note_payment, 
+    i.is_changeprice_p, 
+    i.is_have_bahan, 
+    i.is_box, 
+    i.is_produksi,
+    i.discount_formula, 
+    i.created_at, 
+    i.updated_at, 
+    i.deleted_at, 
+    i.supplier_id, 
+    i.flag,
+    pt.tsd_conversion_rate
+FROM pending_transactions pt
+
+LEFT JOIN items i ON pt.item_id = i.id 
+LEFT JOIN units u ON u.id = i.unit
+WHERE i.deleted_at IS NULL
+AND pt.pt_id = @search
+ORDER BY i.stock > 0 DESC, i.name
+LIMIT 1";
+
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+
+            using var cmd = new NpgsqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@search",pt_id);
+
+            using var dr = cmd.ExecuteReader();
+
+            if (!dr.Read()) return null;
+
+            return new Item
+            {
+                id = Convert.ToInt32(dr.GetInt64(dr.GetOrdinal("id"))),
+                name = dr.GetString(dr.GetOrdinal("name")),
+                barcode = dr.IsDBNull(dr.GetOrdinal("barcode")) ? "" : dr.GetString(dr.GetOrdinal("barcode")),
+                sell_price = dr.GetDecimal(dr.GetOrdinal("sell_price")),
+                buy_price = dr.GetDecimal(dr.GetOrdinal("buy_price")),
+                stock = Convert.ToInt32(dr.GetDouble(dr.GetOrdinal("stock"))),
+                reserved_stock = Convert.ToInt32(dr.GetDouble(dr.GetOrdinal("reserved_stock"))),
+
+                // 🔥 FIX DI SINI
+                unitid = dr.GetInt32(dr.GetOrdinal("unit_id")),     // INT
+                unit = dr["unit_name"]?.ToString() ?? "",            // STRING (nama unit)
+
+                category_id = dr.IsDBNull(dr.GetOrdinal("category_id")) ? 0 : dr.GetInt32(dr.GetOrdinal("category_id")),
+                note = dr["note"]?.ToString() ?? "",
+                picture = dr["picture"]?.ToString() ?? "",
+                is_inventory_p = dr.GetBoolean(dr.GetOrdinal("is_inventory_p")),
+                IsPurchasable = dr.GetBoolean(dr.GetOrdinal("is_purchasable")),
+                IsSellable = dr.GetBoolean(dr.GetOrdinal("is_sellable")),
+                RequireNotePayment = dr.GetBoolean(dr.GetOrdinal("is_note_payment")),
+                is_changeprice_p = dr.GetBoolean(dr.GetOrdinal("is_changeprice_p")),
+                HasMaterials = dr.GetBoolean(dr.GetOrdinal("is_have_bahan")),
+                IsPackage = dr.GetBoolean(dr.GetOrdinal("is_box")),
+                IsProduced = dr.GetBoolean(dr.GetOrdinal("is_produksi")),
+                discount_formula = dr["discount_formula"]?.ToString() ?? "",
+                created_at = dr.GetDateTime(dr.GetOrdinal("created_at")),
+                updated_at = dr.GetDateTime(dr.GetOrdinal("updated_at")),
+                deleted_at = dr.IsDBNull(dr.GetOrdinal("deleted_at")) ? null : dr.GetDateTime(dr.GetOrdinal("deleted_at")),
+                supplier_id = dr.IsDBNull(dr.GetOrdinal("supplier_id")) ? 0 : dr.GetInt32(dr.GetOrdinal("supplier_id")),
+                flag = dr.IsDBNull(dr.GetOrdinal("flag")) ? 0 : dr.GetInt32(dr.GetOrdinal("flag")),
+
+                conversion = dr.GetInt32(dr.GetOrdinal("tsd_conversion_rate")) ,
+                price_per_pcs = dr.GetDecimal(dr.GetOrdinal("sell_price")),
+                price_per_pcs_asli = dr.GetDecimal(dr.GetOrdinal("buy_price"))
+            };
+        }
+
+
 
 
 
@@ -228,6 +317,7 @@ LIMIT 1";
             var dt = new DataTable();
 
             // Tambahkan kolom sesuai InvoiceBuilder
+            dt.Columns.Add("pt_id", typeof(int));
             dt.Columns.Add("item_id", typeof(int));
             dt.Columns.Add("barcode", typeof(string));
             dt.Columns.Add("name", typeof(string));
@@ -249,6 +339,7 @@ LIMIT 1";
 
             string sql = @"
 SELECT 
+    pt.pt_id,
     pt.item_id,
     pt.barcode,
     i.name,
@@ -277,6 +368,7 @@ ORDER BY pt.created_at;";
             while (reader.Read())
             {
                 dt.Rows.Add(
+                    reader.GetInt32(reader.GetOrdinal("pt_id")),
                     reader.GetInt32(reader.GetOrdinal("item_id")),
                     reader.GetString(reader.GetOrdinal("barcode")),
                     reader["name"]?.ToString() ?? "",
@@ -1032,6 +1124,28 @@ LIMIT 1";
 
             var result = cmd.ExecuteScalar();
             return result?.ToString();
+        }
+
+        public DataTable GetPendingCartsByCashier(int cashierId)
+        {
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+            string sql = @"
+SELECT 
+    cart_session_code,
+    COUNT(*) AS total_items,
+    COALESCE(SUM(total),0) AS grand_total,
+    MAX(updated_at) AS last_update
+FROM pending_transactions
+WHERE cashier_id = @cashierId
+GROUP BY cart_session_code
+ORDER BY last_update DESC";
+            using var cmd = new NpgsqlCommand(sql, con);
+            cmd.Parameters.AddWithValue("@cashierId", cashierId);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
         }
 
 

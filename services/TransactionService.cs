@@ -1,4 +1,4 @@
-﻿using Npgsql;
+using Npgsql;
 using POS_qu.Controllers;
 using POS_qu.Core;
 using POS_qu.DTO;
@@ -403,6 +403,127 @@ namespace POS_qu.services
                         return TransactionResult.Fail(ex.Message);
                     }
                 }
+            }
+        }
+
+        public TransactionResult ProcessSplitPaymentAndSave(
+            InvoiceData invoice,
+            List<(string Method, decimal Amount)> parts
+        )
+        {
+            if (invoice == null || !invoice.Items.Any())
+                return TransactionResult.Fail("Invoice kosong.");
+            if (parts == null || parts.Count == 0)
+                return TransactionResult.Fail("Rincian pembayaran kosong.");
+
+            decimal grandTotal = CalculateGrandTotal(invoice);
+            decimal totalPaid = parts.Sum(p => p.Amount);
+            if (totalPaid < grandTotal)
+                return TransactionResult.Fail("Total pembayaran kurang dari grand total.");
+
+            invoice.PaymentAmount = totalPaid;
+            invoice.ChangeAmount = totalPaid - grandTotal;
+            invoice.Status = "Paid";
+            invoice.PaymentMethod = "SPLIT";
+
+            var sessionUser = SessionUser.GetCurrentUser();
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+            using var tran = con.BeginTransaction();
+            try
+            {
+                Transactions transaction = new Transactions
+                {
+                    TsNumbering = Utility.GenerateTransactionNumber(),
+                    TsCode = Utility.getTrxNumbering(),
+                    TsTotal = invoice.Items.Sum(x => x.Total),
+                    TsPaymentAmount = invoice.PaymentAmount,
+                    TsCashback = invoice.ChangeAmount,
+                    TsMethod = "SPLIT",
+                    TsStatus = TransactionStatus.Paid,
+                    TsChange = invoice.ChangeAmount,
+                    TsInternalNote = "Split payment",
+                    TsNote = invoice.GlobalNote ?? string.Empty,
+                    TsDiscountTotal = 0,
+                    TsGrandTotal = grandTotal,
+                    TsCustomer = null,
+                    TsDelivery = invoice.DeliveryAmount,
+                    TsFreename = "Guest",
+                    UserId = sessionUser.UserId,
+                    CreatedBy = sessionUser.UserId,
+                    TerminalId = sessionUser.TerminalId,
+                    ShiftId = sessionUser.ShiftId,
+                    CreatedAt = DateTime.Now,
+                    OrderId = null,
+                    CartSessionCode = invoice.CartSessionCode
+                };
+
+                int transactionId = _repo.InsertTransaction(con, tran, transaction);
+                if (transactionId <= 0)
+                    throw new Exception("Gagal insert transaksi split.");
+
+                var details = invoice.Items.Select(i => new TransactionDetail
+                {
+                    TsId = transactionId,
+                    ItemId = i.ItemId,
+                    Barcode = i.Barcode,
+                    Name = i.Name,
+                    TsdSellPrice = i.Price,
+                    TsdBuyPrice = i.CostPrice,
+                    TsdQuantity = i.Qty,
+                    TsdUnit = i.Unit,
+                    TsdConversionRate = i.ConversionRate,
+                    TsdPricePerUnit = i.Price,
+                    TsdUnitVariant = i.Unit,
+                    TsdDiscountPerItem = i.Qty > 0 ? i.DiscountAmount / i.Qty : 0,
+                    TsdDiscountPercentage = i.DiscountPercent,
+                    TsdDiscountTotal = i.DiscountAmount,
+                    TsdTax = i.Tax,
+                    TsdTotal = i.Total,
+                    TsdNote = i.Note,
+                    CreatedBy = sessionUser.UserId,
+                    CreatedAt = DateTime.Now,
+                    CartSessionCode = invoice.CartSessionCode
+                }).ToList();
+
+                if (details.Count > 0)
+                    _repo.InsertTransactionDetails(con, tran, details);
+
+                foreach (var item in details)
+                {
+                    decimal stockNeeded = item.TsdQuantity * item.TsdConversionRate;
+                    int affected = _repo.ReduceStock(con, tran, item.ItemId, stockNeeded);
+                    if (affected == 0)
+                        throw new Exception($"Stock update failed for item {item.ItemId}");
+                    decimal newStock = _repo.GetCurrentStock(con, tran, item.ItemId);
+                    _repo.InsertStockLog(con, tran, new StockLog
+                    {
+                        ProductId = item.ItemId,
+                        TipeTransaksi = "payment",
+                        QtyMasuk = 0,
+                        QtyKeluar = item.TsdQuantity,
+                        SisaStock = newStock,
+                        Keterangan = $"Split Payment #{transaction.TsNumbering}",
+                        UserId = sessionUser.UserId,
+                        CreatedAt = DateTime.Now,
+                        LoginId = sessionUser.LoginId
+                    });
+                }
+
+                _repo.DeletePendingTransactions(con, tran, invoice.CartSessionCode);
+                tran.Commit();
+                _activityService.LogAction(
+                    userId: sessionUser.UserId.ToString(),
+                    actionType: "Transaction_Complete_Split",
+                    referenceId: transactionId,
+                    details: new { Invoice = invoice, Parts = parts }
+                );
+                return TransactionResult.Success(invoice.ChangeAmount);
+            }
+            catch (Exception ex)
+            {
+                tran.Rollback();
+                return TransactionResult.Fail(ex.Message);
             }
         }
 

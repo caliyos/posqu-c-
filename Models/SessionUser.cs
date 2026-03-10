@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -58,6 +58,21 @@ namespace POS_qu.Models
         public static SessionUser GetCurrentUser()
         {
             return instance;
+        }
+
+        public static void UpdateShiftId(int shiftId)
+        {
+            if (instance == null) return;
+            instance = new SessionUser(
+                instance.UserId,
+                instance.LoginId,
+                instance.Username,
+                instance.RoleId,
+                instance.RoleName,
+                shiftId,
+                instance.TerminalId,
+                instance.TerminalName
+            );
         }
 
         public static void Logout()

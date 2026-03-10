@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -33,6 +33,15 @@ namespace POS_qu
         // ================================
         // PROPERTIES
         // ================================
+        public bool IsSplitPayment
+        {
+            get
+            {
+                return PaymentMethod == "Split Payment";
+            }
+        }
+        public IEnumerable<(string Method, decimal Amount)>? SplitPayments { get; set; }
+
         public decimal PaymentAmount
         {
             get
@@ -83,16 +92,39 @@ namespace POS_qu
         // ================================
         private void btnPay_Click(object sender, EventArgs e)
         {
-            if (txtPaymentAmount.Text == string.Empty || cmbPaymentMethod.SelectedItem == null)
+            if (cmbPaymentMethod.SelectedItem == null)
             {
                 MessageBox.Show("Please fill all the fields.");
                 return;
             }
 
-            decimal paymentAmount = PaymentAmount;
-            //decimal cashback = paymentAmount - totalAmount;
+            if (IsSplitPayment)
+            {
+                decimal cash = 0, card = 0;
+                if (txtCashPart != null && !string.IsNullOrWhiteSpace(txtCashPart.Text))
+                    cash = ParseMoney(txtCashPart.Text);
+                if (txtCardPart != null && !string.IsNullOrWhiteSpace(txtCardPart.Text))
+                    card = ParseMoney(txtCardPart.Text);
 
-            //txtCashback.Text = cashback.ToString("C");
+                if (cash <= 0 && card <= 0)
+                {
+                    MessageBox.Show("Isi nominal split payment (Cash/Card).");
+                    return;
+                }
+                var parts = new List<(string Method, decimal Amount)>();
+                if (cash > 0) parts.Add(("Cash", cash));
+                if (card > 0) parts.Add(("Card", card));
+                SplitPayments = parts;
+            }
+            else
+            {
+                if (string.IsNullOrWhiteSpace(txtPaymentAmount.Text))
+                {
+                    MessageBox.Show("Masukkan nominal pembayaran.");
+                    return;
+                }
+                var _ = PaymentAmount; // trigger parse
+            }
             this.DialogResult = DialogResult.OK;
             this.Close();
         }
@@ -178,6 +210,15 @@ namespace POS_qu
             btnPay.Enabled = valid;
         }
 
+        private static decimal ParseMoney(string text)
+        {
+            string clean = text.Replace("Rp", "")
+                               .Replace(".", "")
+                               .Replace(",", "")
+                               .Trim();
+            if (decimal.TryParse(clean, out var value)) return value;
+            return 0;
+        }
+
     }
 }
-

@@ -16,6 +16,8 @@ namespace POS_qu.Core
         System,
         Print,
         Other,
-        StockAdjusment
+        StockAdjusment,
+        OpenShift,
+        CloseShift
     }
 }

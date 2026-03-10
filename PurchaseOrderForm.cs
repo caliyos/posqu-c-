@@ -1,4 +1,4 @@
-﻿using Npgsql;
+using Npgsql;
 using POS_qu.Controllers;
 using POS_qu.Helpers;
 using System;

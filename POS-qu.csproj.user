@@ -4,6 +4,9 @@
     <Compile Update="CasherNew.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="CashierOpenForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="CategoryForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -11,18 +14,6 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="DatabaseSetting.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Form1.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Form2-crud.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Form3-crud.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Update="Casher-POS.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="FormListDraft.cs">
@@ -82,6 +73,9 @@
     <Compile Update="SearchFormItem.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="ShortcutForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="StockAdjustment.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -98,6 +92,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="TokoSetting.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="TransactionsListForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="UnitForm.cs">

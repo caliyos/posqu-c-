@@ -173,20 +173,20 @@ namespace POS_qu
 
         private void DgvOrders_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex >= 0)
-            {
-                SelectedOrderId = Convert.ToInt32(dgvOrders.Rows[e.RowIndex].Cells["order_id"].Value);
-                if (SelectedOrderId > 0)
-                {
-                    var detailForm = new OrderDetailForm(SelectedOrderId);
-                    detailForm.OnOrderSelected += (orderId) =>
-                    {
-                        var cashierForm = Application.OpenForms.OfType<Casher_POS>().FirstOrDefault();
-                        if (cashierForm != null) cashierForm.SelectedOrderId = orderId;
-                    };
-                    detailForm.ShowDialog();
-                }
-            }
+            //    if (e.RowIndex >= 0)
+            //    {
+            //        SelectedOrderId = Convert.ToInt32(dgvOrders.Rows[e.RowIndex].Cells["order_id"].Value);
+            //        if (SelectedOrderId > 0)
+            //        {
+            //            var detailForm = new OrderDetailForm(SelectedOrderId);
+            //            detailForm.OnOrderSelected += (orderId) =>
+            //            {
+            //                var cashierForm = Application.OpenForms.OfType<Casher_POS>().FirstOrDefault();
+            //                if (cashierForm != null) cashierForm.SelectedOrderId = orderId;
+            //            };
+            //            detailForm.ShowDialog();
+            //        }
+            //    }
         }
 
         private void btnAddToCart_Click(object sender, EventArgs e)

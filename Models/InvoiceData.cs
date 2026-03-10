@@ -31,6 +31,8 @@ namespace POS_qu.Models
 
         public int IsMultiPrice { get; set; }
 
+        public int pt_id { get; set; }
+
 
     }
 
@@ -83,6 +85,8 @@ namespace POS_qu.Models
             {
                 var item = new InvoiceItem
                 {
+                    
+                    pt_id = r["pt_id"] != DBNull.Value ? Convert.ToInt32(r["pt_id"]) : 0,
                     ItemId = r["item_id"] != DBNull.Value ? Convert.ToInt32(r["item_id"]) : 0,
                     Barcode = r["barcode"]?.ToString() ?? "",
                     Name = r["name"]?.ToString() ?? "",

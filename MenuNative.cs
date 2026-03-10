@@ -1,4 +1,4 @@
-﻿using Npgsql;
+﻿﻿﻿using Npgsql;
 using POS_qu;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -147,11 +147,52 @@ namespace POSqu_menu
                     $"🖥️ Terminal: {user.TerminalName} (ID: {user.TerminalId})\n" +
                     $"⏰ Shift: {user.ShiftId}\n" +
                     $"💻 PC ID: {pcId}";
+
+                LoadDashboardSummary();
+                RenderSalesBarsLast30Days();
+                btnRefreshDashboard.Click += btnRefreshDashboard_Click;
+                var btnAdminPendingField = panelWelcome.Controls["btnAdminPending"] as Button;
+                if (btnAdminPendingField != null)
+                    btnAdminPendingField.Click += (s, ev) =>
+                    {
+                        MessageBox.Show("Manajemen Pending/Draft sementara tidak tersedia.", "Info");
+                    };
+                // Menu item: Pending (Admin)
+                var miPendingAdmin = FindMenuItemByName(menuStrip1.Items, "pendingTransaksiAdminToolStripMenuItem");
+                if (miPendingAdmin != null)
+                {
+                    miPendingAdmin.Click += (s, ev) =>
+                    {
+                        MessageBox.Show("Manajemen Pending/Draft sementara tidak tersedia.", "Info");
+                    };
+                }
+                var miRetur = FindMenuItemByName(menuStrip1.Items, "returBarangToolStripMenuItem");
+                if (miRetur != null)
+                {
+                    miRetur.Click += (s, ev) =>
+                    {
+                        MessageBox.Show("Fitur Retur sementara tidak tersedia.", "Info");
+                    };
+                }
             }
             catch (Exception ex)
             {
                 label2.Text = "❌ Error memuat sesi: " + ex.Message;
             }
+        }
+
+        private ToolStripMenuItem FindMenuItemByName(ToolStripItemCollection items, string name)
+        {
+            foreach (ToolStripItem it in items)
+            {
+                if (it.Name == name) return it as ToolStripMenuItem;
+                if (it is ToolStripMenuItem mi && mi.DropDownItems.Count > 0)
+                {
+                    var found = FindMenuItemByName(mi.DropDownItems, name);
+                    if (found != null) return found;
+                }
+            }
+            return null;
         }
 
         private void SetMenuVisibility(int roleId)
@@ -170,8 +211,8 @@ namespace POSqu_menu
         {
             int marginRight = 10;
             int panel1Width = panel1.Width;
-            panel2.Location = new Point(panel1Width + 12, panel2.Location.Y);  // +12 px gap
-            panel2.Size = new Size(this.ClientSize.Width - panel1Width - marginRight - 12, this.ClientSize.Height);
+            //panel2.Location = new Point(panel1Width + 12, panel2.Location.Y);  // +12 px gap
+            //panel2.Size = new Size(this.ClientSize.Width - panel1Width - marginRight - 12, this.ClientSize.Height);
         }
 
         private void masterToolStripMenuItem_Click(object sender, EventArgs e)
@@ -205,12 +246,6 @@ namespace POSqu_menu
 
         private void casherToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
-            CasherNew casherForm = new CasherNew();
-            this.Hide();  // Sembunyikan MenuNative sementara
-
-            casherForm.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative
-            casherForm.Show();
 
         }
 
@@ -330,5 +365,166 @@ namespace POSqu_menu
             }
         }
 
+        private void daftarTransaksiToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (TransactionsListForm f = new TransactionsListForm())
+            {
+                f.ShowDialog(this); // owner = form utama
+            }
+        }
+
+        private void casherToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+
+            CasherNew casherForm = new CasherNew();
+            this.Hide();  // Sembunyikan MenuNative sementara
+
+            casherForm.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative
+            casherForm.Show();
+
+        }
+
+        private void pendingTransaksiAdminToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Manajemen Pending/Draft sementara tidak tersedia.", "Info");
+        }
+
+        private void LoadDashboardSummary()
+        {
+            using var conn = new Npgsql.NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+            DateTime todayStart = DateTime.Today;
+            DateTime todayEnd = DateTime.Today.AddDays(1).AddTicks(-1);
+            DateTime monthStart = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+            DateTime monthEnd = monthStart.AddMonths(1).AddTicks(-1);
+
+            decimal omzetToday = GetOmzet(conn, todayStart, todayEnd);
+            decimal omzetMonth = GetOmzet(conn, monthStart, monthEnd);
+            decimal hppMonth = GetHPP(conn, monthStart, monthEnd);
+            decimal profitMonth = omzetMonth - hppMonth;
+
+            var ci = System.Globalization.CultureInfo.GetCultureInfo("id-ID");
+            label1.Text = "Welcome • Dashboard";
+            label1.Font = new Font(label1.Font, FontStyle.Bold);
+            label1.ForeColor = Color.Black;
+            label2.ForeColor = Color.DimGray;
+            label2.Font = new Font("Segoe UI", 9, FontStyle.Regular);
+
+            // labels in designer
+            // lblOmzetToday, lblOmzetMonth, lblHPPMonth, lblProfitMonth
+            var form = (POSqu_menu.MenuNative)this;
+            // direct access to labels declared in designer
+            // set text
+            // They are fields; we can set directly
+            // Below assumes names exist
+            // If not, designer patch added them
+            lblOmzetToday.Text = $"Omzet Hari Ini: Rp {omzetToday.ToString("N0", ci)}";
+            lblOmzetMonth.Text = $"Omzet Bulan Ini: Rp {omzetMonth.ToString("N0", ci)}";
+            lblHPPMonth.Text = $"HPP Bulanan: Rp {hppMonth.ToString("N0", ci)}";
+            lblProfitMonth.Text = $"Laba Bersih: Rp {profitMonth.ToString("N0", ci)}";
+        }
+
+        private decimal GetOmzet(Npgsql.NpgsqlConnection conn, DateTime start, DateTime end)
+        {
+            using var cmd = new Npgsql.NpgsqlCommand(@"
+                SELECT COALESCE(SUM(ts_grand_total),0)
+                FROM transactions
+                WHERE ts_status = 1
+                  AND created_at BETWEEN @start AND @end
+            ", conn);
+            cmd.Parameters.AddWithValue("@start", start);
+            cmd.Parameters.AddWithValue("@end", end);
+            var result = cmd.ExecuteScalar();
+            return result != null ? Convert.ToDecimal(result) : 0;
+        }
+
+        private decimal GetHPP(Npgsql.NpgsqlConnection conn, DateTime start, DateTime end)
+        {
+            using var cmd = new Npgsql.NpgsqlCommand(@"
+                SELECT COALESCE(SUM(td.tsd_buy_price * td.tsd_quantity),0)
+                FROM transaction_details td
+                JOIN transactions t ON t.ts_id = td.ts_id
+                WHERE t.ts_status = 1
+                  AND t.created_at BETWEEN @start AND @end
+            ", conn);
+            cmd.Parameters.AddWithValue("@start", start);
+            cmd.Parameters.AddWithValue("@end", end);
+            var result = cmd.ExecuteScalar();
+            return result != null ? Convert.ToDecimal(result) : 0;
+        }
+
+        private void RenderSalesBarsLast30Days()
+        {
+            var flp = new FlowLayoutPanel();
+            flp.Name = "salesBarsPanel";
+            flp.Dock = DockStyle.Right;
+            flp.Width = 360;
+            flp.Height = 160;
+            flp.Padding = new Padding(8);
+            flp.BackColor = Color.White;
+            flp.AutoScroll = true;
+
+            var rows = new List<(string day, decimal sum)>();
+            using (var conn = new Npgsql.NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                conn.Open();
+                using var cmd = new Npgsql.NpgsqlCommand(@"
+                    SELECT TO_CHAR(DATE(created_at), 'DD/MM') AS d, SUM(ts_grand_total) AS s
+                    FROM transactions
+                    WHERE ts_status = 1
+                      AND created_at >= CURRENT_DATE - INTERVAL '30 days'
+                    GROUP BY DATE(created_at)
+                    ORDER BY DATE(created_at)
+                ", conn);
+                using var rdr = cmd.ExecuteReader();
+                while (rdr.Read())
+                {
+                    rows.Add((rdr.GetString(0), rdr.GetDecimal(1)));
+                }
+            }
+
+            if (rows.Count == 0)
+            {
+                var lbl = new Label { Text = "Tidak ada data omzet 30 hari.", AutoSize = true };
+                flp.Controls.Add(lbl);
+            }
+            else
+            {
+                decimal max = rows.Max(r => r.sum);
+                foreach (var r in rows)
+                {
+                    int barWidth = max > 0 ? (int)(300 * (r.sum / max)) : 0;
+                    var rowPanel = new Panel { Width = flp.Width - 24, Height = 24, BackColor = Color.Transparent };
+                    var lblDay = new Label { Text = r.day, Width = 60, Height = 24, TextAlign = ContentAlignment.MiddleLeft };
+                    var bar = new Panel { Width = barWidth, Height = 16, BackColor = Color.SteelBlue, Margin = new Padding(6, 4, 6, 4) };
+                    var lblVal = new Label { Text = r.sum.ToString("N0"), AutoSize = true, Height = 24, TextAlign = ContentAlignment.MiddleLeft };
+                    rowPanel.Controls.Add(lblDay);
+                    lblDay.Location = new Point(0, 0);
+                    rowPanel.Controls.Add(bar);
+                    bar.Location = new Point(66, 4);
+                    rowPanel.Controls.Add(lblVal);
+                    lblVal.Location = new Point(66 + barWidth + 8, 0);
+                    flp.Controls.Add(rowPanel);
+                }
+            }
+
+            panelWelcome.Controls.Add(flp);
+            flp.BringToFront();
+        }
+
+        private void btnRefreshDashboard_Click(object sender, EventArgs e)
+        {
+            LoadDashboardSummary();
+            foreach (Control c in panelWelcome.Controls)
+            {
+                if (c.Name == "salesBarsPanel")
+                {
+                    panelWelcome.Controls.Remove(c);
+                    c.Dispose();
+                    break;
+                }
+            }
+            RenderSalesBarsLast30Days();
+        }
     }
 }

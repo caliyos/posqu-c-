@@ -30,6 +30,8 @@ namespace POS_qu
             // Set field
             lblName.Text = _item.Name;
             lblPrice.Text = _item.Price.ToString("N0");
+            lblSatuan.Text = _item.Unit;
+            lblQty.Text = _item.Qty.ToString();
             numQty.Value = _item.Qty;
         }
 
@@ -38,7 +40,7 @@ namespace POS_qu
             int newQty = (int)numQty.Value;
 
             // Update DB via CartService
-            _invoiceData = _cartService.UpdateItemQty(_item.Name, newQty,_invoiceData);
+            _invoiceData = _cartService.UpdateItemQty(_item.pt_id, newQty,_invoiceData);
 
             _onUpdate?.Invoke(_invoiceData);
 
@@ -102,8 +104,10 @@ namespace POS_qu
                     return;
                 }
 
+                var invoicedebug = _invoiceData;
+                //MessageBox.Show("here", _invoiceData);
                 // Update item via CartService
-                var updatedInvoice = _cartService.UpdateItemQty(_item.Name, newQty, _invoiceData);
+                var updatedInvoice = _cartService.UpdateItemQty(_item.pt_id, newQty, _invoiceData);
 
                 // Callback ke form utama untuk refresh
                 _onUpdate?.Invoke(updatedInvoice);

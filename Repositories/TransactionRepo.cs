@@ -1,4 +1,4 @@
-﻿using Npgsql;
+using Npgsql;
 using POS_qu.Helpers;
 using POS_qu.Models;
 using POS_qu.DTO;

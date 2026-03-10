@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -147,6 +147,7 @@ namespace POS_qu
 
 
             LoadItems();
+            ApplyProfessionalGridStyle();
 
         }
 
@@ -388,6 +389,7 @@ namespace POS_qu
             cmbPageSize.SelectedIndex = 0;
 
 
+            ApplyProfessionalGridStyle();
         }
 
 
@@ -886,5 +888,21 @@ namespace POS_qu
 
 
 
+        private void ApplyProfessionalGridStyle()
+        {
+            dataGridView1.EnableHeadersVisualStyles = false;
+            dataGridView1.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(240, 240, 240);
+            dataGridView1.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.Black;
+            dataGridView1.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+            dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridView1.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
+            dataGridView1.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
+            dataGridView1.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(248, 248, 248);
+            dataGridView1.RowHeadersVisible = false;
+            dataGridView1.BorderStyle = BorderStyle.None;
+            dataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dataGridView1.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(220, 235, 255);
+            dataGridView1.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
+        }
     }
 }

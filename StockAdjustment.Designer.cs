@@ -1,4 +1,4 @@
-﻿namespace POS_qu
+namespace POS_qu
 {
     partial class StockAdjustment
     {
@@ -47,6 +47,8 @@
             bntCancel = new Button();
             label8 = new Label();
             label9 = new Label();
+            label10 = new Label();
+            textBox5 = new TextBox();
             SuspendLayout();
             // 
             // label1
@@ -83,6 +85,7 @@
             label3.Size = new Size(171, 25);
             label3.TabIndex = 0;
             label3.Text = "Metode Adjustment";
+            label3.Font = new Font(label3.Font, FontStyle.Bold);
             // 
             // label4
             // 
@@ -188,7 +191,7 @@
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(112, 34);
             btnUpdate.TabIndex = 10;
-            btnUpdate.Text = "Update";
+            btnUpdate.Text = "Simpan";
             btnUpdate.UseVisualStyleBackColor = true;
             btnUpdate.Click += btnUpdate_Click;
             // 
@@ -221,11 +224,32 @@
             label9.TabIndex = 11;
             label9.Text = "(Stok Sistem + Qty Manual)";
             // 
+            // label10
+            // 
+            label10.AutoSize = true;
+            label10.Location = new Point(96, 352);
+            label10.Name = "label10";
+            label10.Size = new Size(96, 25);
+            label10.TabIndex = 12;
+            label10.Text = "Stok Akhir";
+            label10.Font = new Font(label10.Font, FontStyle.Bold);
+            // 
+            // textBox5
+            // 
+            textBox5.Location = new Point(312, 352);
+            textBox5.Name = "textBox5";
+            textBox5.ReadOnly = true;
+            textBox5.Size = new Size(328, 31);
+            textBox5.TabIndex = 13;
+            textBox5.TabStop = false;
+            // 
             // StockAdjustment
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(864, 821);
+            Controls.Add(textBox5);
+            Controls.Add(label10);
             Controls.Add(label9);
             Controls.Add(label8);
             Controls.Add(bntCancel);
@@ -246,7 +270,11 @@
             Controls.Add(label2);
             Controls.Add(label1);
             Name = "StockAdjustment";
-            Text = "StockAdjustment";
+            Text = "Penyesuaian Stok";
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            MaximizeBox = false;
+            MinimizeBox = false;
+            StartPosition = FormStartPosition.CenterScreen;
             ResumeLayout(false);
             PerformLayout();
         }
@@ -272,5 +300,7 @@
         private Button bntCancel;
         private Label label8;
         private Label label9;
+        private Label label10;
+        private TextBox textBox5;
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace POS_qu
+namespace POS_qu
 {
     partial class PaymentModalForm
     {

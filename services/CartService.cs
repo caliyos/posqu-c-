@@ -1,4 +1,4 @@
-﻿using DocumentFormat.OpenXml.Wordprocessing;
+using DocumentFormat.OpenXml.Wordprocessing;
 using Npgsql;
 using PdfSharp.Drawing.BarCodes;
 using POS_qu.Controllers;
@@ -43,13 +43,14 @@ public class CartService
     {
         return new InvoiceItem
         {
+
             ItemId = product.id,
             Barcode = product.barcode,
             Name = product.name,
             Unit = product.unit,
             UnitId = product.unitid,
             UnitVariant = product.unit, // default sama
-            ConversionRate = 1,
+            ConversionRate = product.conversion,
             Qty = 1,
             Price = product.sell_price,
             CostPrice = product.buy_price,
@@ -154,6 +155,43 @@ public class CartService
     }
 
 
+    public InvoiceData updateItemByVariant(
+   InvoiceData currentInvoice,
+   int variantId,
+   int qty)
+    {
+        var variant = _repo.GetVariantById(variantId);
+
+        if (variant == null)
+            throw new Exception("Variant tidak ditemukan");
+
+        var item = _repo.GetItemById(variant.ItemId);
+
+        if (item == null)
+            throw new Exception("Produk tidak ditemukan");
+
+        var invoiceItem = MapVariantToInvoiceItem(variant, item, qty);
+
+        invoiceItem.IsEditMode = false;
+        invoiceItem.AdditionalQuantity = qty;
+
+        // CORE
+        currentInvoice = UpdateCartItemStock(invoiceItem, currentInvoice);
+
+        var rows = _repo.GetPendingItems(Session.CartSessionCode);
+
+        var updatedInvoice = InvoiceBuilder.FromPending(rows);
+
+        currentInvoice.Items = updatedInvoice.Items;
+        currentInvoice.NumOfItems = updatedInvoice.NumOfItems;
+        currentInvoice.Subtotal = updatedInvoice.Subtotal;
+        currentInvoice.TotalDiscount = updatedInvoice.TotalDiscount;
+        currentInvoice.GrandTotal = updatedInvoice.GrandTotal;
+
+        return currentInvoice;
+    }
+
+
     public InvoiceData AddItemByName(
      InvoiceData currentInvoice,
      string name,
@@ -190,9 +228,9 @@ public class CartService
 
 
 
-    public InvoiceData UpdateItemQty(string itemName, int newQty, InvoiceData invoice)
+    public InvoiceData UpdateItemQty(int pt_id, int newQty, InvoiceData invoice)
     {
-        var product = _repo.GetSingleItemByName(itemName);
+        var product = _repo.GetSinglePendingItemById(pt_id);
         if (product == null)
             throw new Exception("Produk tidak ditemukan");
 
@@ -491,6 +529,15 @@ WHERE po_id = @poId";
         // 4️⃣ Build invoice dari pending_transactions
         var invoice = InvoiceBuilder.FromPending(rows);
 
+        return invoice;
+    }
+
+    public InvoiceData LoadInvoiceFromCartSession(string cartCode)
+    {
+        Session.CartSessionCode = cartCode;
+        var rows = _repo.GetPendingItems(cartCode);
+        var invoice = InvoiceBuilder.FromPending(rows);
+        invoice.CartSessionCode = cartCode;
         return invoice;
     }
 

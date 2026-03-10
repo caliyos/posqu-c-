@@ -1,4 +1,4 @@
-﻿    using Npgsql;
+﻿﻿  using Npgsql;
     using System;
     using System.Collections.Generic;
     using System.Data;
@@ -650,6 +650,46 @@ using System.ComponentModel;
             return dt;
         }
 
+        public DataTable GetItemsBySupplier(long? supplierId)
+        {
+            DataTable dt = new DataTable();
+            using (var vCon = new Npgsql.NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                vCon.Open();
+                string sql = @"
+                    SELECT 
+                        items.id,
+                        items.name,
+                        items.barcode,
+                        items.buy_price,
+                        items.sell_price,
+                        items.stock,
+                        units.name AS unit,
+                        items.reserved_stock,
+                        items.supplier_id,
+                        suppliers.name AS supplier_name
+                    FROM items
+                    LEFT JOIN units ON items.unit = units.id
+                    LEFT JOIN suppliers ON items.supplier_id = suppliers.id
+                    WHERE items.deleted_at IS NULL
+                ";
+                if (supplierId.HasValue && supplierId.Value > 0)
+                {
+                    sql += " AND items.supplier_id = @supplier_id";
+                }
+                using (var cmd = new Npgsql.NpgsqlCommand(sql, vCon))
+                {
+                    if (supplierId.HasValue && supplierId.Value > 0)
+                        cmd.Parameters.AddWithValue("@supplier_id", supplierId.Value);
+                    using (var dr = cmd.ExecuteReader())
+                    {
+                        dt.Load(dr);
+                    }
+                }
+            }
+            return dt;
+        }
+
         public DataTable GetUnits()
         {
             DataTable dt = new DataTable();
@@ -1174,12 +1214,19 @@ VALUES (
             using (var vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
+                int unitId = 0;
+                using (var findUnit = new NpgsqlCommand("SELECT id FROM units WHERE LOWER(name) = LOWER(@name) OR LOWER(abbr) = LOWER(@name) LIMIT 1", vCon))
+                {
+                    findUnit.Parameters.AddWithValue("@name", unit);
+                    var obj = findUnit.ExecuteScalar();
+                    if (obj != null && obj != DBNull.Value) unitId = Convert.ToInt32(obj);
+                }
                 string query = @"
 INSERT INTO pending_transactions 
-    (terminal_id, cashier_id, item_id, barcode, unit, quantity,buy_price, sell_price, discount_percentage, 
+    (terminal_id, cashier_id, item_id, barcode, unit, unitid, quantity, buy_price, sell_price, discount_percentage, 
      discount_total, tax, total, note, cart_session_code, tsd_conversion_rate)
 VALUES 
-    (@terminalId, @cashierId, @itemId, @barcode, @unit, @quantity, @buy_price, @sellPrice, @discountPercentage,
+    (@terminalId, @cashierId, @itemId, @barcode, @unit, @unitid, @quantity, @buy_price, @sellPrice, @discountPercentage,
      @discountTotal, @tax, @total, @note, @cartSessionCode, @conversionRate)
 RETURNING pt_id;
 ";
@@ -1191,6 +1238,7 @@ RETURNING pt_id;
                     cmd.Parameters.AddWithValue("@itemId", itemId);
                     cmd.Parameters.AddWithValue("@barcode", barcode);
                     cmd.Parameters.AddWithValue("@unit", unit);
+                    cmd.Parameters.AddWithValue("@unitid", unitId);
                     cmd.Parameters.AddWithValue("@quantity", quantity);
                     cmd.Parameters.AddWithValue("@sellPrice", sellPrice);
                     cmd.Parameters.AddWithValue("@buy_price", buyPrice); 

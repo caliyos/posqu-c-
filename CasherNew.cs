@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -21,6 +21,7 @@ namespace POS_qu
 {
     public partial class CasherNew : Form
     {
+
         private CartActivity cartrepo;
         private IActivityService activityService;
         private ILogger flogger = new FileLogger();
@@ -30,6 +31,11 @@ namespace POS_qu
         public CasherNew()
         {
             InitializeComponent();
+            this.AutoScaleMode = AutoScaleMode.Dpi; // bukan Font!
+            this.WindowState = FormWindowState.Maximized;
+            this.MinimumSize = new Size(1024, 768);
+            this.KeyPreview = true; // Ensure the form can intercept key events
+            //this.KeyDown += CasherNew_KeyDown; // Add the key down event handler
         }
 
         private void CasherNew_Load(object sender, EventArgs e)
@@ -39,6 +45,8 @@ namespace POS_qu
             // ===============================
             this.StartPosition = FormStartPosition.CenterScreen;
             this.WindowState = FormWindowState.Maximized;
+            this.KeyPreview = true;
+            //this.KeyDown += CasherNew_KeyDown;
             // this.FormBorderStyle = FormBorderStyle.None; // opsional full kiosk
 
             // ===============================
@@ -74,11 +82,261 @@ namespace POS_qu
             txtCariBarang.KeyDown += TxtCariBarang_KeyDown;
             dataGridViewCart4.CellDoubleClick += dataGridViewCart4_CellDoubleClick;
             dataGridViewCart4.KeyDown += DataGridViewCart4_KeyDown;
+            btnOpenCashier.Click += btnOpenCashier_Click;
+            btnCloseCashier.Click += btnCloseCashier_Click;
+            var btnPending = this.Controls.Find("btnPendingList", true);
+            if (btnPending != null && btnPending.Length > 0 && btnPending[0] is Button)
+            {
+                ((Button)btnPending[0]).Click += btnPendingList_Click;
+            }
 
             // ===============================
             // 🔹 DATAGRIDVIEW STYLE
             // ===============================
             SetupCartGrid();
+
+            PromptOpenShiftIfNeeded();
+            PromptResumeCartIfAny();
+            UpdateShiftInfoUI();
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            switch (keyData)
+            {
+                case Keys.Control | Keys.K:
+                    OpenSearchShortcut();
+                    return true;
+
+                case Keys.F1:
+                    ShowShortcutsHelp();
+                    return true;
+
+                case Keys.Control | Keys.S:
+                    txtCariBarang.Focus();
+                    return true;
+
+                case Keys.Control | Keys.F:
+                    // SearchAndAddItem();
+                    return true;
+
+                case Keys.Control | Keys.I:
+                    // BtnToggleInfo.PerformClick();
+                    return true;
+
+                case Keys.Control | Keys.Shift | Keys.O:
+                    OpenShift();
+                    return true;
+
+                case Keys.Control | Keys.Shift | Keys.C:
+                    CloseShift();
+                    return true;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void OpenSearchShortcut()
+        {
+            Item selectedItem = null;
+
+            using (var search = new SearchFormItem(""))
+            {
+                if (search.ShowDialog(this) != DialogResult.OK || search.SelectedItem == null)
+                    return;
+
+                selectedItem = search.SelectedItem;
+            }
+
+            var item = _cartService.GetItemByName(selectedItem.name);
+
+            if (item == null)
+            {
+                MessageBox.Show("Barang tidak ditemukan");
+                return;
+            }
+
+            var itemvariant = _cartService.cekUnitVariant(selectedItem.name);
+            if (itemvariant == null)
+            {
+                MessageBox.Show("Barang tidak ditemukan");
+                return;
+            }
+
+            var itemm = itemvariant.Item;
+            var variants = itemvariant.Variants;
+
+            UnitVariant selectedVariant = null;
+
+            // 🔥 Jika ada lebih dari 1 variant → tampilkan modal
+            if (variants != null && variants.Count >= 1)
+            {
+                selectedVariant = ShowVariantPicker(this, variants);
+            }
+
+
+            if (selectedVariant != null)
+            {
+                // User pilih variant
+                _currentInvoice = _cartService.AddItemByVariant(
+                    _currentInvoice,
+                    selectedVariant.Id,
+                    1
+                );
+            }
+            else
+            {
+                // Tidak ada variant / user batal → pakai base item
+                _currentInvoice = _cartService.AddItemByName(_currentInvoice, selectedItem.name, 1);
+            }
+
+
+            //_currentInvoice = _cartService.AddItemByName(_currentInvoice, search.SelectedItem.name, 1);
+            RenderInvoice(_currentInvoice);
+            var lastItem = _currentInvoice.Items.Last();
+            AddInvoiceItemToPanel(lastItem);
+            RenderReceiptUI(
+                _currentInvoice,
+                SessionUser.GetCurrentUser().TerminalName,
+                SessionUser.GetCurrentUser().Username,
+                SessionUser.GetCurrentUser().ShiftId.ToString(),
+                "Unpaid",
+                _currentInvoice.GrandTotal.ToString(),
+                "-",
+                "0"
+            );
+            UpdateInvoiceSummary();
+
+        }
+
+        private void ShowShortcutsHelp()
+        {
+            using (Form f = new Form())
+            {
+                f.Text = "Daftar Shortcut";
+                f.StartPosition = FormStartPosition.CenterParent;
+                f.Size = new Size(420, 360);
+                var lb = new ListBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 10F) };
+                lb.Items.Add("Ctrl+K  • Cari barang (Search)");
+                lb.Items.Add("Ctrl+N  • Transaksi baru");
+                lb.Items.Add("Ctrl+P  • Bayar");
+                lb.Items.Add("F3      • Draft");
+                lb.Items.Add("Ctrl+D  • Buka Draft");
+                lb.Items.Add("F12     • Help");
+                lb.Items.Add("Ctrl+Shift+O • Buka Kasir");
+                lb.Items.Add("Ctrl+Shift+C • Tutup Kasir");
+                f.Controls.Add(lb);
+                f.ShowDialog(this);
+            }
+        }
+
+        private void PromptOpenShiftIfNeeded()
+        {
+            var session = SessionUser.GetCurrentUser();
+            var sc = new POS_qu.Controllers.ShiftController();
+            var open = sc.GetOpenShift(session.UserId, session.TerminalId);
+            if (open == null)
+            {
+                using var dlg = new CashierOpenForm();
+                if (dlg.ShowDialog(this) == DialogResult.OK)
+                {
+                    var shiftId = sc.OpenShift(session.UserId, session.TerminalId, dlg.OpeningCash);
+                    flogger.Log(SessionUser.GetCurrentUser().UserId.ToString(), ActivityType.OpenShift.ToString(), null, "shift_open", $"Shift opened #{shiftId} with opening {dlg.OpeningCash}");
+                    SessionUser.UpdateShiftId(shiftId);
+                }
+            }
+            else
+            {
+                SessionUser.UpdateShiftId(Convert.ToInt32(open["id"]));
+            }
+        }
+
+        private void OpenShift()
+        {
+            var session = SessionUser.GetCurrentUser();
+            var sc = new POS_qu.Controllers.ShiftController();
+            var open = sc.GetOpenShift(session.UserId, session.TerminalId);
+            if (open != null)
+            {
+                MessageBox.Show("Shift kasir sudah terbuka.", "Info");
+                return;
+            }
+            using var dlg = new CashierOpenForm();
+            if (dlg.ShowDialog(this) == DialogResult.OK)
+            {
+                var shiftId = sc.OpenShift(session.UserId, session.TerminalId, dlg.OpeningCash);
+                flogger.Log(SessionUser.GetCurrentUser().UserId.ToString(), ActivityType.OpenShift.ToString(), null, "Shift_opened", $"Shift opened #{shiftId} with opening {dlg.OpeningCash}");
+                SessionUser.UpdateShiftId(shiftId);
+                UpdateShiftInfoUI();
+            }
+        }
+
+        private void CloseShift()
+        {
+            MessageBox.Show("Fitur Close Shift sementara tidak tersedia.", "Info");
+        }
+
+        private void btnOpenCashier_Click(object sender, EventArgs e) => OpenShift();
+        private void btnCloseCashier_Click(object sender, EventArgs e) => CloseShift();
+        private void btnPendingList_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Daftar Pending Cart sementara tidak tersedia.", "Info");
+        }
+        private void PromptResumeCartIfAny()
+        {
+            var session = SessionUser.GetCurrentUser();
+            var repo = new CartActivity();
+            var dt = repo.GetPendingCartsByCashier(session.UserId);
+            if (dt == null || dt.Rows.Count == 0) return;
+
+            if (dt.Rows.Count == 1)
+            {
+                var code = dt.Rows[0]["cart_session_code"].ToString();
+                if (!string.IsNullOrEmpty(Session.CartSessionCode) && Session.CartSessionCode == code) return;
+                int items = Convert.ToInt32(dt.Rows[0]["total_items"]);
+                decimal total = Convert.ToDecimal(dt.Rows[0]["grand_total"]);
+                var result = MessageBox.Show(
+                    $"Ada sesi pending: {code}\nItem: {items}\nTotal: {total:N0}\nLanjutkan?",
+                    "Resume Cart",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question
+                );
+                if (result == DialogResult.Yes)
+                {
+                    ResumeCartByCode(code);
+                }
+            }
+            else
+            {
+            }
+        }
+
+        private void ResumeCartByCode(string cartCode)
+        {
+            _currentInvoice = _cartService.LoadInvoiceFromCartSession(cartCode);
+            RenderInvoice(_currentInvoice);
+            if (_currentInvoice.Items.Any())
+            {
+                var lastItem = _currentInvoice.Items.Last();
+                AddInvoiceItemToPanel(lastItem);
+            }
+            RenderReceiptUI(
+                _currentInvoice,
+                SessionUser.GetCurrentUser().TerminalName,
+                SessionUser.GetCurrentUser().Username,
+                SessionUser.GetCurrentUser().ShiftId.ToString(),
+                "Unpaid",
+                _currentInvoice.GrandTotal.ToString(),
+                "-",
+                "0"
+            );
+            UpdateInvoiceSummary();
+        }
+
+        private void UpdateShiftInfoUI()
+        {
+            lblShiftInfo.Text = "Shift: status tidak diketahui";
+            lblShiftInfo.ForeColor = Color.DarkOrange;
         }
         private void StartNewTransaction()
         {
@@ -148,7 +406,7 @@ namespace POS_qu
         }
 
 
-        private UnitVariant ShowVariantPicker(List<UnitVariant> variants)
+        private UnitVariant ShowVariantPicker(IWin32Window owner,List<UnitVariant> variants)
         {
             UnitVariant result = null; // hasil default null
 
@@ -176,9 +434,6 @@ namespace POS_qu
                 listBox.DisplayMember = "UnitName";
 
 
-                // =============================
-                // PANEL BUTTONS
-                // =============================
                 int btnHeight = 40; // tinggi tombol yang nyaman
                 int btnSpacing = 10;
                 var panelButtons = new Panel()
@@ -244,7 +499,7 @@ namespace POS_qu
                 form.Controls.Add(listBox);
                 form.Controls.Add(panelButtons);
 
-                form.ShowDialog();
+                form.ShowDialog(owner);
             }
 
             return result; // null kalau klik Satuan Normal atau Batal
@@ -285,7 +540,7 @@ namespace POS_qu
                 // 🔥 Jika ada lebih dari 1 variant → tampilkan modal
                 if (variants != null && variants.Count >= 1)
                 {
-                    selectedVariant = ShowVariantPicker(variants);
+                    selectedVariant = ShowVariantPicker(this,   variants);
                 }
 
 
@@ -314,8 +569,6 @@ namespace POS_qu
                 var lastItem = _currentInvoice.Items.Last();
                 AddInvoiceItemToPanel(lastItem);
 
-                // ✅ Render full struk di FlowLayoutPanel
-                // ✅ Render full struk di FlowLayoutPanel
                 RenderReceiptUI(
                     _currentInvoice,      // invoice
                     SessionUser.GetCurrentUser().TerminalName,                // terminal (dummy / bisa diambil dari session)
@@ -367,13 +620,12 @@ namespace POS_qu
             // Detail qty, unit, harga, diskon, pajak
             var lblDetail = new Label
             {
-                Text = $"{item.Name} | {item.Qty} {(string.IsNullOrEmpty(item.UnitVariant) ? item.Unit : item.UnitVariant)} {item.Price:N0}  Diskon: {item.DiscountAmount:N0}  Pajak: {item.Tax:N0}",
+                Text = $"{item.Name} | {item.Qty} {item.Unit} {item.Price:N0}  Diskon: {item.DiscountAmount:N0}  Pajak: {item.Tax:N0}",
                 Font = new Font("Consolas", 9, FontStyle.Regular),
                 AutoSize = true,
                 ForeColor = Color.Black
             };
 
-            // Total harga item
             var lblTotal = new Label
             {
                 Text = $"  Total: {item.Total:N0}",
@@ -382,7 +634,6 @@ namespace POS_qu
                 ForeColor = Color.Black
             };
 
-            // 🔹 Label Qty + Satuan (Kanan)
             var lblQty = new Label
             {
                 Text = $"{item.Qty} {item.Unit}",
@@ -394,16 +645,8 @@ namespace POS_qu
             };
 
 
-
-
-
-            // Tambahkan label ke panel
-            //panel.Controls.Add(lblName);
-            //panel.Controls.Add(lblQty);
             panel.Controls.Add(lblDetail);
-            //panel.Controls.Add(lblTotal);
 
-            // Separator tipis antar item
             var separator = new Label
             {
                 BorderStyle = BorderStyle.Fixed3D,
@@ -412,7 +655,6 @@ namespace POS_qu
                 Margin = new Padding(0, 2, 0, 2)
             };
 
-            // Tambahkan ke FlowLayoutPanel utama
             flpInvoice.Controls.Add(panel);
             flpInvoice.Controls.Add(separator);
         }
@@ -429,7 +671,6 @@ namespace POS_qu
         {
             flpInvoice.Controls.Clear();
 
-            // 1️⃣ Ambil setting struk
             string judul = "", alamat = "", telepon = "", footer = "";
             bool showNamaToko = true, showAlamat = true, showTelepon = true, showFooter = true;
 
@@ -454,7 +695,6 @@ namespace POS_qu
                 }
             }
 
-            // Helper: tambah label
             void AddLabel(string text,
                  int fontSize = 9,
                  bool bold = false,
@@ -467,7 +707,7 @@ namespace POS_qu
                     Font = new Font("Consolas", fontSize, bold ? FontStyle.Bold : FontStyle.Regular),
                     ForeColor = color ?? Color.Black,
                     Width = flpInvoice.Width - 5,   // FULL WIDTH
-                    AutoSize = false,               // wajib false supaya bisa align
+                    AutoSize = false,           
                     TextAlign = align
                 };
 
@@ -476,7 +716,6 @@ namespace POS_qu
 
 
 
-            // === 2️⃣ Header toko ===
             if (showNamaToko && !string.IsNullOrEmpty(judul))
                 AddLabel(judul, 11, true, null, ContentAlignment.MiddleCenter);
 
@@ -489,7 +728,6 @@ namespace POS_qu
             AddLabel(new string('-', 32), 9, false, null, ContentAlignment.MiddleCenter);
 
 
-            // === 3️⃣ Info transaksi ===
             AddLabel($"Terminal : {terminal}");
             AddLabel($"Kasir    : {user}");
             AddLabel($"Shift    : {shift}");
@@ -497,13 +735,11 @@ namespace POS_qu
             AddLabel($"Waktu    : {DateTime.Now:HH:mm:ss}");
             AddLabel(new string('-', 32));
 
-            // === 4️⃣ Detail item ===
             foreach (var item in invoice.Items)
             {
-                AddInvoiceItemToPanel(item); // pakai style tipis persis yang kamu punya
+                AddInvoiceItemToPanel(item);
             }
 
-            // === 5️⃣ Ringkasan totals ===
             AddLabel(new string('-', 32));
             AddLabel($"Subtotal".PadRight(20) + $"{invoice.Subtotal:N0}".PadLeft(10));
             AddLabel($"Item Discount".PadRight(20) + $"-{invoice.TotalDiscount:N0}".PadLeft(10));
@@ -516,7 +752,6 @@ namespace POS_qu
             AddLabel(new string('-', 32));
             AddLabel($"Grand Total".PadRight(20) + $"{invoice.GrandTotal:N0}".PadLeft(10));
 
-            // === 6️⃣ Info pembayaran ===
             if (decimal.TryParse(jumlahBayar, out decimal jmlBayar)) jumlahBayar = jmlBayar.ToString("N0");
             if (decimal.TryParse(kembalian, out decimal kemb)) kembalian = kemb.ToString("N0");
 
@@ -527,7 +762,6 @@ namespace POS_qu
             AddLabel($"Kembalian    : {kembalian}");
             AddLabel(new string('-', 32));
 
-            // === 7️⃣ Footer ===
             if (showFooter && !string.IsNullOrEmpty(footer))
                 AddLabel(footer, 9, false, Color.Gray, ContentAlignment.MiddleCenter);
 
@@ -536,9 +770,9 @@ namespace POS_qu
 
         private void UpdateInvoiceSummary()
         {
-            lblTotal.Text = _currentInvoice.GrandTotal.ToString();
+            lblTotal.Text = _currentInvoice.GrandTotal.ToString("N0");
             labelNumOfItems.Text = _currentInvoice.Items.Sum(x => x.Qty).ToString();
-            lblKembalian.Text = _currentInvoice.ChangeAmount.ToString();
+            lblKembalian.Text = _currentInvoice.ChangeAmount.ToString("N0");
         }
 
 
@@ -549,14 +783,13 @@ namespace POS_qu
             {
                 i.Name,
                 i.Qty,
-                Satuan = string.IsNullOrEmpty(i.UnitVariant) ? i.Unit : i.UnitVariant,
+                Satuan =  i.Unit ,
                 Harga = i.Price,
                 Total = i.Total
             }).ToList();
 
 
             dataGridViewCart4.DataSource = bs;
-            // Optional: atur format kolom
             dataGridViewCart4.Columns["Harga"].DefaultCellStyle.Format = "N0";
             dataGridViewCart4.Columns["Total"].DefaultCellStyle.Format = "N0";
             labelNumOfItems.Text = invoice.Items.Sum(x => x.Qty).ToString();
@@ -569,20 +802,15 @@ namespace POS_qu
             var row = dataGridViewCart4.Rows[e.RowIndex];
             string itemName = row.Cells["Name"].Value.ToString();
 
-            // Cari item dari _currentInvoice
             var item = _currentInvoice.Items.FirstOrDefault(x => x.Name == itemName);
             if (item == null) return;
 
-            // Buka modal
             var modal = new FormUpdateItem(_currentInvoice, item, _cartService, updatedInvoice =>
             {
 
-                // Update _currentInvoice
                 _currentInvoice = updatedInvoice;
 
-                // Refresh DataGridView & FlowLayoutPanel (opsional)
                 RenderInvoice(_currentInvoice);
-                // Refresh FlowLayoutPanel
                 RefreshInvoicePanel();
                 UpdateInvoiceSummary();
             });
@@ -620,18 +848,17 @@ namespace POS_qu
                     }
 
 
-                    // ✅ Render full struk di FlowLayoutPanel
+              
                     RenderReceiptUI(
-                        _currentInvoice,      // invoice
-                        SessionUser.GetCurrentUser().TerminalName,                // terminal (dummy / bisa diambil dari session)
-                        SessionUser.GetCurrentUser().Username,            // user
-                        SessionUser.GetCurrentUser().ShiftId.ToString(),               // shift
-                        "Unpaid",              // statusBayar
-                        _currentInvoice.GrandTotal.ToString(), // jumlahBayar
-                        "-",               // metodeBayar
-                        "0"                   // kembalian, bisa dihitung sesuai bayar
+                        _currentInvoice,     
+                        SessionUser.GetCurrentUser().TerminalName,               
+                        SessionUser.GetCurrentUser().Username,           
+                        SessionUser.GetCurrentUser().ShiftId.ToString(),              
+                        "Unpaid",            
+                        _currentInvoice.GrandTotal.ToString(), 
+                        "-",             
+                        "0"               
                     );
-                    // Refresh DataGridView & FlowLayoutPanel
 
                     RenderInvoice(_currentInvoice);
                     UpdateInvoiceSummary();
@@ -687,12 +914,24 @@ namespace POS_qu
                 _currentInvoice.DeliveryAmount = paymentModal.DeliveryAmount;
                 _currentInvoice.GlobalNote = paymentModal.GlobalNote;
 
-                // 🔹 PROCESS + SAVE + LOG
-                var result = _transactionService.ProcessPaymentAndSave(
-                    _currentInvoice,
-                    paymentModal.PaymentAmount,
-                    paymentModal.PaymentMethod
-                );
+                TransactionResult result;
+                if (paymentModal.IsSplitPayment && paymentModal.SplitPayments != null)
+                {
+                    var parts = paymentModal.SplitPayments.ToList();
+                    result = _transactionService.ProcessSplitPaymentAndSave(
+                        _currentInvoice,
+                        parts
+                    );
+                }
+                else
+                {
+                    // 🔹 PROCESS + SAVE + LOG
+                    result = _transactionService.ProcessPaymentAndSave(
+                        _currentInvoice,
+                        paymentModal.PaymentAmount,
+                        paymentModal.PaymentMethod
+                    );
+                }
 
                 if (!result.IsSuccess)
                 {
@@ -700,29 +939,19 @@ namespace POS_qu
                     return;
                 }
 
-                //if (result.IsSuccess)
-                //{
-                //    PrintInvoice(invoice);
-                //}
-                //else
-                //{
-                //    ShowError(result.Message);
-                //}
-
-                // 2️⃣ Reset invoice untuk transaksi baru
                 _currentInvoice = new InvoiceData();
 
-                // 3️⃣ Clear UI
+
                 RenderInvoice(_currentInvoice);
                 RenderReceiptUI(
-                    _currentInvoice,      // invoice
-                    SessionUser.GetCurrentUser().TerminalName,                // terminal (dummy / bisa diambil dari session)
-                    SessionUser.GetCurrentUser().Username,            // user
-                    SessionUser.GetCurrentUser().ShiftId.ToString(),               // shift
-                    "Unpaid",              // statusBayar
-                    _currentInvoice.GrandTotal.ToString(), // jumlahBayar
-                    "-",               // metodeBayar
-                    "0"                   // kembalian, bisa dihitung sesuai bayar
+                    _currentInvoice,    
+                    SessionUser.GetCurrentUser().TerminalName,                
+                    SessionUser.GetCurrentUser().Username,           
+                    SessionUser.GetCurrentUser().ShiftId.ToString(),             
+                    "Unpaid",             
+                    _currentInvoice.GrandTotal.ToString(),
+                    "-",               
+                    "0"                
                 );
                 UpdateInvoiceSummary();
                 StartNewTransaction();
@@ -945,8 +1174,9 @@ namespace POS_qu
 
         private int? ShowDraftModal()
         {
-            var drafts = _cartService.GetDraftOrders();
-
+            var session = SessionUser.GetCurrentUser();
+            var repoDraft = new CartActivity();
+            var drafts = repoDraft.GetDraftOrders(session.TerminalId, session.UserId);
             if (drafts == null || drafts.Count == 0)
             {
                 MessageBox.Show("Tidak ada draft.");
@@ -966,7 +1196,7 @@ namespace POS_qu
 
                 // Header Panel
                 Panel pnlHeader = new Panel { Dock = DockStyle.Top, Height = 80, Padding = new Padding(15) };
-                
+
                 Label lblTitle = new Label
                 {
                     Text = "Daftar Draft Transaksi",
@@ -989,7 +1219,7 @@ namespace POS_qu
 
                 // Footer Panel
                 Panel pnlFooter = new Panel { Dock = DockStyle.Bottom, Height = 70, Padding = new Padding(15) };
-                
+
                 Label lblTotal = new Label
                 {
                     Text = $"Total Draft: {drafts.Count}",
@@ -1037,56 +1267,128 @@ namespace POS_qu
                     Font = new Font("Segoe UI", 10),
                     TabIndex = 1
                 };
+                DataGridView gridDetails = new DataGridView
+                {
+                    Dock = DockStyle.Bottom,
+                    Height = 200,
+                    ReadOnly = true,
+                    SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                    MultiSelect = false,
+                    AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                    BackgroundColor = Color.WhiteSmoke,
+                    BorderStyle = BorderStyle.None,
+                    RowHeadersVisible = false,
+                    AllowUserToAddRows = false,
+                    Font = new Font("Segoe UI", 10),
+                    TabIndex = 2
+                };
 
                 grid.Columns.Add("PoId", "ID");
                 grid.Columns.Add("Customer", "Customer");
                 grid.Columns.Add("Note", "Catatan");
                 grid.Columns.Add("Total", "Total");
                 grid.Columns.Add("CreatedAt", "Tanggal");
-                
+                grid.Columns.Add("Status", "Status");
+                grid.Columns.Add("CartCode", "Cart");
+
                 grid.Columns["PoId"].Width = 50;
                 grid.Columns["Total"].DefaultCellStyle.Format = "N0";
                 grid.Columns["Total"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
 
-                void LoadGrid(List<PendingOrderDto> source)
+                void LoadGrid(IEnumerable<POS_qu.DTO.PendingOrderDto> source)
                 {
                     grid.Rows.Clear();
                     foreach (var d in source)
                     {
                         grid.Rows.Add(
                             d.PoId,
-                            d.CustomerName ?? "-",
-                            d.Note ?? "-",
+                            string.IsNullOrWhiteSpace(d.CustomerName) ? "-" : d.CustomerName,
+                            string.IsNullOrWhiteSpace(d.Note) ? "-" : d.Note,
                             d.Total,
-                            d.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                            d.CreatedAt.ToString("dd MMM yyyy HH:mm"),
+                            "draft",
+                            d.CartSessionCode ?? ""
                         );
                     }
-                    lblTotal.Text = $"Total Draft: {source.Count}";
+                    lblTotal.Text = $"Total Draft: {source.Count()}";
+                    // pewarnaan
+                    foreach (DataGridViewRow row in grid.Rows)
+                    {
+                        row.DefaultCellStyle.BackColor = Color.LightGoldenrodYellow;
+                    }
                 }
 
                 LoadGrid(drafts);
+                void LoadDetails()
+                {
+                    if (grid.SelectedRows.Count == 0)
+                    {
+                        gridDetails.DataSource = null;
+                        return;
+                    }
+                    var cartCode = grid.SelectedRows[0].Cells["CartCode"]?.Value?.ToString() ?? "";
+                    if (string.IsNullOrEmpty(cartCode))
+                    {
+                        gridDetails.DataSource = null;
+                        return;
+                    }
+                    DataTable dt = repoDraft.GetPendingItems(cartCode);
+                    gridDetails.DataSource = dt;
+                    DataGridViewColumn col;
+                    if ((col = gridDetails.Columns["name"]) != null)
+                        col.HeaderText = "Item";
+                    if ((col = gridDetails.Columns["unit"]) != null)
+                        col.HeaderText = "Unit";
+                    if ((col = gridDetails.Columns["qty"]) != null)
+                    {
+                        col.HeaderText = "Qty";
+                        col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    }
+                    if ((col = gridDetails.Columns["price"]) != null)
+                    {
+                        col.HeaderText = "Harga";
+                        col.DefaultCellStyle.Format = "N0";
+                        col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    }
+                    if ((col = gridDetails.Columns["sell_price"]) != null)
+                    {
+                        col.HeaderText = "Harga";
+                        col.DefaultCellStyle.Format = "N0";
+                        col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    }
+                    if ((col = gridDetails.Columns["total"]) != null)
+                    {
+                        col.HeaderText = "Total";
+                        col.DefaultCellStyle.Format = "N0";
+                        col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    }
+                }
+                grid.SelectionChanged += (s, e) => LoadDetails();
+                LoadDetails();
 
                 txtSearch.TextChanged += (s, e) =>
                 {
-                    string key = txtSearch.Text.ToLower();
-                    var filtered = drafts.Where(x =>
-                            (x.CustomerName ?? "").ToLower().Contains(key) ||
-                            (x.Note ?? "").ToLower().Contains(key) ||
-                            x.Total.ToString().Contains(key) ||
-                            x.CreatedAt.ToString("dd-MM-yyyy HH:mm").ToLower().Contains(key)
-                        ).ToList();
+                    string key = txtSearch.Text.Trim().ToLower();
+                    var filtered = drafts.Where(d =>
+                        (!string.IsNullOrWhiteSpace(d.CustomerName) && d.CustomerName.ToLower().Contains(key)) ||
+                        (!string.IsNullOrWhiteSpace(d.Note) && d.Note.ToLower().Contains(key)) ||
+                        d.Total.ToString().Contains(key) ||
+                        d.CreatedAt.ToString("dd-MM-yyyy HH:mm").ToLower().Contains(key)
+                    );
                     LoadGrid(filtered);
                 };
 
                 grid.ColumnHeaderMouseClick += (s, e) =>
                 {
+                    IEnumerable<POS_qu.DTO.PendingOrderDto> ordered = drafts;
                     switch (e.ColumnIndex)
                     {
-                        case 1: drafts = drafts.OrderBy(x => x.CustomerName).ToList(); break;
-                        case 3: drafts = drafts.OrderByDescending(x => x.Total).ToList(); break;
-                        case 4: drafts = drafts.OrderByDescending(x => x.CreatedAt).ToList(); break;
+                        case 1: ordered = drafts.OrderBy(d => d.CustomerName); break;
+                        case 3: ordered = drafts.OrderByDescending(d => d.Total); break;
+                        case 4: ordered = drafts.OrderByDescending(d => d.CreatedAt); break;
+                        default: ordered = drafts; break;
                     }
-                    LoadGrid(drafts);
+                    LoadGrid(ordered);
                 };
 
                 btnLoad.Click += (s, ev) =>
@@ -1096,20 +1398,21 @@ namespace POS_qu
                         MessageBox.Show("Pilih draft dulu.");
                         return;
                     }
-                    selectedPoId = Convert.ToInt32(grid.SelectedRows[0].Cells[0].Value);
+                    selectedPoId = Convert.ToInt32(grid.SelectedRows[0].Cells["PoId"].Value);
                     modal.DialogResult = DialogResult.OK;
                     modal.Close();
                 };
 
                 btnCancel.Click += (s, ev) => modal.Close();
 
+                modal.Controls.Add(gridDetails);
                 modal.Controls.Add(grid);
                 modal.Controls.Add(pnlHeader);
                 modal.Controls.Add(pnlFooter);
 
                 modal.AcceptButton = btnLoad;
                 modal.CancelButton = btnCancel;
-                
+
                 txtSearch.Focus();
                 modal.ShowDialog();
             }
@@ -1197,7 +1500,7 @@ namespace POS_qu
                 // Nama Customer
                 Label lblCustomer = new Label { Text = "Nama Customer:", Dock = DockStyle.Top, Height = 25 };
                 TextBox txtCustomer = new TextBox { Dock = DockStyle.Top, TabIndex = 0, Font = new Font("Segoe UI", 11) };
-                
+
                 Button btnPickCustomer = new Button
                 {
                     Text = "🔍 Pilih Customer Exist",
@@ -1212,11 +1515,12 @@ namespace POS_qu
 
                 // Nominal Bayar
                 Label lblAmount = new Label { Text = "Nominal Bayar Sekarang:", Dock = DockStyle.Top, Height = 25 };
-                TextBox txtAmount = new TextBox { 
-                    Dock = DockStyle.Top, 
-                    TabIndex = 2, 
+                TextBox txtAmount = new TextBox
+                {
+                    Dock = DockStyle.Top,
+                    TabIndex = 2,
                     Font = new Font("Segoe UI", 12, FontStyle.Bold),
-                    Text = totalDue.ToString("N0") 
+                    Text = totalDue.ToString("N0")
                 };
 
                 // Spacer
@@ -1224,17 +1528,18 @@ namespace POS_qu
 
                 // Catatan
                 Label lblNote = new Label { Text = "Catatan:", Dock = DockStyle.Top, Height = 25 };
-                TextBox txtNote = new TextBox { 
-                    Dock = DockStyle.Top, 
-                    TabIndex = 3, 
-                    Multiline = true, 
+                TextBox txtNote = new TextBox
+                {
+                    Dock = DockStyle.Top,
+                    TabIndex = 3,
+                    Multiline = true,
                     Height = 80,
                     Font = new Font("Segoe UI", 10)
                 };
 
                 // Bottom Buttons
                 Panel pnlButtons = new Panel { Dock = DockStyle.Bottom, Height = 60, Padding = new Padding(0, 10, 0, 0) };
-                
+
                 Button btnSave = new Button
                 {
                     Text = "Simpan Transaksi",
@@ -1367,7 +1672,7 @@ namespace POS_qu
 
                 // Footer Buttons
                 Panel pnlFooter = new Panel { Dock = DockStyle.Bottom, Height = 120, Padding = new Padding(15) };
-                
+
                 Button btnOk = new Button
                 {
                     Text = "Pilih Pelanggan (Enter)",
@@ -1391,7 +1696,7 @@ namespace POS_qu
                     Font = new Font("Segoe UI", 9),
                     TabIndex = 2
                 };
-                
+
                 pnlFooter.Controls.Add(btnAdd);
                 pnlFooter.Controls.Add(spacer);
                 pnlFooter.Controls.Add(btnOk);
@@ -1408,8 +1713,10 @@ namespace POS_qu
                         _customerService.Insert(name);
                         LoadCustomers();
                         // Auto select yang baru ditambah
-                        for (int i = 0; i < list.Items.Count; i++) {
-                            if (((CustomerDto)list.Items[i]).Name == name) {
+                        for (int i = 0; i < list.Items.Count; i++)
+                        {
+                            if (((CustomerDto)list.Items[i]).Name == name)
+                            {
                                 list.SelectedIndex = i;
                                 break;
                             }
@@ -1419,7 +1726,8 @@ namespace POS_qu
 
                 btnOk.Click += (s, e) =>
                 {
-                    if (list.SelectedItem == null) {
+                    if (list.SelectedItem == null)
+                    {
                         MessageBox.Show("Silakan pilih pelanggan terlebih dahulu.");
                         return;
                     }
@@ -1436,7 +1744,7 @@ namespace POS_qu
                 modal.Controls.Add(pnlFooter);
 
                 modal.AcceptButton = btnOk;
-                
+
                 list.Focus();
                 modal.ShowDialog();
             }
@@ -1496,17 +1804,19 @@ namespace POS_qu
                     grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "ID", DataPropertyName = "TransactionId", Width = 60 });
                     grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "No. Transaksi", DataPropertyName = "TransactionNumber", Width = 150 });
                     grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Pelanggan", DataPropertyName = "CustomerName", Width = 180 });
-                    grid.Columns.Add(new DataGridViewTextBoxColumn { 
-                        HeaderText = "Total Transaksi", 
-                        DataPropertyName = "TotalAmount", 
-                        Width = 130, 
-                        DefaultCellStyle = { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight } 
+                    grid.Columns.Add(new DataGridViewTextBoxColumn
+                    {
+                        HeaderText = "Total Transaksi",
+                        DataPropertyName = "TotalAmount",
+                        Width = 130,
+                        DefaultCellStyle = { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight }
                     });
-                    grid.Columns.Add(new DataGridViewTextBoxColumn { 
-                        HeaderText = "Sisa Piutang", 
-                        DataPropertyName = "DueAmount", 
-                        Width = 130, 
-                        DefaultCellStyle = { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight, ForeColor = Color.Red, Font = new Font("Segoe UI", 10, FontStyle.Bold) } 
+                    grid.Columns.Add(new DataGridViewTextBoxColumn
+                    {
+                        HeaderText = "Sisa Piutang",
+                        DataPropertyName = "DueAmount",
+                        Width = 130,
+                        DefaultCellStyle = { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight, ForeColor = Color.Red, Font = new Font("Segoe UI", 10, FontStyle.Bold) }
                     });
                     grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Terakhir Update", DataPropertyName = "CreatedAt", Width = 150 });
 
@@ -1520,14 +1830,16 @@ namespace POS_qu
 
                     // Footer
                     Panel pnlFooter = new Panel { Dock = DockStyle.Bottom, Height = 60, Padding = new Padding(10) };
-                    Label lblInfo = new Label { 
+                    Label lblInfo = new Label
+                    {
                         Text = "💡 Double klik pada baris untuk melihat riwayat cicilan atau melakukan pembayaran sisa bon.",
                         Dock = DockStyle.Fill,
                         Font = new Font("Segoe UI", 9, FontStyle.Italic),
                         ForeColor = Color.DimGray,
                         TextAlign = ContentAlignment.MiddleLeft
                     };
-                    Button btnClose = new Button {
+                    Button btnClose = new Button
+                    {
                         Text = "Tutup (Esc)",
                         Dock = DockStyle.Right,
                         Width = 120,
@@ -1543,7 +1855,7 @@ namespace POS_qu
                         if (ev.RowIndex < 0) return;
                         var selected = (InstallmentDto)grid.Rows[ev.RowIndex].DataBoundItem;
                         ShowTransactionInstallments(selected.TransactionId, selected.TransactionNumber);
-                        
+
                         // Refresh data setelah kembali dari detail (siapa tahu ada bayar)
                         var refreshed = _transactionService.GetAllInstallments();
                         grid.DataSource = refreshed.GroupBy(i => i.TransactionId).Select(g => g.First()).OrderByDescending(x => x.DueAmount).ToList();
@@ -1575,7 +1887,7 @@ namespace POS_qu
             }
 
             decimal totalPaid = installments.Sum(i => i.Amount);
-            decimal totalDue = installments.First().DueAmount; 
+            decimal totalDue = installments.First().DueAmount;
 
             using (Form modal = new Form())
             {
@@ -1611,11 +1923,12 @@ namespace POS_qu
                     TabIndex = 2
                 };
 
-                grid.Columns.Add(new DataGridViewTextBoxColumn { 
-                    HeaderText = "Nominal Bayar", 
-                    DataPropertyName = "Amount", 
-                    Width = 150, 
-                    DefaultCellStyle = { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight, ForeColor = Color.Green, Font = new Font("Segoe UI", 10, FontStyle.Bold) } 
+                grid.Columns.Add(new DataGridViewTextBoxColumn
+                {
+                    HeaderText = "Nominal Bayar",
+                    DataPropertyName = "Amount",
+                    Width = 150,
+                    DefaultCellStyle = { Format = "N0", Alignment = DataGridViewContentAlignment.MiddleRight, ForeColor = Color.Green, Font = new Font("Segoe UI", 10, FontStyle.Bold) }
                 });
                 grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Catatan", DataPropertyName = "Note", Width = 250 });
                 grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "Kasir", DataPropertyName = "CreatedByName", Width = 120 });
@@ -1625,7 +1938,7 @@ namespace POS_qu
 
                 // Footer Buttons
                 Panel pnlButtons = new Panel { Dock = DockStyle.Bottom, Height = 70, Padding = new Padding(15) };
-                
+
                 Button btnPay = new Button
                 {
                     Text = "Bayar Sisa Bon",
@@ -1787,19 +2100,13 @@ namespace POS_qu
             }
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+        private void button6_Click(object sender, EventArgs e)
+        {
+            using (ShortcutForm frm = new ShortcutForm())
+            {
+                frm.ShowDialog(this); // Modal
+            }
+        }
     }
 
 }

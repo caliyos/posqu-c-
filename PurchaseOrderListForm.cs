@@ -1,4 +1,4 @@
-﻿using Npgsql;
+using Npgsql;
 using POS_qu.Helpers;
 using System;
 using System.Collections.Generic;
