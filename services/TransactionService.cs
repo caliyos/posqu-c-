@@ -171,7 +171,7 @@ namespace POS_qu.services
 
                         foreach (var item in details)
                         {
-                            if (item.ItemId > 0)
+                            if (item.ItemId > 0 && _repo.IsInventoryItem(con, tran, item.ItemId))
                             {
                                 decimal stockNeeded = item.TsdQuantity * item.TsdConversionRate;
                                 int affected = _repo.ReduceStock(con, tran, item.ItemId, stockNeeded);
@@ -346,7 +346,7 @@ namespace POS_qu.services
 
                         foreach (var item in details)
                         {
-                            if (item.ItemId > 0)
+                            if (item.ItemId > 0 && _repo.IsInventoryItem(con, tran, item.ItemId))
                             {
                                 decimal stockNeeded = item.TsdQuantity * item.TsdConversionRate;
     
@@ -493,7 +493,7 @@ namespace POS_qu.services
 
                 foreach (var item in details)
                 {
-                    if (item.ItemId > 0)
+                    if (item.ItemId > 0 && _repo.IsInventoryItem(con, tran, item.ItemId))
                     {
                         decimal stockNeeded = item.TsdQuantity * item.TsdConversionRate;
                         int affected = _repo.ReduceStock(con, tran, item.ItemId, stockNeeded);
@@ -606,7 +606,7 @@ namespace POS_qu.services
 
                 foreach (var d in details)
                 {
-                    if (d.ItemId > 0)
+                    if (d.ItemId > 0 && _repo.IsInventoryItem(con, tran, d.ItemId))
                     {
                         decimal stockIn = d.TsdQuantity * d.TsdConversionRate;
                         int affected = _repo.IncreaseStock(con, tran, d.ItemId, stockIn);
@@ -708,7 +708,7 @@ namespace POS_qu.services
                 foreach (System.Data.DataRow r in details.Rows)
                 {
                     int itemId = r["item_id"] == DBNull.Value ? 0 : Convert.ToInt32(r["item_id"]);
-                    if (itemId > 0)
+                    if (itemId > 0 && _repo.IsInventoryItem(con, tran, itemId))
                     {
                         decimal qty = Convert.ToDecimal(r["tsd_quantity"]);
                         decimal conv = r["tsd_conversion_rate"] == DBNull.Value ? 1 : Convert.ToDecimal(r["tsd_conversion_rate"]);

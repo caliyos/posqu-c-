@@ -343,6 +343,58 @@ if ($item_id) {
     die("❌ Failed inserting item.\n");
 }
 
+// NON-INVENTORY ITEMss
+
+// =====================================================
+// 3️⃣ ITEM: Plastik Kresek (Non Inventory)
+// =====================================================
+$item = [
+    'name' => 'Plastik Kresek',
+    'buy_price' => 0,
+    'sell_price' => 500,
+    'barcode' => 'NI-PLASTIK',
+    'stock' => 0,                // tidak dipakai
+    'reserved_stock' => 0,
+    'unit' => 1,
+    'category_id' => 1,
+
+    'is_inventory_p' => 0,       // 🔥 PENTING: NON INVENTORY
+    'is_purchasable' => 0,       // biasanya tidak dibeli (opsional)
+    'is_sellable' => 1,          // tetap bisa dijual
+    'is_note_payment' => 0,
+
+    'is_changeprice_p' => 1,     // opsional (biar harga bisa diubah di kasir)
+    'is_have_bahan' => 0,
+    'is_box' => 0,
+    'is_produksi' => 0,
+
+    'note' => 'Non inventory: tidak hitung stok',
+    'picture' => null,
+    'supplier_id' => null,       // boleh null
+    'flag' => 1,
+];
+
+
+$stmt = $db->prepare("
+    INSERT INTO items
+    (
+        name, buy_price, sell_price, barcode, stock, reserved_stock, unit, category_id,
+        is_inventory_p, is_purchasable, is_sellable, is_note_payment,
+        is_changeprice_p, is_have_bahan, is_box, is_produksi,
+        note, picture, created_at, updated_at, supplier_id, flag
+    )
+    VALUES
+    (
+        :name, :buy_price, :sell_price, :barcode, :stock, :reserved_stock, :unit, :category_id,
+        :is_inventory_p, :is_purchasable, :is_sellable, :is_note_payment,
+        :is_changeprice_p, :is_have_bahan, :is_box, :is_produksi,
+        :note, :picture, NOW(), NOW(), :supplier_id, :flag
+    )
+    RETURNING id
+");
+
+$item_id = $stmt->execute($item) ? $stmt->fetchColumn() : null;
+
 // =====================================================
 // 3️⃣ UNIT VARIANTS
 // =====================================================

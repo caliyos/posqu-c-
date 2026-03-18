@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -16,6 +16,10 @@ namespace POS_qu
         private int? editingItemId = null;
         private List<UnitVariant> unitVariantsFromForm = new List<UnitVariant>(); // Store globally if needed
         private Item _item;
+        private DateTimePicker dtpExpired;
+        private Label lblStockOut;
+        private Label lblStockValueHpp;
+        private Label lblStockValueSell;
 
         public ItemDetailForm()
         {
@@ -64,6 +68,40 @@ namespace POS_qu
      
             dgvMultiPrice.Hide();
             dgvMultiPrice.ReadOnly = true;
+
+            // Tambah control Expired At secara dinamis
+            dtpExpired = new DateTimePicker
+            {
+                Format = DateTimePickerFormat.Short,
+                Width = 140
+            };
+            var lblExpired = new Label
+            {
+                Text = "Expired:",
+                AutoSize = true
+            };
+            lblExpired.Location = new Point(txtNote.Left, txtNote.Bottom + 12);
+            dtpExpired.Location = new Point(lblExpired.Right + 8, txtNote.Bottom + 8);
+            this.Controls.Add(lblExpired);
+            this.Controls.Add(dtpExpired);
+
+            // Output stok di sebelah input stok
+            lblStockOut = new Label
+            {
+                AutoSize = true,
+                Text = ""
+            };
+            lblStockOut.Location = new Point(txtStock.Right + 12, txtStock.Top + 3);
+            this.Controls.Add(lblStockOut);
+            lblStockValueHpp = new Label { AutoSize = true, Text = "", Left = txtStock.Left, Top = txtStock.Bottom + 8, ForeColor = Color.DimGray };
+            lblStockValueSell = new Label { AutoSize = true, Text = "", Left = txtStock.Left, Top = txtStock.Bottom + 26, ForeColor = Color.DimGray };
+            this.Controls.Add(lblStockValueHpp);
+            this.Controls.Add(lblStockValueSell);
+            txtStock.TextChanged += (s, e) => UpdateStockOutput();
+            cmbUnit.SelectedIndexChanged += (s, e) => UpdateStockOutput();
+            txtBuyPrice.TextChanged += (s, e) => UpdateStockOutput();
+            txtSellPrice.TextChanged += (s, e) => UpdateStockOutput();
+            UpdateStockOutput();
         }
 
         private void SetDefaultSettings()
@@ -78,6 +116,10 @@ namespace POS_qu
             cmbUnit.DataSource = itemController.GetUnits();
             cmbUnit.DisplayMember = "display";
             cmbUnit.ValueMember = "id";
+            if (cmbUnit.Items.Count > 0 && cmbUnit.SelectedIndex < 0)
+            {
+                cmbUnit.SelectedIndex = 0;
+            }
 
             cmbCategory.DataSource = itemController.GetCategories();
             cmbCategory.DisplayMember = "display";
@@ -123,6 +165,10 @@ namespace POS_qu
             txtNote.Text = _item.note;
 
             cmbUnit.SelectedValue = _item.unitid != 0 ? _item.unitid : -1;
+            if (cmbUnit.SelectedValue == null || (cmbUnit.SelectedValue is int v && v <= 0))
+            {
+                if (cmbUnit.Items.Count > 0) cmbUnit.SelectedIndex = 0;
+            }
             cmbCategory.SelectedValue = _item.category_id != 0 ? _item.category_id : -1;
             cmbSupplier.SelectedValue = _item.supplier_id != 0 ? _item.supplier_id : -1;
 
@@ -136,6 +182,11 @@ namespace POS_qu
             chk_IsProduced.Checked = _item.IsProduced;
 
             dgvMultiPrice.DataSource = itemController.LoadMultiPrice(_item.id);
+
+            if (_item.ExpiredAt.HasValue)
+                dtpExpired.Value = _item.ExpiredAt.Value;
+
+            UpdateStockOutput();
         }
 
 
@@ -190,6 +241,12 @@ namespace POS_qu
             _item.barcode = txtBarcode.Text;
             _item.note = txtNote.Text;
             _item.unitid = cmbUnit.SelectedValue != null ? Convert.ToInt32(cmbUnit.SelectedValue) : 0;
+            if (_item.unitid <= 0)
+            {
+                MessageBox.Show("Pilih unit terlebih dahulu.");
+                cmbUnit.Focus();
+                return;
+            }
             _item.category_id = cmbCategory.SelectedValue != null ? Convert.ToInt32(cmbCategory.SelectedValue) : 0;
             _item.supplier_id = cmbSupplier.SelectedValue != null ? Convert.ToInt32(cmbSupplier.SelectedValue) : 0;
             _item.is_inventory_p = chk_is_inventory_p.Checked;
@@ -201,6 +258,7 @@ namespace POS_qu
             _item.IsPackage = chk_IsPackage.Checked;
             _item.IsProduced = chk_IsProduced.Checked;
             _item.discount_formula = txtDiscountFormula.Text;
+            _item.ExpiredAt = dtpExpired.Value.Date;
 
             // Update multi-price
             _item.Prices = ((BindingList<ItemPrice>)dgvMultiPrice.DataSource).ToList();
@@ -229,6 +287,23 @@ namespace POS_qu
                     this.Close();
                 }
             }
+        }
+
+        private void UpdateStockOutput()
+        {
+            if (lblStockOut == null) return;
+            int val = 0;
+            int.TryParse(txtStock.Text, out val);
+            string unitName = cmbUnit.SelectedIndex >= 0 ? cmbUnit.Text : "pcs";
+            lblStockOut.Text = $"{val:N0} {unitName}";
+            // nilai stok (HPP) dan nilai jual
+            decimal bp = 0m, sp = 0m;
+            decimal.TryParse(txtBuyPrice.Text, out bp);
+            decimal.TryParse(txtSellPrice.Text, out sp);
+            var hpp = bp * val;
+            var jual = sp * val;
+            if (lblStockValueHpp != null) lblStockValueHpp.Text = $"Nilai Stok (HPP): {hpp:N0}";
+            if (lblStockValueSell != null) lblStockValueSell.Text = $"Nilai Jual: {jual:N0}";
         }
 
 

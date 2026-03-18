@@ -385,6 +385,22 @@ ORDER BY td.tsd_id
             return dt;
         }
 
+        public DataTable GetReturnTransactions()
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+            using var cmd = new NpgsqlCommand(@"
+SELECT ts_id, ts_numbering, ts_grand_total, ts_method, created_at, user_id
+FROM transactions
+WHERE ts_method = 'RETURN' AND deleted_at IS NULL
+ORDER BY created_at DESC
+", conn);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
         public void SoftCancelTransaction(NpgsqlConnection con, NpgsqlTransaction tran, int tsId)
         {
             using var cmd = new NpgsqlCommand(@"
@@ -394,6 +410,58 @@ WHERE ts_id = @id AND deleted_at IS NULL
 ", con, tran);
             cmd.Parameters.AddWithValue("@id", tsId);
             cmd.ExecuteNonQuery();
+        }
+
+        public DataTable GetTransactionsByFilter(string filter)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+            string sql = "";
+            if (string.Equals(filter, "Sukses", StringComparison.OrdinalIgnoreCase))
+            {
+                sql = @"
+SELECT ts_id, ts_numbering, ts_grand_total, ts_method, ts_status, created_at, user_id
+FROM transactions
+WHERE ts_status = 1 AND deleted_at IS NULL
+ORDER BY created_at DESC";
+            }
+            else if (string.Equals(filter, "Retur", StringComparison.OrdinalIgnoreCase))
+            {
+                sql = @"
+SELECT ts_id, ts_numbering, ts_grand_total, ts_method, ts_status, created_at, user_id
+FROM transactions
+WHERE ts_method = 'RETURN' AND deleted_at IS NULL
+ORDER BY created_at DESC";
+            }
+            else if (string.Equals(filter, "Dibatalkan", StringComparison.OrdinalIgnoreCase))
+            {
+                sql = @"
+SELECT ts_id, ts_numbering, ts_grand_total, ts_method, ts_status, created_at, user_id
+FROM transactions
+WHERE deleted_at IS NOT NULL
+ORDER BY created_at DESC";
+            }
+            else
+            {
+                sql = @"
+SELECT ts_id, ts_numbering, ts_grand_total, ts_method, ts_status, created_at, user_id, deleted_at
+FROM transactions
+ORDER BY created_at DESC";
+            }
+            using var cmd = new NpgsqlCommand(sql, conn);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        public bool IsInventoryItem(NpgsqlConnection con, NpgsqlTransaction tran, int itemId)
+        {
+            using var cmd = new NpgsqlCommand("SELECT is_inventory_p FROM items WHERE id=@id", con, tran);
+            cmd.Parameters.AddWithValue("@id", itemId);
+            object v = cmd.ExecuteScalar();
+            if (v == null || v == DBNull.Value) return true;
+            return Convert.ToBoolean(v);
         }
 
 

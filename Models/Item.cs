@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -64,6 +64,7 @@ namespace POS_qu.Models
         // DISCOUNT FORMULA PER ITEM
         public string discount_formula { get; set; }
 
+        public DateTime? ExpiredAt { get; set; }
 
         // MULTI HARGA
         public List<ItemPrice> Prices { get; set; } = new();

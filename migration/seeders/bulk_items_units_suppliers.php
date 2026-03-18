@@ -27,7 +27,7 @@ try {
     foreach ($units as $u) { $stmt->execute($u); echo "Inserted unit: {$u['name']}\n"; }
 
     $db->exec("SELECT setval('units_id_seq',(SELECT COALESCE(MAX(id),0) FROM units)+1,false);");
-
+    
     $items = [
         ['name'=>'Aqua Botol 600ml','buy_price'=>2500,'sell_price'=>3500,'barcode'=>'899100000101','stock'=>200,'reserved_stock'=>0,'unit'=>1,'category_id'=>2,'is_inventory_p'=>1,'is_purchasable'=>1,'is_sellable'=>1,'is_note_payment'=>0,'is_changeprice_p'=>0,'is_have_bahan'=>0,'is_box'=>0,'is_produksi'=>0,'note'=>'Air mineral botol','picture'=>null,'supplier_id'=>15,'flag'=>1],
         ['name'=>'Teh Kotak 250ml','buy_price'=>3500,'sell_price'=>5000,'barcode'=>'899200000201','stock'=>150,'reserved_stock'=>0,'unit'=>1,'category_id'=>2,'is_inventory_p'=>1,'is_purchasable'=>1,'is_sellable'=>1,'is_note_payment'=>0,'is_changeprice_p'=>0,'is_have_bahan'=>0,'is_box'=>0,'is_produksi'=>0,'note'=>'Minuman teh','picture'=>null,'supplier_id'=>12,'flag'=>1],

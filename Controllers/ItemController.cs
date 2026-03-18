@@ -1,4 +1,4 @@
-﻿﻿  using Npgsql;
+﻿﻿﻿﻿﻿﻿  using Npgsql;
     using System;
     using System.Collections.Generic;
     using System.Data;
@@ -194,12 +194,13 @@ using System.ComponentModel;
                         int newItemId;
                         using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon, tran))
                         {
+                            int unitIdSafe = item.unitid > 0 ? item.unitid : 1;
                             vCmd.Parameters.AddWithValue("@name", item.name);
                             vCmd.Parameters.AddWithValue("@buy_price", item.buy_price);
                             vCmd.Parameters.AddWithValue("@sell_price", item.sell_price);
                             vCmd.Parameters.AddWithValue("@barcode", item.barcode ?? "");
                             vCmd.Parameters.AddWithValue("@stock", item.stock);
-                            vCmd.Parameters.AddWithValue("@unit", item.unitid);
+                            vCmd.Parameters.AddWithValue("@unit", unitIdSafe);
                             vCmd.Parameters.AddWithValue("@category_id", item.category_id);
                             vCmd.Parameters.AddWithValue("@supplier_id", item.supplier_id);
                             vCmd.Parameters.AddWithValue("@is_inventory_p", item.is_inventory_p);
@@ -211,6 +212,16 @@ using System.ComponentModel;
                             object result = vCmd.ExecuteScalar();
                             if (result == null) throw new Exception("Gagal insert item");
                             newItemId = Convert.ToInt32(result);
+                        }
+
+                        // Sinkronkan ke kolom 'unit_id' bila ada untuk hindari NOT NULL violation
+                        if (HasColumn(vCon, tran, "items", "unit_id"))
+                        {
+                            int unitIdSafe2 = item.unitid > 0 ? item.unitid : 1;
+                            using var setUnitId = new NpgsqlCommand("UPDATE items SET unit_id = @unit WHERE id = @id", vCon, tran);
+                            setUnitId.Parameters.AddWithValue("@unit", unitIdSafe2);
+                            setUnitId.Parameters.AddWithValue("@id", newItemId);
+                            setUnitId.ExecuteNonQuery();
                         }
 
                         // ----------------------
@@ -288,6 +299,7 @@ using System.ComponentModel;
             }
             catch (Exception ex)
             {
+                // Pastikan transaksi dibatalkan agar tidak 25P02
                 MessageBox.Show("Error inserting item: " + ex.Message);
                 return null;
             }
@@ -328,13 +340,14 @@ using System.ComponentModel;
 
                         using (var vCmd = new NpgsqlCommand(sql, vCon, tran))
                         {
+                            int unitIdSafe = item.unitid > 0 ? item.unitid : 1;
                             vCmd.Parameters.AddWithValue("@id", item.id);
                             vCmd.Parameters.AddWithValue("@name", item.name);
                             vCmd.Parameters.AddWithValue("@buy_price", item.buy_price);
                             vCmd.Parameters.AddWithValue("@sell_price", item.sell_price);
                             vCmd.Parameters.AddWithValue("@barcode", item.barcode ?? "");
                             vCmd.Parameters.AddWithValue("@stock", item.stock);
-                            vCmd.Parameters.AddWithValue("@unit", item.unitid);
+                            vCmd.Parameters.AddWithValue("@unit", unitIdSafe);
                             vCmd.Parameters.AddWithValue("@category_id", item.category_id);
                             vCmd.Parameters.AddWithValue("@supplier_id", item.supplier_id);
                             vCmd.Parameters.AddWithValue("@is_inventory_p", item.is_inventory_p);
@@ -344,6 +357,16 @@ using System.ComponentModel;
                             vCmd.Parameters.AddWithValue("@note", item.note ?? "");
 
                             vCmd.ExecuteNonQuery();
+                        }
+
+                        // Sinkronkan ke kolom 'unit_id' bila ada
+                        if (HasColumn(vCon, tran, "items", "unit_id"))
+                        {
+                            int unitIdSafe2 = item.unitid > 0 ? item.unitid : 1;
+                            using var setUnitId = new NpgsqlCommand("UPDATE items SET unit_id = @unit WHERE id = @id", vCon, tran);
+                            setUnitId.Parameters.AddWithValue("@unit", unitIdSafe2);
+                            setUnitId.Parameters.AddWithValue("@id", item.id);
+                            setUnitId.ExecuteNonQuery();
                         }
 
                         // ----------------------
@@ -431,6 +454,7 @@ using System.ComponentModel;
             }
             catch (Exception ex)
             {
+                // Pastikan tidak menyisakan transaksi dalam keadaan aborted
                 MessageBox.Show("Error updating item: " + ex.Message);
                 return false;
             }
@@ -488,7 +512,7 @@ using System.ComponentModel;
             LEFT JOIN categories  ON items.category_id = categories.id
             LEFT JOIN suppliers   ON items.supplier_id = suppliers.id
             WHERE items.deleted_at IS NULL
-            ORDER BY items.id DESC
+            ORDER BY items.id ASC
         ";
 
                 using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
@@ -710,6 +734,21 @@ using System.ComponentModel;
                 }
             }
             return dt;
+        }
+
+        private bool HasColumn(NpgsqlConnection con, NpgsqlTransaction tran, string table, string column)
+        {
+            using var cmd = new NpgsqlCommand(@"
+SELECT 1 
+FROM information_schema.columns 
+WHERE table_schema = current_schema()
+  AND table_name = @t 
+  AND column_name = @c
+LIMIT 1", con, tran);
+            cmd.Parameters.AddWithValue("@t", table);
+            cmd.Parameters.AddWithValue("@c", column);
+            var obj = cmd.ExecuteScalar();
+            return obj != null;
         }
 
         public DataTable GetCategories()

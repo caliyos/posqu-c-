@@ -25,6 +25,8 @@ namespace POS_qu
         private Button btnRemove;
         private Button btnSave;
         private Label lblTotal;
+        private Panel pnlTop;
+        private bool _isTransactionMode = false;
 
         private TransactionService _txService;
         private TransactionRepo _txRepo;
@@ -42,7 +44,7 @@ namespace POS_qu
             _txRepo = new TransactionRepo();
             _txService = new TransactionService(_txRepo, new ActivityService());
 
-            var pnlTop = new Panel { Dock = DockStyle.Top, Height = 100 };
+            pnlTop = new Panel { Dock = DockStyle.Top, Height = 100 };
             var lblTxn = new Label { Text = "No. Transaksi:", Left = 0, Top = 12, AutoSize = true };
             txtTxnNumber = new TextBox { PlaceholderText = "Contoh: TRX-20260311120000", Width = 260, Left = 110, Top = 8 };
             btnLoadTxn = new Button { Text = "Load", Left = 380, Top = 6, Width = 60 };
@@ -102,6 +104,11 @@ namespace POS_qu
 
         private void BtnAdd_Click(object? sender, EventArgs e)
         {
+            if (_isTransactionMode)
+            {
+                MessageBox.Show("Tambah manual dinonaktifkan saat retur dari transaksi.");
+                return;
+            }
             if (string.IsNullOrWhiteSpace(txtName.Text))
             {
                 MessageBox.Show("Nama item wajib.");
@@ -189,6 +196,16 @@ namespace POS_qu
             this.Close();
         }
 
+        public void PreloadTransaction(string txnNumber, bool autoLoad = false)
+        {
+            txtTxnNumber.Text = txnNumber;
+            EnterTransactionMode();
+            if (autoLoad)
+            {
+                LoadTxnByNumber(txnNumber);
+            }
+        }
+
         private void BtnLoadTxn_Click(object? sender, EventArgs e)
         {
             string num = txtTxnNumber.Text?.Trim();
@@ -197,6 +214,11 @@ namespace POS_qu
                 MessageBox.Show("Masukkan nomor transaksi.");
                 return;
             }
+            LoadTxnByNumber(num);
+        }
+
+        private void LoadTxnByNumber(string num)
+        {
             try
             {
                 var dt = _txRepo.GetTransactionDetailsByNumber(num);
@@ -216,6 +238,13 @@ namespace POS_qu
                     decimal price = (decimal)r["tsd_sell_price"];
                     grid.Rows.Add(itemId, barcode, name, qtyAsal, 0, unit, price, 0);
                 }
+                // pastikan hanya kolom QtyReturn yang bisa diedit
+                if (grid.Columns.Contains("Name")) grid.Columns["Name"].ReadOnly = true;
+                if (grid.Columns.Contains("Barcode")) grid.Columns["Barcode"].ReadOnly = true;
+                if (grid.Columns.Contains("QtyAsal")) grid.Columns["QtyAsal"].ReadOnly = true;
+                if (grid.Columns.Contains("Unit")) grid.Columns["Unit"].ReadOnly = true;
+                if (grid.Columns.Contains("Price")) grid.Columns["Price"].ReadOnly = true;
+                if (grid.Columns.Contains("Total")) grid.Columns["Total"].ReadOnly = true;
                 RecalcTotal();
                 grid.CellEndEdit += (s, ev) =>
                 {
@@ -230,6 +259,22 @@ namespace POS_qu
             {
                 MessageBox.Show("Gagal load transaksi: " + ex.Message);
             }
+        }
+
+        private void EnterTransactionMode()
+        {
+            _isTransactionMode = true;
+            // Sembunyikan input manual yang tidak dipakai
+            txtName.Visible = false;
+            txtQty.Visible = false;
+            txtUnit.Visible = false;
+            txtPrice.Visible = false;
+            txtBarcode.Visible = false;
+            btnAdd.Visible = false;
+            // Tombol hapus baris manual juga disembunyikan
+            if (btnRemove != null) btnRemove.Visible = false;
+            // Perkecil header
+            pnlTop.Height = 60;
         }
 
         private void RecalcTotal()

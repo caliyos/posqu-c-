@@ -25,6 +25,9 @@ namespace POS_qu
         private string selectedImagePath = "";
         private DataGridViewManager dgvManager;
         private List<UnitVariant> unitVariantsFromForm = new List<UnitVariant>(); // Store globally if needed
+        private Panel panelSummary;
+        private Label lblSumItems, lblSumQty, lblSumStockValue, lblSumRetailValue, lblSumInvRatio;
+        private System.Data.DataTable _dtFull;
 
         private readonly IActivityService _activityService;
         private readonly IStockAdjustmentService _stockService;
@@ -144,10 +147,131 @@ namespace POS_qu
             //inputPanel.Controls.Add(btnClose);
             //this.Controls.Add(btnClose);
             dataGridView1.CellClick += dataGridView1_CellClick;
+            dataGridView1.DataBindingComplete += (s, e) => { ConfigureGridColumns(); UpdateSummaryFromGrid(); };
+            dataGridView1.CellDoubleClick += (s, e) =>
+            {
+                if (e.RowIndex < 0) return;
+                var row = dataGridView1.Rows[e.RowIndex];
+                OpenEditForRow(row);
+            };
 
+            // Toolbar cepat Export/Import agar selalu terlihat
+            var quickBar = new Panel { Dock = DockStyle.Top, Height = 52, BackColor = System.Drawing.Color.FromArgb(245, 245, 245) };
+            var btnExportQuick = new Button
+            {
+                Text = "Export Items",
+                Width = 130,
+                Height = 36,
+                Left = 10,
+                Top = 8,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            };
+            var btnImportQuick = new Button
+            {
+                Text = "Import Item",
+                Width = 130,
+                Height = 36,
+                Left = 150,
+                Top = 8,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            };
+            btnExportQuick.Click += btnExportExcel_Click;
+            btnImportQuick.Click += btnImportExcel_Click;
+            quickBar.Controls.Add(btnExportQuick);
+            quickBar.Controls.Add(btnImportQuick);
 
+            // Panel ringkasan di bawah toolbar
+            panelSummary = new Panel { Dock = DockStyle.Top, Height = 64, BackColor = System.Drawing.Color.White };
+            lblSumItems = new Label { Left = 10, Top = 8, Width = 260, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
+            lblSumQty = new Label { Left = 280, Top = 8, Width = 260, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
+            lblSumStockValue = new Label { Left = 10, Top = 34, Width = 260, Font = new Font("Segoe UI", 10, FontStyle.Regular) };
+            lblSumRetailValue = new Label { Left = 280, Top = 34, Width = 260, Font = new Font("Segoe UI", 10, FontStyle.Regular) };
+            lblSumInvRatio = new Label { Left = 550, Top = 8, Width = 320, Font = new Font("Segoe UI", 10, FontStyle.Regular) };
+            panelSummary.Controls.Add(lblSumItems);
+            panelSummary.Controls.Add(lblSumQty);
+            panelSummary.Controls.Add(lblSumStockValue);
+            panelSummary.Controls.Add(lblSumRetailValue);
+            panelSummary.Controls.Add(lblSumInvRatio);
+
+            // Panel actions: Select All, Search, Stock Adjustment, Refresh
+            var actionPanel = new Panel { Dock = DockStyle.Top, Height = 56, BackColor = System.Drawing.Color.FromArgb(250, 250, 250) };
+            var chkActionSelectAll = new CheckBox
+            {
+                Text = "Pilih Semua",
+                Left = 12,
+                Top = 18,
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10, FontStyle.Regular)
+            };
+            chkActionSelectAll.CheckedChanged += (s, ev) =>
+            {
+                bool checkAll = chkActionSelectAll.Checked;
+                foreach (DataGridViewRow row2 in dataGridView1.Rows)
+                {
+                    if (row2.IsNewRow) continue;
+                    if (row2.Cells["chkSelect"] != null)
+                        row2.Cells["chkSelect"].Value = checkAll;
+                }
+            };
+            var lblCari = new Label
+            {
+                Text = "Cari:",
+                Left = 150,
+                Top = 20,
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10, FontStyle.Regular)
+            };
+            var txtActionSearch = new TextBox
+            {
+                Left = 195,
+                Top = 16,
+                Width = 260,
+                Font = new Font("Segoe UI", 10, FontStyle.Regular)
+            };
+            txtActionSearch.TextChanged += (s, ev) =>
+            {
+                if (dgvManager != null)
+                {
+                    dgvManager.Filter(txtActionSearch.Text, "name");
+                }
+            };
+            var btnActionStockAdj = new Button
+            {
+                Text = "Update Stock",
+                Left = 470,
+                Top = 12,
+                Width = 140,
+                Height = 32,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            };
+            btnActionStockAdj.Click += btnStockAdjs_Click;
+            var btnActionRefresh = new Button
+            {
+                Text = "Refresh",
+                Left = 620,
+                Top = 12,
+                Width = 100,
+                Height = 32,
+                Font = new Font("Segoe UI", 10, FontStyle.Regular)
+            };
+            btnActionRefresh.Click += btnRefresh_Click;
+            actionPanel.Controls.Add(chkActionSelectAll);
+            actionPanel.Controls.Add(lblCari);
+            actionPanel.Controls.Add(txtActionSearch);
+            actionPanel.Controls.Add(btnActionStockAdj);
+            actionPanel.Controls.Add(btnActionRefresh);
+
+            // Tambahkan ke tablePanel agar selalu terlihat
+            tablePanel.Controls.Add(quickBar);
+            tablePanel.Controls.Add(panelSummary);
+            tablePanel.Controls.Add(actionPanel);
+            tablePanel.Controls.SetChildIndex(quickBar, 0);
+            tablePanel.Controls.SetChildIndex(panelSummary, 1);
+            tablePanel.Controls.SetChildIndex(actionPanel, 2);
+            dataGridView1.Dock = DockStyle.Fill;
             LoadItems();
             ApplyProfessionalGridStyle();
+            dataGridView1.Dock = DockStyle.Fill;
 
         }
 
@@ -206,10 +330,10 @@ namespace POS_qu
                 sell_price = Convert.ToDecimal(rowSelected.Cells["sell_price"].Value),
                 stock = Convert.ToInt32(rowSelected.Cells["stock"].Value),
                 barcode = rowSelected.Cells["barcode"].Value.ToString(),
-                unitid = Convert.ToInt32(rowSelected.Cells["unit_id"].Value),
+                unitid = rowSelected.Cells["unit_id"].Value == DBNull.Value ? 1 : Convert.ToInt32(rowSelected.Cells["unit_id"].Value),
                 unit = rowSelected.Cells["unit_name"].Value.ToString(),
-                category_id = Convert.ToInt32(rowSelected.Cells["category_id"].Value),
-                supplier_id = Convert.ToInt32(rowSelected.Cells["supplier_id"].Value),
+                category_id = rowSelected.Cells["category_id"].Value == DBNull.Value ? 0 : Convert.ToInt32(rowSelected.Cells["category_id"].Value),
+                supplier_id = rowSelected.Cells["supplier_id"].Value == DBNull.Value ? 0 : Convert.ToInt32(rowSelected.Cells["supplier_id"].Value),
                 note = rowSelected.Cells["note"].Value.ToString(),
                 picture = rowSelected.Cells["picture"].Value?.ToString(),
                 is_inventory_p = Convert.ToBoolean(rowSelected.Cells["is_inventory_p"].Value),
@@ -346,6 +470,7 @@ namespace POS_qu
 
             itemController = new ItemController();
             DataTable dt = itemController.GetItems();
+            _dtFull = dt?.Copy();
 
             // Tambahkan kolom dummy untuk variant
             if (!dt.Columns.Contains("btnVariant"))
@@ -354,6 +479,11 @@ namespace POS_qu
             // 1️⃣ Tambahkan kolom dummy di DataTable
             if (!dt.Columns.Contains("UnitVariant"))
                 dt.Columns.Add("UnitVariant", typeof(string));
+            // 1b️⃣ Tambahkan kolom nilai stok dan nilai jual
+            if (!dt.Columns.Contains("stock_value"))
+                dt.Columns.Add("stock_value", typeof(decimal));
+            if (!dt.Columns.Contains("retail_value"))
+                dt.Columns.Add("retail_value", typeof(decimal));
 
             // 2️⃣ Isi "+" jika item punya variant
             foreach (DataRow row in dt.Rows)
@@ -361,6 +491,20 @@ namespace POS_qu
                 int itemId = Convert.ToInt32(row["id"]);
                 var variants = itemController.GetUnitVariants(itemId);
                 row["UnitVariant"] = variants.Count > 0 ? "+" : "";
+                // Hitung nilai
+                try
+                {
+                    decimal buy = row.Table.Columns.Contains("buy_price") && row["buy_price"] != DBNull.Value ? Convert.ToDecimal(row["buy_price"]) : 0m;
+                    decimal sell = row.Table.Columns.Contains("sell_price") && row["sell_price"] != DBNull.Value ? Convert.ToDecimal(row["sell_price"]) : 0m;
+                    int stok = row.Table.Columns.Contains("stock") && row["stock"] != DBNull.Value ? Convert.ToInt32(row["stock"]) : 0;
+                    row["stock_value"] = buy * stok;
+                    row["retail_value"] = sell * stok;
+                }
+                catch
+                {
+                    row["stock_value"] = 0m;
+                    row["retail_value"] = 0m;
+                }
             }
 
 
@@ -371,6 +515,18 @@ namespace POS_qu
             // 4️⃣ Pindahkan kolom UnitVariant ke posisi pertama
             if (dataGridView1.Columns.Contains("UnitVariant"))
                 dataGridView1.Columns["UnitVariant"].DisplayIndex = 1;
+            if (dataGridView1.Columns.Contains("stock_value"))
+            {
+                dataGridView1.Columns["stock_value"].HeaderText = "Nilai Stok (HPP)";
+                dataGridView1.Columns["stock_value"].DefaultCellStyle.Format = "N0";
+                dataGridView1.Columns["stock_value"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+            if (dataGridView1.Columns.Contains("retail_value"))
+            {
+                dataGridView1.Columns["retail_value"].HeaderText = "Nilai Jual";
+                dataGridView1.Columns["retail_value"].DefaultCellStyle.Format = "N0";
+                dataGridView1.Columns["retail_value"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
 
             if (!dataGridView1.Columns.Contains("chkSelect"))
             {
@@ -390,6 +546,7 @@ namespace POS_qu
 
 
             ApplyProfessionalGridStyle();
+            UpdateSummaryFromGrid();
         }
 
 
@@ -643,7 +800,7 @@ namespace POS_qu
 
                 try
                 {
-                    ImportItemsFromExcel(txtFile.Text);
+                    ImportItemsFromExcelImpl(txtFile.Text);
                     MessageBox.Show("Import berhasil!");
                     importForm.Close();
                 }
@@ -760,6 +917,51 @@ namespace POS_qu
                 // format tabel
                 refSheet.Columns().AdjustToContents();
                 refSheet.Rows().Style.Alignment.Vertical = ClosedXML.Excel.XLAlignmentVerticalValues.Center;
+
+                // === SHEET 3: Sample10 ===
+                var smp = workbook.Worksheets.Add("Sample10");
+                smp.Cell(1, 1).Value = "name";
+                smp.Cell(1, 2).Value = "buy_price";
+                smp.Cell(1, 3).Value = "sell_price";
+                smp.Cell(1, 4).Value = "barcode";
+                smp.Cell(1, 5).Value = "stock";
+                smp.Cell(1, 6).Value = "unit";
+                smp.Cell(1, 7).Value = "group";
+                smp.Cell(1, 8).Value = "supplier_id";
+                smp.Cell(1, 9).Value = "note";
+                smp.Cell(1, 10).Value = "is_inventory_p";
+                smp.Cell(1, 11).Value = "is_changeprice_p";
+                smp.Row(1).Style.Font.Bold = true;
+                var samples = new[]
+                {
+                    new {N="Plastik Kresek Kecil", BP=0m, SP=300m, BC="PK-KCL", ST=0, U=1, G=4, S=4, Note="Non inventory", Inv="N", Chg="N"},
+                    new {N="Plastik Kresek Besar", BP=0m, SP=500m, BC="PK-BSR", ST=0, U=1, G=4, S=4, Note="Non inventory", Inv="N", Chg="N"},
+                    new {N="Aqua Gelas", BP=500m, SP=1500m, BC="AG-01", ST=100, U=5, G=2, S=3, Note="", Inv="Y", Chg="N"},
+                    new {N="Teh Botol", BP=2500m, SP=4000m, BC="TB-01", ST=50, U=5, G=2, S=3, Note="", Inv="Y", Chg="N"},
+                    new {N="Kopi Sachet", BP=1000m, SP=2000m, BC="KS-01", ST=200, U=5, G=1, S=1, Note="", Inv="Y", Chg="N"},
+                    new {N="Tissue Saku", BP=1500m, SP=2500m, BC="TS-01", ST=80, U=5, G=4, S=4, Note="", Inv="Y", Chg="N"},
+                    new {N="Pulsa Telkomsel 10k", BP=9000m, SP=10000m, BC="PLS-TSEL-10", ST=0, U=5, G=4, S=4, Note="Non inventory (jasa)", Inv="N", Chg="N"},
+                    new {N="Sedotan Jumbo", BP=300m, SP=500m, BC="SD-JMB", ST=100, U=5, G=4, S=4, Note="", Inv="Y", Chg="N"},
+                    new {N="Gula Pasir 1kg", BP=12000m, SP=15000m, BC="GP-1KG", ST=40, U=4, G=1, S=1, Note="", Inv="Y", Chg="N"},
+                    new {N="Kantong Kertas", BP=0m, SP=1000m, BC="KK-01", ST=0, U=5, G=4, S=4, Note="Non inventory", Inv="N", Chg="N"},
+                };
+                int r = 2;
+                foreach (var x in samples)
+                {
+                    smp.Cell(r, 1).Value = x.N;
+                    smp.Cell(r, 2).Value = x.BP;
+                    smp.Cell(r, 3).Value = x.SP;
+                    smp.Cell(r, 4).Value = x.BC;
+                    smp.Cell(r, 5).Value = x.ST;
+                    smp.Cell(r, 6).Value = x.U;
+                    smp.Cell(r, 7).Value = x.G;
+                    smp.Cell(r, 8).Value = x.S;
+                    smp.Cell(r, 9).Value = x.Note;
+                    smp.Cell(r, 10).Value = x.Inv;
+                    smp.Cell(r, 11).Value = x.Chg;
+                    r++;
+                }
+                smp.Columns().AdjustToContents();
 
                 workbook.SaveAs(path);
             }
@@ -903,6 +1105,207 @@ namespace POS_qu
             dataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
             dataGridView1.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(220, 235, 255);
             dataGridView1.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
+        }
+
+        private void UpdateSummaryFromGrid()
+        {
+            try
+            {
+                int rows = dataGridView1.Rows.Count;
+                long sumQty = 0;
+                decimal sumStockValue = 0m, sumRetailValue = 0m;
+                int invCount = 0, nonInvCount = 0;
+                foreach (DataGridViewRow r in dataGridView1.Rows)
+                {
+                    if (r.IsNewRow) continue;
+                    int q = 0;
+                    if (r.Cells["stock"]?.Value != null && int.TryParse(r.Cells["stock"].Value.ToString(), out var qtmp)) q = qtmp;
+                    sumQty += q;
+                    if (r.Cells["stock_value"]?.Value != null && decimal.TryParse(r.Cells["stock_value"].Value.ToString(), out var sv)) sumStockValue += sv;
+                    if (r.Cells["retail_value"]?.Value != null && decimal.TryParse(r.Cells["retail_value"].Value.ToString(), out var rv)) sumRetailValue += rv;
+                    bool inv = false;
+                    if (r.Cells["is_inventory_p"]?.Value != null) bool.TryParse(r.Cells["is_inventory_p"].Value.ToString(), out inv);
+                    if (inv) invCount++; else nonInvCount++;
+                }
+                // Gunakan label dari designer
+                label9.Text = $"Nilai Stock (HPP): {sumStockValue:N0} | Nilai Jual: {sumRetailValue:N0}";
+                label10.Text = $"Jumlah Stock: {sumQty:N0} | Total Item: {rows:N0} (Inv:{invCount:N0}/Non:{nonInvCount:N0})";
+                int total = _dtFull?.Rows.Count ?? rows;
+                lblPagingInfo.Text = $"Menampilkan {rows:N0} dari {total:N0}";
+            }
+            catch
+            {
+                // ignore summary errors
+            }
+        }
+
+        private void ConfigureGridColumns()
+        {
+            if (dataGridView1.Columns.Contains("name"))
+            {
+                var c = dataGridView1.Columns["name"];
+                c.HeaderText = "Nama Barang";
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                c.FillWeight = 320;
+            }
+            if (dataGridView1.Columns.Contains("barcode"))
+            {
+                var c = dataGridView1.Columns["barcode"];
+                c.HeaderText = "Barcode";
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                c.FillWeight = 130;
+            }
+            if (dataGridView1.Columns.Contains("unit_name"))
+            {
+                var c = dataGridView1.Columns["unit_name"];
+                c.HeaderText = "Satuan";
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                c.FillWeight = 90;
+            }
+            if (dataGridView1.Columns.Contains("sell_price"))
+            {
+                var c = dataGridView1.Columns["sell_price"];
+                c.HeaderText = "Harga";
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                c.DefaultCellStyle.Format = "N0";
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                c.FillWeight = 110;
+            }
+            if (dataGridView1.Columns.Contains("buy_price"))
+            {
+                var c = dataGridView1.Columns["buy_price"];
+                c.HeaderText = "HPP";
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                c.DefaultCellStyle.Format = "N0";
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                c.FillWeight = 110;
+            }
+            if (dataGridView1.Columns.Contains("stock"))
+            {
+                var c = dataGridView1.Columns["stock"];
+                c.HeaderText = "Stok";
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                c.FillWeight = 90;
+            }
+            if (dataGridView1.Columns.Contains("stock_value"))
+            {
+                var c = dataGridView1.Columns["stock_value"];
+                c.HeaderText = "Nilai Stok (HPP)";
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                c.DefaultCellStyle.Format = "N0";
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                c.FillWeight = 140;
+            }
+            if (dataGridView1.Columns.Contains("retail_value"))
+            {
+                var c = dataGridView1.Columns["retail_value"];
+                c.HeaderText = "Nilai Jual";
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                c.DefaultCellStyle.Format = "N0";
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                c.FillWeight = 140;
+            }
+
+            string[] hideCols = new[]
+            {
+                "reserved_stock","unit_id","category_id","supplier_id","note","picture","is_purchasable","is_sellable",
+                "is_note_payment","is_changeprice_p","is_have_bahan","is_box","is_produksi","discount_formula","flag",
+                "created_at","updated_at","category_name","supplier_name","btnVariant"
+            };
+            foreach (var key in hideCols)
+            {
+                if (dataGridView1.Columns.Contains(key))
+                    dataGridView1.Columns[key].Visible = false;
+            }
+        }
+
+        private void OpenEditForRow(DataGridViewRow rowSelected)
+        {
+            int itemId = Convert.ToInt32(rowSelected.Cells["id"].Value);
+            Item selectedItem = new Item
+            {
+                id = itemId,
+                name = rowSelected.Cells["name"].Value.ToString(),
+                buy_price = Convert.ToDecimal(rowSelected.Cells["buy_price"].Value),
+                sell_price = Convert.ToDecimal(rowSelected.Cells["sell_price"].Value),
+                stock = Convert.ToInt32(rowSelected.Cells["stock"].Value),
+                barcode = rowSelected.Cells["barcode"].Value.ToString(),
+                unitid = rowSelected.Cells["unit_id"].Value == DBNull.Value ? 1 : Convert.ToInt32(rowSelected.Cells["unit_id"].Value),
+                unit = rowSelected.Cells["unit_name"].Value.ToString(),
+                category_id = rowSelected.Cells["category_id"].Value == DBNull.Value ? 0 : Convert.ToInt32(rowSelected.Cells["category_id"].Value),
+                supplier_id = rowSelected.Cells["supplier_id"].Value == DBNull.Value ? 0 : Convert.ToInt32(rowSelected.Cells["supplier_id"].Value),
+                note = rowSelected.Cells["note"].Value.ToString(),
+                picture = rowSelected.Cells["picture"].Value?.ToString(),
+                is_inventory_p = Convert.ToBoolean(rowSelected.Cells["is_inventory_p"].Value),
+                IsPurchasable = Convert.ToBoolean(rowSelected.Cells["is_purchasable"].Value),
+                IsSellable = Convert.ToBoolean(rowSelected.Cells["is_sellable"].Value),
+                RequireNotePayment = Convert.ToBoolean(rowSelected.Cells["is_note_payment"].Value),
+                is_changeprice_p = Convert.ToBoolean(rowSelected.Cells["is_changeprice_p"].Value),
+                discount_formula = rowSelected.Cells["discount_formula"].Value.ToString(),
+                HasMaterials = Convert.ToBoolean(rowSelected.Cells["is_have_bahan"].Value),
+                IsPackage = Convert.ToBoolean(rowSelected.Cells["is_box"].Value),
+                IsProduced = Convert.ToBoolean(rowSelected.Cells["is_produksi"].Value)
+            };
+            selectedItem.UnitVariants = itemController.GetUnitVariants(itemId);
+            using (var detailForm = new ItemDetailForm(selectedItem))
+            {
+                if (detailForm.ShowDialog() == DialogResult.OK)
+                    LoadItems();
+            }
+        }
+        private void ImportItemsFromExcelImpl(string filePath)
+        {
+            using (var workbook = new ClosedXML.Excel.XLWorkbook(filePath))
+            {
+                var ws = workbook.Worksheets.First();
+                var used = ws.RangeUsed();
+                if (used == null)
+                {
+                    MessageBox.Show("File kosong.");
+                    return;
+                }
+                int ok = 0, fail = 0;
+                foreach (var row in used.RowsUsed().Skip(1))
+                {
+                    try
+                    {
+                        var item = new Item
+                        {
+                            name = row.Cell(1).GetString(),
+                            buy_price = (decimal)(row.Cell(2).TryGetValue<double>(out var bp) ? bp : 0),
+                            sell_price = (decimal)(row.Cell(3).TryGetValue<double>(out var sp) ? sp : 0),
+                            barcode = row.Cell(4).GetString(),
+                            stock = (int)(row.Cell(5).TryGetValue<double>(out var st) ? st : 0),
+                            unitid = row.Cell(6).TryGetValue<int>(out var u) ? u : 1,
+                            category_id = row.Cell(7).TryGetValue<int>(out var g) ? g : 0,
+                            supplier_id = row.Cell(8).TryGetValue<int>(out var s) ? s : 0,
+                            note = row.Cell(9).GetString(),
+                            is_inventory_p = ParseYN(row.Cell(10).GetString(), true),
+                            is_changeprice_p = ParseYN(row.Cell(11).GetString(), false),
+                            IsPurchasable = true,
+                            IsSellable = true
+                        };
+                        var id = itemController.InsertItem(item);
+                        if (id != null) ok++; else fail++;
+                    }
+                    catch
+                    {
+                        fail++;
+                    }
+                }
+                MessageBox.Show($"Import selesai. Sukses: {ok}, Gagal: {fail}");
+                LoadItems();
+            }
+        }
+
+        private static bool ParseYN(string s, bool defaultVal)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return defaultVal;
+            s = s.Trim().ToUpperInvariant();
+            if (s == "Y" || s == "YES" || s == "TRUE" || s == "1") return true;
+            if (s == "N" || s == "NO" || s == "FALSE" || s == "0") return false;
+            return defaultVal;
         }
     }
 }

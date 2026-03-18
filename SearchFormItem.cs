@@ -36,6 +36,24 @@ namespace POS_qu
             dataGridViewSearchResults.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dataGridViewSearchResults.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridViewSearchResults.KeyDown += DataGridViewSearchResults_KeyDown;
+            dataGridViewSearchResults.CellDoubleClick += (s, ev) =>
+            {
+                if (dataGridViewSearchResults.CurrentRow == null) return;
+                var drv = dataGridViewSearchResults.CurrentRow.DataBoundItem as DataRowView;
+                if (drv == null) return;
+                TrySelectItemFromRow(drv);
+            };
+            dataGridViewSearchResults.KeyDown += (s, ev) =>
+            {
+                var ke = ev as KeyEventArgs;
+                if (ke != null && ke.KeyCode == Keys.Enter)
+                {
+                    if (dataGridViewSearchResults.SelectedRows.Count == 0) return;
+                    var drv = dataGridViewSearchResults.SelectedRows[0].DataBoundItem as DataRowView;
+                    if (drv == null) return;
+                    TrySelectItemFromRow(drv);
+                }
+            };
 
             // Disable the last empty row from appearing
             dataGridViewSearchResults.AllowUserToAddRows = false;
@@ -265,6 +283,23 @@ namespace POS_qu
             //{
             //    MessageBox.Show("An unexpected error occurred: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             //}
+        }
+
+        private void TrySelectItemFromRow(DataRowView drv)
+        {
+            try
+            {
+                int productId = Convert.ToInt32(drv["id"]);
+                string name = drv["name"]?.ToString() ?? "";
+                string unit = drv.Row.Table.Columns.Contains("unit") ? (drv["unit"]?.ToString() ?? "pcs") : "pcs";
+                SelectedItem = new Item { id = productId, name = name, unit = unit };
+                this.DialogResult = DialogResult.OK;
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Gagal memilih item: " + ex.Message);
+            }
         }
 
     }

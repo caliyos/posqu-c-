@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿using Npgsql;
 using POS_qu;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -182,7 +182,11 @@ namespace POSqu_menu
                     }
                 }
                 if (miRetur != null)
-                    miRetur.Click += returBarangToolStripMenuItem_Click;
+                    miRetur.Click += (s, ev) =>
+                    {
+                        using var frm = new ReturnListForm();
+                        frm.ShowDialog(this);
+                    };
             }
             catch (Exception ex)
             {
@@ -398,11 +402,7 @@ namespace POSqu_menu
             MessageBox.Show("Manajemen Pending/Draft sementara tidak tersedia.", "Info");
         }
 
-        private void returBarangToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            using var frm = new ReturnForm();
-            frm.ShowDialog(this);
-        }
+        // returBarangToolStripMenuItem_Click no longer used
 
         private void LoadDashboardSummary()
         {

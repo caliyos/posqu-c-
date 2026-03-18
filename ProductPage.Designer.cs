@@ -21,6 +21,7 @@ namespace POS_qu
             btnDelete = new Button();
             btnEdit = new Button();
             chkSelectAll = new CheckBox();
+            btnStockAdjs = new Button();
             btnRefresh = new Button();
             btnAddProduct = new Button();
             label10 = new Label();
@@ -36,7 +37,6 @@ namespace POS_qu
             btnPrevious = new Button();
             btnNext = new Button();
             dataGridView1 = new DataGridView();
-            btnStockAdjs = new Button();
             tablePanel.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
@@ -67,12 +67,12 @@ namespace POS_qu
             tablePanel.Location = new Point(0, 0);
             tablePanel.Name = "tablePanel";
             tablePanel.Padding = new Padding(10);
-            tablePanel.Size = new Size(2184, 1370);
+            tablePanel.Size = new Size(1924, 1055);
             tablePanel.TabIndex = 0;
             // 
             // btnDelete
             // 
-            btnDelete.Location = new Point(992, 184);
+            btnDelete.Location = new Point(986, 580);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(112, 34);
             btnDelete.TabIndex = 27;
@@ -82,7 +82,7 @@ namespace POS_qu
             // 
             // btnEdit
             // 
-            btnEdit.Location = new Point(856, 184);
+            btnEdit.Location = new Point(850, 580);
             btnEdit.Name = "btnEdit";
             btnEdit.Size = new Size(112, 34);
             btnEdit.TabIndex = 27;
@@ -93,16 +93,26 @@ namespace POS_qu
             // chkSelectAll
             // 
             chkSelectAll.AutoSize = true;
-            chkSelectAll.Location = new Point(40, 184);
+            chkSelectAll.Location = new Point(34, 580);
             chkSelectAll.Name = "chkSelectAll";
-            chkSelectAll.Size = new Size(109, 29);
+            chkSelectAll.Size = new Size(93, 24);
             chkSelectAll.TabIndex = 26;
             chkSelectAll.Text = "Select All";
             chkSelectAll.UseVisualStyleBackColor = true;
             // 
+            // btnStockAdjs
+            // 
+            btnStockAdjs.Location = new Point(1430, 581);
+            btnStockAdjs.Name = "btnStockAdjs";
+            btnStockAdjs.Size = new Size(176, 34);
+            btnStockAdjs.TabIndex = 25;
+            btnStockAdjs.Text = "Stock Adjustment";
+            btnStockAdjs.UseVisualStyleBackColor = true;
+            btnStockAdjs.Click += btnStockAdjs_Click;
+            // 
             // btnRefresh
             // 
-            btnRefresh.Location = new Point(1232, 184);
+            btnRefresh.Location = new Point(1226, 580);
             btnRefresh.Name = "btnRefresh";
             btnRefresh.Size = new Size(112, 34);
             btnRefresh.TabIndex = 25;
@@ -112,7 +122,7 @@ namespace POS_qu
             // 
             // btnAddProduct
             // 
-            btnAddProduct.Location = new Point(616, 184);
+            btnAddProduct.Location = new Point(610, 580);
             btnAddProduct.Name = "btnAddProduct";
             btnAddProduct.Size = new Size(208, 34);
             btnAddProduct.TabIndex = 24;
@@ -123,18 +133,18 @@ namespace POS_qu
             // label10
             // 
             label10.AutoSize = true;
-            label10.Location = new Point(168, 24);
+            label10.Location = new Point(162, 800);
             label10.Name = "label10";
-            label10.Size = new Size(115, 25);
+            label10.Size = new Size(95, 20);
             label10.TabIndex = 9;
             label10.Text = "Jumlah Stock";
             // 
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(40, 24);
+            label9.Location = new Point(34, 800);
             label9.Name = "label9";
-            label9.Size = new Size(94, 25);
+            label9.Size = new Size(80, 20);
             label9.TabIndex = 9;
             label9.Text = "Nilai Stock";
             // 
@@ -163,16 +173,16 @@ namespace POS_qu
             cmbPageSize.FormattingEnabled = true;
             cmbPageSize.Location = new Point(32, 1288);
             cmbPageSize.Name = "cmbPageSize";
-            cmbPageSize.Size = new Size(182, 33);
+            cmbPageSize.Size = new Size(182, 28);
             cmbPageSize.TabIndex = 7;
             cmbPageSize.SelectedIndexChanged += cmbPageSize_SelectedIndexChanged;
             // 
             // lblSearch
             // 
             lblSearch.AutoSize = true;
-            lblSearch.Location = new Point(216, 192);
+            lblSearch.Location = new Point(210, 588);
             lblSearch.Name = "lblSearch";
-            lblSearch.Size = new Size(64, 25);
+            lblSearch.Size = new Size(53, 20);
             lblSearch.TabIndex = 6;
             lblSearch.Text = "Search";
             // 
@@ -201,15 +211,15 @@ namespace POS_qu
             lblPagingInfo.AutoSize = true;
             lblPagingInfo.Location = new Point(32, 1256);
             lblPagingInfo.Name = "lblPagingInfo";
-            lblPagingInfo.Size = new Size(103, 25);
+            lblPagingInfo.Size = new Size(84, 20);
             lblPagingInfo.TabIndex = 4;
             lblPagingInfo.Text = "Paging Info";
             // 
             // txtSearch
             // 
-            txtSearch.Location = new Point(296, 184);
+            txtSearch.Location = new Point(290, 580);
             txtSearch.Name = "txtSearch";
-            txtSearch.Size = new Size(256, 31);
+            txtSearch.Size = new Size(256, 27);
             txtSearch.TabIndex = 2;
             txtSearch.TextChanged += txtSearch_TextChanged;
             // 
@@ -236,25 +246,15 @@ namespace POS_qu
             // dataGridView1
             // 
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView1.Location = new Point(24, 232);
+            dataGridView1.Location = new Point(23, 22);
             dataGridView1.Name = "dataGridView1";
             dataGridView1.RowHeadersWidth = 62;
-            dataGridView1.Size = new Size(2136, 1000);
+            dataGridView1.Size = new Size(2136, 500);
             dataGridView1.TabIndex = 0;
-            // 
-            // btnStockAdjs
-            // 
-            btnStockAdjs.Location = new Point(1432, 184);
-            btnStockAdjs.Name = "btnStockAdjs";
-            btnStockAdjs.Size = new Size(176, 34);
-            btnStockAdjs.TabIndex = 25;
-            btnStockAdjs.Text = "Stock Adjustment";
-            btnStockAdjs.UseVisualStyleBackColor = true;
-            btnStockAdjs.Click += btnStockAdjs_Click;
             // 
             // ProductPage
             // 
-            ClientSize = new Size(2184, 1370);
+            ClientSize = new Size(1924, 1055);
             Controls.Add(tablePanel);
             FormBorderStyle = FormBorderStyle.FixedSingle;
             Name = "ProductPage";

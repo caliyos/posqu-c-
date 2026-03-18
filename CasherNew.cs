@@ -106,7 +106,7 @@ namespace POS_qu
                 }
                 else
                 {
-                    btnCustom.Left = 12;
+                    btnCustom.Left = 20;
                     btnCustom.Top = 12;
                 }
                 btnCustom.Click += BtnCustomTransaction_Click;
