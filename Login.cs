@@ -1,4 +1,4 @@
-﻿using POS_qu.Controllers;
+using POS_qu.Controllers;
 using POS_qu.Models;
 using POSqu_menu;
 using System;
@@ -19,6 +19,7 @@ namespace POS_qu
         {
             InitializeComponent();
             this.StartPosition = FormStartPosition.CenterScreen;
+            this.Text = $"Login — {POS_qu.Helpers.GlobalContext.ConnectionSummary}";
         }
         // Click event for Login button
         private void buttonLogin_Click(object sender, EventArgs e)

@@ -1,4 +1,4 @@
-﻿
+
 using System;
 using Npgsql;
 using POSqu_menu;
@@ -43,34 +43,35 @@ namespace POS_qu
 
             try
             {
+                bool needSetup = false;
+                try
+                {
+                    POS_qu.Helpers.DbConfig.LoadConfig();
+                    if (string.IsNullOrWhiteSpace(POS_qu.Helpers.DbConfig.ConnectionString))
+                    {
+                        needSetup = true;
+                    }
+                    else
+                    {
+                        using var conn = new Npgsql.NpgsqlConnection(POS_qu.Helpers.DbConfig.ConnectionString);
+                        conn.Open();
+                    }
+                }
+                catch
+                {
+                    needSetup = true;
+                }
 
-                //Application.Run(new Casher());
-                //Application.Run(new Form2_crud());
-                //Application.Run(new Roles());
-                //Application.Run(new Terminal());
-                //Application.Run(new MenuNative());
+                if (needSetup)
+                {
+                    using (var setup = new POS_qu.DatabaseSetting())
+                    {
+                        setup.ShowDialog();
+                    }
+                    POS_qu.Helpers.DbConfig.LoadConfig();
+                }
+                POS_qu.Helpers.GlobalContext.RefreshConnectionInfo();
                 Application.Run(new Login());
-                //Application.Run(new SearchFormItem(""));
-
-                //Application.Run(new Casher_POS());
-                //Application.Run(new SalesReports());
-                //Application.Run(new StockReports());
-                //Application.Run(new CategoryForm());
-                //Application.Run(new SupplierForm());
-                //Application.Run(new ProductPage());
-                //Application.Run(new TokoSetting());
-                //Application.Run(new StrukSetting());
-                //Application.Run(new DatabaseSetting());
-
-                //Application.Run(new PurchaseOrderForm());
-                //Application.Run(new PurchaseOrderListForm());
-
-                //Application.Run(new UnitForm());
-                //Application.Run(new CustomerForm());
-                //Application.Run(new StockAdjustment());
-                //Application.Run(new CasherNew());
-
-
             }
             catch (Exception ex)
             {

@@ -8,16 +8,21 @@ class Database {
     public static function connect() {
         try {
             // Deteksi environment
-            if (self::isDocker()) {
-                $dbHost = 'host.docker.internal'; // container → host
+            $envHost = getenv('PGHOST');
+            if ($envHost !== false && $envHost !== '') {
+                $dbHost = $envHost;
             } else {
-                $dbHost = 'localhost'; // host langsung
+                if (self::isDocker()) {
+                    $dbHost = 'host.docker.internal'; // container → host
+                } else {
+                    $dbHost = 'localhost'; // host langsung
+                }
             }
 
-            $dbPort = 5433; // default PostgreSQL
-            $dbName = 'A-Posqu001'; // ganti sesuai database kamu
-            $dbUser = 'postgres';   // default PostgreSQL user
-            $dbPass = 'postgres11'; // isi password PostgreSQL kamu
+            $dbPort = getenv('PGPORT') ?: 5433; // default PostgreSQL
+            $dbName = getenv('PGDATABASE') ?: 'A-Posqu001';
+            $dbUser = getenv('PGUSER') ?: 'postgres';
+            $dbPass = getenv('PGPASSWORD') ?: 'postgres11';
 
             // Koneksi PostgreSQL via PDO
             $dsn = "pgsql:host={$dbHost};port={$dbPort};dbname={$dbName};";

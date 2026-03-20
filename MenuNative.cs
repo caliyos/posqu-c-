@@ -541,5 +541,15 @@ namespace POSqu_menu
             }
             RenderSalesBarsLast30Days();
         }
+
+        private void databaseToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+            DatabaseSetting p = new DatabaseSetting();
+            this.Hide();  // Sembunyikan MenuNative sementara
+
+            p.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative
+            p.Show();
+        }
     }
 }

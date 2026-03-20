@@ -259,21 +259,21 @@
             // daftarTransaksiToolStripMenuItem
             // 
             daftarTransaksiToolStripMenuItem.Name = "daftarTransaksiToolStripMenuItem";
-            daftarTransaksiToolStripMenuItem.Size = new Size(273, 26);
+            daftarTransaksiToolStripMenuItem.Size = new Size(203, 26);
             daftarTransaksiToolStripMenuItem.Text = "Daftar Transaksi";
             daftarTransaksiToolStripMenuItem.Click += daftarTransaksiToolStripMenuItem_Click;
             // 
             // casherToolStripMenuItem1
             // 
             casherToolStripMenuItem1.Name = "casherToolStripMenuItem1";
-            casherToolStripMenuItem1.Size = new Size(273, 26);
+            casherToolStripMenuItem1.Size = new Size(203, 26);
             casherToolStripMenuItem1.Text = "Casher";
             casherToolStripMenuItem1.Click += casherToolStripMenuItem1_Click;
             // 
             // pendingTransaksiAdminToolStripMenuItem
             // 
             pendingTransaksiAdminToolStripMenuItem.Name = "pendingTransaksiAdminToolStripMenuItem";
-            pendingTransaksiAdminToolStripMenuItem.Size = new Size(273, 26);
+            pendingTransaksiAdminToolStripMenuItem.Size = new Size(203, 26);
             pendingTransaksiAdminToolStripMenuItem.Text = "Pending (Admin)";
             // 
             // pembelianToolStripMenuItem
@@ -349,6 +349,7 @@
             databaseToolStripMenuItem.Name = "databaseToolStripMenuItem";
             databaseToolStripMenuItem.Size = new Size(290, 26);
             databaseToolStripMenuItem.Text = "Database";
+            databaseToolStripMenuItem.Click += databaseToolStripMenuItem_Click;
             // 
             // strukSettingToolStripMenuItem
             // 
