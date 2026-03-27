@@ -4,12 +4,13 @@ using System.IO;
 using System.Windows.Forms;
 using POS_qu.Helpers;
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace POS_qu
 {
     public class DatabaseSetting : Form
     {
-        private readonly string configPath = @"D:\dbconfigposqu.config";
+        private readonly string configPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Posqu", "config.json");
         private TextBox txtHost, txtPort, txtUser, txtPass, txtDb;
         private Button btnTest, btnRunPhpMigrations, btnRunPhpSeeders, btnResetSchema, btnCreateDb, btnSetupAll, btnSaveConfig;
         private TextBox txtLog;
@@ -135,8 +136,17 @@ namespace POS_qu
         {
             try
             {
-                var conn = $"Host={txtHost.Text.Trim()};Port={txtPort.Text.Trim()};Username={txtUser.Text.Trim()};Password={txtPass.Text.Trim()};Database={txtDb.Text.Trim()}";
-                File.WriteAllText(configPath, conn);
+                Directory.CreateDirectory(Path.GetDirectoryName(configPath)!);
+                var cfg = new PosquConfig
+                {
+                    Host = txtHost.Text.Trim(),
+                    Port = int.TryParse(txtPort.Text.Trim(), out var p) ? p : 5432,
+                    Username = txtUser.Text.Trim(),
+                    Password = txtPass.Text.Trim(),
+                    Database = txtDb.Text.Trim()
+                };
+                var json = JsonSerializer.Serialize(cfg, new JsonSerializerOptions { WriteIndented = true });
+                File.WriteAllText(configPath, json);
                 MessageBox.Show("✅ Config tersimpan.", "Config", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -149,15 +159,32 @@ namespace POS_qu
         {
             try
             {
-                if (!File.Exists(configPath)) return;
-                var conn = File.ReadAllText(configPath).Trim();
-                var map = ParseConnString(conn);
-                if (map.TryGetValue("HOST", out var host)) txtHost.Text = host;
-                if (map.TryGetValue("PORT", out var port)) txtPort.Text = port;
-                if (map.TryGetValue("USERNAME", out var user)) txtUser.Text = user;
-                if (map.TryGetValue("USER", out var user2)) txtUser.Text = user2;
-                if (map.TryGetValue("PASSWORD", out var pass)) txtPass.Text = pass;
-                if (map.TryGetValue("DATABASE", out var db)) txtDb.Text = db;
+                if (File.Exists(configPath))
+                {
+                    var json = File.ReadAllText(configPath);
+                    var cfg = JsonSerializer.Deserialize<PosquConfig>(json);
+                    if (cfg != null)
+                    {
+                        txtHost.Text = cfg.Host ?? txtHost.Text;
+                        txtPort.Text = (cfg.Port > 0 ? cfg.Port : int.Parse(txtPort.Text)).ToString();
+                        txtUser.Text = cfg.Username ?? txtUser.Text;
+                        txtPass.Text = cfg.Password ?? txtPass.Text;
+                        txtDb.Text = cfg.Database ?? txtDb.Text;
+                        return;
+                    }
+                }
+                var legacy = @"D:\dbconfigposqu.config";
+                if (File.Exists(legacy))
+                {
+                    var conn = File.ReadAllText(legacy).Trim();
+                    var map = ParseConnString(conn);
+                    if (map.TryGetValue("HOST", out var host)) txtHost.Text = host;
+                    if (map.TryGetValue("PORT", out var port)) txtPort.Text = port;
+                    if (map.TryGetValue("USERNAME", out var user)) txtUser.Text = user;
+                    if (map.TryGetValue("USER", out var user2)) txtUser.Text = user2;
+                    if (map.TryGetValue("PASSWORD", out var pass)) txtPass.Text = pass;
+                    if (map.TryGetValue("DATABASE", out var db)) txtDb.Text = db;
+                }
             }
             catch
             {
