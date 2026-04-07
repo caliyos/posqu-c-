@@ -12,21 +12,24 @@ using POS_qu.Models;
 using POS_qu.Helpers;
 using POS_qu.Controllers;
 using POS_qu.Core;
+using POS_qu.Core.Interfaces;
 using POS_qu.Services;
+using POS_qu.Repositories;
 using System.Transactions;
 using System.Security.Cryptography.Xml;
 using DocumentFormat.OpenXml.Office2010.Excel;
+using Npgsql;
 
 namespace POS_qu
 {
     public partial class ProductPage : Form
     {
-        private ItemController itemController;
+        private IProductService _productService;
+        private int currentPage = 1;
+        private int pageSize = 15;
         private string selectedImagePath = "";
         private DataGridViewManager dgvManager;
         private List<UnitVariant> unitVariantsFromForm = new List<UnitVariant>(); // Store globally if needed
-        private Panel panelSummary;
-        private Label lblSumItems, lblSumQty, lblSumStockValue, lblSumRetailValue, lblSumInvRatio;
         private System.Data.DataTable _dtFull;
 
         private readonly IActivityService _activityService;
@@ -124,155 +127,40 @@ namespace POS_qu
         // CUSTOM BUTTON CLOSE
         //private Button btnClose;
 
+        private void chkActionSelectAll_CheckedChanged2(object sender, EventArgs e)
+        {
+            bool checkAll = chkActionSelectAll.Checked;
+            foreach (DataGridViewRow row2 in dataGridView1.Rows)
+            {
+                if (row2.IsNewRow) continue;
+                if (row2.Cells["chkSelect"] != null)
+                    row2.Cells["chkSelect"].Value = checkAll;
+            }
+        }
+
+        private void txtActionSearch_TextChanged(object sender, EventArgs e)
+        {
+            if (dgvManager != null)
+            {
+                dgvManager.Filter(txtActionSearch.Text, "name");
+            }
+        }
+
         private void ProductPage_Load(object sender, EventArgs e)
         {
             this.WindowState = FormWindowState.Maximized; // Fullscreen
-            //this.FormBorderStyle = FormBorderStyle.None; // Optional: Hide title bar
 
-            // Position the close button top-right after full size is known
-
-            //CUSTOM BUTTON CLOSE
-            //Close Button
-            //btnClose = new Button();
-            //btnClose.Text = "X";
-            //btnClose.Font = new Font("Arial", 14, FontStyle.Bold);
-            //btnClose.ForeColor = Color.White;
-            //btnClose.BackColor = Color.Red;
-            //btnClose.FlatStyle = FlatStyle.Flat;
-            //btnClose.FlatAppearance.BorderSize = 0;
-            //btnClose.Size = new Size(50, 40);
-            //btnClose.Location = new Point(this.ClientSize.Width - 10, 10); // Position top-right
-            //btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            //btnClose.Click += BtnClose_Click;
-            //inputPanel.Controls.Add(btnClose);
-            //this.Controls.Add(btnClose);
             dataGridView1.CellClick += dataGridView1_CellClick;
-            dataGridView1.DataBindingComplete += (s, e) => { ConfigureGridColumns(); UpdateSummaryFromGrid(); };
-            dataGridView1.CellDoubleClick += (s, e) =>
+            dataGridView1.DataBindingComplete += (s, ev) => { ConfigureGridColumns(); UpdateSummaryFromGrid(); };
+            dataGridView1.CellDoubleClick += (s, ev) =>
             {
-                if (e.RowIndex < 0) return;
-                var row = dataGridView1.Rows[e.RowIndex];
+                if (ev.RowIndex < 0) return;
+                var row = dataGridView1.Rows[ev.RowIndex];
                 OpenEditForRow(row);
             };
 
-            // Toolbar cepat Export/Import agar selalu terlihat
-            var quickBar = new Panel { Dock = DockStyle.Top, Height = 52, BackColor = System.Drawing.Color.FromArgb(245, 245, 245) };
-            var btnExportQuick = new Button
-            {
-                Text = "Export Items",
-                Width = 130,
-                Height = 36,
-                Left = 10,
-                Top = 8,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold)
-            };
-            var btnImportQuick = new Button
-            {
-                Text = "Import Item",
-                Width = 130,
-                Height = 36,
-                Left = 150,
-                Top = 8,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold)
-            };
-            btnExportQuick.Click += btnExportExcel_Click;
-            btnImportQuick.Click += btnImportExcel_Click;
-            quickBar.Controls.Add(btnExportQuick);
-            quickBar.Controls.Add(btnImportQuick);
-
-            // Panel ringkasan di bawah toolbar
-            panelSummary = new Panel { Dock = DockStyle.Top, Height = 64, BackColor = System.Drawing.Color.White };
-            lblSumItems = new Label { Left = 10, Top = 8, Width = 260, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
-            lblSumQty = new Label { Left = 280, Top = 8, Width = 260, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
-            lblSumStockValue = new Label { Left = 10, Top = 34, Width = 260, Font = new Font("Segoe UI", 10, FontStyle.Regular) };
-            lblSumRetailValue = new Label { Left = 280, Top = 34, Width = 260, Font = new Font("Segoe UI", 10, FontStyle.Regular) };
-            lblSumInvRatio = new Label { Left = 550, Top = 8, Width = 320, Font = new Font("Segoe UI", 10, FontStyle.Regular) };
-            panelSummary.Controls.Add(lblSumItems);
-            panelSummary.Controls.Add(lblSumQty);
-            panelSummary.Controls.Add(lblSumStockValue);
-            panelSummary.Controls.Add(lblSumRetailValue);
-            panelSummary.Controls.Add(lblSumInvRatio);
-
-            // Panel actions: Select All, Search, Stock Adjustment, Refresh
-            var actionPanel = new Panel { Dock = DockStyle.Top, Height = 56, BackColor = System.Drawing.Color.FromArgb(250, 250, 250) };
-            var chkActionSelectAll = new CheckBox
-            {
-                Text = "Pilih Semua",
-                Left = 12,
-                Top = 18,
-                AutoSize = true,
-                Font = new Font("Segoe UI", 10, FontStyle.Regular)
-            };
-            chkActionSelectAll.CheckedChanged += (s, ev) =>
-            {
-                bool checkAll = chkActionSelectAll.Checked;
-                foreach (DataGridViewRow row2 in dataGridView1.Rows)
-                {
-                    if (row2.IsNewRow) continue;
-                    if (row2.Cells["chkSelect"] != null)
-                        row2.Cells["chkSelect"].Value = checkAll;
-                }
-            };
-            var lblCari = new Label
-            {
-                Text = "Cari:",
-                Left = 150,
-                Top = 20,
-                AutoSize = true,
-                Font = new Font("Segoe UI", 10, FontStyle.Regular)
-            };
-            var txtActionSearch = new TextBox
-            {
-                Left = 195,
-                Top = 16,
-                Width = 260,
-                Font = new Font("Segoe UI", 10, FontStyle.Regular)
-            };
-            txtActionSearch.TextChanged += (s, ev) =>
-            {
-                if (dgvManager != null)
-                {
-                    dgvManager.Filter(txtActionSearch.Text, "name");
-                }
-            };
-            var btnActionStockAdj = new Button
-            {
-                Text = "Update Stock",
-                Left = 470,
-                Top = 12,
-                Width = 140,
-                Height = 32,
-                Font = new Font("Segoe UI", 10, FontStyle.Bold)
-            };
-            btnActionStockAdj.Click += btnStockAdjs_Click;
-            var btnActionRefresh = new Button
-            {
-                Text = "Refresh",
-                Left = 620,
-                Top = 12,
-                Width = 100,
-                Height = 32,
-                Font = new Font("Segoe UI", 10, FontStyle.Regular)
-            };
-            btnActionRefresh.Click += btnRefresh_Click;
-            actionPanel.Controls.Add(chkActionSelectAll);
-            actionPanel.Controls.Add(lblCari);
-            actionPanel.Controls.Add(txtActionSearch);
-            actionPanel.Controls.Add(btnActionStockAdj);
-            actionPanel.Controls.Add(btnActionRefresh);
-
-            // Tambahkan ke tablePanel agar selalu terlihat
-            tablePanel.Controls.Add(quickBar);
-            tablePanel.Controls.Add(panelSummary);
-            tablePanel.Controls.Add(actionPanel);
-            tablePanel.Controls.SetChildIndex(quickBar, 0);
-            tablePanel.Controls.SetChildIndex(panelSummary, 1);
-            tablePanel.Controls.SetChildIndex(actionPanel, 2);
-            dataGridView1.Dock = DockStyle.Fill;
             LoadItems();
             ApplyProfessionalGridStyle();
-            dataGridView1.Dock = DockStyle.Fill;
-
         }
 
         private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
@@ -347,7 +235,7 @@ namespace POS_qu
                 IsProduced = Convert.ToBoolean(rowSelected.Cells["is_produksi"].Value)
             };
 
-            selectedItem.UnitVariants = itemController.GetUnitVariants(itemId);
+            selectedItem.UnitVariants = _productService.GetItemUnitVariants(itemId);
 
             using (var detailForm = new ItemDetailForm(selectedItem))
             {
@@ -377,77 +265,13 @@ namespace POS_qu
             {
                 foreach (int id in selectedItems)
                 {
-                    itemController.DeleteItem(id);
+                    _productService.DeleteProduct(id, out string msg);
                 }
                 LoadItems(); // reload grid
             }
         }
 
-        //private void DataGridView1_CellClick(object? sender, DataGridViewCellEventArgs e)
-        //{
-        //    if (e.RowIndex < 0 || e.ColumnIndex < 0) return; // header diklik
-
-        //    dataGridView1.ReadOnly = true;
-
-        //    DataGridViewRow row = dataGridView1.Rows[e.RowIndex];
-        //    int itemId = Convert.ToInt32(row.Cells["id"].Value);
-
-        //    // cek apakah tombol variant diklik
-        //    if (dataGridView1.Columns[e.ColumnIndex].Name == "btnVariantButton")
-        //    {
-        //        //// Ambil item & variants
-        //        //Item selectedItem = itemController.GetItemById(itemId);
-        //        //selectedItem.UnitVariants = itemController.GetUnitVariants(itemId);
-
-        //        //// Bisa tampilkan di modal khusus variant
-        //        //using (var variantForm = new UnitVariantForm(selectedItem))
-        //        //{
-        //        //    if (variantForm.ShowDialog() == DialogResult.OK)
-        //        //    {
-        //        //        // jika ada perubahan variant, reload item grid
-        //        //        LoadItems();
-        //        //    }
-        //        //}
-        //    }
-        //    else
-        //    {
-        //        // klik row biasa -> buka detail form seperti biasa
-        //        Item selectedItem = new Item
-        //        {
-        //            id = itemId,
-        //            name = row.Cells["name"].Value.ToString(),
-        //            buy_price = Convert.ToDecimal(row.Cells["buy_price"].Value),
-        //            sell_price = Convert.ToDecimal(row.Cells["sell_price"].Value),
-        //            stock = Convert.ToInt32(row.Cells["stock"].Value),
-        //            barcode = row.Cells["barcode"].Value.ToString(),
-        //            unitid = Convert.ToInt32(row.Cells["unit_id"].Value),
-        //            unit = row.Cells["unit_name"].Value.ToString(),
-        //            category_id = Convert.ToInt32(row.Cells["category_id"].Value),
-        //            supplier_id = Convert.ToInt32(row.Cells["supplier_id"].Value),
-        //            note = row.Cells["note"].Value.ToString(),
-        //            picture = row.Cells["picture"].Value?.ToString(),
-        //            is_inventory_p = Convert.ToBoolean(row.Cells["is_inventory_p"].Value),
-        //            IsPurchasable = Convert.ToBoolean(row.Cells["is_purchasable"].Value),
-        //            IsSellable = Convert.ToBoolean(row.Cells["is_sellable"].Value),
-        //            RequireNotePayment = Convert.ToBoolean(row.Cells["is_note_payment"].Value),
-        //            is_changeprice_p = Convert.ToBoolean(row.Cells["is_changeprice_p"].Value),
-        //            discount_formula = row.Cells["discount_formula"].Value.ToString(),
-        //            HasMaterials = Convert.ToBoolean(row.Cells["is_have_bahan"].Value),
-        //            IsPackage = Convert.ToBoolean(row.Cells["is_box"].Value),
-        //            IsProduced = Convert.ToBoolean(row.Cells["is_produksi"].Value)
-        //        };
-        //        selectedItem.UnitVariants = itemController.GetUnitVariants(itemId);
-
-        //        using (var detailForm = new ItemDetailForm(selectedItem))
-        //        {
-        //            if (detailForm.ShowDialog() == DialogResult.OK)
-        //            {
-        //                LoadItems(); // reload grid setelah simpan
-        //            }
-        //        }
-        //    }
-        //}
-
+      
 
         // CUSTOM BUTTON CLOSE
         private void BtnClose_Click(object sender, EventArgs e)
@@ -468,8 +292,8 @@ namespace POS_qu
             dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dataGridView1.MultiSelect = false;
 
-            itemController = new ItemController();
-            DataTable dt = itemController.GetItems();
+            _productService = new ProductService(new ProductRepository());
+            DataTable dt = _productService.GetAllProducts();
             _dtFull = dt?.Copy();
 
             // Tambahkan kolom dummy untuk variant
@@ -489,7 +313,7 @@ namespace POS_qu
             foreach (DataRow row in dt.Rows)
             {
                 int itemId = Convert.ToInt32(row["id"]);
-                var variants = itemController.GetUnitVariants(itemId);
+                var variants = _productService.GetItemUnitVariants(itemId);
                 row["UnitVariant"] = variants.Count > 0 ? "+" : "";
                 // Hitung nilai
                 try
@@ -609,41 +433,7 @@ namespace POS_qu
             }
         }
 
-        //private void CheckUnitVariantEligibility()
-        //{
-        //    // Assuming txtItemName and cmbUnit are your controls
-        //    bool isItemNameValid = !string.IsNullOrWhiteSpace(txtName.Text);
-        //    bool isUnitSelected = cmbUnit.SelectedIndex >= 0;
-
-        //    btnUnitVariant.Enabled = isItemNameValid && isUnitSelected;
-        //}
-
-
-        //private void btnUnitVariant_Click(object sender, EventArgs e)
-        //{
-        //    bool isItemNameValid = !string.IsNullOrWhiteSpace(txtName.Text);
-        //    bool isUnitSelected = cmbUnit.SelectedIndex >= 0;
-
-        //    if (!isItemNameValid || !isUnitSelected)
-        //    {
-        //        btnUnitVariant.Cursor = Cursors.No; // Stop sign cursor
-        //        MessageBox.Show("Please enter item name and select a unit first.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-        //        return;
-        //    }
-
-        //    btnUnitVariant.Cursor = Cursors.Default;
-
-        //    int itemId = 2; // Replace with how you actually get it
-        //    string baseUnitName = cmbUnit.Text; // get selected base unit name
-        //    using (var variantForm = new UnitVariantForm(itemId, baseUnitName, unitVariantsFromForm))
-        //    {
-        //        var result = variantForm.ShowDialog();
-        //        if (result == DialogResult.OK)
-        //        {
-        //            unitVariantsFromForm = variantForm.UnitVariants;
-        //        }
-        //    }
-        //}
+       
 
         private void btnCancelEdit_Click(object sender, EventArgs e)
         {
@@ -656,7 +446,7 @@ namespace POS_qu
             try
             {
                 // Ambil data dari database lewat controller
-                DataTable dt = itemController.GetItems();
+                DataTable dt = _productService.GetAllProducts();
 
                 if (dt.Rows.Count == 0)
                 {
@@ -1093,17 +883,27 @@ namespace POS_qu
         private void ApplyProfessionalGridStyle()
         {
             dataGridView1.EnableHeadersVisualStyles = false;
-            dataGridView1.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(240, 240, 240);
-            dataGridView1.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.Black;
-            dataGridView1.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Bold);
+            dataGridView1.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(245, 245, 245);
+            dataGridView1.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(80, 80, 80);
+            dataGridView1.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+            dataGridView1.ColumnHeadersHeight = 45;
+            dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            
             dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridView1.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
-            dataGridView1.DefaultCellStyle.Font = new Font("Segoe UI", 10, FontStyle.Regular);
-            dataGridView1.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(248, 248, 248);
+            dataGridView1.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
+            dataGridView1.RowTemplate.Height = 45;
+            
+            dataGridView1.DefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Regular);
+            dataGridView1.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            dataGridView1.DefaultCellStyle.Padding = new Padding(5, 0, 5, 0);
+            
+            dataGridView1.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(252, 252, 252);
             dataGridView1.RowHeadersVisible = false;
             dataGridView1.BorderStyle = BorderStyle.None;
             dataGridView1.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
-            dataGridView1.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(220, 235, 255);
+            dataGridView1.GridColor = System.Drawing.Color.FromArgb(235, 235, 235);
+            
+            dataGridView1.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(240, 248, 255);
             dataGridView1.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.Black;
         }
 
@@ -1247,7 +1047,7 @@ namespace POS_qu
                 IsPackage = Convert.ToBoolean(rowSelected.Cells["is_box"].Value),
                 IsProduced = Convert.ToBoolean(rowSelected.Cells["is_produksi"].Value)
             };
-            selectedItem.UnitVariants = itemController.GetUnitVariants(itemId);
+            selectedItem.UnitVariants = _productService.GetItemUnitVariants(itemId);
             using (var detailForm = new ItemDetailForm(selectedItem))
             {
                 if (detailForm.ShowDialog() == DialogResult.OK)
@@ -1286,8 +1086,8 @@ namespace POS_qu
                             IsPurchasable = true,
                             IsSellable = true
                         };
-                        var id = itemController.InsertItem(item);
-                        if (id != null) ok++; else fail++;
+                        bool success = _productService.SaveProduct(item, out string msg);
+                        if (success) ok++; else fail++;
                     }
                     catch
                     {

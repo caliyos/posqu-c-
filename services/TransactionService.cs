@@ -12,20 +12,28 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace POS_qu.services
+using POS_qu.Core.Interfaces;
+using POS_qu.Models;
+using POS_qu.DTO;
+using POS_qu.Repositories;
+
+namespace POS_qu.Services
 {
-    public class TransactionService
+    public class TransactionService : ITransactionService
     {
 
         private readonly IActivityService _activityService;
         public readonly TransactionRepo _repo;
+        private readonly IStockValuationStrategy _stockValuationStrategy;
 
         public TransactionService(
     TransactionRepo repo,
-    IActivityService activityService)
+    IActivityService activityService,
+    IStockValuationStrategy stockValuationStrategy = null)
         {
             _repo = repo;
             _activityService = activityService;
+            _stockValuationStrategy = stockValuationStrategy ?? new POS_qu.Services.StockValuation.FifoStrategy();
         }
 
         public decimal CalculateChangePreview(InvoiceData invoice, decimal paymentAmount)
@@ -166,17 +174,23 @@ namespace POS_qu.services
                             _repo.InsertTransactionDetails(con, tran, details);
 
                         // ===============================
-                        // UPDATE STOCK (ANTI RACE CONDITION)
+                        // UPDATE STOCK USING STRATEGY (FIFO / AVERAGE)
                         // ===============================
 
                         foreach (var item in details)
                         {
                             if (item.ItemId > 0 && _repo.IsInventoryItem(con, tran, item.ItemId))
                             {
-                                decimal stockNeeded = item.TsdQuantity * item.TsdConversionRate;
-                                int affected = _repo.ReduceStock(con, tran, item.ItemId, stockNeeded);
-                                if (affected == 0)
-                                    throw new Exception($"Stock update failed for item {item.ItemId}");
+                                int stockNeeded = (int)(item.TsdQuantity * item.TsdConversionRate);
+                                
+                                string valMethod = _repo.GetItemValuationMethod(con, tran, item.ItemId);
+                                IStockValuationStrategy strategy = valMethod == "AVG" 
+                                    ? new POS_qu.Services.StockValuation.AverageStrategy() 
+                                    : new POS_qu.Services.StockValuation.FifoStrategy();
+
+                                // Default warehouseId = 1
+                                decimal cogs = strategy.CalculateCOGSAndDeductStock(item.ItemId, 1, stockNeeded, con, tran);
+
                                 decimal newStock = _repo.GetCurrentStock(con, tran, item.ItemId);
                                 _repo.InsertStockLog(con, tran, new StockLog
                                 {
@@ -341,20 +355,22 @@ namespace POS_qu.services
                         );
 
                         // ===============================
-                        // UPDATE STOCK + INSERT STOCK LOG
+                        // UPDATE STOCK USING STRATEGY + INSERT STOCK LOG
                         // ===============================
 
                         foreach (var item in details)
                         {
                             if (item.ItemId > 0 && _repo.IsInventoryItem(con, tran, item.ItemId))
                             {
-                                decimal stockNeeded = item.TsdQuantity * item.TsdConversionRate;
-    
-                                int affected = _repo.ReduceStock(con, tran, item.ItemId, stockNeeded);
-    
-                                if (affected == 0)
-                                    throw new Exception($"Stock gagal update item {item.ItemId}");
-    
+                                int stockNeeded = (int)(item.TsdQuantity * item.TsdConversionRate);
+                                
+                                string valMethod = _repo.GetItemValuationMethod(con, tran, item.ItemId);
+                                IStockValuationStrategy strategy = valMethod == "AVG" 
+                                    ? new POS_qu.Services.StockValuation.AverageStrategy() 
+                                    : new POS_qu.Services.StockValuation.FifoStrategy();
+
+                                decimal cogs = strategy.CalculateCOGSAndDeductStock(item.ItemId, 1, stockNeeded, con, tran);
+
                                 // 🔹 INSERT STOCK LOG
                                 decimal newStock = _repo.GetCurrentStock(con, tran, item.ItemId);
                                 _repo.InsertStockLog(con, tran, new StockLog
@@ -370,7 +386,6 @@ namespace POS_qu.services
                                     LoginId = sessionUser.LoginId
                                 });
                             }
-
                         }
 
                         // ===============================
@@ -495,10 +510,15 @@ namespace POS_qu.services
                 {
                     if (item.ItemId > 0 && _repo.IsInventoryItem(con, tran, item.ItemId))
                     {
-                        decimal stockNeeded = item.TsdQuantity * item.TsdConversionRate;
-                        int affected = _repo.ReduceStock(con, tran, item.ItemId, stockNeeded);
-                        if (affected == 0)
-                            throw new Exception($"Stock update failed for item {item.ItemId}");
+                        int stockNeeded = (int)(item.TsdQuantity * item.TsdConversionRate);
+                        
+                        string valMethod = _repo.GetItemValuationMethod(con, tran, item.ItemId);
+                        IStockValuationStrategy strategy = valMethod == "AVG" 
+                            ? new POS_qu.Services.StockValuation.AverageStrategy() 
+                            : new POS_qu.Services.StockValuation.FifoStrategy();
+
+                        decimal cogs = strategy.CalculateCOGSAndDeductStock(item.ItemId, 1, stockNeeded, con, tran);
+
                         decimal newStock = _repo.GetCurrentStock(con, tran, item.ItemId);
                         _repo.InsertStockLog(con, tran, new StockLog
                         {
@@ -608,10 +628,15 @@ namespace POS_qu.services
                 {
                     if (d.ItemId > 0 && _repo.IsInventoryItem(con, tran, d.ItemId))
                     {
-                        decimal stockIn = d.TsdQuantity * d.TsdConversionRate;
-                        int affected = _repo.IncreaseStock(con, tran, d.ItemId, stockIn);
-                        if (affected == 0)
-                            throw new Exception($"Gagal menambah stok item {d.ItemId}");
+                        int stockIn = (int)(d.TsdQuantity * d.TsdConversionRate);
+                        
+                        string valMethod = _repo.GetItemValuationMethod(con, tran, d.ItemId);
+                        IStockValuationStrategy strategy = valMethod == "AVG" 
+                            ? new POS_qu.Services.StockValuation.AverageStrategy() 
+                            : new POS_qu.Services.StockValuation.FifoStrategy();
+
+                        strategy.AddStockIn(d.ItemId, 1, stockIn, d.TsdBuyPrice, con, tran);
+
                         decimal newStock = _repo.GetCurrentStock(con, tran, d.ItemId);
                         _repo.InsertStockLog(con, tran, new StockLog
                         {
@@ -852,30 +877,7 @@ namespace POS_qu.services
 
 
 
-    public class TransactionResult
-    {
-        public bool IsSuccess { get; private set; }
-        public string Message { get; private set; }
-        public decimal Change { get; private set; }
 
-        public static TransactionResult Success(decimal change)
-        {
-            return new TransactionResult
-            {
-                IsSuccess = true,
-                Change = change
-            };
-        }
-
-        public static TransactionResult Fail(string message)
-        {
-            return new TransactionResult
-            {
-                IsSuccess = false,
-                Message = message
-            };
-        }
-    }
 
 
 }

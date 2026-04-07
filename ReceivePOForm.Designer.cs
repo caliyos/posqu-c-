@@ -1,6 +1,6 @@
 namespace POS_qu
 {
-    partial class PurchaseOrderForm
+    partial class ReceivePOForm
     {
         /// <summary>
         /// Required designer variable.
@@ -101,7 +101,7 @@ namespace POS_qu
             lblTitle.Name = "lblTitle";
             lblTitle.Size = new Size(335, 45);
             lblTitle.TabIndex = 0;
-            lblTitle.Text = "Buat Pesanan Pembelian";
+            lblTitle.Text = "Penerimaan Barang (PO)";
             // 
             // button1
             // 
@@ -365,19 +365,19 @@ namespace POS_qu
             btnSave.ForeColor = Color.White;
             btnSave.Location = new Point(650, 100);
             btnSave.Size = new Size(190, 50);
-            btnSave.Text = "Simpan Pesanan";
+            btnSave.Text = "Terima & Update Stok";
             btnSave.UseVisualStyleBackColor = false;
 
 
-            // Form
+            // ReceivePOForm
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1600, 900);
             Controls.Add(pnlRight);
             Controls.Add(pnlLeft);
             Controls.Add(pnlHeader);
-            Name = "PurchaseOrderForm";
-            Text = "Pesanan Pembelian";
+            Name = "ReceivePOForm";
+            Text = "Penerimaan Barang";
             StartPosition = FormStartPosition.CenterScreen;
 
             pnlHeader.ResumeLayout(false);

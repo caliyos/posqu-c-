@@ -67,6 +67,9 @@
     <Compile Update="QuantityForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="ReceivePOForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="ReturnForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -110,6 +113,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="UnitVariantForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="WarehouseForm.cs">
       <SubType>Form</SubType>
     </Compile>
   </ItemGroup>

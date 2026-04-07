@@ -1,9 +1,9 @@
-﻿using POS_qu.DTO;
+using POS_qu.DTO;
 using POS_qu.Models;
 using POS_qu.Repositories;
 using System.Collections.Generic;
 
-namespace POS_qu.services
+namespace POS_qu.Services
 {
     public class CustomerService
     {

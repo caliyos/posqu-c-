@@ -69,6 +69,13 @@ namespace POS_qu.Models
         // MULTI HARGA
         public List<ItemPrice> Prices { get; set; } = new();
         public List<UnitVariant> UnitVariants { get; set; } = new List<UnitVariant>();
+        
+        // MULTI GUDANG (BARU)
+        public List<Stock> Stocks { get; set; } = new List<Stock>();
+        public List<ItemUnit> ItemUnits { get; set; } = new List<ItemUnit>();
+        
+        // VALUATION METHOD (FIFO / AVG)
+        public string valuation_method { get; set; } = "FIFO";
 
     }
 }

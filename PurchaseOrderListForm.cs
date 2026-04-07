@@ -31,14 +31,9 @@ namespace POS_qu
             txtSearch.TextChanged += txtSearch_TextChanged;
 
             cmbFilterStatus.Items.Clear();
-            cmbFilterStatus.Items.Add("All");      // untuk semua
-            cmbFilterStatus.Items.Add("DRAFT");
-            cmbFilterStatus.Items.Add("PENDING");
-            cmbFilterStatus.Items.Add("APPROVED");
-            cmbFilterStatus.Items.Add("REJECTED");
-            cmbFilterStatus.Items.Add("COMPLETED");
+            cmbFilterStatus.Items.AddRange(new string[] { "Semua", "PENDING", "APPROVED", "RECEIVED", "CANCELLED" });
 
-            cmbFilterStatus.SelectedIndex = 0; // default "All"
+            cmbFilterStatus.SelectedIndex = 0; // default "Semua"
 
             cmbFilterStatus.SelectedIndexChanged += cmbFilterStatus_SelectedIndexChanged;
             btnChangeStatus.Click += btnChangeStatus_Click;
@@ -47,33 +42,54 @@ namespace POS_qu
 
         private void LoadPO()
         {
-            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
-            conn.Open();
+            try
+            {
+                using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+                conn.Open();
 
-            string query = @"
-        SELECT po.id, s.name AS supplier, po.order_date, po.expected_date,
-               po.status, po.total_amount, po.note, po.created_at
-        FROM purchase_orders po
-        LEFT JOIN suppliers s ON po.supplier_id = s.id
-        WHERE (@status = 'All' OR po.status = @status)
-        ORDER BY po.created_at DESC";
+                string query = @"
+                    SELECT 
+                        po.id, 
+                        s.name as supplier_name, 
+                        po.order_date, 
+                        po.status, 
+                        po.total_amount, 
+                        po.note
+                    FROM purchase_orders po
+                    LEFT JOIN suppliers s ON po.supplier_id = s.id
+                    WHERE (@status = '' OR po.status = @status)
+                      AND (@search = '' OR s.name ILIKE @search OR po.note ILIKE @search)
+                    ORDER BY po.id DESC";
 
-            using var cmd = new NpgsqlCommand(query, conn);
-            cmd.Parameters.AddWithValue("@status", cmbFilterStatus.SelectedItem?.ToString() ?? "All");
+                using var cmd = new NpgsqlCommand(query, conn);
+                string filterStatus = cmbFilterStatus.SelectedItem?.ToString();
+                if (filterStatus == "Semua" || filterStatus == "All") filterStatus = "";
 
-            using var da = new NpgsqlDataAdapter(cmd);
-            _dtPO = new DataTable();
-            da.Fill(_dtPO);
+                cmd.Parameters.AddWithValue("@status", filterStatus ?? "");
+                cmd.Parameters.AddWithValue("@search", "%" + txtSearch.Text + "%");
 
-            dgvPO.DataSource = _dtPO;
-            dgvPO.Columns["id"].HeaderText = "PO ID";
-            dgvPO.Columns["supplier"].HeaderText = "Supplier";
-            dgvPO.Columns["order_date"].HeaderText = "Order Date";
-            dgvPO.Columns["expected_date"].HeaderText = "Expected Date";
-            dgvPO.Columns["status"].HeaderText = "Status";
-            dgvPO.Columns["total_amount"].HeaderText = "Total";
-            dgvPO.Columns["note"].HeaderText = "Note";
-            dgvPO.Columns["created_at"].HeaderText = "Created At";
+                using var adapter = new NpgsqlDataAdapter(cmd);
+                _dtPO = new DataTable();
+                adapter.Fill(_dtPO);
+
+                dgvPO.DataSource = _dtPO;
+                
+                // Set Header Texts
+                if(dgvPO.Columns.Contains("id")) dgvPO.Columns["id"].HeaderText = "ID PO";
+                if(dgvPO.Columns.Contains("supplier_name")) dgvPO.Columns["supplier_name"].HeaderText = "Supplier";
+                if(dgvPO.Columns.Contains("order_date")) dgvPO.Columns["order_date"].HeaderText = "Tanggal";
+                if(dgvPO.Columns.Contains("status")) dgvPO.Columns["status"].HeaderText = "Status";
+                if(dgvPO.Columns.Contains("total_amount")) 
+                {
+                    dgvPO.Columns["total_amount"].HeaderText = "Total";
+                    dgvPO.Columns["total_amount"].DefaultCellStyle.Format = "N0";
+                }
+                if(dgvPO.Columns.Contains("note")) dgvPO.Columns["note"].HeaderText = "Catatan";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading PO: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void cmbFilterStatus_SelectedIndexChanged(object sender, EventArgs e)
@@ -219,7 +235,7 @@ namespace POS_qu
         {
             if (dgvPO.CurrentRow == null)
             {
-                MessageBox.Show("Pilih dulu PO yang ingin diubah statusnya.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Silakan pilih PO terlebih dahulu!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -234,7 +250,7 @@ namespace POS_qu
                 form.Size = new System.Drawing.Size(400, 250);
 
                 var cmb = new ComboBox { Left = 20, Top = 20, Width = 200, DropDownStyle = ComboBoxStyle.DropDownList };
-                cmb.Items.AddRange(new string[] { "DRAFT", "PENDING", "APPROVED", "REJECTED", "COMPLETED" });
+                cmb.Items.AddRange(new string[] { "PENDING", "APPROVED", "CANCELLED" }); // Hapus RECEIVED dari sini
                 cmb.SelectedItem = currentStatus;
 
                 var btnOk = new Button { Text = "OK", Left = 20, Top = 60, Width = 80, Height = 40, DialogResult = DialogResult.OK };

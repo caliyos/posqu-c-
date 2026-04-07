@@ -7,25 +7,24 @@ using System.Linq;
 using System.Windows.Forms;
 using POS_qu.Controllers;
 using POS_qu.Models;
+using POS_qu.Core.Interfaces;
+using POS_qu.Services;
+using POS_qu.Repositories;
 
 namespace POS_qu
 {
     public partial class ItemDetailForm : Form
     {
-        private ItemController itemController;
+        private IProductService _productService;
         private int? editingItemId = null;
         private List<UnitVariant> unitVariantsFromForm = new List<UnitVariant>(); // Store globally if needed
         private Item _item;
-        private DateTimePicker dtpExpired;
-        private Label lblStockOut;
-        private Label lblStockValueHpp;
-        private Label lblStockValueSell;
 
         public ItemDetailForm()
         {
             StartPosition = FormStartPosition.CenterScreen;
             InitializeComponent();
-            itemController = new ItemController();
+            _productService = new ProductService(new ProductRepository());
             // MODE TAMBAH
             label8.Text = "Stock Awal";     // ✅
             txtStock.Enabled = true;       // ✅ BISA INPUT
@@ -39,7 +38,8 @@ namespace POS_qu
         {
             StartPosition = FormStartPosition.CenterScreen;
             InitializeComponent();
-            itemController = new ItemController();
+            _productService = new ProductService(new ProductRepository());
+            _item = item;
             editingItemId = item.id;
             // DISABLE STOK DI MODE EDIT
             txtStock.Enabled = false;     // ✅ yang benar
@@ -48,6 +48,7 @@ namespace POS_qu
 
             InitializeForm();
             LoadItem(item); // Mode Edit
+           
         }
 
         // ------------------------
@@ -57,6 +58,8 @@ namespace POS_qu
         {
             SetDefaultSettings();
             LoadCombos();
+            
+            ApplyProfessionalStyle();
 
             // Event handler margin
             txtBuyPrice.TextChanged += (s, e) => UpdateMargin();
@@ -65,43 +68,131 @@ namespace POS_qu
 
             // DataGridView harga bertingkat
             dgvMultiPrice.DataSource = new BindingList<ItemPrice>();
-     
-            dgvMultiPrice.Hide();
+            dgvMultiPrice.AutoGenerateColumns = false;
+            dgvMultiPrice.Columns.Clear();
+            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "UnitName", HeaderText = "Satuan", Width = 150 });
+            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "PriceLevelName", HeaderText = "Level Harga", Width = 150 });
+            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "MinQty", HeaderText = "Min Qty", Width = 100 });
+            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "MaxQty", HeaderText = "Max Qty", Width = 100 });
+            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Price", HeaderText = "Harga Jual", Width = 200, DefaultCellStyle = new DataGridViewCellStyle { Format = "N0" } });
+            dgvMultiPrice.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
             dgvMultiPrice.ReadOnly = true;
+            dgvMultiPrice.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvMultiPrice.AllowUserToAddRows = false;
+            dgvMultiPrice.BackgroundColor = Color.White;
+            dgvMultiPrice.BorderStyle = BorderStyle.None;
+            dgvMultiPrice.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dgvMultiPrice.GridColor = Color.FromArgb(235, 235, 235);
+            dgvMultiPrice.RowHeadersVisible = false;
+            dgvMultiPrice.RowTemplate.Height = 45;
+            dgvMultiPrice.EnableHeadersVisualStyles = false;
+            
+            var headerStyle = new DataGridViewCellStyle();
+            headerStyle.BackColor = Color.FromArgb(245, 245, 245);
+            headerStyle.ForeColor = Color.FromArgb(80, 80, 80);
+            headerStyle.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            headerStyle.Padding = new Padding(5, 0, 5, 0);
+            dgvMultiPrice.ColumnHeadersDefaultCellStyle = headerStyle;
+            dgvMultiPrice.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+            dgvMultiPrice.ColumnHeadersHeight = 50;
+            dgvMultiPrice.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
-            // Tambah control Expired At secara dinamis
-            dtpExpired = new DateTimePicker
-            {
-                Format = DateTimePickerFormat.Short,
-                Width = 140
-            };
-            var lblExpired = new Label
-            {
-                Text = "Expired:",
-                AutoSize = true
-            };
-            lblExpired.Location = new Point(txtNote.Left, txtNote.Bottom + 12);
-            dtpExpired.Location = new Point(lblExpired.Right + 8, txtNote.Bottom + 8);
-            this.Controls.Add(lblExpired);
-            this.Controls.Add(dtpExpired);
+            var cellStyle1 = new DataGridViewCellStyle();
+            cellStyle1.BackColor = Color.White;
+            cellStyle1.ForeColor = Color.FromArgb(50, 50, 50);
+            cellStyle1.Font = new Font("Segoe UI", 11F);
+            cellStyle1.SelectionBackColor = Color.FromArgb(240, 248, 255);
+            cellStyle1.SelectionForeColor = Color.Black;
+            cellStyle1.Padding = new Padding(5, 0, 5, 0);
+            dgvMultiPrice.DefaultCellStyle = cellStyle1;
 
-            // Output stok di sebelah input stok
-            lblStockOut = new Label
-            {
-                AutoSize = true,
-                Text = ""
-            };
-            lblStockOut.Location = new Point(txtStock.Right + 12, txtStock.Top + 3);
-            this.Controls.Add(lblStockOut);
-            lblStockValueHpp = new Label { AutoSize = true, Text = "", Left = txtStock.Left, Top = txtStock.Bottom + 8, ForeColor = Color.DimGray };
-            lblStockValueSell = new Label { AutoSize = true, Text = "", Left = txtStock.Left, Top = txtStock.Bottom + 26, ForeColor = Color.DimGray };
-            this.Controls.Add(lblStockValueHpp);
-            this.Controls.Add(lblStockValueSell);
+            var cellStyleAlt = new DataGridViewCellStyle();
+            cellStyleAlt.BackColor = Color.FromArgb(252, 252, 252);
+            dgvMultiPrice.AlternatingRowsDefaultCellStyle = cellStyleAlt;
+
+            // Tambah control Expired At secara dinamis (Sudah pindah ke Designer)
+            
+            // Output stok di sebelah input stok (Sudah pindah ke Designer)
+
+            // Combo Box for Valuation Method
+            var lblValuation = new Label { Text = "Sistem Penilaian:", Left = 26, Top = 305, AutoSize = true };
+            var cmbValuation = new ComboBox { Name = "cmbValuation", Left = 160, Top = 300, Width = 150, DropDownStyle = ComboBoxStyle.DropDownList };
+            cmbValuation.Items.Add("FIFO");
+            cmbValuation.Items.Add("AVG");
+            cmbValuation.SelectedIndex = 0; // Default FIFO
+            
+            panel1.Height = 350; // Perbesar panel untuk menampung combobox
+            panel1.Controls.Add(lblValuation);
+            panel1.Controls.Add(cmbValuation);
+
             txtStock.TextChanged += (s, e) => UpdateStockOutput();
             cmbUnit.SelectedIndexChanged += (s, e) => UpdateStockOutput();
             txtBuyPrice.TextChanged += (s, e) => UpdateStockOutput();
             txtSellPrice.TextChanged += (s, e) => UpdateStockOutput();
             UpdateStockOutput();
+        
+        }
+
+        private void ApplyProfessionalStyle()
+        {
+            this.BackColor = Color.FromArgb(244, 246, 249);
+            this.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
+            
+            // Buttons
+            btnSimpan.BackColor = Color.FromArgb(0, 122, 255);
+            btnSimpan.ForeColor = Color.White;
+            btnSimpan.FlatStyle = FlatStyle.Flat;
+            btnSimpan.FlatAppearance.BorderSize = 0;
+            btnSimpan.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            
+            btnCancel.BackColor = Color.FromArgb(108, 117, 125);
+            btnCancel.ForeColor = Color.White;
+            btnCancel.FlatStyle = FlatStyle.Flat;
+            btnCancel.FlatAppearance.BorderSize = 0;
+            
+            btnAddPrice.BackColor = Color.FromArgb(40, 167, 69);
+            btnAddPrice.ForeColor = Color.White;
+            btnAddPrice.FlatStyle = FlatStyle.Flat;
+            btnAddPrice.FlatAppearance.BorderSize = 0;
+            
+            btnEditPrice.BackColor = Color.FromArgb(255, 193, 7);
+            btnEditPrice.ForeColor = Color.Black;
+            btnEditPrice.FlatStyle = FlatStyle.Flat;
+            btnEditPrice.FlatAppearance.BorderSize = 0;
+            
+            btnDeletePrice.BackColor = Color.FromArgb(220, 53, 69);
+            btnDeletePrice.ForeColor = Color.White;
+            btnDeletePrice.FlatStyle = FlatStyle.Flat;
+            btnDeletePrice.FlatAppearance.BorderSize = 0;
+            
+            btnUnitVariant.BackColor = Color.DodgerBlue;
+            btnUnitVariant.ForeColor = Color.White;
+            btnUnitVariant.FlatStyle = FlatStyle.Flat;
+            btnUnitVariant.FlatAppearance.BorderSize = 0;
+            btnUnitVariant.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+
+            btnMultiPrice.Visible = false; // We just show the grid directly now
+            dgvMultiPrice.Visible = true;
+            dgvMultiPrice.Location = new Point(24, 380);
+            dgvMultiPrice.Width = 900;
+            dgvMultiPrice.Height = 220;
+            
+            btnAddPrice.Text = "Tambah Harga";
+            btnEditPrice.Text = "Edit Harga";
+            btnDeletePrice.Text = "Hapus Harga";
+
+            btnAddPrice.Location = new Point(24, 340);
+            btnAddPrice.Width = 140;
+            btnAddPrice.Height = 35;
+            
+            btnEditPrice.Location = new Point(175, 340);
+            btnEditPrice.Width = 140;
+            btnEditPrice.Height = 35;
+
+            btnDeletePrice.Location = new Point(325, 340);
+            btnDeletePrice.Width = 140;
+            btnDeletePrice.Height = 35;
         }
 
         private void SetDefaultSettings()
@@ -113,7 +204,7 @@ namespace POS_qu
 
         private void LoadCombos()
         {
-            cmbUnit.DataSource = itemController.GetUnits();
+            cmbUnit.DataSource = _productService.GetUnits();
             cmbUnit.DisplayMember = "display";
             cmbUnit.ValueMember = "id";
             if (cmbUnit.Items.Count > 0 && cmbUnit.SelectedIndex < 0)
@@ -121,11 +212,11 @@ namespace POS_qu
                 cmbUnit.SelectedIndex = 0;
             }
 
-            cmbCategory.DataSource = itemController.GetCategories();
+            cmbCategory.DataSource = _productService.GetCategories();
             cmbCategory.DisplayMember = "display";
             cmbCategory.ValueMember = "id";
 
-            cmbSupplier.DataSource = itemController.GetSuppliers();
+            cmbSupplier.DataSource = _productService.GetSuppliers();
             cmbSupplier.DisplayMember = "display";
             cmbSupplier.ValueMember = "id";
         }
@@ -181,12 +272,25 @@ namespace POS_qu
             chk_IsPackage.Checked = _item.IsPackage;
             chk_IsProduced.Checked = _item.IsProduced;
 
-            dgvMultiPrice.DataSource = itemController.LoadMultiPrice(_item.id);
+            var prices = _productService.GetItemPrices(_item.id);
+            dgvMultiPrice.DataSource = new BindingList<ItemPrice>(prices);
+            _item.Prices = prices; // Ensure it's in the object too
 
             if (_item.ExpiredAt.HasValue)
                 dtpExpired.Value = _item.ExpiredAt.Value;
 
+            if (!string.IsNullOrEmpty(_item.valuation_method))
+            {
+                var cmb = panel1.Controls["cmbValuation"] as ComboBox;
+                if (cmb != null)
+                {
+                    int idx = cmb.FindStringExact(_item.valuation_method);
+                    cmb.SelectedIndex = idx >= 0 ? idx : 0;
+                }
+            }
+
             UpdateStockOutput();
+            LoadUnitVariantsUI();
         }
 
 
@@ -259,6 +363,9 @@ namespace POS_qu
             _item.IsProduced = chk_IsProduced.Checked;
             _item.discount_formula = txtDiscountFormula.Text;
             _item.ExpiredAt = dtpExpired.Value.Date;
+            
+            var cmbVal = panel1.Controls["cmbValuation"] as ComboBox;
+            _item.valuation_method = cmbVal?.Text ?? "FIFO";
 
             // Update multi-price
             _item.Prices = ((BindingList<ItemPrice>)dgvMultiPrice.DataSource).ToList();
@@ -266,26 +373,41 @@ namespace POS_qu
             // UnitVariants sudah ada di _item.UnitVariants (dari btnUnitVariant)
             _item.UnitVariants = unitVariantsFromForm;
 
-            if (editingItemId == null)
+            try
             {
-                var insertedId = itemController.InsertItem(_item);
-                if (insertedId != null)
+                string msg;
+                if (!editingItemId.HasValue)
                 {
-                    _item.id = insertedId.Value; // simpan ID baru
-                    MessageBox.Show("Item berhasil ditambahkan");
-                    this.DialogResult = DialogResult.OK;
-                    this.Close();
+                    bool success = _productService.SaveProduct(_item, out msg);
+                    if (success)
+                    {
+                        MessageBox.Show(msg, "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        this.DialogResult = DialogResult.OK;
+                        this.Close();
+                    }
+                    else
+                    {
+                        MessageBox.Show(msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                else
+                {
+                    bool success = _productService.SaveProduct(_item, out msg);
+                    if (success)
+                    {
+                        MessageBox.Show(msg, "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        this.DialogResult = DialogResult.OK;
+                        this.Close();
+                    }
+                    else
+                    {
+                        MessageBox.Show(msg, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
-            else
+            catch (Exception ex)
             {
-                _item.id = editingItemId.Value;
-                if (itemController.UpdateItem(_item))
-                {
-                    MessageBox.Show("Item berhasil diperbarui");
-                    this.DialogResult = DialogResult.OK;
-                    this.Close();
-                }
+                MessageBox.Show("Gagal menyimpan item: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -380,19 +502,92 @@ namespace POS_qu
             {
                 StartPosition = FormStartPosition.CenterParent,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
-                Width = 420,
-                Height = 350,
+                Width = 450,
+                Height = 450,
                 Text = "Edit Harga Bertingkat"
             };
 
-            Label lblItemName = new Label() { Left = 20, Top = 15, Width = 360, Text = "Item: " + itemName, Font = new Font("Segoe UI", 11, FontStyle.Bold) };
-            Label lblMinQty = new Label() { Left = 20, Top = 60, Text = "Min Qty", AutoSize = true };
-            TextBox txtMinQty = new TextBox() { Left = 150, Top = 58, Width = 200, Text = price.MinQty.ToString() };
-            Label lblPrice = new Label() { Left = 20, Top = 100, Text = "Harga", AutoSize = true };
-            TextBox txtPrice = new TextBox() { Left = 150, Top = 98, Width = 200, Text = price.Price.ToString() };
+            Label lblItemName = new Label() { Left = 20, Top = 15, Width = 400, Text = "Item: " + itemName, Font = new Font("Segoe UI", 11, FontStyle.Bold) };
+            
+            Label lblUnit = new Label() { Left = 20, Top = 60, Text = "Satuan", AutoSize = true };
+            ComboBox cmbVariantUnit = new ComboBox() { Left = 150, Top = 58, Width = 250, DropDownStyle = ComboBoxStyle.DropDownList };
+            
+            // Populate cmbVariantUnit with base unit and variants
+            List<dynamic> unitList = new List<dynamic>();
 
-            Label lblFinalPrice = new Label() { Left = 20, Top = 150, Width = 350, Text = "Harga Akhir: -" };
-            Label lblMargin = new Label() { Left = 20, Top = 180, Width = 350, Text = "Margin: -" };
+            // Tambahkan Base Unit (Satuan Dasar)
+            if (cmbUnit.SelectedValue != null && int.TryParse(cmbUnit.SelectedValue.ToString(), out int baseUnitId))
+            {
+                unitList.Add(new { id = baseUnitId, display = cmbUnit.Text });
+            }
+
+            // Tambahkan Unit Variants
+            foreach (var v in _item.UnitVariants)
+            {
+                if (v.UnitId > 0 && v.UnitId != (cmbUnit.SelectedValue != null ? Convert.ToInt32(cmbUnit.SelectedValue) : 0))
+                {
+                    unitList.Add(new { id = v.UnitId, display = v.UnitName });
+                }
+            }
+            
+            cmbVariantUnit.ValueMember = "id";
+            cmbVariantUnit.DisplayMember = "display";
+            cmbVariantUnit.DataSource = unitList;
+            if (price.UnitId > 0) cmbVariantUnit.SelectedValue = price.UnitId;
+            else if (cmbUnit.SelectedValue != null) cmbVariantUnit.SelectedValue = Convert.ToInt32(cmbUnit.SelectedValue);
+
+            Label lblLevel = new Label() { Left = 20, Top = 100, Text = "Level Harga", AutoSize = true };
+            ComboBox cmbLevel = new ComboBox() { Left = 150, Top = 98, Width = 250, DropDownStyle = ComboBoxStyle.DropDownList };
+            var dtLevels = _productService.GetPriceLevels();
+            
+            // Konversi dari DataTable ke custom class/object list agar tidak muncul System.Data.DataRowView
+            List<dynamic> levelList = new List<dynamic>();
+            foreach (DataRow row in dtLevels.Rows)
+            {
+                levelList.Add(new { id = Convert.ToInt32(row["id"]), name = row["name"].ToString() });
+            }
+            
+            cmbLevel.ValueMember = "id";
+            cmbLevel.DisplayMember = "name";
+            cmbLevel.DataSource = levelList;
+            if (price.PriceLevelId > 0) cmbLevel.SelectedValue = price.PriceLevelId;
+
+            Label lblMinQty = new Label() { Left = 20, Top = 140, Text = "Min Qty", AutoSize = true };
+            TextBox txtMinQty = new TextBox() { Left = 150, Top = 138, Width = 100, Text = price.MinQty.ToString() };
+            
+            Label lblMaxQty = new Label() { Left = 260, Top = 140, Text = "Max Qty", AutoSize = true };
+            TextBox txtMaxQty = new TextBox() { Left = 330, Top = 138, Width = 70, Text = price.MaxQty?.ToString() };
+
+            Label lblPrice = new Label() { Left = 20, Top = 180, Text = "Harga Jual", AutoSize = true };
+            TextBox txtPrice = new TextBox() { Left = 150, Top = 178, Width = 250, Text = price.Price.ToString() };
+
+            Label lblFinalPrice = new Label() { Left = 20, Top = 230, Width = 350, Text = "Harga Akhir: -" };
+            Label lblMargin = new Label() { Left = 20, Top = 260, Width = 350, Text = "Margin: -" };
+
+            // Auto-update base buyPrice based on selected variant's conversion
+            void UpdateVariantBuyPrice()
+            {
+                if (cmbVariantUnit.SelectedValue == null) return;
+                int selectedUnitId = Convert.ToInt32(cmbVariantUnit.SelectedValue);
+                int baseUnitId = cmbUnit.SelectedValue != null ? Convert.ToInt32(cmbUnit.SelectedValue) : 0;
+                
+                decimal variantBuyPrice = buyPrice; // default to base
+                
+                if (selectedUnitId != baseUnitId)
+                {
+                    var variant = _item.UnitVariants.FirstOrDefault(v => v.UnitId == selectedUnitId);
+                    if (variant != null && variant.Conversion > 0)
+                    {
+                        variantBuyPrice = buyPrice * (decimal)variant.Conversion;
+                    }
+                }
+                
+                // Set the local variable that Recalculate uses
+                price.buy_price_temp = variantBuyPrice;
+                Recalculate();
+            }
+
+            cmbVariantUnit.SelectedIndexChanged += (s, e) => UpdateVariantBuyPrice();
 
             void Recalculate()
             {
@@ -403,8 +598,9 @@ namespace POS_qu
                     return;
                 }
 
-                decimal margin = sellPrice - buyPrice;
-                decimal marginPercent = buyPrice > 0 ? (margin / buyPrice) * 100 : 0;
+                decimal currentBuyPrice = price.buy_price_temp > 0 ? price.buy_price_temp : buyPrice;
+                decimal margin = sellPrice - currentBuyPrice;
+                decimal marginPercent = currentBuyPrice > 0 ? (margin / currentBuyPrice) * 100 : 0;
 
                 lblFinalPrice.Text = $"Harga Akhir: {sellPrice:N0}";
                 lblMargin.Text = $"Margin: {margin:N0} ({marginPercent:+0.##;-0.##}%)";
@@ -413,16 +609,27 @@ namespace POS_qu
             txtPrice.TextChanged += (s, e) => Recalculate();
             Recalculate();
 
-            Button btnOK = new Button() { Left = 150, Top = 240, Width = 90, Height = 45, Text = "OK", DialogResult = DialogResult.OK };
-            Button btnCancel = new Button() { Left = 260, Top = 240, Width = 90, Height = 45, Text = "Batal", DialogResult = DialogResult.Cancel };
+            Button btnOK = new Button() { Left = 200, Top = 320, Width = 90, Height = 45, Text = "OK", DialogResult = DialogResult.OK };
+            Button btnCancel = new Button() { Left = 310, Top = 320, Width = 90, Height = 45, Text = "Batal", DialogResult = DialogResult.Cancel };
 
-            popup.Controls.AddRange(new Control[] { lblItemName, lblMinQty, txtMinQty, lblPrice, txtPrice, lblFinalPrice, lblMargin, btnOK, btnCancel });
+            popup.Controls.AddRange(new Control[] { lblItemName, lblUnit, cmbVariantUnit, lblLevel, cmbLevel, lblMinQty, txtMinQty, lblMaxQty, txtMaxQty, lblPrice, txtPrice, lblFinalPrice, lblMargin, btnOK, btnCancel });
             popup.AcceptButton = btnOK;
             popup.CancelButton = btnCancel;
 
             if (popup.ShowDialog() == DialogResult.OK)
             {
+                if (cmbVariantUnit.SelectedValue != null)
+                {
+                    price.UnitId = Convert.ToInt32(cmbVariantUnit.SelectedValue);
+                    price.UnitName = cmbVariantUnit.Text;
+                }
+                if (cmbLevel.SelectedValue != null)
+                {
+                    price.PriceLevelId = Convert.ToInt32(cmbLevel.SelectedValue);
+                    price.PriceLevelName = cmbLevel.Text;
+                }
                 if (int.TryParse(txtMinQty.Text, out int minQty)) price.MinQty = minQty;
+                if (int.TryParse(txtMaxQty.Text, out int maxQty)) price.MaxQty = maxQty; else price.MaxQty = null;
                 if (decimal.TryParse(txtPrice.Text, out decimal harga)) price.Price = harga;
                 return true;
             }
@@ -441,29 +648,41 @@ namespace POS_qu
 
         private void btnUnitVariant_Click(object sender, EventArgs e)
         {
-            bool isItemNameValid = !string.IsNullOrWhiteSpace(txtName.Text);
-            bool isUnitSelected = cmbUnit.SelectedIndex >= 0;
+            if (_item == null) _item = new Item();
+            if (!decimal.TryParse(txtSellPrice.Text, out decimal sellPrice)) sellPrice = 0;
+            
+            // _item.UnitVariants = ... diisi saat save
 
-            if (!isItemNameValid || !isUnitSelected)
+            using (var variantForm = new UnitVariantForm(_item, cmbUnit.Text, sellPrice))
             {
-                btnUnitVariant.Cursor = Cursors.No; // Stop sign cursor
-                MessageBox.Show("Please enter item name and select a unit first.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            btnUnitVariant.Cursor = Cursors.Default;
-
-            using (var variantForm = new UnitVariantForm(_item, unitVariantsFromForm))
-            {
-                var result = variantForm.ShowDialog();
-                if (result == DialogResult.OK)
+                if (variantForm.ShowDialog() == DialogResult.OK)
                 {
-                    unitVariantsFromForm = variantForm._item.UnitVariants;
-                    _item.UnitVariants = variantForm._item.UnitVariants; // kalau mau langsung update item
+                    // Update the local list
+                    unitVariantsFromForm = variantForm.UnitVariants;
+                    _item.UnitVariants = variantForm.UnitVariants; // kalau mau langsung update item
+                    //LoadUnitVariantsUI(); // Refresh the tab
                 }
             }
         }
 
-  
+        private void ItemDetailForm_Load(object sender, EventArgs e)
+        {
+            LoadUnitVariantsUI();
+        }
+
+        private void LoadUnitVariantsUI()
+        {
+            if (dgvVariants.Columns.Count == 0)
+            {
+                dgvVariants.AutoGenerateColumns = false;
+                dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "UnitName", HeaderText = "Satuan", Width = 150 });
+                dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Conversion", HeaderText = "Konversi", Width = 100 });
+                dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "SellPrice", HeaderText = "Harga Jual", Width = 200, DefaultCellStyle = new DataGridViewCellStyle { Format = "N0" } });
+                dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Barcode", HeaderText = "Barcode", Width = 200 });
+            }
+
+            dgvVariants.DataSource = null; // Reset binding
+            dgvVariants.DataSource = _item.UnitVariants;
+        }
     }
 }

@@ -6,7 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 
-namespace POS_qu.services
+namespace POS_qu.Repositories
 {
     public class TransactionRepo
     {
@@ -177,7 +177,7 @@ VALUES (
      NpgsqlTransaction tran,
      int itemId)
         {
-            string sql = "SELECT stock FROM items WHERE id = @id FOR UPDATE";
+            string sql = "SELECT SUM(qty) FROM stocks WHERE item_id = @id";
 
             using (var cmd = new NpgsqlCommand(sql, con, tran))
             {
@@ -185,7 +185,18 @@ VALUES (
 
                 object result = cmd.ExecuteScalar();
 
-                return result != null ? Convert.ToDecimal(result) : 0;
+                return result != null && result != DBNull.Value ? Convert.ToDecimal(result) : 0;
+            }
+        }
+
+        public string GetItemValuationMethod(NpgsqlConnection con, NpgsqlTransaction tran, int itemId)
+        {
+            string sql = "SELECT valuation_method FROM items WHERE id = @id";
+            using (var cmd = new NpgsqlCommand(sql, con, tran))
+            {
+                cmd.Parameters.AddWithValue("@id", itemId);
+                var res = cmd.ExecuteScalar();
+                return res != null && res != DBNull.Value ? res.ToString() : "FIFO";
             }
         }
 

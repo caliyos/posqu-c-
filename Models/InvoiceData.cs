@@ -1,4 +1,4 @@
-﻿using POS_qu.Helpers;
+using POS_qu.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -47,6 +47,11 @@ namespace POS_qu.Models
         public decimal GlobalDiscountValue { get; set; }    // Nilai diskon global dalam rupiah
         public decimal DeliveryAmount { get; set; }         // Ongkir
         public decimal GrandTotal { get; set; }             // Total akhir (setelah semua diskon dan ongkir)
+        
+        public int? CustomerId { get; set; }
+        public string CustomerName { get; set; }
+        public int PriceLevelId { get; set; } = 1; // Default to Retail (1)
+
         public decimal PaymentAmount { get; set; }          // Jumlah uang yang dibayar
         public decimal Cashback { get; set; }               // Kembalian
         public string PaymentMethod { get; set; }               // Kembalian

@@ -9,9 +9,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data;
 
+using POS_qu.Core.Interfaces;
+
 namespace POS_qu.Repositories
 {
-    public class CartActivity
+    public class CartActivity : ICartRepository
     {
 
         public Item GetItemById(int id)
@@ -23,8 +25,8 @@ SELECT
     i.barcode, 
     i.sell_price, 
     i.buy_price, 
-    i.stock, 
-    i.reserved_stock, 
+    COALESCE((SELECT SUM(qty) FROM stocks WHERE item_id = i.id), 0) AS stock, 
+    COALESCE((SELECT SUM(reserved_qty) FROM stocks WHERE item_id = i.id), 0) AS reserved_stock, 
     i.unit AS unit_id,
     u.name AS unit_name,
     i.category_id, 
@@ -105,10 +107,10 @@ SELECT
     i.id, 
     i.name, 
     i.barcode, 
-    i.sell_price, 
     i.buy_price, 
-    i.stock, 
-    i.reserved_stock, 
+    i.sell_price, 
+    COALESCE((SELECT SUM(qty) FROM stocks WHERE item_id = i.id), 0) AS stock, 
+    COALESCE((SELECT SUM(reserved_qty) FROM stocks WHERE item_id = i.id), 0) AS reserved_stock, 
     i.unit AS unit_id,
     u.name AS unit_name,
     i.category_id, 
@@ -132,7 +134,7 @@ FROM items i
 LEFT JOIN units u ON u.id = i.unit
 WHERE i.deleted_at IS NULL
 AND i.name ILIKE @search
-ORDER BY i.stock > 0 DESC, i.name
+ORDER BY COALESCE((SELECT SUM(qty) FROM stocks WHERE item_id = i.id), 0) > 0 DESC, i.name
 LIMIT 1";
 
             using var con = new NpgsqlConnection(DbConfig.ConnectionString);
@@ -193,8 +195,8 @@ SELECT
     i.barcode, 
     i.sell_price, 
     i.buy_price, 
-    i.stock, 
-    i.reserved_stock, 
+    COALESCE((SELECT SUM(qty) FROM stocks WHERE item_id = i.id), 0) AS stock, 
+    COALESCE((SELECT SUM(reserved_qty) FROM stocks WHERE item_id = i.id), 0) AS reserved_stock, 
     pt.unitid AS unit_id,
     pt.unit AS unit_name,
     i.category_id, 
@@ -221,7 +223,7 @@ LEFT JOIN items i ON pt.item_id = i.id
 LEFT JOIN units u ON u.id = i.unit
 WHERE i.deleted_at IS NULL
 AND pt.pt_id = @search
-ORDER BY i.stock > 0 DESC, i.name
+ORDER BY COALESCE((SELECT SUM(qty) FROM stocks WHERE item_id = i.id), 0) > 0 DESC, i.name
 LIMIT 1";
 
             using var con = new NpgsqlConnection(DbConfig.ConnectionString);
@@ -576,7 +578,7 @@ WHERE terminal_id = @terminalId
             public bool HasMultiPrice { get; set; }  // Apakah item ini pakai multi-price
         }
 
-        public PriceDecisionResult DecideMultiPriceFromDb(int itemId, int unitId, int qty)
+        public PriceDecisionResult DecideMultiPriceFromDb(int itemId, int unitId, int qty, int priceLevelId = 1)
         {
             using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
             {
@@ -587,7 +589,8 @@ WHERE terminal_id = @terminalId
             FROM item_prices
             WHERE item_id = @itemId
               AND unit_id = @unitId
-              AND min_qty <= @qty
+              AND price_level_id = @priceLevelId
+              AND @qty BETWEEN min_qty AND COALESCE(max_qty, 999999)
               AND is_active = TRUE
               AND (effective_to IS NULL OR effective_to >= NOW())
             ORDER BY min_qty DESC
@@ -598,6 +601,7 @@ WHERE terminal_id = @terminalId
                 {
                     cmd.Parameters.AddWithValue("@itemId", itemId);
                     cmd.Parameters.AddWithValue("@unitId", unitId);
+                    cmd.Parameters.AddWithValue("@priceLevelId", priceLevelId);
                     cmd.Parameters.AddWithValue("@qty", qty);
 
                     var result = cmd.ExecuteScalar();
@@ -685,11 +689,12 @@ WHERE i.id = @item
       int baseQtyDiff)
         {
             string sql = @"
-UPDATE items
-SET reserved_stock = reserved_stock + @baseQtyDiff
-WHERE id = @itemId
-AND (reserved_stock + @baseQtyDiff) >= 0
-AND (reserved_stock + @baseQtyDiff) <= stock;
+UPDATE stocks
+SET reserved_qty = reserved_qty + @baseQtyDiff
+WHERE item_id = (SELECT id FROM items WHERE barcode = @barcode LIMIT 1)
+AND warehouse_id = 1
+AND (reserved_qty + @baseQtyDiff) >= 0
+AND (reserved_qty + @baseQtyDiff) <= qty;
 ";
 
             using var cmd = new NpgsqlCommand(sql, conn, tran);
@@ -836,17 +841,17 @@ WHERE terminal_id = @terminalId
             try
             {
                 using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                vCon.Open();
+                string sql = "SELECT SUM(reserved_qty) FROM stocks WHERE item_id = (SELECT id FROM items WHERE barcode = @barcode LIMIT 1)";
+                using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
                 {
-                    vCon.Open();
-                    string sql = "SELECT reserved_stock FROM items WHERE barcode = @barcode";
-                    using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
-                    {
-                        vCmd.Parameters.AddWithValue("@barcode", barcode);
+                    vCmd.Parameters.AddWithValue("@barcode", barcode);
 
-                        var result = vCmd.ExecuteScalar();
-                        return result != null ? Convert.ToInt32(result) : 0; // Return the current stock, or 0 if not found
-                    }
+                    var result = vCmd.ExecuteScalar();
+                    return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
                 }
+            }
             }
             catch (Exception ex)
             {
@@ -860,7 +865,11 @@ WHERE terminal_id = @terminalId
             using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 vCon.Open();
-                string sql = "UPDATE items SET reserved_stock = @reservedStock WHERE barcode = @barcode";
+                string sql = @"
+UPDATE stocks 
+SET reserved_qty = @reservedStock 
+WHERE item_id = (SELECT id FROM items WHERE barcode = @barcode LIMIT 1)
+AND warehouse_id = 1";
 
                 using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
                 {
@@ -878,13 +887,13 @@ WHERE terminal_id = @terminalId
                 using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
                 {
                     vCon.Open();
-                    string sql = "SELECT stock FROM items WHERE barcode = @barcode";
+                    string sql = "SELECT SUM(qty) FROM stocks WHERE item_id = (SELECT id FROM items WHERE barcode = @barcode LIMIT 1)";
                     using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
                     {
                         vCmd.Parameters.AddWithValue("@barcode", barcode);
 
                         var result = vCmd.ExecuteScalar();
-                        return result != null ? Convert.ToInt32(result) : 0; // Return the current stock, or 0 if not found
+                        return result != null && result != DBNull.Value ? Convert.ToInt32(result) : 0;
                     }
                 }
             }
@@ -902,7 +911,11 @@ WHERE terminal_id = @terminalId
                 using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
                 {
                     vCon.Open();
-                    string sql = "UPDATE items SET stock = @stock WHERE barcode = @barcode";
+                    string sql = @"
+UPDATE stocks 
+SET qty = @stock 
+WHERE item_id = (SELECT id FROM items WHERE barcode = @barcode LIMIT 1)
+AND warehouse_id = 1";
                     using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
                     {
                         vCmd.Parameters.AddWithValue("@stock", newStock);

@@ -15,6 +15,24 @@ namespace POS_qu
         private Panel tablePanel;
         private DataGridView dataGridView1;
 
+        private Panel quickBar;
+        private Button btnExportQuick;
+        private Button btnImportQuick;
+
+        private Panel panelSummary;
+        private Label lblSumItems;
+        private Label lblSumQty;
+        private Label lblSumStockValue;
+        private Label lblSumRetailValue;
+        private Label lblSumInvRatio;
+
+        private Panel actionPanel;
+        private CheckBox chkActionSelectAll;
+        private Label lblCari;
+        private TextBox txtActionSearch;
+        private Button btnActionStockAdj;
+        private Button btnActionRefresh;
+
         private void InitializeComponent()
         {
             tablePanel = new Panel();
@@ -37,231 +55,278 @@ namespace POS_qu
             btnPrevious = new Button();
             btnNext = new Button();
             dataGridView1 = new DataGridView();
+            
+            quickBar = new Panel();
+            btnExportQuick = new Button();
+            btnImportQuick = new Button();
+            panelSummary = new Panel();
+            lblSumItems = new Label();
+            lblSumQty = new Label();
+            lblSumStockValue = new Label();
+            lblSumRetailValue = new Label();
+            lblSumInvRatio = new Label();
+            actionPanel = new Panel();
+            chkActionSelectAll = new CheckBox();
+            lblCari = new Label();
+            txtActionSearch = new TextBox();
+            btnActionStockAdj = new Button();
+            btnActionRefresh = new Button();
+            
+            Panel topContainer = new Panel();
+            Panel bottomContainer = new Panel();
+            
             tablePanel.SuspendLayout();
+            quickBar.SuspendLayout();
+            panelSummary.SuspendLayout();
+            actionPanel.SuspendLayout();
+            topContainer.SuspendLayout();
+            bottomContainer.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
+            
             // 
             // tablePanel
             // 
             tablePanel.BackColor = Color.White;
-            tablePanel.Controls.Add(btnDelete);
-            tablePanel.Controls.Add(btnEdit);
-            tablePanel.Controls.Add(chkSelectAll);
-            tablePanel.Controls.Add(btnStockAdjs);
-            tablePanel.Controls.Add(btnRefresh);
-            tablePanel.Controls.Add(btnAddProduct);
-            tablePanel.Controls.Add(label10);
-            tablePanel.Controls.Add(label9);
-            tablePanel.Controls.Add(btnImportExcel);
-            tablePanel.Controls.Add(btnExportExcel);
-            tablePanel.Controls.Add(cmbPageSize);
-            tablePanel.Controls.Add(lblSearch);
-            tablePanel.Controls.Add(btnLastPage);
-            tablePanel.Controls.Add(btnFirstPage);
-            tablePanel.Controls.Add(lblPagingInfo);
-            tablePanel.Controls.Add(txtSearch);
-            tablePanel.Controls.Add(btnPrevious);
-            tablePanel.Controls.Add(btnNext);
             tablePanel.Controls.Add(dataGridView1);
+            tablePanel.Controls.Add(bottomContainer);
+            tablePanel.Controls.Add(topContainer);
             tablePanel.Dock = DockStyle.Fill;
             tablePanel.Location = new Point(0, 0);
             tablePanel.Name = "tablePanel";
-            tablePanel.Padding = new Padding(10);
-            tablePanel.Size = new Size(1924, 1055);
+            tablePanel.Size = new Size(1200, 800);
             tablePanel.TabIndex = 0;
+            
             // 
-            // btnDelete
+            // topContainer
             // 
-            btnDelete.Location = new Point(986, 580);
-            btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(112, 34);
-            btnDelete.TabIndex = 27;
-            btnDelete.Text = "Delete";
-            btnDelete.UseVisualStyleBackColor = true;
-            btnDelete.Click += btnDelete_Click_1;
+            topContainer.Dock = DockStyle.Top;
+            topContainer.Height = 175;
+            topContainer.Controls.Add(actionPanel);
+            topContainer.Controls.Add(panelSummary);
+            topContainer.Controls.Add(quickBar);
+            
             // 
-            // btnEdit
+            // quickBar
             // 
-            btnEdit.Location = new Point(850, 580);
-            btnEdit.Name = "btnEdit";
-            btnEdit.Size = new Size(112, 34);
-            btnEdit.TabIndex = 27;
-            btnEdit.Text = "Edit";
-            btnEdit.UseVisualStyleBackColor = true;
-            btnEdit.Click += btnEdit_Click;
-            // 
-            // chkSelectAll
-            // 
-            chkSelectAll.AutoSize = true;
-            chkSelectAll.Location = new Point(34, 580);
-            chkSelectAll.Name = "chkSelectAll";
-            chkSelectAll.Size = new Size(93, 24);
-            chkSelectAll.TabIndex = 26;
-            chkSelectAll.Text = "Select All";
-            chkSelectAll.UseVisualStyleBackColor = true;
-            // 
-            // btnStockAdjs
-            // 
-            btnStockAdjs.Location = new Point(1430, 581);
-            btnStockAdjs.Name = "btnStockAdjs";
-            btnStockAdjs.Size = new Size(176, 34);
-            btnStockAdjs.TabIndex = 25;
-            btnStockAdjs.Text = "Stock Adjustment";
-            btnStockAdjs.UseVisualStyleBackColor = true;
-            btnStockAdjs.Click += btnStockAdjs_Click;
-            // 
-            // btnRefresh
-            // 
-            btnRefresh.Location = new Point(1226, 580);
-            btnRefresh.Name = "btnRefresh";
-            btnRefresh.Size = new Size(112, 34);
-            btnRefresh.TabIndex = 25;
-            btnRefresh.Text = "Refresh";
-            btnRefresh.UseVisualStyleBackColor = true;
-            btnRefresh.Click += btnRefresh_Click;
-            // 
+            quickBar.BackColor = Color.FromArgb(240, 240, 240);
+            quickBar.Controls.Add(btnAddProduct);
+            quickBar.Controls.Add(btnEdit);
+            quickBar.Controls.Add(btnDelete);
+            quickBar.Controls.Add(btnExportQuick);
+            quickBar.Controls.Add(btnImportQuick);
+            quickBar.Dock = DockStyle.Top;
+            quickBar.Height = 55;
+            quickBar.Name = "quickBar";
+            
             // btnAddProduct
-            // 
-            btnAddProduct.Location = new Point(610, 580);
-            btnAddProduct.Name = "btnAddProduct";
-            btnAddProduct.Size = new Size(208, 34);
-            btnAddProduct.TabIndex = 24;
-            btnAddProduct.Text = "Tambah Item";
-            btnAddProduct.UseVisualStyleBackColor = true;
+            btnAddProduct.BackColor = Color.FromArgb(0, 120, 215);
+            btnAddProduct.ForeColor = Color.White;
+            btnAddProduct.FlatStyle = FlatStyle.Flat;
+            btnAddProduct.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnAddProduct.Location = new Point(10, 10);
+            btnAddProduct.Size = new Size(130, 35);
+            btnAddProduct.Text = "+ Tambah Item";
             btnAddProduct.Click += btnAddProduct_Click;
+            
+            // btnEdit
+            btnEdit.BackColor = Color.FromArgb(240, 173, 78);
+            btnEdit.ForeColor = Color.White;
+            btnEdit.FlatStyle = FlatStyle.Flat;
+            btnEdit.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnEdit.Location = new Point(150, 10);
+            btnEdit.Size = new Size(90, 35);
+            btnEdit.Text = "Edit";
+            btnEdit.Click += btnEdit_Click;
+            
+            // btnDelete
+            btnDelete.BackColor = Color.FromArgb(217, 83, 79);
+            btnDelete.ForeColor = Color.White;
+            btnDelete.FlatStyle = FlatStyle.Flat;
+            btnDelete.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            btnDelete.Location = new Point(250, 10);
+            btnDelete.Size = new Size(90, 35);
+            btnDelete.Text = "Hapus";
+            btnDelete.Click += btnDelete_Click_1;
+            
+            // btnExportQuick
+            btnExportQuick.BackColor = Color.White;
+            btnExportQuick.FlatStyle = FlatStyle.Flat;
+            btnExportQuick.Font = new Font("Segoe UI", 10F);
+            btnExportQuick.Location = new Point(350, 10);
+            btnExportQuick.Size = new Size(110, 35);
+            btnExportQuick.Text = "Export Excel";
+            btnExportQuick.Click += btnExportExcel_Click;
+            
+            // btnImportQuick
+            btnImportQuick.BackColor = Color.White;
+            btnImportQuick.FlatStyle = FlatStyle.Flat;
+            btnImportQuick.Font = new Font("Segoe UI", 10F);
+            btnImportQuick.Location = new Point(470, 10);
+            btnImportQuick.Size = new Size(110, 35);
+            btnImportQuick.Text = "Import Excel";
+            btnImportQuick.Click += btnImportExcel_Click;
+            
             // 
-            // label10
+            // panelSummary
             // 
+            panelSummary.BackColor = Color.White;
+            panelSummary.Controls.Add(label9);
+            panelSummary.Controls.Add(label10);
+            panelSummary.Dock = DockStyle.Top;
+            panelSummary.Height = 60;
+            panelSummary.Name = "panelSummary";
+            
+            // label10 (Sum Qty / Total Items)
             label10.AutoSize = true;
-            label10.Location = new Point(162, 800);
-            label10.Name = "label10";
-            label10.Size = new Size(95, 20);
-            label10.TabIndex = 9;
-            label10.Text = "Jumlah Stock";
-            // 
-            // label9
-            // 
+            label10.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
+            label10.Location = new Point(10, 10);
+            label10.Text = "Total Item: 0 | Jumlah Stock: 0";
+            
+            // label9 (Sum Stock Value / Retail Value)
             label9.AutoSize = true;
-            label9.Location = new Point(34, 800);
-            label9.Name = "label9";
-            label9.Size = new Size(80, 20);
-            label9.TabIndex = 9;
-            label9.Text = "Nilai Stock";
+            label9.Font = new Font("Segoe UI", 10F);
+            label9.Location = new Point(10, 35);
+            label9.Text = "Nilai Stok (HPP): 0 | Nilai Jual: 0";
+            
             // 
-            // btnImportExcel
+            // actionPanel
             // 
-            btnImportExcel.Location = new Point(1600, 1312);
-            btnImportExcel.Name = "btnImportExcel";
-            btnImportExcel.Size = new Size(168, 34);
-            btnImportExcel.TabIndex = 8;
-            btnImportExcel.Text = "Import Excel";
-            btnImportExcel.UseVisualStyleBackColor = true;
-            btnImportExcel.Click += btnImportExcel_Click;
+            actionPanel.BackColor = Color.FromArgb(250, 250, 250);
+            actionPanel.Controls.Add(chkActionSelectAll);
+            actionPanel.Controls.Add(lblCari);
+            actionPanel.Controls.Add(txtActionSearch);
+            actionPanel.Controls.Add(btnActionStockAdj);
+            actionPanel.Controls.Add(btnActionRefresh);
+            actionPanel.Dock = DockStyle.Top;
+            actionPanel.Height = 60;
+            actionPanel.Name = "actionPanel";
+            
+            // chkActionSelectAll
+            chkActionSelectAll.AutoSize = true;
+            chkActionSelectAll.Font = new Font("Segoe UI", 10F);
+            chkActionSelectAll.Location = new Point(15, 20);
+            chkActionSelectAll.Text = "Pilih Semua";
+            chkActionSelectAll.CheckedChanged += chkActionSelectAll_CheckedChanged2;
+            
+            // lblCari
+            lblCari.AutoSize = true;
+            lblCari.Font = new Font("Segoe UI", 10F);
+            lblCari.Location = new Point(130, 20);
+            lblCari.Text = "Cari:";
+            
+            // txtActionSearch
+            txtActionSearch.Font = new Font("Segoe UI", 11F);
+            txtActionSearch.Location = new Point(175, 17);
+            txtActionSearch.Size = new Size(250, 27);
+            txtActionSearch.TextChanged += txtActionSearch_TextChanged;
+            
+            // btnActionRefresh
+            btnActionRefresh.BackColor = Color.White;
+            btnActionRefresh.FlatStyle = FlatStyle.Flat;
+            btnActionRefresh.Font = new Font("Segoe UI", 10F);
+            btnActionRefresh.Location = new Point(440, 15);
+            btnActionRefresh.Size = new Size(90, 32);
+            btnActionRefresh.Text = "Refresh";
+            btnActionRefresh.Click += btnRefresh_Click;
+            
+            // btnActionStockAdj
+            btnActionStockAdj.BackColor = Color.White;
+            btnActionStockAdj.FlatStyle = FlatStyle.Flat;
+            btnActionStockAdj.Font = new Font("Segoe UI", 10F);
+            btnActionStockAdj.Location = new Point(540, 15);
+            btnActionStockAdj.Size = new Size(130, 32);
+            btnActionStockAdj.Text = "Update Stock";
+            btnActionStockAdj.Click += btnStockAdjs_Click;
+            
             // 
-            // btnExportExcel
+            // bottomContainer
             // 
-            btnExportExcel.Location = new Point(1600, 1256);
-            btnExportExcel.Name = "btnExportExcel";
-            btnExportExcel.Size = new Size(168, 34);
-            btnExportExcel.TabIndex = 8;
-            btnExportExcel.Text = "Export Excel";
-            btnExportExcel.UseVisualStyleBackColor = true;
-            btnExportExcel.Click += btnExportExcel_Click;
-            // 
-            // cmbPageSize
-            // 
-            cmbPageSize.FormattingEnabled = true;
-            cmbPageSize.Location = new Point(32, 1288);
-            cmbPageSize.Name = "cmbPageSize";
-            cmbPageSize.Size = new Size(182, 28);
-            cmbPageSize.TabIndex = 7;
-            cmbPageSize.SelectedIndexChanged += cmbPageSize_SelectedIndexChanged;
-            // 
-            // lblSearch
-            // 
-            lblSearch.AutoSize = true;
-            lblSearch.Location = new Point(210, 588);
-            lblSearch.Name = "lblSearch";
-            lblSearch.Size = new Size(53, 20);
-            lblSearch.TabIndex = 6;
-            lblSearch.Text = "Search";
-            // 
-            // btnLastPage
-            // 
-            btnLastPage.Location = new Point(968, 1248);
-            btnLastPage.Name = "btnLastPage";
-            btnLastPage.Size = new Size(112, 34);
-            btnLastPage.TabIndex = 5;
-            btnLastPage.Text = "Last";
-            btnLastPage.UseVisualStyleBackColor = true;
-            btnLastPage.Click += btnLastPage_Click;
-            // 
-            // btnFirstPage
-            // 
-            btnFirstPage.Location = new Point(560, 1248);
-            btnFirstPage.Name = "btnFirstPage";
-            btnFirstPage.Size = new Size(112, 34);
-            btnFirstPage.TabIndex = 5;
-            btnFirstPage.Text = "First";
-            btnFirstPage.UseVisualStyleBackColor = true;
-            btnFirstPage.Click += btnFirstPage_Click;
-            // 
+            bottomContainer.Dock = DockStyle.Bottom;
+            bottomContainer.Height = 60;
+            bottomContainer.BackColor = Color.WhiteSmoke;
+            bottomContainer.Controls.Add(lblPagingInfo);
+            bottomContainer.Controls.Add(cmbPageSize);
+            bottomContainer.Controls.Add(btnFirstPage);
+            bottomContainer.Controls.Add(btnPrevious);
+            bottomContainer.Controls.Add(btnNext);
+            bottomContainer.Controls.Add(btnLastPage);
+            
             // lblPagingInfo
-            // 
             lblPagingInfo.AutoSize = true;
-            lblPagingInfo.Location = new Point(32, 1256);
-            lblPagingInfo.Name = "lblPagingInfo";
-            lblPagingInfo.Size = new Size(84, 20);
-            lblPagingInfo.TabIndex = 4;
-            lblPagingInfo.Text = "Paging Info";
-            // 
-            // txtSearch
-            // 
-            txtSearch.Location = new Point(290, 580);
-            txtSearch.Name = "txtSearch";
-            txtSearch.Size = new Size(256, 27);
-            txtSearch.TabIndex = 2;
-            txtSearch.TextChanged += txtSearch_TextChanged;
-            // 
+            lblPagingInfo.Font = new Font("Segoe UI", 10F);
+            lblPagingInfo.Location = new Point(15, 20);
+            lblPagingInfo.Text = "Menampilkan 0 dari 0";
+            
+            // cmbPageSize
+            cmbPageSize.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbPageSize.Font = new Font("Segoe UI", 10F);
+            cmbPageSize.Location = new Point(180, 17);
+            cmbPageSize.Size = new Size(80, 25);
+            cmbPageSize.SelectedIndexChanged += cmbPageSize_SelectedIndexChanged;
+            
+            // btnFirstPage
+            btnFirstPage.BackColor = Color.White;
+            btnFirstPage.FlatStyle = FlatStyle.Flat;
+            btnFirstPage.Location = new Point(280, 15);
+            btnFirstPage.Size = new Size(70, 30);
+            btnFirstPage.Text = "First";
+            btnFirstPage.Click += btnFirstPage_Click;
+            
             // btnPrevious
-            // 
-            btnPrevious.Location = new Point(832, 1248);
-            btnPrevious.Name = "btnPrevious";
-            btnPrevious.Size = new Size(112, 34);
-            btnPrevious.TabIndex = 1;
+            btnPrevious.BackColor = Color.White;
+            btnPrevious.FlatStyle = FlatStyle.Flat;
+            btnPrevious.Location = new Point(360, 15);
+            btnPrevious.Size = new Size(70, 30);
             btnPrevious.Text = "Prev";
-            btnPrevious.UseVisualStyleBackColor = true;
             btnPrevious.Click += btnPrevious_Click;
-            // 
+            
             // btnNext
-            // 
-            btnNext.Location = new Point(688, 1248);
-            btnNext.Name = "btnNext";
-            btnNext.Size = new Size(112, 34);
-            btnNext.TabIndex = 1;
+            btnNext.BackColor = Color.White;
+            btnNext.FlatStyle = FlatStyle.Flat;
+            btnNext.Location = new Point(440, 15);
+            btnNext.Size = new Size(70, 30);
             btnNext.Text = "Next";
-            btnNext.UseVisualStyleBackColor = true;
             btnNext.Click += btnNext_Click;
+            
+            // btnLastPage
+            btnLastPage.BackColor = Color.White;
+            btnLastPage.FlatStyle = FlatStyle.Flat;
+            btnLastPage.Location = new Point(520, 15);
+            btnLastPage.Size = new Size(70, 30);
+            btnLastPage.Text = "Last";
+            btnLastPage.Click += btnLastPage_Click;
+            
             // 
             // dataGridView1
             // 
-            dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView1.Location = new Point(23, 22);
+            dataGridView1.BackgroundColor = Color.White;
+            dataGridView1.BorderStyle = BorderStyle.None;
+            dataGridView1.Dock = DockStyle.Fill;
+            dataGridView1.Location = new Point(0, 175);
             dataGridView1.Name = "dataGridView1";
-            dataGridView1.RowHeadersWidth = 62;
-            dataGridView1.Size = new Size(2136, 500);
+            dataGridView1.RowHeadersVisible = false;
+            dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dataGridView1.TabIndex = 0;
+            
             // 
             // ProductPage
             // 
-            ClientSize = new Size(1924, 1055);
+            ClientSize = new Size(1200, 800);
             Controls.Add(tablePanel);
-            FormBorderStyle = FormBorderStyle.FixedSingle;
             Name = "ProductPage";
-            Text = "Product Page";
+            Text = "Data Produk";
             Load += ProductPage_Load;
+            
             tablePanel.ResumeLayout(false);
-            tablePanel.PerformLayout();
+            quickBar.ResumeLayout(false);
+            panelSummary.ResumeLayout(false);
+            panelSummary.PerformLayout();
+            actionPanel.ResumeLayout(false);
+            actionPanel.PerformLayout();
+            topContainer.ResumeLayout(false);
+            bottomContainer.ResumeLayout(false);
+            bottomContainer.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
         }

@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
 using POS_qu;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -70,16 +70,28 @@ namespace POSqu_menu
         // Update marquee text
         private void UpdateMarqueeText()
         {
-            var user = SessionUser.GetCurrentUser();
-            if (user == null) return;
+            try
+            {
+                var user = SessionUser.GetCurrentUser();
+                if (user == null) return;
 
-            string dbTimeZone = GetDatabaseTimeZone() ?? "Asia/Makassar"; // fallback kalau gagal
+                string dbTimeZone = GetDatabaseTimeZone() ?? "Asia/Makassar"; // fallback kalau gagal
 
-            DateTime utcNow = DateTime.UtcNow;
-            DateTime localTime = TimeZoneInfo.ConvertTimeFromUtc(utcNow, TimeZoneInfo.FindSystemTimeZoneById(dbTimeZone));
+                DateTime utcNow = DateTime.UtcNow;
+                DateTime localTime;
+                try
+                {
+                    localTime = TimeZoneInfo.ConvertTimeFromUtc(utcNow, TimeZoneInfo.FindSystemTimeZoneById(dbTimeZone));
+                }
+                catch
+                {
+                    localTime = DateTime.Now; // fallback ke local machine time jika error IANA
+                }
 
-            marqueeText = $"👤 {user.Username} | 🎭 {user.RoleName} | 🖥️ {user.TerminalName} | ⏰ {localTime:HH:mm:ss dd/MM/yyyy}";
-            labelMarquee.Text = marqueeText;
+                marqueeText = $"👤 {user.Username} | 🎭 {user.RoleName} | 🖥️ {user.TerminalName} | ⏰ {localTime:HH:mm:ss dd/MM/yyyy}";
+                labelMarquee.Text = marqueeText;
+            }
+            catch { /* abaikan error timer */ }
         }
 
         /// <summary>
@@ -233,6 +245,14 @@ namespace POSqu_menu
 
         }
 
+        private void MasterGudang_Click(object sender, EventArgs e)
+        {
+            WarehouseForm f = new WarehouseForm();
+            this.Hide();
+            f.FormClosed += (s, args) => this.Show();
+            f.Show();
+        }
+
         private void produkToolStripMenuItem_Click(object sender, EventArgs e)
         {
 
@@ -276,12 +296,20 @@ namespace POSqu_menu
 
         }
 
-        private void daftarPembelianToolStripMenuItem_Click(object sender, EventArgs e)
+        private void pOToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            PurchaseOrderListForm POForm = new PurchaseOrderListForm();
+            PurchaseOrderListForm f = new PurchaseOrderListForm();
             this.Hide();
-            POForm.FormClosed += (s, args) => this.Show();
-            POForm.Show();
+            f.FormClosed += (s, args) => this.Show();
+            f.Show();
+        }
+
+        private void penerimaanBarangToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ReceivePOForm f = new ReceivePOForm();
+            this.Hide();
+            f.FormClosed += (s, args) => this.Show();
+            f.Show();
         }
 
         private void strukSettingToolStripMenuItem_Click(object sender, EventArgs e)

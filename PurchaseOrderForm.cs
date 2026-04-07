@@ -44,6 +44,7 @@ namespace POS_qu
             InitializeComponent();
             LoadSuppliers();
             LoadStatuses();
+            LoadWarehouses();
             LoadItems();
             InitOrderDetailsGrid();
 
@@ -89,8 +90,19 @@ namespace POS_qu
 
         private void LoadStatuses()
         {
-            cmbStatus.Items.AddRange(new string[] { "PENDING", "APPROVED", "RECEIVED", "CANCELLED" });
+            cmbStatus.Items.AddRange(new string[] { "PENDING", "APPROVED" }); // Hapus RECEIVED dan CANCELLED di form PO
             cmbStatus.SelectedIndex = 0;
+        }
+
+        private void LoadWarehouses()
+        {
+            WarehouseController wc = new WarehouseController();
+            DataTable dt = wc.GetWarehouses();
+            cmbWarehouse.DataSource = dt;
+            cmbWarehouse.DisplayMember = "name";
+            cmbWarehouse.ValueMember = "id";
+            if (dt.Rows.Count > 0)
+                cmbWarehouse.SelectedIndex = 0;
         }
 
         private void LoadItems()
@@ -123,8 +135,11 @@ namespace POS_qu
             dgvOrderDetails.Columns["item_id"].Visible = false;
 
             // Nama barang
-            dgvOrderDetails.Columns.Add("name", "Name");
-
+      
+            var nameCol = new DataGridViewTextBoxColumn();
+            nameCol.Name = "name";
+            nameCol.HeaderText = "Name";
+            dgvOrderDetails.Columns.Add(nameCol);
             // Quantity
             var qtyCol = new DataGridViewTextBoxColumn();
             qtyCol.Name = "quantity";
@@ -173,7 +188,15 @@ namespace POS_qu
                 decimal.TryParse(row.Cells["unit_price"].Value?.ToString(), out price);
 
                 row.Cells["subtotal"].Value = qty * price;
+                UpdateTotalAmount();
             }
+        }
+
+        private void UpdateTotalAmount()
+        {
+            decimal totalAmount = dgvOrderDetails.Rows.Cast<DataGridViewRow>()
+                .Sum(r => Convert.ToDecimal(r.Cells["subtotal"].Value ?? 0));
+            lblTotalAmount.Text = $"Total: Rp {totalAmount:N0}";
         }
 
 
@@ -193,6 +216,7 @@ namespace POS_qu
                 decimal subtotal = quantity * unitPrice;
 
                 dgvOrderDetails.Rows.Add(itemId, name, quantity, unit, unitPrice, subtotal, ""); // tambahkan subtotal
+                UpdateTotalAmount();
             }
         }
 
@@ -207,17 +231,34 @@ namespace POS_qu
             {
                 // Insert header (purchase_orders)
                 string insertPO = @"
-            INSERT INTO purchase_orders (supplier_id, order_date, status, total_amount, note, created_by)
-            VALUES (@supplier_id, CURRENT_DATE, @status, @total_amount, @note, @created_by)
+            INSERT INTO purchase_orders (supplier_id, order_date, status, total_amount, note, created_by, warehouse_id)
+            VALUES (@supplier_id, CURRENT_DATE, @status, @total_amount, @note, @created_by, @warehouse_id)
             RETURNING id;";
 
                 decimal totalAmount = dgvOrderDetails.Rows.Cast<DataGridViewRow>()
                     .Sum(r => Convert.ToDecimal(r.Cells["subtotal"].Value ?? 0));
 
                 using var cmdPO = new NpgsqlCommand(insertPO, conn, tran);
-                cmdPO.Parameters.AddWithValue("@supplier_id", Convert.ToInt64(cmbSupplier.SelectedValue));
+                
+                // Handling null supplier
+                if (cmbSupplier.SelectedValue != null && int.TryParse(cmbSupplier.SelectedValue.ToString(), out int supplierId))
+                {
+                    cmdPO.Parameters.AddWithValue("@supplier_id", supplierId);
+                }
+                else
+                {
+                    cmdPO.Parameters.AddWithValue("@supplier_id", DBNull.Value);
+                }
 
-                cmdPO.Parameters.AddWithValue("@status", cmbStatus.SelectedItem.ToString());
+                // Handling warehouse
+                int warehouseId = 1; // default fallback
+                if (cmbWarehouse.SelectedValue != null && int.TryParse(cmbWarehouse.SelectedValue.ToString(), out int wid))
+                {
+                    warehouseId = wid;
+                }
+                
+                cmdPO.Parameters.AddWithValue("@warehouse_id", warehouseId);
+                cmdPO.Parameters.AddWithValue("@status", cmbStatus.SelectedItem?.ToString() ?? "PENDING");
                 cmdPO.Parameters.AddWithValue("@total_amount", totalAmount);
                 cmdPO.Parameters.AddWithValue("@note", txtNote.Text ?? "");
                 cmdPO.Parameters.AddWithValue("@created_by", 1); // TODO: ganti user login id
@@ -232,18 +273,22 @@ namespace POS_qu
                 INSERT INTO purchase_order_items (po_id, item_id, quantity, unit, unit_price, note)
                 VALUES (@po_id, @item_id, @qty, @unit, @unit_price, @note);";
 
+                    long itemId = Convert.ToInt64(row.Cells["item_id"].Value);
+                    decimal qty = Convert.ToDecimal(row.Cells["quantity"].Value);
+                    decimal unitPrice = Convert.ToDecimal(row.Cells["unit_price"].Value);
+
                     using var cmdItem = new NpgsqlCommand(insertItem, conn, tran);
                     cmdItem.Parameters.AddWithValue("@po_id", poId);
-                    cmdItem.Parameters.AddWithValue("@item_id", Convert.ToInt64(row.Cells["item_id"].Value));
-                    cmdItem.Parameters.AddWithValue("@qty", Convert.ToDecimal(row.Cells["quantity"].Value));
+                    cmdItem.Parameters.AddWithValue("@item_id", itemId);
+                    cmdItem.Parameters.AddWithValue("@qty", qty);
                     cmdItem.Parameters.AddWithValue("@unit", row.Cells["unit"].Value?.ToString() ?? "");
-                    cmdItem.Parameters.AddWithValue("@unit_price", Convert.ToDecimal(row.Cells["unit_price"].Value));
+                    cmdItem.Parameters.AddWithValue("@unit_price", unitPrice);
                     cmdItem.Parameters.AddWithValue("@note", row.Cells["note"].Value?.ToString() ?? "");
                     cmdItem.ExecuteNonQuery();
                 }
 
                 tran.Commit();
-                MessageBox.Show("Purchase Order saved successfully!");
+                MessageBox.Show("Pesanan Pembelian berhasil disimpan!");
 
                 // kasih sinyal ke pemanggil
                 this.DialogResult = DialogResult.OK;

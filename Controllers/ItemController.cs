@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿  using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿    ﻿﻿﻿﻿﻿﻿﻿  using Npgsql;
     using System;
     using System.Collections.Generic;
     using System.Data;
@@ -230,16 +230,20 @@ using System.ComponentModel;
                         if (item.Prices != null && item.Prices.Count > 0)
                         {
                             string insertPriceSql = @"
-                        INSERT INTO item_prices (item_id, min_qty, price, created_at)
-                        VALUES (@item_id, @min_qty, @price, NOW());
+                        INSERT INTO item_prices (item_id, unit_id, price_level_id, min_qty, max_qty, price, created_at)
+                        VALUES (@item_id, @unit_id, @price_level_id, @min_qty, @max_qty, @price, NOW());
                     ";
 
                             foreach (var price in item.Prices)
                             {
                                 using (var cmd = new NpgsqlCommand(insertPriceSql, vCon, tran))
                                 {
+                                    int unitIdSafe2 = item.unitid > 0 ? item.unitid : 1;
                                     cmd.Parameters.AddWithValue("@item_id", newItemId);
+                                    cmd.Parameters.AddWithValue("@unit_id", price.UnitId > 0 ? price.UnitId : unitIdSafe2);
+                                    cmd.Parameters.AddWithValue("@price_level_id", price.PriceLevelId > 0 ? price.PriceLevelId : 1);
                                     cmd.Parameters.AddWithValue("@min_qty", price.MinQty);
+                                    cmd.Parameters.AddWithValue("@max_qty", price.MaxQty.HasValue ? (object)price.MaxQty.Value : DBNull.Value);
                                     cmd.Parameters.AddWithValue("@price", price.Price);
                                     cmd.ExecuteNonQuery();
                                 }
@@ -385,16 +389,20 @@ using System.ComponentModel;
                         if (item.Prices != null && item.Prices.Count > 0)
                         {
                             string insertPriceSql = @"
-                        INSERT INTO item_prices (item_id, min_qty, price, created_at)
-                        VALUES (@item_id, @min_qty, @price, NOW());
+                        INSERT INTO item_prices (item_id, unit_id, price_level_id, min_qty, max_qty, price, created_at)
+                        VALUES (@item_id, @unit_id, @price_level_id, @min_qty, @max_qty, @price, NOW());
                     ";
 
                             foreach (var price in item.Prices)
                             {
                                 using (var cmd = new NpgsqlCommand(insertPriceSql, vCon, tran))
                                 {
+                                    int unitIdSafe2 = item.unitid > 0 ? item.unitid : 1;
                                     cmd.Parameters.AddWithValue("@item_id", item.id);
+                                    cmd.Parameters.AddWithValue("@unit_id", price.UnitId > 0 ? price.UnitId : unitIdSafe2);
+                                    cmd.Parameters.AddWithValue("@price_level_id", price.PriceLevelId > 0 ? price.PriceLevelId : 1);
                                     cmd.Parameters.AddWithValue("@min_qty", price.MinQty);
+                                    cmd.Parameters.AddWithValue("@max_qty", price.MaxQty.HasValue ? (object)price.MaxQty.Value : DBNull.Value);
                                     cmd.Parameters.AddWithValue("@price", price.Price);
                                     cmd.ExecuteNonQuery();
                                 }
@@ -477,10 +485,8 @@ using System.ComponentModel;
                 items.barcode,
                 items.buy_price,
                 items.sell_price,
-                items.stock,
-                items.reserved_stock,
 
-                items.unit AS unit_id,
+                items.unit AS unit,
                 units.name AS unit_name,
 
                 items.category_id,
@@ -749,6 +755,30 @@ LIMIT 1", con, tran);
             cmd.Parameters.AddWithValue("@c", column);
             var obj = cmd.ExecuteScalar();
             return obj != null;
+        }
+
+        public DataTable GetPriceLevels()
+        {
+            var dt = new DataTable();
+            try
+            {
+                using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
+                {
+                    conn.Open();
+                    using (var cmd = new NpgsqlCommand("SELECT id, name FROM price_levels ORDER BY id", conn))
+                    {
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            dt.Load(reader);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error get price levels: " + ex.Message);
+            }
+            return dt;
         }
 
         public DataTable GetCategories()
@@ -1847,7 +1877,16 @@ WHERE terminal_id = @terminal_id AND cashier_id = @cashier_id AND cart_session_c
             using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
-                using (var cmd = new NpgsqlCommand("SELECT min_qty, price FROM item_prices WHERE item_id = @id ORDER BY min_qty", conn))
+                string sql = @"
+                    SELECT ip.min_qty, ip.max_qty, ip.price, ip.unit_id, ip.price_level_id,
+                           u.name as unit_name, pl.name as price_level_name
+                    FROM item_prices ip
+                    LEFT JOIN units u ON ip.unit_id = u.id
+                    LEFT JOIN price_levels pl ON ip.price_level_id = pl.id
+                    WHERE ip.item_id = @id 
+                    ORDER BY ip.price_level_id, ip.unit_id, ip.min_qty";
+                    
+                using (var cmd = new NpgsqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@id", itemId);
 
@@ -1858,7 +1897,12 @@ WHERE terminal_id = @terminal_id AND cashier_id = @cashier_id AND cart_session_c
                             prices.Add(new ItemPrice
                             {
                                 MinQty = reader.GetInt32(0),
-                                Price = reader.GetDecimal(1)
+                                MaxQty = reader.IsDBNull(1) ? (int?)null : reader.GetInt32(1),
+                                Price = reader.GetDecimal(2),
+                                UnitId = reader.GetInt32(3),
+                                PriceLevelId = reader.GetInt32(4),
+                                UnitName = reader.IsDBNull(5) ? "" : reader.GetString(5),
+                                PriceLevelName = reader.IsDBNull(6) ? "" : reader.GetString(6)
                             });
                         }
                     }

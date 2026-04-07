@@ -1,4 +1,5 @@
-using POS_qu.services;
+using POS_qu.Services;
+using POS_qu.Repositories;
 using POS_qu.Core;
 using System;
 using System.Data;

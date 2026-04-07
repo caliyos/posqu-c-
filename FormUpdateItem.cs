@@ -1,4 +1,5 @@
-﻿using POS_qu.Models;
+using POS_qu.Core.Interfaces;
+using POS_qu.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -15,10 +16,10 @@ namespace POS_qu
     {
         private InvoiceItem _item;
         private InvoiceData _invoiceData;
-        private CartService _cartService;
+        private ICartService _cartService;
         private Action<InvoiceData> _onUpdate;
 
-        public FormUpdateItem(InvoiceData invoice, InvoiceItem item, CartService cartService, Action<InvoiceData> onUpdate)
+        public FormUpdateItem(InvoiceData invoice, InvoiceItem item, ICartService cartService, Action<InvoiceData> onUpdate)
         {
             InitializeComponent();
             this.StartPosition = FormStartPosition.CenterScreen;

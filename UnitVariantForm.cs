@@ -1,4 +1,4 @@
-﻿using POS_qu.Controllers;
+using POS_qu.Controllers;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,35 +10,43 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using POS_qu.Controllers;
 using POS_qu.Models;
+using POS_qu.Core.Interfaces;
+using POS_qu.Services;
+using POS_qu.Repositories;
 
 namespace POS_qu
 {
     public partial class UnitVariantForm : Form
     {
-        private ItemController itemController;
-      
+        public List<UnitVariant> UnitVariants { get; private set; }
+        private Item _item;
+        private IProductService _productService;
         private string baseUnitName;
-        public Item _item;
+        private decimal baseSellPrice;
 
-        public UnitVariantForm(Item item, List<UnitVariant> existingVariants = null)
+        public UnitVariantForm(Item item, string unitName, decimal sellPrice)
         {
             InitializeComponent();
             _item = item;
-            baseUnitName = _item.unit;
-
-            if (existingVariants != null && existingVariants.Count > 0)
-            {
-                _item.UnitVariants = existingVariants; 
-            }
+            baseUnitName = unitName;
+            baseSellPrice = sellPrice;
+            
+            UnitVariants = new List<UnitVariant>(_item.UnitVariants ?? new List<UnitVariant>());
+            _productService = new ProductService(new ProductRepository());
 
             StartPosition = FormStartPosition.CenterScreen;
         }
 
-
         private void UnitVariantForm_Load(object sender, EventArgs e)
         {
-            itemController = new ItemController();
-            DataTable unitTable = itemController.GetUnits();
+            ApplyProfessionalStyle();
+            
+            // Reconfigure form bounds for better UI
+        
+            this.StartPosition = FormStartPosition.CenterParent;
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
+
+            DataTable unitTable = _productService.GetUnits();
             cmbUnitVariant.DataSource = unitTable;
             cmbUnitVariant.DisplayMember = "display";
             cmbUnitVariant.ValueMember = "id";
@@ -46,35 +54,55 @@ namespace POS_qu
 
             lblConvertionRate.Text = baseUnitName;
 
-            foreach (var variant in _item.UnitVariants)
+            foreach (var variant in UnitVariants)
             {
                 AddVariantToPanel(variant);
             }
             
         }
 
+        private void ApplyProfessionalStyle()
+        {
+            this.BackColor = Color.FromArgb(244, 246, 249);
+            this.Font = new Font("Segoe UI", 10F, FontStyle.Regular);
+
+            var btnSave = this.Controls.Find("btnSaveVariant", true).FirstOrDefault() as Button;
+            if (btnSave != null)
+            {
+                btnSave.BackColor = Color.FromArgb(40, 167, 69);
+                btnSave.ForeColor = Color.White;
+                btnSave.FlatStyle = FlatStyle.Flat;
+                btnSave.FlatAppearance.BorderSize = 0;
+            }
+
+            var btnDone = this.Controls.Find("btnDone", true).FirstOrDefault() as Button;
+            if (btnDone != null)
+            {
+                btnDone.BackColor = Color.FromArgb(0, 122, 255);
+                btnDone.ForeColor = Color.White;
+                btnDone.FlatStyle = FlatStyle.Flat;
+                btnDone.FlatAppearance.BorderSize = 0;
+                btnDone.Text = "Simpan";
+            }
+            
+         
+        }
+
         private void BtnSaveVariant_Click(object sender, EventArgs e)
         {
             if (!int.TryParse(txtConvertionRate.Text, out int conversion) || conversion <= 0)
             {
-                MessageBox.Show("Conversion must be a positive number.");
+                MessageBox.Show("Konversi harus berupa angka positif.");
                 return;
             }
 
             if (!decimal.TryParse(txtSellingPrice.Text, out decimal sellingPrice))
             {
-                MessageBox.Show("Selling Price must be a valid number.");
+                MessageBox.Show("Harga Jual harus berupa angka yang valid.");
                 return;
             }
 
-            //decimal.TryParse(txtProfit.Text, out decimal profit);
-
-            //if (cmbUnitVariant.SelectedValue == null)
-            //{
-            //    MessageBox.Show("Please select a unit.");
-            //    return;
-            //}
-            decimal actualSellPrice = _item.sell_price * conversion;
+            decimal actualSellPrice = baseSellPrice * conversion;
             decimal profit = sellingPrice - actualSellPrice;
 
             int unitId = Convert.ToInt32(cmbUnitVariant.SelectedValue);
@@ -83,9 +111,9 @@ namespace POS_qu
             decimal MinQty;
             if (!decimal.TryParse(txtMinQty.Text, out MinQty))
             {
-                // Input bukan angka, beri default atau tampilkan pesan error
-                MinQty = 0; // contoh default
+                MinQty = 0; 
                 MessageBox.Show("Masukkan angka yang valid untuk MinQty.");
+                return;
             }
 
 
@@ -93,14 +121,14 @@ namespace POS_qu
             {
                 UnitId = unitId,
                 UnitName = unitName,
-                Conversion = conversion,
+                Conversion = conversion, 
                 actualSellPrice = actualSellPrice,
                 SellPrice = sellingPrice,
                 Profit = profit,
                 MinQty = MinQty
             };
 
-            _item.UnitVariants.Add(variant);
+            UnitVariants.Add(variant);
             AddVariantToPanel(variant);
 
             txtConvertionRate.Text = "";
@@ -114,106 +142,85 @@ namespace POS_qu
             var panel = new Panel
             {
                 Width = flpVariantLog.Width - 30,
-                AutoSize = true,
-                BorderStyle = BorderStyle.None,
-                Margin = new Padding(0, 5, 0, 5)
+                Height = 80,
+                BorderStyle = BorderStyle.FixedSingle,
+                Margin = new Padding(0, 5, 0, 5),
+                BackColor = Color.White
             };
 
             var labelEquation = new Label
             {
                 Text = $"1 {variant.UnitName} = {variant.Conversion} {lblConvertionRate.Text}",
-                AutoSize = true
+                AutoSize = true,
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                Location = new Point(15, 15)
             };
-
 
             var labelMinQty = new Label
             {
-                Text = $"Minimal Qty: {variant.MinQty}",
-                AutoSize = true
-
+                Text = $"Min Qty: {variant.MinQty}",
+                AutoSize = true,
+                Location = new Point(15, 45),
+                ForeColor = Color.DimGray
             };
-            var labelConversion = new Label
+            
+            var labelSelling = new Label
             {
-                Text = $"Konversi: {variant.Conversion}",
-                AutoSize = true
-            };
-
-            var labelhargabeli = new Label
-            {
-                Text = $"Harga Jual Produk: {_item.sell_price}",
-                AutoSize = true
+                Text = $"Harga Jual: Rp {variant.SellPrice:N0}",
+                AutoSize = true,
+                Location = new Point(250, 15),
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = Color.FromArgb(0, 122, 255)
             };
 
             var labelActualSelling = new Label
             {
-                Text = $"Total Harga Jual: {variant.actualSellPrice}",
-                AutoSize = true
-            };
-
-            var labelSelling = new Label
-            {
-                Text = $"Harga Jual Variant: {variant.SellPrice}",
-                AutoSize = true
+                Text = $"Total Harga Dasar: Rp {variant.actualSellPrice:N0}",
+                AutoSize = true,
+                Location = new Point(250, 45),
+                ForeColor = Color.DimGray
             };
 
             var labelProfit = new Label
             {
-                Text = $"Profit: {variant.Profit}",
-                AutoSize = true
+                Text = $"Profit: Rp {variant.Profit:N0}",
+                AutoSize = true,
+                Location = new Point(480, 15),
+                Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                ForeColor = variant.Profit >= 0 ? Color.Green : Color.Red
             };
 
             var btnDelete = new Button
             {
-                Text = "Delete",
-                AutoSize = true,
-                BackColor = Color.LightCoral,
+                Text = "Hapus",
+                Size = new Size(80, 35),
+                BackColor = Color.FromArgb(220, 53, 69),
                 ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
                 Tag = variant,
-                Margin = new Padding(5)
+                Location = new Point(panel.Width - 95, 20)
             };
+            btnDelete.FlatAppearance.BorderSize = 0;
 
             btnDelete.Click += (s, ev) =>
             {
-                var result = MessageBox.Show("Are you sure you want to delete this unit variant?", "Confirm Delete", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                var result = MessageBox.Show("Apakah Anda yakin ingin menghapus varian ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (result == DialogResult.Yes)
                 {
                     UnitVariant toRemove = (UnitVariant)btnDelete.Tag;
-                    _item.UnitVariants.Remove(toRemove);
+                    UnitVariants.Remove(toRemove);
                     flpVariantLog.Controls.Remove(panel);
                 }
             };
 
-            var contentLayout = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.TopDown,
-                AutoSize = true,
-                WrapContents = false
-            };
-
-            contentLayout.Controls.Add(labelEquation);
-            contentLayout.Controls.Add(labelMinQty); 
-            contentLayout.Controls.Add(labelConversion);
-            contentLayout.Controls.Add(labelActualSelling); 
-            contentLayout.Controls.Add(labelhargabeli);
-            contentLayout.Controls.Add(labelSelling);
-            contentLayout.Controls.Add(labelProfit);
-
-            panel.Controls.Add(contentLayout);
+            panel.Controls.Add(labelEquation);
+            panel.Controls.Add(labelMinQty);
+            panel.Controls.Add(labelSelling);
+            panel.Controls.Add(labelActualSelling);
+            panel.Controls.Add(labelProfit);
             panel.Controls.Add(btnDelete);
 
-            btnDelete.Anchor = AnchorStyles.Right;
-            btnDelete.Location = new Point(panel.Width - btnDelete.Width - 10, 10);
-
-            var separator = new Label
-            {
-                BorderStyle = BorderStyle.Fixed3D,
-                Height = 2,
-                Width = panel.Width,
-                Margin = new Padding(3, 10, 3, 10)
-            };
-
             flpVariantLog.Controls.Add(panel);
-            flpVariantLog.Controls.Add(separator);
         }
 
         private void TxtConvertionRate_KeyPress(object sender, KeyPressEventArgs e)
@@ -226,8 +233,12 @@ namespace POS_qu
 
         private void btnDone_Click(object sender, EventArgs e)
         {
-            this.DialogResult = DialogResult.OK;
-            this.Close();
+            DialogResult = DialogResult.OK;
+            Close();
+        }
+        private void btnCancel_Click(object sender, EventArgs e)
+        {
+            this.DialogResult = DialogResult.Cancel; this.Close();
         }
     }
 }

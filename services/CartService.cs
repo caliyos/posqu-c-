@@ -7,6 +7,7 @@ using POS_qu.DTO;
 using POS_qu.Helpers;
 using POS_qu.Models;
 using POS_qu.Repositories;
+using POS_qu.Core.Interfaces;
 using static POS_qu.Repositories.CartActivity;
 
 
@@ -26,8 +27,7 @@ public class ItemWithVariants
 
 
 // DATAGRID SYNCHRONIZATION WITH PENDING TRANSACTIONS IN DB
-public class CartService
-
+public class CartService : ICartService
 {
     //private CartActivity _repo;
     private readonly IActivityService _activityService;
@@ -305,12 +305,13 @@ public class CartService
             var priceResult = DecideMultiPrice(
                 item.ItemId,
                 item.UnitId,
-                newQty);
+                newQty,
+                invoice.PriceLevelId);
             decimal price;
 
             if (priceResult.HasMultiPrice)
             {
-                // Multi-price → total harga langsung pakai price dari tabel
+                // Multi-price → total harga = qty * harga dari tabel tier
                 price = priceResult.Price;
                 item.IsMultiPrice = 1;
             }
@@ -321,7 +322,7 @@ public class CartService
                 item.IsMultiPrice = 0;
             }
 
-            decimal total = priceResult.HasMultiPrice ? price : price * newQty;
+            decimal total = price * newQty;
 
             bool updateSuccess;
 
@@ -719,10 +720,22 @@ WHERE po_id = @poId";
 
     }
 
-
-    private PriceDecisionResult DecideMultiPrice(int itemId, int unitId, int qty)
+    public InvoiceData RecalculateCartPrices(InvoiceData invoice)
     {
-        return _repo.DecideMultiPriceFromDb(itemId, unitId, qty);
+        var itemsCopy = invoice.Items.ToList();
+        foreach (var item in itemsCopy)
+        {
+            item.IsEditMode = true;
+            item.AdditionalQuantity = item.Qty; // Keep same quantity, just recalculate
+            invoice = UpdateCartItemStock(item, invoice);
+        }
+        return invoice;
+    }
+
+
+    private PriceDecisionResult DecideMultiPrice(int itemId, int unitId, int qty, int priceLevelId = 1)
+    {
+        return _repo.DecideMultiPriceFromDb(itemId, unitId, qty, priceLevelId);
     }
 
 

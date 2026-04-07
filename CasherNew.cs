@@ -14,20 +14,22 @@ using POS_qu.Core;
 using POS_qu.Helpers;
 using POS_qu.Models;
 using POS_qu.Repositories;
-using POS_qu.services;
+using POS_qu.Services;
 using POS_qu.DTO;
+using POS_qu.Core.Interfaces;
 
 namespace POS_qu
 {
     public partial class CasherNew : Form
     {
 
-        private CartActivity cartrepo;
+        private ICartRepository cartrepo;
         private IActivityService activityService;
         private ILogger flogger = new FileLogger();
         private ILogger dlogger = new DbLogger();
         private InvoiceData _currentInvoice;
-        private CartService _cartService;
+        private ICartService _cartService;
+        private ITransactionService _transactionService;
         public CasherNew()
         {
             InitializeComponent();
@@ -50,11 +52,13 @@ namespace POS_qu
             // this.FormBorderStyle = FormBorderStyle.None; // opsional full kiosk
 
             // ===============================
-            // 🔹 DEPENDENCY & SERVICE INIT
+            // 🔹 DEPENDENCY & SERVICE INIT (DI)
             // ===============================
             cartrepo = new CartActivity();
             activityService = new ActivityService(flogger, dlogger);
-            _cartService = new CartService(cartrepo, activityService);
+            _cartService = new CartService((CartActivity)cartrepo, activityService);
+            repo = new TransactionRepo();
+            _transactionService = new TransactionService(repo, activityService);
 
             // ===============================
             // 🔹 SESSION
@@ -84,40 +88,26 @@ namespace POS_qu
             dataGridViewCart4.KeyDown += DataGridViewCart4_KeyDown;
             btnOpenCashier.Click += btnOpenCashier_Click;
             btnCloseCashier.Click += btnCloseCashier_Click;
-            var btnPending = this.Controls.Find("btnPendingList", true);
-            if (btnPending != null && btnPending.Length > 0 && btnPending[0] is Button)
+            
+            button1.Click += button1_Click;
+            button2.Click += button2_Click;
+            button3.Click += button3_Click;
+            button4.Click += button4_Click;
+            button5.Click += button5_Click;
+            button6.Click += button6_Click;
+            
+            if (btnPendingList != null)
             {
-                ((Button)btnPending[0]).Click += btnPendingList_Click;
+                btnPendingList.Click += btnPendingList_Click;
             }
-            var btnCustom = this.Controls.Find("btnCustomTransaction", true).FirstOrDefault() as Button;
-            if (btnCustom == null)
+            if (btnCustomer != null)
             {
-                btnCustom = new Button
-                {
-                    Name = "btnCustomTransaction",
-                    Text = "Custom Transaction",
-                    Width = 160,
-                    Height = 36
-                };
-                if (btnOpenCashier != null)
-                {
-                    btnCustom.Left = btnOpenCashier.Left;
-                    btnCustom.Top = btnOpenCashier.Bottom + 8;
-                }
-                else
-                {
-                    btnCustom.Left = 20;
-                    btnCustom.Top = 12;
-                }
-                btnCustom.Click += BtnCustomTransaction_Click;
-                this.Controls.Add(btnCustom);
-                btnCustom.BringToFront();
+                btnCustomer.Click += btnCustomer_Click;
             }
-
-            // ===============================
-            // 🔹 DATAGRIDVIEW STYLE
-            // ===============================
-            SetupCartGrid();
+            if (btnCustomTransaction != null)
+            {
+                btnCustomTransaction.Click += BtnCustomTransaction_Click;
+            }
 
             PromptOpenShiftIfNeeded();
             PromptResumeCartIfAny();
@@ -134,6 +124,10 @@ namespace POS_qu
 
                 case Keys.F1:
                     ShowShortcutsHelp();
+                    return true;
+                    
+                case Keys.F4:
+                    if (btnCustomer != null) btnCustomer.PerformClick();
                     return true;
 
                 case Keys.Control | Keys.S:
@@ -302,6 +296,28 @@ namespace POS_qu
 
         private void btnOpenCashier_Click(object sender, EventArgs e) => OpenShift();
         private void btnCloseCashier_Click(object sender, EventArgs e) => CloseShift();
+        
+        private void btnCustomer_Click(object sender, EventArgs e)
+        {
+            var customerDto = ShowCustomerPicker();
+            if (customerDto != null)
+            {
+                _currentInvoice.CustomerId = customerDto.Id;
+                _currentInvoice.CustomerName = customerDto.Name;
+                _currentInvoice.PriceLevelId = customerDto.PriceLevelId ?? 1;
+                
+                btnCustomer.Text = customerDto.Name;
+                
+                // Recalculate cart prices based on new customer level
+                if (_currentInvoice.Items.Count > 0)
+                {
+                    _currentInvoice = _cartService.RecalculateCartPrices(_currentInvoice);
+                    RenderInvoice(_currentInvoice);
+                    RefreshInvoicePanel();
+                }
+            }
+        }
+
         private void btnPendingList_Click(object sender, EventArgs e)
         {
             MessageBox.Show("Daftar Pending Cart sementara tidak tersedia.", "Info");
@@ -449,54 +465,17 @@ namespace POS_qu
                 GlobalDiscountPercent = 0,
                 DeliveryAmount = 0,
                 GlobalNote = "",
-                Status = "Draft"
+                Status = "Draft",
+                PriceLevelId = 1
             };
+
+            if (btnCustomer != null) btnCustomer.Text = "Pelanggan (F4)";
 
             lblSessionCode.Text = _currentInvoice.CartSessionCode;
         }
 
 
-        private void SetupCartGrid()
-        {
-            dataGridViewCart4.Dock = DockStyle.Fill;
-            dataGridViewCart4.ScrollBars = ScrollBars.Vertical;
 
-            dataGridViewCart4.AutoSize = false;
-            dataGridViewCart4.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dataGridViewCart4.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
-
-            dataGridViewCart4.EnableHeadersVisualStyles = false;
-            dataGridViewCart4.RowHeadersVisible = false;
-            dataGridViewCart4.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dataGridViewCart4.MultiSelect = false;
-            dataGridViewCart4.ReadOnly = true;
-            dataGridViewCart4.AllowUserToAddRows = false;
-            dataGridViewCart4.AllowUserToResizeRows = false;
-
-            // Background
-            dataGridViewCart4.BackgroundColor = Color.WhiteSmoke;
-
-            // Cell Style
-            dataGridViewCart4.DefaultCellStyle.BackColor = Color.White;
-            dataGridViewCart4.DefaultCellStyle.ForeColor = Color.Black;
-            dataGridViewCart4.DefaultCellStyle.Font = new Font("Yu Gothic", 10, FontStyle.Regular);
-            dataGridViewCart4.DefaultCellStyle.SelectionBackColor = Color.LightBlue;
-            dataGridViewCart4.DefaultCellStyle.SelectionForeColor = Color.Black;
-
-            // Header Style
-            dataGridViewCart4.ColumnHeadersDefaultCellStyle.BackColor = Color.DarkSlateGray;
-            dataGridViewCart4.ColumnHeadersDefaultCellStyle.ForeColor = Color.White;
-            dataGridViewCart4.ColumnHeadersDefaultCellStyle.Font = new Font("Yu Gothic", 10, FontStyle.Bold);
-            dataGridViewCart4.ColumnHeadersHeight = 40;
-            dataGridViewCart4.ReadOnly = true;
-            dataGridViewCart4.AllowUserToAddRows = false;
-            dataGridViewCart4.AllowUserToDeleteRows = false;
-            dataGridViewCart4.AllowUserToResizeRows = false;
-            dataGridViewCart4.AllowUserToResizeColumns = false;
-            dataGridViewCart4.MultiSelect = false;
-            dataGridViewCart4.EditMode = DataGridViewEditMode.EditProgrammatically;
-
-        }
 
 
 
@@ -986,17 +965,12 @@ namespace POS_qu
         }
 
         private TransactionRepo repo;
-        private TransactionService _transactionService;
         private void button1_Click(object sender, EventArgs e)
         {
-
-            repo = new TransactionRepo();
 
             using (PaymentModalForm paymentModal =
                 new PaymentModalForm(_currentInvoice.GrandTotal))
             {
-                _transactionService = new TransactionService(repo, activityService);
-
                 // 🔹 Realtime preview (UI only)
                 paymentModal.PaymentAmountChanged += (amount) =>
                 {
@@ -1362,11 +1336,23 @@ namespace POS_qu
                     AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                     BackgroundColor = Color.White,
                     BorderStyle = BorderStyle.None,
+                    CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
+                    GridColor = Color.FromArgb(235, 235, 235),
                     RowHeadersVisible = false,
                     AllowUserToAddRows = false,
-                    Font = new Font("Segoe UI", 10),
+                    Font = new Font("Segoe UI", 11),
+                    RowTemplate = { Height = 45 },
                     TabIndex = 1
                 };
+                grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(240, 248, 255);
+                grid.DefaultCellStyle.SelectionForeColor = Color.Black;
+                grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+                grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(245, 245, 245);
+                grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(80, 80, 80);
+                grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+                grid.ColumnHeadersHeight = 45;
+                grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+
                 DataGridView gridDetails = new DataGridView
                 {
                     Dock = DockStyle.Bottom,
@@ -1377,11 +1363,18 @@ namespace POS_qu
                     AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                     BackgroundColor = Color.WhiteSmoke,
                     BorderStyle = BorderStyle.None,
+                    CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
+                    GridColor = Color.FromArgb(220, 220, 220),
                     RowHeadersVisible = false,
                     AllowUserToAddRows = false,
                     Font = new Font("Segoe UI", 10),
+                    RowTemplate = { Height = 35 },
                     TabIndex = 2
                 };
+                gridDetails.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+                gridDetails.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(230, 230, 230);
+                gridDetails.ColumnHeadersHeight = 40;
+                gridDetails.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
                 grid.Columns.Add("PoId", "ID");
                 grid.Columns.Add("Customer", "Customer");
@@ -1896,10 +1889,21 @@ namespace POS_qu
                         SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                         BackgroundColor = Color.White,
                         BorderStyle = BorderStyle.None,
+                        CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
+                        GridColor = Color.FromArgb(235, 235, 235),
                         RowHeadersVisible = false,
-                        Font = new Font("Segoe UI", 10),
+                        Font = new Font("Segoe UI", 11),
+                        RowTemplate = { Height = 45 },
                         TabIndex = 0
                     };
+                    grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(240, 248, 255);
+                    grid.DefaultCellStyle.SelectionForeColor = Color.Black;
+                    grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+                    grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(245, 245, 245);
+                    grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(80, 80, 80);
+                    grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+                    grid.ColumnHeadersHeight = 45;
+                    grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
                     grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "ID", DataPropertyName = "TransactionId", Width = 60 });
                     grid.Columns.Add(new DataGridViewTextBoxColumn { HeaderText = "No. Transaksi", DataPropertyName = "TransactionNumber", Width = 150 });
@@ -2018,10 +2022,21 @@ namespace POS_qu
                     AllowUserToAddRows = false,
                     BackgroundColor = Color.White,
                     BorderStyle = BorderStyle.None,
+                    CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
+                    GridColor = Color.FromArgb(235, 235, 235),
                     RowHeadersVisible = false,
-                    Font = new Font("Segoe UI", 10),
+                    Font = new Font("Segoe UI", 11),
+                    RowTemplate = { Height = 45 },
                     TabIndex = 2
                 };
+                grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(240, 248, 255);
+                grid.DefaultCellStyle.SelectionForeColor = Color.Black;
+                grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+                grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(245, 245, 245);
+                grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(80, 80, 80);
+                grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
+                grid.ColumnHeadersHeight = 45;
+                grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
                 grid.Columns.Add(new DataGridViewTextBoxColumn
                 {

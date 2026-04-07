@@ -1,4 +1,4 @@
-﻿using Npgsql;
+using Npgsql;
 using POS_qu.DTO;
 using POS_qu.Helpers;
 using System;
@@ -22,10 +22,11 @@ namespace POS_qu.Repositories
             conn.Open();
 
             using var cmd = new NpgsqlCommand(@"
-                SELECT id, name
-                FROM customers
-                WHERE deleted_at IS NULL
-                ORDER BY name ASC
+                SELECT c.id, c.name, c.price_level_id, pl.name as price_level_name
+                FROM customers c
+                LEFT JOIN price_levels pl ON c.price_level_id = pl.id
+                WHERE c.deleted_at IS NULL
+                ORDER BY c.name ASC
             ", conn);
 
             using var reader = cmd.ExecuteReader();
@@ -34,7 +35,9 @@ namespace POS_qu.Repositories
                 result.Add(new CustomerDto
                 {
                     Id = Convert.ToInt32(reader["id"]),
-                    Name = reader["name"].ToString()
+                    Name = reader["name"].ToString(),
+                    PriceLevelId = reader["price_level_id"] != DBNull.Value ? Convert.ToInt32(reader["price_level_id"]) : (int?)null,
+                    PriceLevelName = reader["price_level_name"]?.ToString()
                 });
             }
 
@@ -44,7 +47,7 @@ namespace POS_qu.Repositories
         // =========================
         // INSERT CUSTOMER
         // =========================
-        public int Insert(string name, int? createdBy)
+        public int Insert(string name, int? createdBy, int? priceLevelId = 1)
         {
             using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
             conn.Open();
@@ -54,14 +57,14 @@ namespace POS_qu.Repositories
             try
             {
                 using var cmd = new NpgsqlCommand(@"
-                    INSERT INTO customers (name, created_by, created_at)
-                    VALUES (@name, @createdBy, NOW())
+                    INSERT INTO customers (name, created_by, price_level_id, created_at)
+                    VALUES (@name, @createdBy, @priceLevelId, NOW())
                     RETURNING id
                 ", conn, tran);
 
                 cmd.Parameters.AddWithValue("@name", name);
-                cmd.Parameters.AddWithValue("@createdBy",
-                    createdBy ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@createdBy", createdBy ?? (object)DBNull.Value);
+                cmd.Parameters.AddWithValue("@priceLevelId", priceLevelId ?? (object)DBNull.Value);
 
                 int newId = Convert.ToInt32(cmd.ExecuteScalar());
 
