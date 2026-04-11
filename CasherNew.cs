@@ -23,7 +23,7 @@ namespace POS_qu
     public partial class CasherNew : Form
     {
 
-        private ICartRepository cartrepo;
+        private CartActivity cartrepo;
         private IActivityService activityService;
         private ILogger flogger = new FileLogger();
         private ILogger dlogger = new DbLogger();

@@ -13,7 +13,7 @@ using POS_qu.Core.Interfaces;
 
 namespace POS_qu.Repositories
 {
-    public class CartActivity : ICartRepository
+    public class CartActivity
     {
 
         public Item GetItemById(int id)
