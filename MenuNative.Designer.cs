@@ -1,4 +1,4 @@
-﻿namespace POSqu_menu
+﻿﻿namespace POSqu_menu
 {
     partial class MenuNative
     {

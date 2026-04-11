@@ -2,14 +2,15 @@ using System;
 using System.Data;
 using POS_qu.Models;
 using POS_qu.Core.Interfaces;
+using POS_qu.Repositories;
 
 namespace POS_qu.Services
 {
     public class ProductService : IProductService
     {
-        private readonly IProductRepository _repository;
+        private readonly ProductRepository _repository;
 
-        public ProductService(IProductRepository repository)
+        public ProductService(ProductRepository repository)
         {
             _repository = repository;
         }

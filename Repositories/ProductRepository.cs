@@ -9,7 +9,7 @@ using POS_qu.Core.Interfaces;
 
 namespace POS_qu.Repositories
 {
-    public class ProductRepository : IProductRepository
+    public class ProductRepository 
     {
         public DataTable GetAllItems()
         {
