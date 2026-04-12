@@ -15,6 +15,8 @@ namespace POS_qu.Core.Interfaces
         DataTable GetUnits();
         DataTable GetSuppliers();
         DataTable GetPriceLevels();
+        DataTable GetBrands();
+        DataTable GetRacks();
         List<ItemPrice> GetItemPrices(int itemId);
         List<UnitVariant> GetItemUnitVariants(int itemId);
     }

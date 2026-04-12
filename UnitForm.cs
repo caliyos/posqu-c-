@@ -81,12 +81,13 @@ namespace POS_qu
             dt.Columns.Add("id", typeof(int));
             dt.Columns.Add("name", typeof(string));
             dt.Columns.Add("abbr", typeof(string));
+            dt.Columns.Add("ord", typeof(string));
             dt.Columns.Add("created_at", typeof(DateTime));
             dt.Columns.Add("updated_at", typeof(DateTime));
 
             foreach (var u in units)
             {
-                dt.Rows.Add(u.Id, u.Name, u.Abbr, u.CreatedAt, u.UpdatedAt);
+                dt.Rows.Add(u.Id, u.Name, u.Abbr, u.Ord, u.CreatedAt, u.UpdatedAt);
             }
 
             return dt;
@@ -104,7 +105,8 @@ namespace POS_qu
             var unit = new Unit
             {
                 Name = txtUnitName.Text,
-                Abbr = txtAbbr.Text
+                Abbr = txtAbbr.Text,
+                Ord = int.TryParse(txtOrder.Text, out int ordValue) ? ordValue : 0
             };
 
             if (unitController.AddUnit(unit))
@@ -131,7 +133,8 @@ namespace POS_qu
             {
                 Id = selectedUnitId,
                 Name = txtUnitName.Text,
-                Abbr = txtAbbr.Text
+                Abbr = txtAbbr.Text,
+                Ord = int.TryParse(txtOrder.Text, out int ordValue) ? ordValue : 0
             };
 
             if (unitController.UpdateUnit(unit))

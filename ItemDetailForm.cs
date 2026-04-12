@@ -10,6 +10,8 @@ using POS_qu.Models;
 using POS_qu.Core.Interfaces;
 using POS_qu.Services;
 using POS_qu.Repositories;
+using POS_qu.Helpers;
+using Npgsql;
 
 namespace POS_qu
 {
@@ -45,6 +47,7 @@ namespace POS_qu
             txtStock.Enabled = false;     // ✅ yang benar
             txtStock.ReadOnly = true;     // ✅ tambahan safety
             label8.Text = "Stock Sekarang";
+            if (cmbWarehouse != null) cmbWarehouse.Enabled = false;
 
             InitializeForm();
             LoadItem(item); // Mode Edit
@@ -54,8 +57,64 @@ namespace POS_qu
         // ------------------------
         // Inisialisasi Form Umum
         // ------------------------
+        private ComboBox cmbBrand;
+        private Button btnAddBrand;
+        private ComboBox cmbRack;
+        private Button btnAddRack;
+        private ComboBox cmbWarehouse;
+
         private void InitializeForm()
         {
+            // Tambah combobox Merk, Rak, dan Gudang secara dinamis
+            
+            // 1. Merk
+            Label lblBrand = new Label { Text = "Merk:", Left = 38, Top = 292, AutoSize = true, Font = new Font("Segoe UI", 10F) };
+            cmbBrand = new ComboBox { Name = "cmbBrand", Left = 192, Top = 292, Width = 280, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 10F) };
+            btnAddBrand = new Button { Text = "+", Left = 480, Top = 292, Width = 35, Height = 28, FlatStyle = FlatStyle.Flat };
+            btnAddBrand.FlatAppearance.BorderSize = 1;
+            btnAddBrand.FlatAppearance.BorderColor = Color.LightGray;
+            btnAddBrand.Click += (s, e) => 
+            {
+                using (var f = new BrandForm())
+                {
+                    f.ShowDialog();
+                    LoadCombos(); // Refresh data setelah form master ditutup
+                }
+            };
+
+            // 2. Rak
+            Label lblRack = new Label { Text = "Rak:", Left = 38, Top = 330, AutoSize = true, Font = new Font("Segoe UI", 10F) };
+            cmbRack = new ComboBox { Name = "cmbRack", Left = 192, Top = 330, Width = 280, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 10F) };
+            btnAddRack = new Button { Text = "+", Left = 480, Top = 330, Width = 35, Height = 28, FlatStyle = FlatStyle.Flat };
+            btnAddRack.FlatAppearance.BorderSize = 1;
+            btnAddRack.FlatAppearance.BorderColor = Color.LightGray;
+            btnAddRack.Click += (s, e) => 
+            {
+                using (var f = new RackForm())
+                {
+                    f.ShowDialog();
+                    LoadCombos(); // Refresh data setelah form master ditutup
+                }
+            };
+
+            // 3. Gudang (Hanya relevan saat stok awal diisi di Mode Tambah)
+            Label lblWarehouse = new Label { Text = "Ke Gudang:", Left = 38, Top = 368, AutoSize = true, Font = new Font("Segoe UI", 10F) };
+            cmbWarehouse = new ComboBox { Name = "cmbWarehouse", Left = 192, Top = 368, Width = 327, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 10F) };
+
+            this.Controls.Add(lblBrand);
+            this.Controls.Add(cmbBrand);
+            this.Controls.Add(btnAddBrand);
+            
+            this.Controls.Add(lblRack);
+            this.Controls.Add(cmbRack);
+            this.Controls.Add(btnAddRack);
+
+            this.Controls.Add(lblWarehouse);
+            this.Controls.Add(cmbWarehouse);
+
+            // Geser panel1 ke bawah agar tidak menabrak combobox baru
+            panel1.Top = 410;
+
             SetDefaultSettings();
             LoadCombos();
             
@@ -131,7 +190,7 @@ namespace POS_qu
             txtBuyPrice.TextChanged += (s, e) => UpdateStockOutput();
             txtSellPrice.TextChanged += (s, e) => UpdateStockOutput();
             UpdateStockOutput();
-        
+            cmbSort.SelectedIndexChanged += cmbSort_SelectedIndexChanged;
         }
 
         private void ApplyProfessionalStyle()
@@ -202,9 +261,37 @@ namespace POS_qu
             chk_IsSellable.Checked = true;
         }
 
+        private void LoadUnits(string sortBy)
+        {
+            var dt = _productService.GetUnits();
+
+            string sort = sortBy switch
+            {
+                "name" => "display ASC",
+                "ord" => "ord ASC", // ⚠️ pastikan kolom ord ada di query
+                _ => "id ASC"
+            };
+
+            DataView dv = dt.DefaultView;
+            dv.Sort = sort;
+
+            cmbUnit.DataSource = dv;
+            cmbUnit.DisplayMember = "display";
+            cmbUnit.ValueMember = "id";
+        }
+
+        private void cmbSort_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            LoadUnits(cmbSort.SelectedItem.ToString().ToLower());
+        }
+
+
         private void LoadCombos()
         {
-            cmbUnit.DataSource = _productService.GetUnits();
+            cmbSort.Items.Clear();
+            cmbSort.Items.AddRange(new string[] { "Id", "Name", "Ord" });
+            LoadUnits("id");
+
             cmbUnit.DisplayMember = "display";
             cmbUnit.ValueMember = "id";
             if (cmbUnit.Items.Count > 0 && cmbUnit.SelectedIndex < 0)
@@ -219,6 +306,35 @@ namespace POS_qu
             cmbSupplier.DataSource = _productService.GetSuppliers();
             cmbSupplier.DisplayMember = "display";
             cmbSupplier.ValueMember = "id";
+
+            // Tambahan Brand, Rack, Warehouse
+            cmbBrand.DataSource = _productService.GetBrands();
+            cmbBrand.DisplayMember = "display";
+            cmbBrand.ValueMember = "id";
+
+            cmbRack.DataSource = _productService.GetRacks();
+            cmbRack.DisplayMember = "display";
+            cmbRack.ValueMember = "id";
+
+            // Gunakan metode yang sama atau langsung NpgsqlCommand untuk warehouse
+            // Asumsikan WarehouseController atau langsung query
+            LoadWarehouses();
+        }
+
+        private void LoadWarehouses()
+        {
+            try
+            {
+                using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+                conn.Open();
+                using var adapter = new NpgsqlDataAdapter("SELECT id, name FROM warehouses ORDER BY name ASC", conn);
+                var dt = new DataTable();
+                adapter.Fill(dt);
+                cmbWarehouse.DataSource = dt;
+                cmbWarehouse.DisplayMember = "name";
+                cmbWarehouse.ValueMember = "id";
+            }
+            catch {}
         }
 
         // ------------------------
@@ -262,6 +378,12 @@ namespace POS_qu
             }
             cmbCategory.SelectedValue = _item.category_id != 0 ? _item.category_id : -1;
             cmbSupplier.SelectedValue = _item.supplier_id != 0 ? _item.supplier_id : -1;
+
+            if (_item.brand_id.HasValue && _item.brand_id > 0)
+                cmbBrand.SelectedValue = _item.brand_id.Value;
+
+            if (_item.rack_id.HasValue && _item.rack_id > 0)
+                cmbRack.SelectedValue = _item.rack_id.Value;
 
             chk_is_inventory_p.Checked = _item.is_inventory_p;
             chk_IsPurchasable.Checked = _item.IsPurchasable;
@@ -353,6 +475,10 @@ namespace POS_qu
             }
             _item.category_id = cmbCategory.SelectedValue != null ? Convert.ToInt32(cmbCategory.SelectedValue) : 0;
             _item.supplier_id = cmbSupplier.SelectedValue != null ? Convert.ToInt32(cmbSupplier.SelectedValue) : 0;
+            _item.brand_id = cmbBrand.SelectedValue != null ? Convert.ToInt32(cmbBrand.SelectedValue) : null;
+            _item.rack_id = cmbRack.SelectedValue != null ? Convert.ToInt32(cmbRack.SelectedValue) : null;
+            _item.initial_warehouse_id = cmbWarehouse.SelectedValue != null ? Convert.ToInt32(cmbWarehouse.SelectedValue) : 1;
+            
             _item.is_inventory_p = chk_is_inventory_p.Checked;
             _item.IsPurchasable = chk_IsPurchasable.Checked;
             _item.IsSellable = chk_IsSellable.Checked;

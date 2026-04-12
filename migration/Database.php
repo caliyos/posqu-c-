@@ -20,7 +20,7 @@ class Database {
             }
 
             $dbPort = getenv('PGPORT') ?: 5433; // default PostgreSQL
-            $dbName = getenv('PGDATABASE') ?: 'A-Posqu001';
+            $dbName = getenv('PGDATABASE') ?: 'A-posqu001';
             $dbUser = getenv('PGUSER') ?: 'postgres';
             $dbPass = getenv('PGPASSWORD') ?: 'postgres11';
 

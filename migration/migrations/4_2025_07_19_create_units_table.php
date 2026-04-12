@@ -6,6 +6,7 @@ return function($db) {
             id SERIAL PRIMARY KEY,
             name VARCHAR(50) NOT NULL,
             abbr VARCHAR(10) NOT NULL UNIQUE,
+            ord INT NULL,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );

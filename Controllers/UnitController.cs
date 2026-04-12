@@ -13,6 +13,8 @@ namespace POS_qu.Controllers
         public int Id { get; set; }
         public string Name { get; set; }
         public string Abbr { get; set; }
+
+        public int Ord { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
     }
@@ -34,19 +36,22 @@ namespace POS_qu.Controllers
                 using var cmd = new NpgsqlCommand(sql, conn);
                 using var reader = cmd.ExecuteReader();
 
-                while (reader.Read())
-                {
-                    list.Add(new Unit
-                    {
-                        Id = reader.GetInt32(reader.GetOrdinal("id")),
-                        Name = reader.GetString(reader.GetOrdinal("name")),
-                        Abbr = reader.GetString(reader.GetOrdinal("abbr")),
-                        CreatedAt = reader.GetDateTime(reader.GetOrdinal("created_at")),
-                        UpdatedAt = reader.GetDateTime(reader.GetOrdinal("updated_at"))
-                    });
-                }
+            while (reader.Read())
+            {
+                var ordIndex = reader.GetOrdinal("ord");
 
-                return list;
+                list.Add(new Unit
+                {
+                    Id = reader.GetInt32(reader.GetOrdinal("id")),
+                    Name = reader.GetString(reader.GetOrdinal("name")),
+                    Abbr = reader.GetString(reader.GetOrdinal("abbr")),
+                    Ord = reader.IsDBNull(ordIndex) ? 0 : reader.GetInt32(ordIndex),
+                    CreatedAt = reader.GetDateTime(reader.GetOrdinal("created_at")),
+                    UpdatedAt = reader.GetDateTime(reader.GetOrdinal("updated_at"))
+                });
+            }
+
+            return list;
             }
 
             // =========================
@@ -55,8 +60,8 @@ namespace POS_qu.Controllers
             public bool AddUnit(Unit unit)
             {
                 string sql = @"
-                INSERT INTO units (name, abbr)
-                VALUES (@name, @abbr)";
+                INSERT INTO units (name, abbr,ord)
+                VALUES (@name, @abbr, @ord)";
 
                 using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
                 conn.Open();
@@ -64,8 +69,9 @@ namespace POS_qu.Controllers
                 using var cmd = new NpgsqlCommand(sql, conn);
                 cmd.Parameters.AddWithValue("@name", unit.Name);
                 cmd.Parameters.AddWithValue("@abbr", unit.Abbr);
+                cmd.Parameters.AddWithValue("@ord", unit.Ord);
 
-                return cmd.ExecuteNonQuery() > 0;
+            return cmd.ExecuteNonQuery() > 0;
             }
 
             // =========================
@@ -76,7 +82,8 @@ namespace POS_qu.Controllers
                 string sql = @"
                 UPDATE units
                 SET name = @name,
-                    abbr = @abbr
+                    abbr = @abbr,
+                    ord = @ord
                 WHERE id = @id";
 
                 using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
@@ -86,8 +93,9 @@ namespace POS_qu.Controllers
                 cmd.Parameters.AddWithValue("@id", unit.Id);
                 cmd.Parameters.AddWithValue("@name", unit.Name);
                 cmd.Parameters.AddWithValue("@abbr", unit.Abbr);
+                cmd.Parameters.AddWithValue("@ord", unit.Ord);
 
-                return cmd.ExecuteNonQuery() > 0;
+            return cmd.ExecuteNonQuery() > 0;
             }
 
             // =========================

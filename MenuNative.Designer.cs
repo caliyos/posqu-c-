@@ -1,4 +1,4 @@
-﻿﻿namespace POSqu_menu
+﻿﻿﻿﻿﻿﻿﻿namespace POSqu_menu
 {
     partial class MenuNative
     {
@@ -201,7 +201,7 @@
             // 
             // masterToolStripMenuItem
             // 
-            masterToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { pelangganCustomerToolStripMenuItem, supplierToolStripMenuItem, kategoriBarangToolStripMenuItem, unitSatuanToolStripMenuItem, gudangToolStripMenuItem });
+            masterToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { pelangganCustomerToolStripMenuItem, supplierToolStripMenuItem, kategoriBarangToolStripMenuItem, unitSatuanToolStripMenuItem, gudangToolStripMenuItem, merkToolStripMenuItem, rakToolStripMenuItem });
             masterToolStripMenuItem.Name = "masterToolStripMenuItem";
             masterToolStripMenuItem.Size = new Size(104, 24);
             masterToolStripMenuItem.Text = "Master Data";
@@ -241,6 +241,22 @@
             gudangToolStripMenuItem.Size = new Size(231, 26);
             gudangToolStripMenuItem.Text = "Gudang / Warehouse";
             gudangToolStripMenuItem.Click += MasterGudang_Click;
+            // 
+            // merkToolStripMenuItem
+            // 
+            merkToolStripMenuItem = new ToolStripMenuItem();
+            merkToolStripMenuItem.Name = "merkToolStripMenuItem";
+            merkToolStripMenuItem.Size = new Size(231, 26);
+            merkToolStripMenuItem.Text = "Merk (Brand)";
+            merkToolStripMenuItem.Click += merkToolStripMenuItem_Click;
+            // 
+            // rakToolStripMenuItem
+            // 
+            rakToolStripMenuItem = new ToolStripMenuItem();
+            rakToolStripMenuItem.Name = "rakToolStripMenuItem";
+            rakToolStripMenuItem.Size = new Size(231, 26);
+            rakToolStripMenuItem.Text = "Rak (Rack)";
+            rakToolStripMenuItem.Click += rakToolStripMenuItem_Click;
             // 
             // productToolStripMenuItem
             // 
@@ -496,6 +512,8 @@
         private ToolStripMenuItem kategoriBarangToolStripMenuItem;
         private ToolStripMenuItem unitSatuanToolStripMenuItem;
         private ToolStripMenuItem gudangToolStripMenuItem;
+        private ToolStripMenuItem merkToolStripMenuItem;
+        private ToolStripMenuItem rakToolStripMenuItem;
         private ToolStripMenuItem daftarTransaksiToolStripMenuItem;
         private ToolStripMenuItem casherToolStripMenuItem1;
         private ToolStripMenuItem pendingTransaksiAdminToolStripMenuItem;

@@ -45,58 +45,66 @@
             btnEdit = new Button();
             btnDelete = new Button();
             btnRefresh = new Button();
+            txtOrder = new TextBox();
+            label1 = new Label();
             ((System.ComponentModel.ISupportInitialize)dgvUnits).BeginInit();
             SuspendLayout();
             // 
             // cmbPageSize
             // 
             cmbPageSize.FormattingEnabled = true;
-            cmbPageSize.Location = new Point(160, 595);
+            cmbPageSize.Location = new Point(128, 476);
+            cmbPageSize.Margin = new Padding(2, 2, 2, 2);
             cmbPageSize.Name = "cmbPageSize";
-            cmbPageSize.Size = new Size(182, 33);
+            cmbPageSize.Size = new Size(146, 28);
             cmbPageSize.TabIndex = 35;
             // 
             // lblPageNumber
             // 
             lblPageNumber.AutoSize = true;
-            lblPageNumber.Location = new Point(368, 99);
+            lblPageNumber.Location = new Point(294, 79);
+            lblPageNumber.Margin = new Padding(2, 0, 2, 0);
             lblPageNumber.Name = "lblPageNumber";
-            lblPageNumber.Size = new Size(59, 25);
+            lblPageNumber.Size = new Size(50, 20);
             lblPageNumber.TabIndex = 34;
             lblPageNumber.Text = "label1";
             // 
             // btnLast
             // 
-            btnLast.Location = new Point(776, 555);
+            btnLast.Location = new Point(621, 444);
+            btnLast.Margin = new Padding(2, 2, 2, 2);
             btnLast.Name = "btnLast";
-            btnLast.Size = new Size(112, 34);
+            btnLast.Size = new Size(90, 27);
             btnLast.TabIndex = 33;
             btnLast.Text = "Last";
             btnLast.UseVisualStyleBackColor = true;
             // 
             // btnNext
             // 
-            btnNext.Location = new Point(648, 555);
+            btnNext.Location = new Point(518, 444);
+            btnNext.Margin = new Padding(2, 2, 2, 2);
             btnNext.Name = "btnNext";
-            btnNext.Size = new Size(112, 34);
+            btnNext.Size = new Size(90, 27);
             btnNext.TabIndex = 32;
             btnNext.Text = "Next";
             btnNext.UseVisualStyleBackColor = true;
             // 
             // btnPrev
             // 
-            btnPrev.Location = new Point(520, 555);
+            btnPrev.Location = new Point(416, 444);
+            btnPrev.Margin = new Padding(2, 2, 2, 2);
             btnPrev.Name = "btnPrev";
-            btnPrev.Size = new Size(112, 34);
+            btnPrev.Size = new Size(90, 27);
             btnPrev.TabIndex = 31;
             btnPrev.Text = "Prev";
             btnPrev.UseVisualStyleBackColor = true;
             // 
             // btnFirst
             // 
-            btnFirst.Location = new Point(384, 555);
+            btnFirst.Location = new Point(307, 444);
+            btnFirst.Margin = new Padding(2, 2, 2, 2);
             btnFirst.Name = "btnFirst";
-            btnFirst.Size = new Size(112, 34);
+            btnFirst.Size = new Size(90, 27);
             btnFirst.TabIndex = 30;
             btnFirst.Text = "First";
             btnFirst.UseVisualStyleBackColor = true;
@@ -104,17 +112,19 @@
             // lblPagingInfo
             // 
             lblPagingInfo.AutoSize = true;
-            lblPagingInfo.Location = new Point(160, 555);
+            lblPagingInfo.Location = new Point(128, 444);
+            lblPagingInfo.Margin = new Padding(2, 0, 2, 0);
             lblPagingInfo.Name = "lblPagingInfo";
-            lblPagingInfo.Size = new Size(103, 25);
+            lblPagingInfo.Size = new Size(84, 20);
             lblPagingInfo.TabIndex = 29;
             lblPagingInfo.Text = "Paging Info";
             // 
             // txtSearch
             // 
-            txtSearch.Location = new Point(160, 99);
+            txtSearch.Location = new Point(128, 79);
+            txtSearch.Margin = new Padding(2, 2, 2, 2);
             txtSearch.Name = "txtSearch";
-            txtSearch.Size = new Size(192, 31);
+            txtSearch.Size = new Size(154, 27);
             txtSearch.TabIndex = 28;
             // 
             // dgvUnits
@@ -124,85 +134,111 @@
             dgvUnits.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             dgvUnits.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvUnits.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvUnits.Location = new Point(160, 139);
+            dgvUnits.Location = new Point(128, 111);
+            dgvUnits.Margin = new Padding(2, 2, 2, 2);
             dgvUnits.MultiSelect = false;
             dgvUnits.Name = "dgvUnits";
             dgvUnits.RowHeadersWidth = 62;
             dgvUnits.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvUnits.Size = new Size(725, 400);
+            dgvUnits.Size = new Size(580, 320);
             dgvUnits.TabIndex = 19;
             // 
             // lblUnit
             // 
-            lblUnit.Location = new Point(960, 89);
+            lblUnit.Location = new Point(768, 71);
+            lblUnit.Margin = new Padding(2, 0, 2, 0);
             lblUnit.Name = "lblUnit";
-            lblUnit.Size = new Size(100, 30);
+            lblUnit.Size = new Size(80, 24);
             lblUnit.TabIndex = 20;
             lblUnit.Text = "Nama Unit";
             // 
             // txtUnitName
             // 
-            txtUnitName.Location = new Point(1100, 89);
+            txtUnitName.Location = new Point(880, 71);
+            txtUnitName.Margin = new Padding(2, 2, 2, 2);
             txtUnitName.Name = "txtUnitName";
-            txtUnitName.Size = new Size(250, 31);
+            txtUnitName.Size = new Size(201, 27);
             txtUnitName.TabIndex = 21;
             // 
             // lblAbbr
             // 
-            lblAbbr.Location = new Point(960, 139);
+            lblAbbr.Location = new Point(768, 112);
+            lblAbbr.Margin = new Padding(2, 0, 2, 0);
             lblAbbr.Name = "lblAbbr";
-            lblAbbr.Size = new Size(116, 30);
+            lblAbbr.Size = new Size(93, 24);
             lblAbbr.TabIndex = 22;
             lblAbbr.Text = "Singkatan";
             // 
             // txtAbbr
             // 
-            txtAbbr.Location = new Point(1100, 137);
+            txtAbbr.Location = new Point(880, 111);
+            txtAbbr.Margin = new Padding(2, 2, 2, 2);
             txtAbbr.Name = "txtAbbr";
-            txtAbbr.Size = new Size(250, 31);
+            txtAbbr.Size = new Size(201, 27);
             txtAbbr.TabIndex = 23;
             // 
             // btnAdd
             // 
-            btnAdd.Location = new Point(960, 199);
+            btnAdd.Location = new Point(768, 223);
+            btnAdd.Margin = new Padding(2, 2, 2, 2);
             btnAdd.Name = "btnAdd";
-            btnAdd.Size = new Size(100, 40);
+            btnAdd.Size = new Size(80, 32);
             btnAdd.TabIndex = 24;
             btnAdd.Text = "Add";
             btnAdd.Click += btnAdd_Click;
             // 
             // btnEdit
             // 
-            btnEdit.Location = new Point(1070, 199);
+            btnEdit.Location = new Point(856, 223);
+            btnEdit.Margin = new Padding(2, 2, 2, 2);
             btnEdit.Name = "btnEdit";
-            btnEdit.Size = new Size(100, 40);
+            btnEdit.Size = new Size(80, 32);
             btnEdit.TabIndex = 25;
             btnEdit.Text = "Edit";
-            btnEdit.Click  += btnEdit_Click;
+            btnEdit.Click += btnEdit_Click;
             // 
             // btnDelete
             // 
-            btnDelete.Location = new Point(1180, 199);
+            btnDelete.Location = new Point(944, 223);
+            btnDelete.Margin = new Padding(2, 2, 2, 2);
             btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(100, 40);
+            btnDelete.Size = new Size(80, 32);
             btnDelete.TabIndex = 26;
             btnDelete.Text = "Delete";
             btnDelete.Click += btnDelete_Click;
             // 
             // btnRefresh
             // 
-            btnRefresh.Location = new Point(1290, 199);
+            btnRefresh.Location = new Point(1032, 223);
+            btnRefresh.Margin = new Padding(2, 2, 2, 2);
             btnRefresh.Name = "btnRefresh";
-            btnRefresh.Size = new Size(100, 40);
+            btnRefresh.Size = new Size(80, 32);
             btnRefresh.TabIndex = 27;
             btnRefresh.Text = "Refresh";
             btnRefresh.Click += btnRefresh_Click;
             // 
+            // txtOrder
+            // 
+            txtOrder.Location = new Point(880, 157);
+            txtOrder.Margin = new Padding(2);
+            txtOrder.Name = "txtOrder";
+            txtOrder.Size = new Size(201, 27);
+            txtOrder.TabIndex = 23;
+            // 
+            // label1
+            // 
+            label1.Location = new Point(768, 158);
+            label1.Margin = new Padding(2, 0, 2, 0);
+            label1.Name = "label1";
+            label1.Size = new Size(93, 24);
+            label1.TabIndex = 22;
+            label1.Text = "Urutan";
+            // 
             // UnitForm
             // 
-            AutoScaleDimensions = new SizeF(10F, 25F);
+            AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1551, 717);
+            ClientSize = new Size(1241, 574);
             Controls.Add(cmbPageSize);
             Controls.Add(lblPageNumber);
             Controls.Add(btnLast);
@@ -214,12 +250,15 @@
             Controls.Add(dgvUnits);
             Controls.Add(lblUnit);
             Controls.Add(txtUnitName);
+            Controls.Add(label1);
             Controls.Add(lblAbbr);
+            Controls.Add(txtOrder);
             Controls.Add(txtAbbr);
             Controls.Add(btnAdd);
             Controls.Add(btnEdit);
             Controls.Add(btnDelete);
             Controls.Add(btnRefresh);
+            Margin = new Padding(2, 2, 2, 2);
             Name = "UnitForm";
             Text = "UnitForm";
             ((System.ComponentModel.ISupportInitialize)dgvUnits).EndInit();
@@ -246,5 +285,7 @@
         private Button btnEdit;
         private Button btnDelete;
         private Button btnRefresh;
+        private TextBox txtOrder;
+        private Label label1;
     }
 }

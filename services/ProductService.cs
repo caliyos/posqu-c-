@@ -84,6 +84,8 @@ namespace POS_qu.Services
         public DataTable GetUnits() => _repository.GetUnits();
         public DataTable GetSuppliers() => _repository.GetSuppliers();
         public DataTable GetPriceLevels() => _repository.GetPriceLevels();
+        public DataTable GetBrands() => _repository.GetBrands();
+        public DataTable GetRacks() => _repository.GetRacks();
         public List<ItemPrice> GetItemPrices(int itemId) => _repository.GetItemPrices(itemId);
         public List<UnitVariant> GetItemUnitVariants(int itemId) => _repository.GetItemUnitVariants(itemId);
     }

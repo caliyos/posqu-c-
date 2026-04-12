@@ -85,6 +85,8 @@ namespace POS_qu
             label7 = new Label();
             btnCancel = new Button();
             btnSimpan = new Button();
+            cmbSort = new ComboBox();
+            label13 = new Label();
             panel1.SuspendLayout();
             tabHarga.SuspendLayout();
             tabPageUnitVariant.SuspendLayout();
@@ -200,7 +202,7 @@ namespace POS_qu
             panel1.Controls.Add(chk_IsPurchasable);
             panel1.Controls.Add(chk_is_inventory_p);
             panel1.Controls.Add(label6);
-            panel1.Location = new Point(38, 313);
+            panel1.Location = new Point(38, 372);
             panel1.Margin = new Padding(2);
             panel1.Name = "panel1";
             panel1.Size = new Size(525, 301);
@@ -368,7 +370,7 @@ namespace POS_qu
             dgvVariants.ColumnHeadersHeight = 50;
             dgvVariants.EnableHeadersVisualStyles = false;
             dgvVariants.GridColor = Color.FromArgb(235, 235, 235);
-            dgvVariants.Location = new Point(16, 113);
+            dgvVariants.Location = new Point(2, 113);
             dgvVariants.Margin = new Padding(2);
             dgvVariants.Name = "dgvVariants";
             dgvVariants.ReadOnly = true;
@@ -728,11 +730,30 @@ namespace POS_qu
             btnSimpan.UseVisualStyleBackColor = true;
             btnSimpan.Click += btnSimpan_Click;
             // 
+            // cmbSort
+            // 
+            cmbSort.FormattingEnabled = true;
+            cmbSort.Location = new Point(495, 101);
+            cmbSort.Name = "cmbSort";
+            cmbSort.Size = new Size(114, 28);
+            cmbSort.TabIndex = 56;
+            // 
+            // label13
+            // 
+            label13.AutoSize = true;
+            label13.Location = new Point(438, 105);
+            label13.Margin = new Padding(2, 0, 2, 0);
+            label13.Name = "label13";
+            label13.Size = new Size(52, 20);
+            label13.TabIndex = 0;
+            label13.Text = "SortBy";
+            // 
             // ItemDetailForm
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1693, 758);
+            Controls.Add(cmbSort);
             Controls.Add(lblExpired);
             Controls.Add(dtpExpired);
             Controls.Add(btnSimpan);
@@ -748,6 +769,7 @@ namespace POS_qu
             Controls.Add(label7);
             Controls.Add(label5);
             Controls.Add(label4);
+            Controls.Add(label13);
             Controls.Add(label3);
             Controls.Add(label2);
             Controls.Add(label1);
@@ -827,5 +849,7 @@ namespace POS_qu
         private Label lblStockValueSell;
         private Label lblVariantTitle;
         private DataGridView dgvVariants;
+        private ComboBox cmbSort;
+        private Label label13;
     }
 }

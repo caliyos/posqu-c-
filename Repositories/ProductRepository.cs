@@ -101,6 +101,8 @@ COALESCE((SELECT SUM(s.qty)
                                 category_id = reader["category_id"] != DBNull.Value ? Convert.ToInt32(reader["category_id"]) : 0,
                                 unitid = reader["unit"] != DBNull.Value ? Convert.ToInt32(reader["unit"]) : 0,
                                 supplier_id = reader["supplier_id"] != DBNull.Value ? Convert.ToInt32(reader["supplier_id"]) : 0,
+                                brand_id = reader["brand_id"] != DBNull.Value ? Convert.ToInt32(reader["brand_id"]) : null,
+                                rack_id = reader["rack_id"] != DBNull.Value ? Convert.ToInt32(reader["rack_id"]) : null,
                                 buy_price = reader["buy_price"] != DBNull.Value ? Convert.ToDecimal(reader["buy_price"]) : 0,
                                 sell_price = reader["sell_price"] != DBNull.Value ? Convert.ToDecimal(reader["sell_price"]) : 0,
                                 stock = Convert.ToInt32(reader["stock_qty"]),
@@ -126,8 +128,8 @@ COALESCE((SELECT SUM(s.qty)
                 {
                     try
                     {
-                        string sql = @"INSERT INTO items (barcode, name, category_id, unit, supplier_id, buy_price, sell_price, valuation_method, is_active, note) 
-                                       VALUES (@barcode, @name, @category_id, @unit_id, @supplier_id, @buy_price, @sell_price, @valuation_method, @is_active, @note) RETURNING id";
+                        string sql = @"INSERT INTO items (barcode, name, category_id, unit, supplier_id, brand_id, rack_id, buy_price, sell_price, valuation_method, is_active, note) 
+                                       VALUES (@barcode, @name, @category_id, @unit_id, @supplier_id, @brand_id, @rack_id, @buy_price, @sell_price, @valuation_method, @is_active, @note) RETURNING id";
                         
                         using (var cmd = new NpgsqlCommand(sql, con, tran))
                         {
@@ -136,6 +138,8 @@ COALESCE((SELECT SUM(s.qty)
                             cmd.Parameters.AddWithValue("@category_id", item.category_id > 0 ? (object)item.category_id : DBNull.Value);
                             cmd.Parameters.AddWithValue("@unit_id", item.unitid > 0 ? (object)item.unitid : DBNull.Value);
                             cmd.Parameters.AddWithValue("@supplier_id", item.supplier_id > 0 ? (object)item.supplier_id : DBNull.Value);
+                            cmd.Parameters.AddWithValue("@brand_id", item.brand_id.HasValue && item.brand_id > 0 ? (object)item.brand_id.Value : DBNull.Value);
+                            cmd.Parameters.AddWithValue("@rack_id", item.rack_id.HasValue && item.rack_id > 0 ? (object)item.rack_id.Value : DBNull.Value);
                             cmd.Parameters.AddWithValue("@buy_price", item.buy_price);
                             cmd.Parameters.AddWithValue("@sell_price", item.sell_price);
                             cmd.Parameters.AddWithValue("@valuation_method", item.valuation_method ?? "FIFO");
@@ -145,21 +149,25 @@ COALESCE((SELECT SUM(s.qty)
                             newItemId = Convert.ToInt32(cmd.ExecuteScalar());
                         }
 
-                        // Insert initial stock to default warehouse (id=1)
+                        // Insert initial stock to default warehouse (or specified warehouse)
                         if (item.stock > 0)
                         {
-                            string sSql = "INSERT INTO stocks (item_id, warehouse_id, qty) VALUES (@item_id, 1, @qty)";
+                            int warehouseId = item.initial_warehouse_id ?? 1;
+
+                            string sSql = "INSERT INTO stocks (item_id, warehouse_id, qty) VALUES (@item_id, @w_id, @qty)";
                             using (var sCmd = new NpgsqlCommand(sSql, con, tran))
                             {
                                 sCmd.Parameters.AddWithValue("@item_id", newItemId);
+                                sCmd.Parameters.AddWithValue("@w_id", warehouseId);
                                 sCmd.Parameters.AddWithValue("@qty", item.stock);
                                 sCmd.ExecuteNonQuery();
                             }
 
-                            string slSql = "INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price) VALUES (@item_id, 1, @qty, @buy_price)";
+                            string slSql = "INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price) VALUES (@item_id, @w_id, @qty, @buy_price)";
                             using (var slCmd = new NpgsqlCommand(slSql, con, tran))
                             {
                                 slCmd.Parameters.AddWithValue("@item_id", newItemId);
+                                slCmd.Parameters.AddWithValue("@w_id", warehouseId);
                                 slCmd.Parameters.AddWithValue("@qty", item.stock);
                                 slCmd.Parameters.AddWithValue("@buy_price", item.buy_price);
                                 slCmd.ExecuteNonQuery();
@@ -227,7 +235,7 @@ COALESCE((SELECT SUM(s.qty)
                     {
                         string sql = @"UPDATE items SET 
                                        barcode = @barcode, name = @name, category_id = @category_id, 
-                                       unit = @unit_id, supplier_id = @supplier_id, buy_price = @buy_price, 
+                                       unit = @unit_id, supplier_id = @supplier_id, brand_id = @brand_id, rack_id = @rack_id, buy_price = @buy_price, 
                                        sell_price = @sell_price, valuation_method = @valuation_method, is_active = @is_active, note = @note 
                                        WHERE id = @id";
                         
@@ -239,6 +247,8 @@ COALESCE((SELECT SUM(s.qty)
                             cmd.Parameters.AddWithValue("@category_id", item.category_id > 0 ? (object)item.category_id : DBNull.Value);
                             cmd.Parameters.AddWithValue("@unit_id", item.unitid > 0 ? (object)item.unitid : DBNull.Value);
                             cmd.Parameters.AddWithValue("@supplier_id", item.supplier_id > 0 ? (object)item.supplier_id : DBNull.Value);
+                            cmd.Parameters.AddWithValue("@brand_id", item.brand_id.HasValue && item.brand_id > 0 ? (object)item.brand_id.Value : DBNull.Value);
+                            cmd.Parameters.AddWithValue("@rack_id", item.rack_id.HasValue && item.rack_id > 0 ? (object)item.rack_id.Value : DBNull.Value);
                             cmd.Parameters.AddWithValue("@buy_price", item.buy_price);
                             cmd.Parameters.AddWithValue("@sell_price", item.sell_price);
                             cmd.Parameters.AddWithValue("@valuation_method", item.valuation_method ?? "FIFO");
@@ -325,9 +335,12 @@ COALESCE((SELECT SUM(s.qty)
         }
 
         public DataTable GetCategories() => GetLookupTable("SELECT id, name AS display FROM categories ORDER BY name ASC");
-        public DataTable GetUnits() => GetLookupTable("SELECT id, name AS display FROM units ORDER BY name ASC");
+        public DataTable GetUnits()
+          => GetLookupTable("SELECT id, name AS display, ord FROM units");
         public DataTable GetSuppliers() => GetLookupTable("SELECT id, name AS display FROM suppliers ORDER BY name ASC");
         public DataTable GetPriceLevels() => GetLookupTable("SELECT id, name FROM price_levels ORDER BY id ASC");
+        public DataTable GetBrands() => GetLookupTable("SELECT id, name AS display FROM brands ORDER BY name ASC");
+        public DataTable GetRacks() => GetLookupTable("SELECT id, name AS display FROM racks ORDER BY name ASC");
 
         public List<ItemPrice> GetItemPrices(int itemId)
         {

@@ -39,6 +39,9 @@ namespace POS_qu.Models
         public DateTime updated_at { get; set; }
         public DateTime? deleted_at { get; set; }
         public int supplier_id { get; set; }
+        public int? brand_id { get; set; }
+        public int? rack_id { get; set; }
+        public int? initial_warehouse_id { get; set; } // Untuk stok awal
         public int flag { get; set; }
 
         //////////////////////////////////////////////////////

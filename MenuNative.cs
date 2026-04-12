@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
 using POS_qu;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -248,6 +248,22 @@ namespace POSqu_menu
         private void MasterGudang_Click(object sender, EventArgs e)
         {
             WarehouseForm f = new WarehouseForm();
+            this.Hide();
+            f.FormClosed += (s, args) => this.Show();
+            f.Show();
+        }
+
+        private void merkToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            BrandForm f = new BrandForm();
+            this.Hide();
+            f.FormClosed += (s, args) => this.Show();
+            f.Show();
+        }
+
+        private void rakToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            RackForm f = new RackForm();
             this.Hide();
             f.FormClosed += (s, args) => this.Show();
             f.Show();
