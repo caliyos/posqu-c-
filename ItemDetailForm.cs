@@ -54,67 +54,8 @@ namespace POS_qu
            
         }
 
-        // ------------------------
-        // Inisialisasi Form Umum
-        // ------------------------
-        private ComboBox cmbBrand;
-        private Button btnAddBrand;
-        private ComboBox cmbRack;
-        private Button btnAddRack;
-        private ComboBox cmbWarehouse;
-
         private void InitializeForm()
         {
-            // Tambah combobox Merk, Rak, dan Gudang secara dinamis
-            
-            // 1. Merk
-            Label lblBrand = new Label { Text = "Merk:", Left = 38, Top = 292, AutoSize = true, Font = new Font("Segoe UI", 10F) };
-            cmbBrand = new ComboBox { Name = "cmbBrand", Left = 192, Top = 292, Width = 280, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 10F) };
-            btnAddBrand = new Button { Text = "+", Left = 480, Top = 292, Width = 35, Height = 28, FlatStyle = FlatStyle.Flat };
-            btnAddBrand.FlatAppearance.BorderSize = 1;
-            btnAddBrand.FlatAppearance.BorderColor = Color.LightGray;
-            btnAddBrand.Click += (s, e) => 
-            {
-                using (var f = new BrandForm())
-                {
-                    f.ShowDialog();
-                    LoadCombos(); // Refresh data setelah form master ditutup
-                }
-            };
-
-            // 2. Rak
-            Label lblRack = new Label { Text = "Rak:", Left = 38, Top = 330, AutoSize = true, Font = new Font("Segoe UI", 10F) };
-            cmbRack = new ComboBox { Name = "cmbRack", Left = 192, Top = 330, Width = 280, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 10F) };
-            btnAddRack = new Button { Text = "+", Left = 480, Top = 330, Width = 35, Height = 28, FlatStyle = FlatStyle.Flat };
-            btnAddRack.FlatAppearance.BorderSize = 1;
-            btnAddRack.FlatAppearance.BorderColor = Color.LightGray;
-            btnAddRack.Click += (s, e) => 
-            {
-                using (var f = new RackForm())
-                {
-                    f.ShowDialog();
-                    LoadCombos(); // Refresh data setelah form master ditutup
-                }
-            };
-
-            // 3. Gudang (Hanya relevan saat stok awal diisi di Mode Tambah)
-            Label lblWarehouse = new Label { Text = "Ke Gudang:", Left = 38, Top = 368, AutoSize = true, Font = new Font("Segoe UI", 10F) };
-            cmbWarehouse = new ComboBox { Name = "cmbWarehouse", Left = 192, Top = 368, Width = 327, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 10F) };
-
-            this.Controls.Add(lblBrand);
-            this.Controls.Add(cmbBrand);
-            this.Controls.Add(btnAddBrand);
-            
-            this.Controls.Add(lblRack);
-            this.Controls.Add(cmbRack);
-            this.Controls.Add(btnAddRack);
-
-            this.Controls.Add(lblWarehouse);
-            this.Controls.Add(cmbWarehouse);
-
-            // Geser panel1 ke bawah agar tidak menabrak combobox baru
-            panel1.Top = 410;
-
             SetDefaultSettings();
             LoadCombos();
             
@@ -170,20 +111,10 @@ namespace POS_qu
             cellStyleAlt.BackColor = Color.FromArgb(252, 252, 252);
             dgvMultiPrice.AlternatingRowsDefaultCellStyle = cellStyleAlt;
 
-            // Tambah control Expired At secara dinamis (Sudah pindah ke Designer)
-            
-            // Output stok di sebelah input stok (Sudah pindah ke Designer)
-
-            // Combo Box for Valuation Method
-            var lblValuation = new Label { Text = "Sistem Penilaian:", Left = 26, Top = 305, AutoSize = true };
-            var cmbValuation = new ComboBox { Name = "cmbValuation", Left = 160, Top = 300, Width = 150, DropDownStyle = ComboBoxStyle.DropDownList };
+            cmbValuation.Items.Clear();
             cmbValuation.Items.Add("FIFO");
             cmbValuation.Items.Add("AVG");
-            cmbValuation.SelectedIndex = 0; // Default FIFO
-            
-            panel1.Height = 350; // Perbesar panel untuk menampung combobox
-            panel1.Controls.Add(lblValuation);
-            panel1.Controls.Add(cmbValuation);
+            if (cmbValuation.SelectedIndex < 0) cmbValuation.SelectedIndex = 0;
 
             txtStock.TextChanged += (s, e) => UpdateStockOutput();
             cmbUnit.SelectedIndexChanged += (s, e) => UpdateStockOutput();
@@ -230,28 +161,10 @@ namespace POS_qu
             btnUnitVariant.FlatStyle = FlatStyle.Flat;
             btnUnitVariant.FlatAppearance.BorderSize = 0;
             btnUnitVariant.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-
-            btnMultiPrice.Visible = false; // We just show the grid directly now
-            dgvMultiPrice.Visible = true;
-            dgvMultiPrice.Location = new Point(24, 380);
-            dgvMultiPrice.Width = 900;
-            dgvMultiPrice.Height = 220;
             
             btnAddPrice.Text = "Tambah Harga";
             btnEditPrice.Text = "Edit Harga";
             btnDeletePrice.Text = "Hapus Harga";
-
-            btnAddPrice.Location = new Point(24, 340);
-            btnAddPrice.Width = 140;
-            btnAddPrice.Height = 35;
-            
-            btnEditPrice.Location = new Point(175, 340);
-            btnEditPrice.Width = 140;
-            btnEditPrice.Height = 35;
-
-            btnDeletePrice.Location = new Point(325, 340);
-            btnDeletePrice.Width = 140;
-            btnDeletePrice.Height = 35;
         }
 
         private void SetDefaultSettings()
@@ -403,12 +316,8 @@ namespace POS_qu
 
             if (!string.IsNullOrEmpty(_item.valuation_method))
             {
-                var cmb = panel1.Controls["cmbValuation"] as ComboBox;
-                if (cmb != null)
-                {
-                    int idx = cmb.FindStringExact(_item.valuation_method);
-                    cmb.SelectedIndex = idx >= 0 ? idx : 0;
-                }
+                int idx = cmbValuation.FindStringExact(_item.valuation_method);
+                cmbValuation.SelectedIndex = idx >= 0 ? idx : 0;
             }
 
             UpdateStockOutput();
@@ -490,8 +399,7 @@ namespace POS_qu
             _item.discount_formula = txtDiscountFormula.Text;
             _item.ExpiredAt = dtpExpired.Value.Date;
             
-            var cmbVal = panel1.Controls["cmbValuation"] as ComboBox;
-            _item.valuation_method = cmbVal?.Text ?? "FIFO";
+            _item.valuation_method = cmbValuation?.Text ?? "FIFO";
 
             // Update multi-price
             _item.Prices = ((BindingList<ItemPrice>)dgvMultiPrice.DataSource).ToList();
@@ -763,13 +671,22 @@ namespace POS_qu
             return false;
         }
 
-        private void btnMultiPrice_Click(object sender, EventArgs e)
+        private void btnAddBrand_Click(object sender, EventArgs e)
         {
-            // Toggle visibility dgvMultiPrice
-            dgvMultiPrice.Visible = !dgvMultiPrice.Visible;
+            using (var f = new BrandForm())
+            {
+                f.ShowDialog();
+                LoadCombos();
+            }
+        }
 
-            // Optional: ubah teks tombol sesuai status
-            btnMultiPrice.Text = dgvMultiPrice.Visible ? "Sembunyikan Multi Harga" : "Tampilkan Multi Harga";
+        private void btnAddRack_Click(object sender, EventArgs e)
+        {
+            using (var f = new RackForm())
+            {
+                f.ShowDialog();
+                LoadCombos();
+            }
         }
 
         private void btnUnitVariant_Click(object sender, EventArgs e)
@@ -794,6 +711,24 @@ namespace POS_qu
         private void ItemDetailForm_Load(object sender, EventArgs e)
         {
             LoadUnitVariantsUI();
+            LoadPriceLevelsUI();
+        }
+
+        private void LoadPriceLevelsUI()
+        {
+            if (dgvPriceLevels == null) return;
+            var dt = _productService.GetPriceLevels();
+            dgvPriceLevels.DataSource = dt;
+            dgvPriceLevels.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvPriceLevels.ReadOnly = true;
+            dgvPriceLevels.AllowUserToAddRows = false;
+            dgvPriceLevels.RowHeadersVisible = false;
+            dgvPriceLevels.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+        }
+
+        private void btnRefreshPriceLevels_Click(object sender, EventArgs e)
+        {
+            LoadPriceLevelsUI();
         }
 
         private void LoadUnitVariantsUI()
