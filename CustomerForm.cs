@@ -190,7 +190,7 @@ namespace POS_qu
         {
             txtName.Clear();
             txtPhone.Clear();
-            textNote.Clear();
+            //textNote.Clear();
             selectedCustomerId = 0;
             btnAdd.Enabled = true;
             btnEdit.Enabled = false;
