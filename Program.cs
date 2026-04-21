@@ -71,9 +71,9 @@ namespace POS_qu
                     POS_qu.Helpers.DbConfig.LoadConfig();
                 }
                 POS_qu.Helpers.GlobalContext.RefreshConnectionInfo();
-                //Application.Run(new Login());
+                Application.Run(new Login());
                 //Application.Run(new UnitForm());
-                Application.Run(new ProductPage());
+                //Application.Run(new ProductPage());
             }
             catch (Exception ex)
             {

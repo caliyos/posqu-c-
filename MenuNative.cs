@@ -136,13 +136,25 @@ namespace POSqu_menu
             this.StartPosition = FormStartPosition.CenterScreen;
             this.WindowState = FormWindowState.Maximized;
             this.Load += MenuNative_Load;
-            InitializeMarquee();
+            //InitializeMarquee();
         }
+
+        
+        //    public MenuNative()
+        //{
+        //    MessageBox.Show("CTOR 1");
+        //    InitializeComponent();
+        //    MessageBox.Show("CTOR 2");
+
+        //    this.Load += MenuNative_Load;
+
+        //}
 
         private void MenuNative_Load(object sender, EventArgs e)
         {
             try
             {
+                MessageBox.Show("Load masuk");
                 var user = SessionUser.GetCurrentUser();
                 string pcId = Utility.GetPcId();
 

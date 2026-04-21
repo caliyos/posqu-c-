@@ -711,24 +711,14 @@ namespace POS_qu
         private void ItemDetailForm_Load(object sender, EventArgs e)
         {
             LoadUnitVariantsUI();
-            LoadPriceLevelsUI();
+            //LoadPriceLevelsUI();
         }
 
-        private void LoadPriceLevelsUI()
-        {
-            if (dgvPriceLevels == null) return;
-            var dt = _productService.GetPriceLevels();
-            dgvPriceLevels.DataSource = dt;
-            dgvPriceLevels.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgvPriceLevels.ReadOnly = true;
-            dgvPriceLevels.AllowUserToAddRows = false;
-            dgvPriceLevels.RowHeadersVisible = false;
-            dgvPriceLevels.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-        }
+   
 
         private void btnRefreshPriceLevels_Click(object sender, EventArgs e)
         {
-            LoadPriceLevelsUI();
+            //LoadPriceLevelsUI();
         }
 
         private void LoadUnitVariantsUI()

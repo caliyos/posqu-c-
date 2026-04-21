@@ -17,6 +17,7 @@
 
         private void InitializeComponent()
         {
+         
             panel1 = new Panel();
             label2 = new Label();
             panelWelcome = new Panel();
@@ -68,6 +69,8 @@
             dashboardPanel.SuspendLayout();
             menuStrip1.SuspendLayout();
             SuspendLayout();
+
+
             // 
             // panel1
             // 
@@ -190,6 +193,7 @@
             // 
             // menuStrip1
             // 
+      
             menuStrip1.ImageScalingSize = new Size(24, 24);
             menuStrip1.Items.AddRange(new ToolStripItem[] { masterToolStripMenuItem, productToolStripMenuItem, casherToolStripMenuItem, pembelianToolStripMenuItem, reportsToolStripMenuItem, settingsToolStripMenuItem, helpToolStripMenuItem, aboutToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
@@ -198,14 +202,12 @@
             menuStrip1.Size = new Size(1506, 28);
             menuStrip1.TabIndex = 2;
             menuStrip1.Text = "menuStrip1";
+            //MessageBox.Show("CTOR 1");
             // 
             // masterToolStripMenuItem
             // 
-            masterToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { pelangganCustomerToolStripMenuItem, supplierToolStripMenuItem, kategoriBarangToolStripMenuItem, unitSatuanToolStripMenuItem, gudangToolStripMenuItem, merkToolStripMenuItem, rakToolStripMenuItem });
-            masterToolStripMenuItem.Name = "masterToolStripMenuItem";
-            masterToolStripMenuItem.Size = new Size(104, 24);
-            masterToolStripMenuItem.Text = "Master Data";
-            masterToolStripMenuItem.Click += masterToolStripMenuItem_Click;
+ 
+       
             // 
             // pelangganCustomerToolStripMenuItem
             // 
@@ -275,6 +277,7 @@
             // 
             // casherToolStripMenuItem
             // 
+
             casherToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { daftarTransaksiToolStripMenuItem, casherToolStripMenuItem1, pendingTransaksiAdminToolStripMenuItem });
             casherToolStripMenuItem.Name = "casherToolStripMenuItem";
             casherToolStripMenuItem.Size = new Size(67, 24);
@@ -452,6 +455,13 @@
             // 
             // MenuNative
             // 
+
+            masterToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { pelangganCustomerToolStripMenuItem, supplierToolStripMenuItem, kategoriBarangToolStripMenuItem, unitSatuanToolStripMenuItem, gudangToolStripMenuItem, merkToolStripMenuItem, rakToolStripMenuItem });
+            masterToolStripMenuItem.Name = "masterToolStripMenuItem";
+            masterToolStripMenuItem.Size = new Size(104, 24);
+            masterToolStripMenuItem.Text = "Master Data";
+            masterToolStripMenuItem.Click += masterToolStripMenuItem_Click;
+
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.ControlLight;

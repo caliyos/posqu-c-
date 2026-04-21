@@ -361,12 +361,12 @@ namespace POS_qu
                 dataGridView1.Columns.Insert(0, chkColumn);
             }
 
-            dgvManager = new DataGridViewManager(dataGridView1, dt, 10);
+            dgvManager = new DataGridViewManager(dataGridView1, dt, 100);
             dgvManager.PagingInfoLabel = lblPagingInfo;
             dgvManager.LoadPage();
 
             cmbPageSize.Items.AddRange(new object[] { "10", "50", "100", "200", "500", "1000" });
-            cmbPageSize.SelectedIndex = 0;
+            cmbPageSize.SelectedIndex = 3;
 
 
             ApplyProfessionalGridStyle();

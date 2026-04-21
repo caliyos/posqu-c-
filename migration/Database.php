@@ -19,10 +19,10 @@ class Database {
                 }
             }
 
-            $dbPort = getenv('PGPORT') ?: 5433; // default PostgreSQL
-            $dbName = getenv('PGDATABASE') ?: 'A-posqu001';
+            $dbPort = getenv('PGPORT') ?: 5432; // default PostgreSQL
+            $dbName = getenv('PGDATABASE') ?: 'A-Posqu001';
             $dbUser = getenv('PGUSER') ?: 'postgres';
-            $dbPass = getenv('PGPASSWORD') ?: 'postgres11';
+            $dbPass = getenv('PGPASSWORD') ?: 'postgres14';
 
             // Koneksi PostgreSQL via PDO
             $dsn = "pgsql:host={$dbHost};port={$dbPort};dbname={$dbName};";
