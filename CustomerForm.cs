@@ -18,6 +18,7 @@ namespace POS_qu
             btnEdit.Click += btnEdit_Click;
             btnAdd.Click += btnAdd_Click;
             btnRefresh.Click += btnRefresh_Click;
+           
         }
 
         private DataGridViewManager dgvManager;
@@ -27,6 +28,7 @@ namespace POS_qu
         private void CustomerForm_Load(object sender, EventArgs e)
         {
             LoadCustomersData();
+            LoadPriceLevels();
         }
 
         private void LoadCustomersData()
@@ -68,10 +70,23 @@ namespace POS_qu
             if (e.RowIndex < 0) return;
 
             DataGridViewRow row = dgvUnits.Rows[e.RowIndex];
+
             selectedCustomerId = Convert.ToInt32(row.Cells["id"].Value);
-            txtName.Text = row.Cells["name"].Value.ToString();
-            txtPhone.Text = row.Cells["phone"].Value.ToString();
-            textNote.Text = row.Cells["note"].Value.ToString();
+
+            txtName.Text = row.Cells["name"].Value?.ToString();
+            txtPhone.Text = row.Cells["phone"].Value?.ToString();
+            textNote.Text = row.Cells["note"].Value?.ToString();
+
+            // OPTIONAL FIELD (kalau sudah ada di query)
+            txtEmail.Text = row.Cells["email"]?.Value?.ToString();
+            txtAddress.Text = row.Cells["address"]?.Value?.ToString();
+            txtMemberCode.Text = row.Cells["member_code"]?.Value?.ToString();
+
+            chkMember.Checked = row.Cells["is_member"] != null &&
+                                Convert.ToBoolean(row.Cells["is_member"].Value);
+
+            if (row.Cells["price_level_id"] != null)
+                cmbLevel.SelectedValue = row.Cells["price_level_id"].Value;
 
             btnAdd.Enabled = false;
             btnEdit.Enabled = true;
@@ -81,17 +96,39 @@ namespace POS_qu
         private DataTable ToDataTable(List<Customer> customers)
         {
             DataTable dt = new DataTable();
+
             dt.Columns.Add("id", typeof(int));
             dt.Columns.Add("name", typeof(string));
             dt.Columns.Add("phone", typeof(string));
+            dt.Columns.Add("email", typeof(string));
+            dt.Columns.Add("address", typeof(string));
+
+            dt.Columns.Add("is_member", typeof(bool));
+            dt.Columns.Add("member_code", typeof(string));
+
+            dt.Columns.Add("price_level_id", typeof(int));
             dt.Columns.Add("note", typeof(string));
+
             dt.Columns.Add("created_by", typeof(int));
             dt.Columns.Add("created_at", typeof(DateTime));
             dt.Columns.Add("deleted_at", typeof(DateTime));
 
             foreach (var c in customers)
             {
-                dt.Rows.Add(c.Id, c.Name, c.Phone, c.Note, c.CreatedBy, c.CreatedAt, c.DeletedAt);
+                dt.Rows.Add(
+                    c.Id,
+                    c.Name,
+                    c.Phone,
+                    c.Email,
+                    c.Address,
+                    c.IsMember,
+                    c.MemberCode,
+                    c.PriceLevelId,
+                    c.Note,
+                    c.CreatedBy,
+                    c.CreatedAt,
+                    c.DeletedAt
+                );
             }
 
             return dt;
@@ -109,7 +146,18 @@ namespace POS_qu
             {
                 Name = txtName.Text,
                 Phone = txtPhone.Text,
-                Note = textNote.Text
+                Email = txtEmail.Text,
+                Address = txtAddress.Text,
+                Note = textNote.Text,
+
+                IsMember = chkMember.Checked,
+                MemberCode = txtMemberCode.Text,
+
+                PriceLevelId = cmbLevel.SelectedValue != null
+                    ? Convert.ToInt32(cmbLevel.SelectedValue)
+                    : (int?)null,
+
+                CreatedBy = 1 // atau user login kamu
             };
 
             if (customerController.AddCustomer(customer))
@@ -123,7 +171,6 @@ namespace POS_qu
                 MessageBox.Show("Gagal menambahkan customer");
             }
         }
-
         private void btnEdit_Click(object sender, EventArgs e)
         {
             if (selectedCustomerId == 0)
@@ -137,7 +184,16 @@ namespace POS_qu
                 Id = selectedCustomerId,
                 Name = txtName.Text,
                 Phone = txtPhone.Text,
-                Note = textNote.Text
+                Email = txtEmail.Text,
+                Address = txtAddress.Text,
+                Note = textNote.Text,
+
+                IsMember = chkMember.Checked,
+                MemberCode = txtMemberCode.Text,
+
+                PriceLevelId = cmbLevel.SelectedValue != null
+                    ? Convert.ToInt32(cmbLevel.SelectedValue)
+                    : (int?)null
             };
 
             if (customerController.UpdateCustomer(customer))
@@ -195,6 +251,15 @@ namespace POS_qu
             btnAdd.Enabled = true;
             btnEdit.Enabled = false;
             btnDelete.Enabled = false;
+        }
+
+        private void LoadPriceLevels()
+        {
+            var levels = customerController.GetPriceLevels();
+
+            cmbLevel.DataSource = levels;
+            cmbLevel.DisplayMember = "Value";   // name
+            cmbLevel.ValueMember = "Key";       // id
         }
     }
 }

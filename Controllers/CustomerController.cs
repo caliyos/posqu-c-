@@ -2,17 +2,35 @@ using Npgsql;
 using POS_qu.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace POS_qu.Controllers
 {
     public class Customer
     {
         public int Id { get; set; }
+
+        // identity
         public string Name { get; set; } = "";
         public string? Phone { get; set; }
-        public string? Note { get; set; }
-        public int? CreatedBy { get; set; }
+        public string? Email { get; set; }
+        public string? Address { get; set; }
+
+        // membership system
+        public bool IsMember { get; set; } = true;
+        public string? MemberCode { get; set; }
+
+        // pricing level (FK price_levels)
         public int? PriceLevelId { get; set; }
+
+        // loyalty system
+        public int Points { get; set; } = 0;
+
+        // note
+        public string? Note { get; set; }
+
+        // system tracking
+        public int? CreatedBy { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
     }
@@ -54,47 +72,104 @@ namespace POS_qu.Controllers
         // =========================
         // ADD CUSTOMER
         // =========================
+
+        // =========================
+        // ADD CUSTOMER (FULL FIELD)
+        // =========================
         public bool AddCustomer(Customer customer)
         {
             string sql = @"
-                INSERT INTO customers (name, phone, note, created_by, price_level_id)
-                VALUES (@name, @phone, @note, @created_by, @price_level_id)";
+            INSERT INTO customers 
+            (name, phone, email, address, is_member, member_code, note, created_by, price_level_id)
+            VALUES 
+            (@name, @phone, @email, @address, @is_member, @member_code, @note, @created_by, @price_level_id)";
 
             using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
             conn.Open();
 
             using var cmd = new NpgsqlCommand(sql, conn);
+
             cmd.Parameters.AddWithValue("@name", customer.Name);
             cmd.Parameters.AddWithValue("@phone", (object)customer.Phone ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@email", (object)customer.Email ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@address", (object)customer.Address ?? DBNull.Value);
+
+            cmd.Parameters.AddWithValue("@is_member", customer.IsMember);
+
+            cmd.Parameters.AddWithValue("@member_code", (object)customer.MemberCode ?? DBNull.Value);
+
             cmd.Parameters.AddWithValue("@note", (object)customer.Note ?? DBNull.Value);
             cmd.Parameters.AddWithValue("@created_by", (object)customer.CreatedBy ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@price_level_id", (object)customer.PriceLevelId ?? DBNull.Value);
+
+            cmd.Parameters.AddWithValue("@price_level_id",
+                (object)customer.PriceLevelId ?? DBNull.Value);
 
             return cmd.ExecuteNonQuery() > 0;
         }
 
         // =========================
-        // UPDATE CUSTOMER
+        // GET PRICE LEVELS (NO MODEL DTO)
+        // =========================
+        public List<KeyValuePair<int, string>> GetPriceLevels()
+        {
+            var list = new List<KeyValuePair<int, string>>();
+
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            using var cmd = new NpgsqlCommand(
+                "SELECT id, name FROM price_levels ORDER BY id", conn);
+
+            using var reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                list.Add(new KeyValuePair<int, string>(
+                    reader.GetInt32(0),
+                    reader.GetString(1)
+                ));
+            }
+
+            return list;
+        }
+
+        // =========================
+        // UPDATE CUSTOMER (FULL FIELD)
         // =========================
         public bool UpdateCustomer(Customer customer)
         {
             string sql = @"
-                UPDATE customers
-                SET name = @name,
-                    phone = @phone,
-                    note = @note,
-                    price_level_id = @price_level_id
-                WHERE id = @id AND deleted_at IS NULL";
+            UPDATE customers
+            SET name = @name,
+                phone = @phone,
+                email = @email,
+                address = @address,
+                is_member = @is_member,
+                member_code = @member_code,
+                note = @note,
+                price_level_id = @price_level_id,
+                updated_at = NOW()
+            WHERE id = @id AND deleted_at IS NULL";
 
             using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
             conn.Open();
 
             using var cmd = new NpgsqlCommand(sql, conn);
+
             cmd.Parameters.AddWithValue("@id", customer.Id);
             cmd.Parameters.AddWithValue("@name", customer.Name);
             cmd.Parameters.AddWithValue("@phone", (object)customer.Phone ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@email", (object)customer.Email ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@address", (object)customer.Address ?? DBNull.Value);
+
+            cmd.Parameters.AddWithValue("@is_member", customer.IsMember);
+
+            cmd.Parameters.AddWithValue("@member_code", (object)customer.MemberCode ?? DBNull.Value);
+
             cmd.Parameters.AddWithValue("@note", (object)customer.Note ?? DBNull.Value);
-            cmd.Parameters.AddWithValue("@price_level_id", (object)customer.PriceLevelId ?? DBNull.Value);
+
+            cmd.Parameters.AddWithValue("@price_level_id",
+                (object)customer.PriceLevelId ?? DBNull.Value);
 
             return cmd.ExecuteNonQuery() > 0;
         }
