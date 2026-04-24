@@ -28,8 +28,6 @@ namespace POS_qu.Services
 
             invoice.Items.RemoveAll(i => string.Equals(i.Note, "Bonus promo", StringComparison.OrdinalIgnoreCase));
 
-            EnsurePromotionTables();
-
             var promos = LoadActivePromotions(DateTime.Today);
             if (promos.Count == 0) return new PromotionApplyResult();
 
@@ -230,28 +228,6 @@ ORDER BY priority DESC, id DESC
                 });
             }
             return list;
-        }
-
-        private void EnsurePromotionTables()
-        {
-            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
-            con.Open();
-            using var cmd = new NpgsqlCommand(@"
-CREATE TABLE IF NOT EXISTS promotions (
-    id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(150) NOT NULL,
-    promo_type VARCHAR(20) NOT NULL,
-    status VARCHAR(20) NOT NULL DEFAULT 'aktif',
-    start_date DATE NULL,
-    end_date DATE NULL,
-    priority INT NOT NULL DEFAULT 0,
-    config_json TEXT NOT NULL DEFAULT '{}',
-    created_by INT NULL REFERENCES users(id) ON DELETE SET NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-", con);
-            cmd.ExecuteNonQuery();
         }
     }
 }

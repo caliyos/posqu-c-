@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
 using POS_qu;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -216,11 +216,100 @@ namespace POSqu_menu
                 {
                     saldoAwalToolStripMenuItem.Visible = ShouldShowSaldoAwalMenu();
                 }
+
+                WireLocalFirstMenus();
             }
             catch (Exception ex)
             {
                 label2.Text = "❌ Error memuat sesi: " + ex.Message;
             }
+        }
+
+        private void WireLocalFirstMenus()
+        {
+            var miLicense = FindMenuItemByName(menuStrip1.Items, "licensesToolStripMenuItem");
+            if (miLicense != null)
+            {
+                miLicense.Click -= licensesToolStripMenuItem_Click_LocalFirst;
+                miLicense.Click += licensesToolStripMenuItem_Click_LocalFirst;
+            }
+
+            var miReports = FindMenuItemByName(menuStrip1.Items, "reportsToolStripMenuItem");
+            if (miReports != null)
+            {
+                var miPro = FindMenuItemByName(miReports.DropDownItems, "proFeatureLockedToolStripMenuItem");
+                if (miPro == null)
+                {
+                    miPro = new ToolStripMenuItem
+                    {
+                        Name = "proFeatureLockedToolStripMenuItem",
+                        Text = "Pro Feature (Locked)"
+                    };
+                    miReports.DropDownItems.Add(new ToolStripSeparator());
+                    miReports.DropDownItems.Add(miPro);
+                }
+                miPro.Click -= proFeatureLockedToolStripMenuItem_Click_LocalFirst;
+                miPro.Click += proFeatureLockedToolStripMenuItem_Click_LocalFirst;
+            }
+
+            var miSettings = FindMenuItemByName(menuStrip1.Items, "settingsToolStripMenuItem");
+            if (miSettings != null)
+            {
+                var miSync = FindMenuItemByName(miSettings.DropDownItems, "syncNowToolStripMenuItem");
+                if (miSync == null)
+                {
+                    miSync = new ToolStripMenuItem
+                    {
+                        Name = "syncNowToolStripMenuItem",
+                        Text = "Sync Now"
+                    };
+                    miSettings.DropDownItems.Add(new ToolStripSeparator());
+                    miSettings.DropDownItems.Add(miSync);
+                }
+                miSync.Click -= syncNowToolStripMenuItem_Click_LocalFirst;
+                miSync.Click += syncNowToolStripMenuItem_Click_LocalFirst;
+            }
+        }
+
+        private void licensesToolStripMenuItem_Click_LocalFirst(object sender, EventArgs e)
+        {
+            using var f = new POS_qu.LicenseActivationForm();
+            f.ShowDialog(this);
+        }
+
+        private async void proFeatureLockedToolStripMenuItem_Click_LocalFirst(object sender, EventArgs e)
+        {
+            if (!await EnsureLicenseValidAsync())
+                return;
+
+            MessageBox.Show("Pro Feature terbuka (dummy).", "Pro", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private async void syncNowToolStripMenuItem_Click_LocalFirst(object sender, EventArgs e)
+        {
+            try
+            {
+                await POS_qu.Helpers.SyncApiClient.SyncDummyItemsAsync("http://localhost:9555");
+                MessageBox.Show("Sync OK", "Sync", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Sync Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async Task<bool> EnsureLicenseValidAsync()
+        {
+            var lic = await POS_qu.Helpers.LicenseManager.LoadAsync();
+            if (POS_qu.Helpers.LicenseManager.IsValidNow(lic))
+                return true;
+
+            MessageBox.Show("Menu ini terkunci. Aktivasi license dulu.", "License", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            using var f = new POS_qu.LicenseActivationForm();
+            f.ShowDialog(this);
+
+            lic = await POS_qu.Helpers.LicenseManager.LoadAsync();
+            return POS_qu.Helpers.LicenseManager.IsValidNow(lic);
         }
 
         private bool ShouldShowSaldoAwalMenu()
@@ -292,6 +381,12 @@ namespace POSqu_menu
         private void buatProgramToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using var f = new POS_qu.PromotionProgramForm();
+            f.ShowDialog(this);
+        }
+
+        private void historyHargaBeliToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var f = new POS_qu.BuyPriceHistoryForm();
             f.ShowDialog(this);
         }
 
@@ -427,6 +522,12 @@ namespace POSqu_menu
             f.Show();
         }
 
+        private void returPembelianToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var f = new PurchaseReturnListForm();
+            f.ShowDialog(this);
+        }
+
         private void strukSettingToolStripMenuItem_Click(object sender, EventArgs e)
         {
             StrukSetting f = new StrukSetting();
@@ -443,6 +544,24 @@ namespace POSqu_menu
 
             f.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative
             f.Show();
+        }
+
+        private void numberingSettingToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var f = new NumberingSettingForm();
+            f.ShowDialog(this);
+        }
+
+        private void hppMethodSettingToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var f = new HppMethodSettingForm();
+            f.ShowDialog(this);
+        }
+
+        private void networkingToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var f = new PrinterTestForm();
+            f.ShowDialog(this);
         }
 
         private void terminalToolStripMenuItem_Click(object sender, EventArgs e)
@@ -463,6 +582,22 @@ namespace POSqu_menu
             f.Show();
         }
 
+        private void manajemenRolesPermissionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Roles f = new Roles();
+            this.Hide();
+            f.FormClosed += (s, args) => this.Show();
+            f.Show();
+        }
+
+        private void usersToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Roles f = new Roles();
+            this.Hide();
+            f.FormClosed += (s, args) => this.Show();
+            f.Show();
+        }
+
         private void stockToolStripMenuItem_Click(object sender, EventArgs e)
         {
             StockReports f = new StockReports();
@@ -470,6 +605,12 @@ namespace POSqu_menu
 
             f.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative
             f.Show();
+        }
+
+        private void jurnalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var f = new JournalReportForm();
+            f.ShowDialog(this);
         }
 
         private void pengeluaranToolStripMenuItem_Click(object sender, EventArgs e)
@@ -524,6 +665,14 @@ namespace POSqu_menu
         private void akunToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using (AccountsForm f = new AccountsForm())
+            {
+                f.ShowDialog(this);
+            }
+        }
+
+        private void jenisPpnToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (TaxTypeForm f = new TaxTypeForm())
             {
                 f.ShowDialog(this);
             }

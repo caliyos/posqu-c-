@@ -1,6 +1,8 @@
 using Npgsql;
 using POS_qu.Controllers;
 using POS_qu.Helpers;
+using POS_qu.Models;
+using POS_qu.Repositories;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -34,6 +36,8 @@ namespace POS_qu
 
         private int _poId = 0;
         private ReceivePurchaseMode _mode = ReceivePurchaseMode.FromApprovedPo;
+        private bool _isPkp;
+        private decimal _defaultPpnRate;
 
         public ReceivePOForm()
         {
@@ -58,6 +62,15 @@ namespace POS_qu
             this.WindowState = FormWindowState.Maximized;
             dgvOrderDetails.CellEndEdit += dgvOrderDetails_CellEndEdit;
 
+            cmbTaxMode.SelectedIndexChanged += (s, e) =>
+            {
+                if (_isPkp)
+                    numTaxRate.Enabled = (cmbTaxMode.SelectedValue?.ToString() ?? "NON") != "NON";
+                UpdateTotalAmount();
+            };
+            numTaxRate.ValueChanged += (s, e) => UpdateTotalAmount();
+            chkManualPurchaseNo.CheckedChanged += (s, e) => ApplyPurchaseNumberUi();
+
             ApplyMode();
         }
 
@@ -68,11 +81,11 @@ namespace POS_qu
 
             // Ambil PO yang APPROVED untuk diterima
             string query = @"
-                SELECT po.id, s.name as supplier_name, po.order_date, po.total_amount
+                SELECT po.id, COALESCE(po.po_number, po.id::text) AS po_number, s.name as supplier_name, po.order_date, po.total_amount
                 FROM purchase_orders po
                 LEFT JOIN suppliers s ON po.supplier_id = s.id
                 WHERE po.status = 'APPROVED'
-                  AND (@search = '' OR s.name ILIKE @search OR po.id::text ILIKE @search)
+                  AND (@search = '' OR s.name ILIKE @search OR po.note ILIKE @search OR COALESCE(po.po_number, po.id::text) ILIKE @search)
                 ORDER BY po.id DESC";
 
             using var cmd = new NpgsqlCommand(query, conn);
@@ -85,7 +98,8 @@ namespace POS_qu
             dgvItems.DataSource = dt;
             
             // Atur header
-            if(dgvItems.Columns.Contains("id")) dgvItems.Columns["id"].HeaderText = "ID PO";
+            if(dgvItems.Columns.Contains("id")) dgvItems.Columns["id"].Visible = false;
+            if(dgvItems.Columns.Contains("po_number")) dgvItems.Columns["po_number"].HeaderText = "No PO";
             if(dgvItems.Columns.Contains("supplier_name")) dgvItems.Columns["supplier_name"].HeaderText = "Supplier";
             if(dgvItems.Columns.Contains("order_date")) dgvItems.Columns["order_date"].HeaderText = "Tanggal";
             if(dgvItems.Columns.Contains("total_amount")) 
@@ -114,6 +128,11 @@ namespace POS_qu
             dgvOrderDetails.Rows.Clear();
             txtNote.Text = "";
             dtpOrderDate.Value = DateTime.Today;
+            txtPurchaseNo.Text = "";
+
+            LoadConfig();
+            ApplyTaxUi();
+            ApplyPurchaseNumberUi();
 
             if (_mode == ReceivePurchaseMode.FromApprovedPo)
             {
@@ -127,6 +146,7 @@ namespace POS_qu
 
                 cmbSupplier.Enabled = false;
                 dtpOrderDate.Enabled = false;
+                cmbWarehouse.Enabled = false;
 
                 LoadApprovedPOs();
             }
@@ -142,8 +162,53 @@ namespace POS_qu
 
                 cmbSupplier.Enabled = true;
                 dtpOrderDate.Enabled = true;
+                cmbWarehouse.Enabled = true;
 
                 LoadPurchasableItems();
+            }
+        }
+
+        private void LoadConfig()
+        {
+            var sc = new SettingController();
+            var cfg = sc.GetPurchaseAndTaxConfig();
+            _isPkp = cfg.IsPkp;
+            _defaultPpnRate = cfg.PpnRate;
+        }
+
+        private void ApplyTaxUi()
+        {
+            if (!_isPkp)
+            {
+                LoadTaxModes();
+                cmbTaxMode.SelectedValue = "NON";
+                cmbTaxMode.Enabled = false;
+                numTaxRate.Value = _defaultPpnRate;
+                numTaxRate.Enabled = false;
+                return;
+            }
+
+            LoadTaxModes();
+            if (cmbTaxMode.SelectedValue == null) cmbTaxMode.SelectedValue = "NON";
+            cmbTaxMode.Enabled = true;
+            numTaxRate.Value = _defaultPpnRate;
+            var code = cmbTaxMode.SelectedValue?.ToString() ?? "NON";
+            numTaxRate.Enabled = code != "NON";
+        }
+
+        private void ApplyPurchaseNumberUi()
+        {
+            if (chkManualPurchaseNo.Checked)
+            {
+                txtPurchaseNo.Enabled = true;
+                if (string.IsNullOrWhiteSpace(txtPurchaseNo.Text))
+                    txtPurchaseNo.Text = "";
+            }
+            else
+            {
+                txtPurchaseNo.Enabled = false;
+                var ns = new POS_qu.Services.DocumentNumberingService();
+                txtPurchaseNo.Text = ns.PeekNext("PURCHASE");
             }
         }
 
@@ -161,7 +226,12 @@ namespace POS_qu
             conn.Open();
 
             // Load Header
-            string qHeader = "SELECT supplier_id, order_date, note FROM purchase_orders WHERE id = @id";
+            string qHeader = @"
+SELECT supplier_id, order_date, note,
+       COALESCE(warehouse_id, 0) AS warehouse_id,
+       COALESCE(purchase_number, '') AS purchase_number
+FROM purchase_orders
+WHERE id = @id";
             using var cmdH = new NpgsqlCommand(qHeader, conn);
             cmdH.Parameters.AddWithValue("@id", _poId);
             using var reader = cmdH.ExecuteReader();
@@ -174,6 +244,19 @@ namespace POS_qu
                     dtpOrderDate.Value = Convert.ToDateTime(reader["order_date"]);
                     
                 txtNote.Text = reader["note"].ToString();
+
+                if (reader["warehouse_id"] != DBNull.Value)
+                {
+                    var wid = Convert.ToInt32(reader["warehouse_id"]);
+                    if (wid > 0) cmbWarehouse.SelectedValue = wid;
+                }
+
+                var pn = reader["purchase_number"]?.ToString() ?? "";
+                if (!string.IsNullOrWhiteSpace(pn))
+                {
+                    txtPurchaseNo.Text = pn;
+                    chkManualPurchaseNo.Checked = true;
+                }
             }
             reader.Close();
 
@@ -377,9 +460,54 @@ ORDER BY items.name ASC";
 
         private void UpdateTotalAmount()
         {
-            decimal totalAmount = dgvOrderDetails.Rows.Cast<DataGridViewRow>()
+            decimal subtotal = dgvOrderDetails.Rows.Cast<DataGridViewRow>()
                 .Sum(r => Convert.ToDecimal(r.Cells["subtotal"].Value ?? 0));
-            lblTotalAmount.Text = $"Total: Rp {totalAmount:N0}";
+
+            var totals = ComputePurchaseTotals(subtotal);
+            lblSubtotal.Text = $"Subtotal: Rp {totals.Subtotal:N0}";
+            lblTaxAmount.Text = $"PPN: Rp {totals.TaxAmount:N0}";
+            lblTotalAmount.Text = $"Total: Rp {totals.GrandTotal:N0}";
+        }
+
+        private (decimal Subtotal, decimal TaxRate, string TaxMode, decimal TaxAmount, decimal GrandTotal) ComputePurchaseTotals(decimal subtotal)
+        {
+            string mode = (_isPkp ? (cmbTaxMode.SelectedValue?.ToString() ?? "NON") : "NON");
+            decimal rate = _isPkp ? Convert.ToDecimal(numTaxRate.Value) : 0m;
+            decimal r = rate / 100m;
+
+            if (mode == "INCLUDE")
+            {
+                if (r <= 0m) return (subtotal, rate, mode, 0m, subtotal);
+                decimal baseAmount = subtotal / (1m + r);
+                decimal tax = subtotal - baseAmount;
+                return (subtotal, rate, mode, tax, subtotal);
+            }
+
+            if (mode == "EXCLUDE")
+            {
+                if (r <= 0m) return (subtotal, rate, mode, 0m, subtotal);
+                decimal tax = subtotal * r;
+                return (subtotal, rate, mode, tax, subtotal + tax);
+            }
+
+            return (subtotal, rate, "NON", 0m, subtotal);
+        }
+
+        private void LoadTaxModes()
+        {
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+            using var da = new NpgsqlDataAdapter(@"
+SELECT code, name
+FROM tax_types
+WHERE is_active = TRUE
+ORDER BY id ASC
+", con);
+            var dt = new DataTable();
+            da.Fill(dt);
+            cmbTaxMode.DisplayMember = "name";
+            cmbTaxMode.ValueMember = "code";
+            cmbTaxMode.DataSource = dt;
         }
 
 
@@ -442,8 +570,10 @@ ORDER BY items.name ASC";
                 using var tran = conn.BeginTransaction();
 
                 // 1. Update status PO jadi RECEIVED dan update catatan/total kalau ada perubahan
-                decimal totalAmount = dgvOrderDetails.Rows.Cast<DataGridViewRow>()
+                decimal subtotal = dgvOrderDetails.Rows.Cast<DataGridViewRow>()
                     .Sum(r => Convert.ToDecimal(r.Cells["subtotal"].Value ?? 0));
+                var totals = ComputePurchaseTotals(subtotal);
+                decimal totalAmount = totals.GrandTotal;
 
                 int warehouseId = 1; // default fallback
                 if (cmbWarehouse.SelectedValue != null && int.TryParse(cmbWarehouse.SelectedValue.ToString(), out int wid))
@@ -451,33 +581,41 @@ ORDER BY items.name ASC";
                     warehouseId = wid;
                 }
 
-                var user = POS_qu.Models.SessionUser.GetCurrentUser();
+                var user = SessionUser.GetCurrentUser();
                 int createdBy = user?.UserId ?? 0;
                 if (createdBy <= 0)
                     throw new InvalidOperationException("Session user tidak ditemukan. Silakan login ulang.");
 
+                string purchaseNo = (txtPurchaseNo.Text ?? "").Trim();
+                if (chkManualPurchaseNo.Checked)
+                {
+                    if (string.IsNullOrWhiteSpace(purchaseNo))
+                        throw new InvalidOperationException("Nomor pembelian manual wajib diisi.");
+                }
+                else
+                {
+                    var ns = new POS_qu.Services.DocumentNumberingService();
+                    purchaseNo = ns.Generate("PURCHASE", dtpOrderDate.Value.Date, conn, tran);
+                }
+
+                long? supplierId = null;
                 if (_mode == ReceivePurchaseMode.DirectPurchase)
                 {
-                    long? supplierId = null;
                     if (cmbSupplier.SelectedValue != null && long.TryParse(cmbSupplier.SelectedValue.ToString(), out var sid) && sid > 0)
                         supplierId = sid;
-
-                    bool hasWhCol = HasColumn(conn, tran, "purchase_orders", "warehouse_id");
-                    string insertPoSql = hasWhCol
-                        ? @"INSERT INTO purchase_orders (supplier_id, order_date, status, total_amount, note, created_by, warehouse_id, created_at, updated_at)
-                           VALUES (@supplier_id, @order_date, 'RECEIVED', @total_amount, @note, @created_by, @warehouse_id, NOW(), NOW())
-                           RETURNING id"
-                        : @"INSERT INTO purchase_orders (supplier_id, order_date, status, total_amount, note, created_by, created_at, updated_at)
-                           VALUES (@supplier_id, @order_date, 'RECEIVED', @total_amount, @note, @created_by, NOW(), NOW())
-                           RETURNING id";
 
                     using var cmdIns = new NpgsqlCommand(insertPoSql, conn, tran);
                     cmdIns.Parameters.AddWithValue("@supplier_id", (object?)supplierId ?? DBNull.Value);
                     cmdIns.Parameters.AddWithValue("@order_date", dtpOrderDate.Value.Date);
                     cmdIns.Parameters.AddWithValue("@total_amount", totalAmount);
+                    cmdIns.Parameters.AddWithValue("@total_before_tax", subtotal);
+                    cmdIns.Parameters.AddWithValue("@tax_mode", totals.TaxMode);
+                    cmdIns.Parameters.AddWithValue("@tax_rate", totals.TaxRate);
+                    cmdIns.Parameters.AddWithValue("@tax_amount", totals.TaxAmount);
                     cmdIns.Parameters.AddWithValue("@note", txtNote.Text ?? "");
                     cmdIns.Parameters.AddWithValue("@created_by", createdBy);
-                    if (hasWhCol) cmdIns.Parameters.AddWithValue("@warehouse_id", warehouseId);
+                    cmdIns.Parameters.AddWithValue("@warehouse_id", warehouseId);
+                    cmdIns.Parameters.AddWithValue("@purchase_number", purchaseNo);
 
                     var newIdObj = cmdIns.ExecuteScalar();
                     _poId = newIdObj != null ? Convert.ToInt32(newIdObj) : 0;
@@ -495,16 +633,26 @@ ORDER BY items.name ASC";
                         UPDATE purchase_orders 
                         SET status = 'RECEIVED', 
                             total_amount = @total, 
+                            total_before_tax = @total_before_tax,
+                            tax_mode = @tax_mode,
+                            tax_rate = @tax_rate,
+                            tax_amount = @tax_amount,
                             note = @note,
                             warehouse_id = @warehouse_id,
+                            purchase_number = @purchase_number,
                             updated_at = NOW()
                         WHERE id = @id";
 
                     using var cmdPO = new NpgsqlCommand(updatePO, conn, tran);
                     cmdPO.Parameters.AddWithValue("@id", _poId);
                     cmdPO.Parameters.AddWithValue("@total", totalAmount);
+                    cmdPO.Parameters.AddWithValue("@total_before_tax", subtotal);
+                    cmdPO.Parameters.AddWithValue("@tax_mode", totals.TaxMode);
+                    cmdPO.Parameters.AddWithValue("@tax_rate", totals.TaxRate);
+                    cmdPO.Parameters.AddWithValue("@tax_amount", totals.TaxAmount);
                     cmdPO.Parameters.AddWithValue("@note", txtNote.Text ?? "");
                     cmdPO.Parameters.AddWithValue("@warehouse_id", warehouseId);
+                    cmdPO.Parameters.AddWithValue("@purchase_number", purchaseNo);
                     cmdPO.ExecuteNonQuery();
 
                     // 2. Hapus item lama, ganti dengan yang baru (karena bisa jadi qty/harga diubah saat terima)
@@ -514,16 +662,34 @@ ORDER BY items.name ASC";
                     cmdDel.ExecuteNonQuery();
                 }
 
+                using (var cmd = new NpgsqlCommand("SELECT supplier_id FROM purchase_orders WHERE id=@id", conn, tran))
+                {
+                    cmd.Parameters.AddWithValue("@id", _poId);
+                    var obj = cmd.ExecuteScalar();
+                    if (obj != null && obj != DBNull.Value) supplierId = Convert.ToInt64(obj);
+                }
+
+                var buyPriceChanges = new List<(long ItemId, string Name, decimal OldPrice, decimal NewPrice)>();
+
                 // Insert details dan Update Stock
                 foreach (DataGridViewRow row in dgvOrderDetails.Rows)
                 {
                     if (row.IsNewRow) continue;
 
                     long itemId = Convert.ToInt64(row.Cells["item_id"].Value);
+                    string itemName = row.Cells["name"].Value?.ToString() ?? "";
                     decimal qty = Convert.ToDecimal(row.Cells["quantity"].Value);
                     decimal unitPrice = Convert.ToDecimal(row.Cells["unit_price"].Value);
                     string unit = row.Cells["unit"].Value?.ToString() ?? "";
                     string note = row.Cells["note"].Value?.ToString() ?? "";
+
+                    decimal oldBuy = GetCurrentBuyPrice(itemId, conn, tran);
+                    if (oldBuy != unitPrice)
+                    {
+                        InsertBuyPriceHistory(itemId, oldBuy, unitPrice, "purchase", _poId, createdBy, conn, tran);
+                        UpdateItemBuyPrice(itemId, unitPrice, conn, tran);
+                        buyPriceChanges.Add((itemId, itemName, oldBuy, unitPrice));
+                    }
 
                     // Re-insert item
                     string insertItem = @"
@@ -570,20 +736,62 @@ ORDER BY items.name ASC";
                     }
 
                     // B. Insert into Stock Layers (Untuk FIFO/AVG)
-                    string insertLayerSql = "INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price) VALUES (@item_id, @warehouse_id, @qty, @buy_price)";
+                    var expiredAt = GetItemExpiredAt(itemId, conn, tran);
+                    string insertLayerSql = "INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, expired_at, created_at) VALUES (@item_id, @warehouse_id, @qty, @buy_price, @exp, NOW())";
                     using var layerCmd = new NpgsqlCommand(insertLayerSql, conn, tran);
                     layerCmd.Parameters.AddWithValue("@item_id", itemId);
                     layerCmd.Parameters.AddWithValue("@warehouse_id", warehouseId);
                     layerCmd.Parameters.AddWithValue("@qty", qty);
                     layerCmd.Parameters.AddWithValue("@buy_price", unitPrice);
+                    layerCmd.Parameters.AddWithValue("@exp", (object?)expiredAt ?? DBNull.Value);
                     layerCmd.ExecuteNonQuery();
+
+                    decimal newStock = 0m;
+                    using (var stockCmd = new NpgsqlCommand("SELECT COALESCE(qty,0) FROM stocks WHERE item_id=@item_id AND warehouse_id=@warehouse_id", conn, tran))
+                    {
+                        stockCmd.Parameters.AddWithValue("@item_id", itemId);
+                        stockCmd.Parameters.AddWithValue("@warehouse_id", warehouseId);
+                        var obj = stockCmd.ExecuteScalar();
+                        if (obj != null && obj != DBNull.Value) newStock = Convert.ToDecimal(obj);
+                    }
+
+                    new TransactionRepo().InsertStockLog(conn, tran, new StockLog
+                    {
+                        ProductId = (int)itemId,
+                        TipeTransaksi = "purchase",
+                        QtyMasuk = qty,
+                        QtyKeluar = 0,
+                        SisaStock = newStock,
+                        Keterangan = $"Purchase #{purchaseNo}",
+                        UserId = createdBy,
+                        CreatedAt = DateTime.Now,
+                        LoginId = SessionUser.GetCurrentUser().LoginId,
+                        WarehouseId = warehouseId,
+                        RefType = "PURCHASE",
+                        RefId = _poId,
+                        SupplierId = supplierId.HasValue ? Convert.ToInt32(supplierId.Value) : (int?)null,
+                        UnitCost = unitPrice,
+                        IsAllocation = false
+                    });
                 }
 
                 var journal = new POS_qu.Services.JournalService();
                 journal.CreateJournalFromPurchase(_poId, conn, tran);
 
                 tran.Commit();
-                MessageBox.Show("Berhasil simpan dan stok telah diperbarui!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                if (buyPriceChanges.Count > 0)
+                {
+                    var top = buyPriceChanges.Take(10)
+                        .Select(x => $"- {x.Name} ({x.ItemId}): {x.OldPrice:N0} -> {x.NewPrice:N0}")
+                        .ToList();
+                    var msg = "Berhasil simpan pembelian & stok diperbarui.\n\nHarga beli berubah:\n" + string.Join("\n", top);
+                    if (buyPriceChanges.Count > 10) msg += $"\n... dan {buyPriceChanges.Count - 10} item lain.";
+                    MessageBox.Show(msg, "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Berhasil simpan dan stok telah diperbarui!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
                 this.DialogResult = DialogResult.OK;
                 this.Close(); // Tutup form setelah selesai
             }
@@ -591,6 +799,51 @@ ORDER BY items.name ASC";
             {
                 MessageBox.Show("Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private string insertPoSql = @"
+INSERT INTO purchase_orders (supplier_id, order_date, status, total_amount, total_before_tax, tax_mode, tax_rate, tax_amount, note, created_by, warehouse_id, purchase_number, created_at, updated_at)
+VALUES (@supplier_id, @order_date, 'RECEIVED', @total_amount, @total_before_tax, @tax_mode, @tax_rate, @tax_amount, @note, @created_by, @warehouse_id, @purchase_number, NOW(), NOW())
+RETURNING id";
+
+        private decimal GetCurrentBuyPrice(long itemId, NpgsqlConnection conn, NpgsqlTransaction tran)
+        {
+            using var cmd = new NpgsqlCommand("SELECT COALESCE(buy_price,0) FROM items WHERE id = @id", conn, tran);
+            cmd.Parameters.AddWithValue("@id", itemId);
+            var obj = cmd.ExecuteScalar();
+            return obj == null || obj == DBNull.Value ? 0m : Convert.ToDecimal(obj);
+        }
+
+        private DateTime? GetItemExpiredAt(long itemId, NpgsqlConnection conn, NpgsqlTransaction tran)
+        {
+            using var cmd = new NpgsqlCommand("SELECT expired_at FROM items WHERE id = @id", conn, tran);
+            cmd.Parameters.AddWithValue("@id", itemId);
+            var obj = cmd.ExecuteScalar();
+            if (obj == null || obj == DBNull.Value) return null;
+            return Convert.ToDateTime(obj).Date;
+        }
+
+        private void UpdateItemBuyPrice(long itemId, decimal newPrice, NpgsqlConnection conn, NpgsqlTransaction tran)
+        {
+            using var cmd = new NpgsqlCommand("UPDATE items SET buy_price = @p, updated_at = NOW() WHERE id = @id", conn, tran);
+            cmd.Parameters.AddWithValue("@id", itemId);
+            cmd.Parameters.AddWithValue("@p", newPrice);
+            cmd.ExecuteNonQuery();
+        }
+
+        private void InsertBuyPriceHistory(long itemId, decimal oldPrice, decimal newPrice, string sourceType, int sourceId, int changedBy, NpgsqlConnection conn, NpgsqlTransaction tran)
+        {
+            using var cmd = new NpgsqlCommand(@"
+INSERT INTO item_buy_price_histories (item_id, old_price, new_price, source_type, source_id, changed_by, changed_at)
+VALUES (@iid, @old, @new, @t, @sid, @by, NOW())
+", conn, tran);
+            cmd.Parameters.AddWithValue("@iid", itemId);
+            cmd.Parameters.AddWithValue("@old", oldPrice);
+            cmd.Parameters.AddWithValue("@new", newPrice);
+            cmd.Parameters.AddWithValue("@t", (object?)sourceType ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@sid", sourceId);
+            cmd.Parameters.AddWithValue("@by", changedBy > 0 ? changedBy : (object)DBNull.Value);
+            cmd.ExecuteNonQuery();
         }
 
         private bool HasColumn(NpgsqlConnection con, NpgsqlTransaction tran, string table, string column)

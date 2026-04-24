@@ -80,7 +80,6 @@ COALESCE((SELECT SUM(s.qty)
             using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 con.Open();
-                EnsureItemMaterialsTable(con, null);
                 string sql = @"
                     SELECT items.*, 
                            COALESCE((SELECT SUM(qty) FROM stocks WHERE item_id = items.id), 0) AS stock_qty,
@@ -143,7 +142,6 @@ COALESCE((SELECT SUM(s.qty)
                 {
                     try
                     {
-                        EnsureItemMaterialsTable(con, tran);
                         string sql = @"INSERT INTO items (
                                             barcode, name, category_id, unit, supplier_id, brand_id, rack_id,
                                             buy_price, sell_price, valuation_method, is_active, note,
@@ -199,13 +197,14 @@ COALESCE((SELECT SUM(s.qty)
                                 sCmd.ExecuteNonQuery();
                             }
 
-                            string slSql = "INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price) VALUES (@item_id, @w_id, @qty, @buy_price)";
+                            string slSql = "INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, expired_at) VALUES (@item_id, @w_id, @qty, @buy_price, @exp)";
                             using (var slCmd = new NpgsqlCommand(slSql, con, tran))
                             {
                                 slCmd.Parameters.AddWithValue("@item_id", newItemId);
                                 slCmd.Parameters.AddWithValue("@w_id", warehouseId);
                                 slCmd.Parameters.AddWithValue("@qty", item.stock);
                                 slCmd.Parameters.AddWithValue("@buy_price", item.buy_price);
+                                slCmd.Parameters.AddWithValue("@exp", item.ExpiredAt.HasValue ? (object)item.ExpiredAt.Value.Date : DBNull.Value);
                                 slCmd.ExecuteNonQuery();
                             }
                         }
@@ -271,7 +270,6 @@ COALESCE((SELECT SUM(s.qty)
                 {
                     try
                     {
-                        EnsureItemMaterialsTable(con, tran);
                         string sql = @"UPDATE items SET 
                                        barcode = @barcode, name = @name, category_id = @category_id, 
                                        unit = @unit_id, supplier_id = @supplier_id, brand_id = @brand_id, rack_id = @rack_id,
@@ -378,24 +376,6 @@ COALESCE((SELECT SUM(s.qty)
             }
         }
 
-        private void EnsureItemMaterialsTable(NpgsqlConnection con, NpgsqlTransaction tran)
-        {
-            string sql = @"
-                CREATE TABLE IF NOT EXISTS item_materials (
-                    id SERIAL PRIMARY KEY,
-                    parent_item_id INT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
-                    component_item_id INT NOT NULL REFERENCES items(id),
-                    qty NUMERIC(15,4) NOT NULL DEFAULT 0,
-                    unit_id INT NOT NULL REFERENCES units(id),
-                    unit_cost NUMERIC(15,2) NOT NULL DEFAULT 0,
-                    created_at TIMESTAMP DEFAULT NOW()
-                );";
-            using (var cmd = new NpgsqlCommand(sql, con, tran))
-            {
-                cmd.ExecuteNonQuery();
-            }
-        }
-
         private List<ItemMaterial> GetItemMaterials(int parentItemId, NpgsqlConnection con)
         {
             var list = new List<ItemMaterial>();
@@ -433,7 +413,6 @@ COALESCE((SELECT SUM(s.qty)
 
         private void SaveItemMaterials(int parentItemId, List<ItemMaterial> materials, NpgsqlConnection con, NpgsqlTransaction tran)
         {
-            EnsureItemMaterialsTable(con, tran);
             using (var delCmd = new NpgsqlCommand("DELETE FROM item_materials WHERE parent_item_id = @id", con, tran))
             {
                 delCmd.Parameters.AddWithValue("@id", parentItemId);

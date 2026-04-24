@@ -29,34 +29,7 @@ namespace POS_qu
 
         private void PromotionListForm_Load(object sender, EventArgs e)
         {
-            EnsurePromotionTables();
             LoadData();
-        }
-
-        private void EnsurePromotionTables()
-        {
-            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
-            con.Open();
-            using var cmd = new NpgsqlCommand(@"
-CREATE TABLE IF NOT EXISTS promotions (
-    id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(150) NOT NULL,
-    promo_type VARCHAR(20) NOT NULL, -- DISKON / PROMO / CASHBACK
-    status VARCHAR(20) NOT NULL DEFAULT 'aktif', -- aktif / nonaktif
-    start_date DATE NULL,
-    end_date DATE NULL,
-    priority INT NOT NULL DEFAULT 0,
-    config_json TEXT NOT NULL DEFAULT '{}',
-    created_by INT NULL REFERENCES users(id) ON DELETE SET NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_promotions_type_status ON promotions(promo_type, status);
-CREATE INDEX IF NOT EXISTS idx_promotions_period ON promotions(start_date, end_date);
-CREATE INDEX IF NOT EXISTS idx_promotions_priority ON promotions(priority);
-", con);
-            cmd.ExecuteNonQuery();
         }
 
         private void LoadData()
@@ -128,4 +101,3 @@ ORDER BY priority DESC, id DESC
         }
     }
 }
-

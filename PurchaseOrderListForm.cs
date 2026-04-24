@@ -49,7 +49,8 @@ namespace POS_qu
 
                 string query = @"
                     SELECT 
-                        po.id, 
+                        po.id,
+                        COALESCE(po.po_number, po.id::text) AS po_number,
                         s.name as supplier_name, 
                         po.order_date, 
                         po.status, 
@@ -75,7 +76,8 @@ namespace POS_qu
                 dgvPO.DataSource = _dtPO;
                 
                 // Set Header Texts
-                if(dgvPO.Columns.Contains("id")) dgvPO.Columns["id"].HeaderText = "ID PO";
+                if(dgvPO.Columns.Contains("id")) dgvPO.Columns["id"].Visible = false;
+                if(dgvPO.Columns.Contains("po_number")) dgvPO.Columns["po_number"].HeaderText = "No PO";
                 if(dgvPO.Columns.Contains("supplier_name")) dgvPO.Columns["supplier_name"].HeaderText = "Supplier";
                 if(dgvPO.Columns.Contains("order_date")) dgvPO.Columns["order_date"].HeaderText = "Tanggal";
                 if(dgvPO.Columns.Contains("status")) dgvPO.Columns["status"].HeaderText = "Status";

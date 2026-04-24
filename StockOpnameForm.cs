@@ -67,7 +67,6 @@ namespace POS_qu
 
         private void StockOpnameForm_Load(object sender, EventArgs e)
         {
-            EnsureStockOpnameTables();
             LoadWarehouses();
             SetupSatuanGrid();
             SetupMassalGrid();
@@ -386,7 +385,6 @@ namespace POS_qu
             var user = SessionUser.GetCurrentUser();
             int userId = user?.UserId ?? 0;
 
-            EnsureStockOpnameTables();
             SaveOpnameAndApplyStock(opnameNo, dtpOpnameDate.Value.Date, whId, "manual", userId, itemsToSave);
 
             MessageBox.Show("Stock opname tersimpan.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -701,8 +699,6 @@ ORDER BY barcode, unit_name
             var user = SessionUser.GetCurrentUser();
             int userId = user?.UserId ?? 0;
 
-            EnsureStockOpnameTables();
-
             var items = grouped.Select(g => new OpnameRow
             {
                 ItemId = g.ItemId,
@@ -824,74 +820,10 @@ ORDER BY u.name
             using var con = new NpgsqlConnection(DbConfig.ConnectionString);
             con.Open();
             using var tran = con.BeginTransaction();
-            using var cmdSel = new NpgsqlCommand("SELECT prefix, last_date, last_number FROM stock_opname_numbering WHERE id=1 FOR UPDATE", con, tran);
-            using var dr = cmdSel.ExecuteReader();
-            string prefix = "SO";
-            DateTime? lastDate = null;
-            int lastNumber = 0;
-            if (dr.Read())
-            {
-                prefix = dr.IsDBNull(0) ? "SO" : dr.GetString(0);
-                lastDate = dr.IsDBNull(1) ? null : dr.GetDateTime(1);
-                lastNumber = dr.IsDBNull(2) ? 0 : dr.GetInt32(2);
-            }
-            dr.Close();
-
-            if (lastDate == null || lastDate.Value.Date != date.Date)
-                lastNumber = 0;
-            lastNumber += 1;
-
-            using var cmdUpd = new NpgsqlCommand("UPDATE stock_opname_numbering SET last_date=@d, last_number=@n WHERE id=1", con, tran);
-            cmdUpd.Parameters.AddWithValue("@d", date.Date);
-            cmdUpd.Parameters.AddWithValue("@n", lastNumber);
-            cmdUpd.ExecuteNonQuery();
+            var ns = new POS_qu.Services.DocumentNumberingService();
+            var no = ns.Generate("STOCK_OPNAME", date.Date, con, tran);
             tran.Commit();
-
-            return $"{prefix}-{date:yyyyMMdd}-{lastNumber:0000}";
-        }
-
-        private void EnsureStockOpnameTables()
-        {
-            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
-            con.Open();
-
-            using (var cmd = new NpgsqlCommand(@"
-CREATE TABLE IF NOT EXISTS stock_opnames (
-  id BIGSERIAL PRIMARY KEY,
-  opname_no VARCHAR(50) NOT NULL,
-  opname_date DATE NOT NULL,
-  warehouse_id INT NOT NULL REFERENCES warehouses(id),
-  mode VARCHAR(20) NOT NULL,
-  created_by INT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS stock_opname_items (
-  id BIGSERIAL PRIMARY KEY,
-  opname_id BIGINT NOT NULL REFERENCES stock_opnames(id) ON DELETE CASCADE,
-  item_id BIGINT NOT NULL REFERENCES items(id),
-  unit_id INT NOT NULL,
-  conversion DOUBLE PRECISION NOT NULL DEFAULT 1,
-  system_qty_base DOUBLE PRECISION NOT NULL DEFAULT 0,
-  physical_qty_input DOUBLE PRECISION NOT NULL DEFAULT 0,
-  physical_qty_base DOUBLE PRECISION NOT NULL DEFAULT 0,
-  diff_qty_base DOUBLE PRECISION NOT NULL DEFAULT 0,
-  note TEXT
-);
-
-CREATE TABLE IF NOT EXISTS stock_opname_numbering (
-  id INT PRIMARY KEY,
-  prefix VARCHAR(10) NOT NULL DEFAULT 'SO',
-  last_date DATE NULL,
-  last_number INT NOT NULL DEFAULT 0
-);
-INSERT INTO stock_opname_numbering (id, prefix, last_date, last_number)
-VALUES (1, 'SO', NULL, 0)
-ON CONFLICT (id) DO NOTHING;
-", con))
-            {
-                cmd.ExecuteNonQuery();
-            }
+            return no;
         }
 
         private void SaveOpnameAndApplyStock(string opnameNo, DateTime opnameDate, int warehouseId, string mode, int createdBy, List<OpnameRow> items)
@@ -962,15 +894,17 @@ DO UPDATE SET qty = EXCLUDED.qty
                     }
 
                     decimal buyPrice = GetBuyPrice(it.ItemId, con, tran);
+                    DateTime? expiredAt = GetExpiredAt(it.ItemId, con, tran);
                     using (var cmd = new NpgsqlCommand(@"
-INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price)
-VALUES (@iid, @w, @q, @buy)
+INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, expired_at, created_at)
+VALUES (@iid, @w, @q, @buy, @exp, NOW())
 ", con, tran))
                     {
                         cmd.Parameters.AddWithValue("@iid", it.ItemId);
                         cmd.Parameters.AddWithValue("@w", warehouseId);
                         cmd.Parameters.AddWithValue("@q", phyBase);
                         cmd.Parameters.AddWithValue("@buy", buyPrice);
+                        cmd.Parameters.AddWithValue("@exp", (object?)expiredAt ?? DBNull.Value);
                         cmd.ExecuteNonQuery();
                     }
                 }
@@ -991,6 +925,15 @@ VALUES (@iid, @w, @q, @buy)
             var v = cmd.ExecuteScalar();
             if (v == null || v == DBNull.Value) return 0m;
             return Convert.ToDecimal(v);
+        }
+
+        private DateTime? GetExpiredAt(int itemId, NpgsqlConnection con, NpgsqlTransaction tran)
+        {
+            using var cmd = new NpgsqlCommand("SELECT expired_at FROM items WHERE id=@id", con, tran);
+            cmd.Parameters.AddWithValue("@id", itemId);
+            var v = cmd.ExecuteScalar();
+            if (v == null || v == DBNull.Value) return null;
+            return Convert.ToDateTime(v).Date;
         }
 
         private void btnPrintBase_Click(object sender, EventArgs e)

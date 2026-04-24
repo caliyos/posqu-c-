@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -36,6 +36,11 @@ namespace POS_qu.Models
         public string TsFreename { get; set; } // ts_freename (free text customer name)
 
         public decimal TsDelivery { get; set; } = 0; 
+
+        public decimal TsTotalBeforeTax { get; set; } = 0;
+        public string TsTaxMode { get; set; } = "NON";
+        public decimal TsTaxRate { get; set; } = 0;
+        public decimal TsTaxAmount { get; set; } = 0;
 
         // Menambahkan properti untuk ShiftId dan TerminalId
         public int? ShiftId { get; set; }  // shift_id (nullable)

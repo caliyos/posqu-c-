@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿namespace POSqu_menu
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿namespace POSqu_menu
 {
     partial class MenuNative
     {
@@ -37,10 +37,12 @@
             unitSatuanToolStripMenuItem = new ToolStripMenuItem();
             gudangToolStripMenuItem = new ToolStripMenuItem();
             akunToolStripMenuItem = new ToolStripMenuItem();
+            jenisPpnToolStripMenuItem = new ToolStripMenuItem();
             productToolStripMenuItem = new ToolStripMenuItem();
             manajemenProdukToolStripMenuItem = new ToolStripMenuItem();
             saldoAwalToolStripMenuItem = new ToolStripMenuItem();
             ubahHargaToolStripMenuItem = new ToolStripMenuItem();
+            historyHargaBeliToolStripMenuItem = new ToolStripMenuItem();
             stockMenuToolStripMenuItem = new ToolStripMenuItem();
             daftarItemMasukToolStripMenuItem = new ToolStripMenuItem();
             daftarItemKeluarToolStripMenuItem = new ToolStripMenuItem();
@@ -58,11 +60,13 @@
             pembelianToolStripMenuItem = new ToolStripMenuItem();
             pesananPembelianToolStripMenuItem = new ToolStripMenuItem();
             penerimaanBarangToolStripMenuItem = new ToolStripMenuItem();
+            returPembelianToolStripMenuItem = new ToolStripMenuItem();
             reportsToolStripMenuItem = new ToolStripMenuItem();
             penjualanToolStripMenuItem = new ToolStripMenuItem();
             stockToolStripMenuItem = new ToolStripMenuItem();
             pengeluaranToolStripMenuItem = new ToolStripMenuItem();
             pembayaranToolStripMenuItem = new ToolStripMenuItem();
+            jurnalToolStripMenuItem = new ToolStripMenuItem();
             printingToolStripMenuItem = new ToolStripMenuItem();
             printBarcodeToolStripMenuItem = new ToolStripMenuItem();
             settingsToolStripMenuItem = new ToolStripMenuItem();
@@ -72,6 +76,8 @@
             strukSettingToolStripMenuItem = new ToolStripMenuItem();
             tokoSettingToolStripMenuItem = new ToolStripMenuItem();
             terminalToolStripMenuItem = new ToolStripMenuItem();
+            numberingSettingToolStripMenuItem = new ToolStripMenuItem();
+            hppMethodSettingToolStripMenuItem = new ToolStripMenuItem();
             rolesToolStripMenuItem = new ToolStripMenuItem();
             manajemenRolesPermissionsToolStripMenuItem = new ToolStripMenuItem();
             usersToolStripMenuItem = new ToolStripMenuItem();
@@ -263,6 +269,13 @@
             akunToolStripMenuItem.Text = "Akun (COA)";
             akunToolStripMenuItem.Click += akunToolStripMenuItem_Click;
             // 
+            // jenisPpnToolStripMenuItem
+            // 
+            jenisPpnToolStripMenuItem.Name = "jenisPpnToolStripMenuItem";
+            jenisPpnToolStripMenuItem.Size = new Size(231, 26);
+            jenisPpnToolStripMenuItem.Text = "Jenis PPN (Include/Exclude)";
+            jenisPpnToolStripMenuItem.Click += jenisPpnToolStripMenuItem_Click;
+            // 
             // merkToolStripMenuItem
             // 
             merkToolStripMenuItem = new ToolStripMenuItem();
@@ -281,7 +294,7 @@
             // 
             // productToolStripMenuItem
             // 
-            productToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { manajemenProdukToolStripMenuItem, ubahHargaToolStripMenuItem });
+            productToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { manajemenProdukToolStripMenuItem, ubahHargaToolStripMenuItem, historyHargaBeliToolStripMenuItem });
             productToolStripMenuItem.Name = "productToolStripMenuItem";
             productToolStripMenuItem.Size = new Size(74, 24);
             productToolStripMenuItem.Text = "Product";
@@ -308,6 +321,13 @@
             ubahHargaToolStripMenuItem.Size = new Size(220, 26);
             ubahHargaToolStripMenuItem.Text = "Ubah Harga (HPP/Jual)";
             ubahHargaToolStripMenuItem.Click += ubahHargaToolStripMenuItem_Click;
+            // 
+            // historyHargaBeliToolStripMenuItem
+            // 
+            historyHargaBeliToolStripMenuItem.Name = "historyHargaBeliToolStripMenuItem";
+            historyHargaBeliToolStripMenuItem.Size = new Size(220, 26);
+            historyHargaBeliToolStripMenuItem.Text = "History Harga Beli";
+            historyHargaBeliToolStripMenuItem.Click += historyHargaBeliToolStripMenuItem_Click;
             // 
             // stockMenuToolStripMenuItem
             // 
@@ -410,7 +430,7 @@
             // 
             // pembelianToolStripMenuItem
             // 
-            pembelianToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { pesananPembelianToolStripMenuItem, penerimaanBarangToolStripMenuItem });
+            pembelianToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { pesananPembelianToolStripMenuItem, penerimaanBarangToolStripMenuItem, returPembelianToolStripMenuItem });
             pembelianToolStripMenuItem.Name = "pembelianToolStripMenuItem";
             pembelianToolStripMenuItem.Size = new Size(92, 24);
             pembelianToolStripMenuItem.Text = "Pembelian";
@@ -430,9 +450,16 @@
             penerimaanBarangToolStripMenuItem.Text = "Pembelian / Penerimaan Barang";
             penerimaanBarangToolStripMenuItem.Click += penerimaanBarangToolStripMenuItem_Click;
             // 
+            // returPembelianToolStripMenuItem
+            // 
+            returPembelianToolStripMenuItem.Name = "returPembelianToolStripMenuItem";
+            returPembelianToolStripMenuItem.Size = new Size(270, 34);
+            returPembelianToolStripMenuItem.Text = "Retur Pembelian (Ke Supplier)";
+            returPembelianToolStripMenuItem.Click += returPembelianToolStripMenuItem_Click;
+            // 
             // reportsToolStripMenuItem
             // 
-            reportsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { penjualanToolStripMenuItem, stockToolStripMenuItem, pengeluaranToolStripMenuItem, pembayaranToolStripMenuItem });
+            reportsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { penjualanToolStripMenuItem, stockToolStripMenuItem, jurnalToolStripMenuItem, pengeluaranToolStripMenuItem, pembayaranToolStripMenuItem });
             reportsToolStripMenuItem.Name = "reportsToolStripMenuItem";
             reportsToolStripMenuItem.Size = new Size(74, 24);
             reportsToolStripMenuItem.Text = "Reports";
@@ -465,6 +492,13 @@
             stockToolStripMenuItem.Text = "Stock";
             stockToolStripMenuItem.Click += stockToolStripMenuItem_Click;
             // 
+            // jurnalToolStripMenuItem
+            // 
+            jurnalToolStripMenuItem.Name = "jurnalToolStripMenuItem";
+            jurnalToolStripMenuItem.Size = new Size(227, 26);
+            jurnalToolStripMenuItem.Text = "Jurnal";
+            jurnalToolStripMenuItem.Click += jurnalToolStripMenuItem_Click;
+            // 
             // pengeluaranToolStripMenuItem
             // 
             pengeluaranToolStripMenuItem.Name = "pengeluaranToolStripMenuItem";
@@ -480,7 +514,7 @@
             // 
             // settingsToolStripMenuItem
             // 
-            settingsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { logoToolStripMenuItem, networkingToolStripMenuItem, databaseToolStripMenuItem, strukSettingToolStripMenuItem, tokoSettingToolStripMenuItem, terminalToolStripMenuItem, rolesToolStripMenuItem, manajemenRolesPermissionsToolStripMenuItem, usersToolStripMenuItem });
+            settingsToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { logoToolStripMenuItem, networkingToolStripMenuItem, databaseToolStripMenuItem, strukSettingToolStripMenuItem, tokoSettingToolStripMenuItem, numberingSettingToolStripMenuItem, hppMethodSettingToolStripMenuItem, terminalToolStripMenuItem, rolesToolStripMenuItem, usersToolStripMenuItem });
             settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
             settingsToolStripMenuItem.Size = new Size(76, 24);
             settingsToolStripMenuItem.Text = "Settings";
@@ -496,6 +530,7 @@
             networkingToolStripMenuItem.Name = "networkingToolStripMenuItem";
             networkingToolStripMenuItem.Size = new Size(290, 26);
             networkingToolStripMenuItem.Text = "Printer";
+            networkingToolStripMenuItem.Click += networkingToolStripMenuItem_Click;
             // 
             // databaseToolStripMenuItem
             // 
@@ -518,6 +553,20 @@
             tokoSettingToolStripMenuItem.Text = "Toko Setting";
             tokoSettingToolStripMenuItem.Click += tokoSettingToolStripMenuItem_Click;
             // 
+            // numberingSettingToolStripMenuItem
+            // 
+            numberingSettingToolStripMenuItem.Name = "numberingSettingToolStripMenuItem";
+            numberingSettingToolStripMenuItem.Size = new Size(270, 34);
+            numberingSettingToolStripMenuItem.Text = "Setting Penomoran";
+            numberingSettingToolStripMenuItem.Click += numberingSettingToolStripMenuItem_Click;
+            // 
+            // hppMethodSettingToolStripMenuItem
+            // 
+            hppMethodSettingToolStripMenuItem.Name = "hppMethodSettingToolStripMenuItem";
+            hppMethodSettingToolStripMenuItem.Size = new Size(270, 34);
+            hppMethodSettingToolStripMenuItem.Text = "Master HPP Method";
+            hppMethodSettingToolStripMenuItem.Click += hppMethodSettingToolStripMenuItem_Click;
+            // 
             // terminalToolStripMenuItem
             // 
             terminalToolStripMenuItem.Name = "terminalToolStripMenuItem";
@@ -537,12 +586,14 @@
             manajemenRolesPermissionsToolStripMenuItem.Name = "manajemenRolesPermissionsToolStripMenuItem";
             manajemenRolesPermissionsToolStripMenuItem.Size = new Size(290, 26);
             manajemenRolesPermissionsToolStripMenuItem.Text = "Manajemen Roles Permissions";
+            manajemenRolesPermissionsToolStripMenuItem.Click += manajemenRolesPermissionsToolStripMenuItem_Click;
             // 
             // usersToolStripMenuItem
             // 
             usersToolStripMenuItem.Name = "usersToolStripMenuItem";
             usersToolStripMenuItem.Size = new Size(290, 26);
             usersToolStripMenuItem.Text = "Users";
+            usersToolStripMenuItem.Click += usersToolStripMenuItem_Click;
             // 
             // helpToolStripMenuItem
             // 
@@ -574,7 +625,7 @@
             // MenuNative
             // 
 
-            masterToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { pelangganCustomerToolStripMenuItem, supplierToolStripMenuItem, kategoriBarangToolStripMenuItem, unitSatuanToolStripMenuItem, gudangToolStripMenuItem, akunToolStripMenuItem, merkToolStripMenuItem, rakToolStripMenuItem });
+            masterToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { pelangganCustomerToolStripMenuItem, supplierToolStripMenuItem, kategoriBarangToolStripMenuItem, unitSatuanToolStripMenuItem, gudangToolStripMenuItem, akunToolStripMenuItem, jenisPpnToolStripMenuItem, merkToolStripMenuItem, rakToolStripMenuItem });
             masterToolStripMenuItem.Name = "masterToolStripMenuItem";
             masterToolStripMenuItem.Size = new Size(104, 24);
             masterToolStripMenuItem.Text = "Master Data";
@@ -624,14 +675,18 @@
         private Label label2;
         private ToolStripMenuItem penjualanToolStripMenuItem;
         private ToolStripMenuItem stockToolStripMenuItem;
+        private ToolStripMenuItem jurnalToolStripMenuItem;
         private ToolStripMenuItem pengeluaranToolStripMenuItem;
         private ToolStripMenuItem pembayaranToolStripMenuItem;
         private ToolStripMenuItem pembelianToolStripMenuItem;
         private ToolStripMenuItem pesananPembelianToolStripMenuItem;
         private ToolStripMenuItem penerimaanBarangToolStripMenuItem;
+        private ToolStripMenuItem returPembelianToolStripMenuItem;
         private ToolStripMenuItem strukSettingToolStripMenuItem;
         private ToolStripMenuItem tokoSettingToolStripMenuItem;
         private ToolStripMenuItem terminalToolStripMenuItem;
+        private ToolStripMenuItem numberingSettingToolStripMenuItem;
+        private ToolStripMenuItem hppMethodSettingToolStripMenuItem;
         private ToolStripMenuItem rolesToolStripMenuItem;
         private ToolStripMenuItem manajemenRolesPermissionsToolStripMenuItem;
         private ToolStripMenuItem usersToolStripMenuItem;
@@ -641,6 +696,7 @@
         private ToolStripMenuItem manajemenProdukToolStripMenuItem;
         private ToolStripMenuItem saldoAwalToolStripMenuItem;
         private ToolStripMenuItem ubahHargaToolStripMenuItem;
+        private ToolStripMenuItem historyHargaBeliToolStripMenuItem;
         private ToolStripMenuItem stockMenuToolStripMenuItem;
         private ToolStripMenuItem daftarItemMasukToolStripMenuItem;
         private ToolStripMenuItem daftarItemKeluarToolStripMenuItem;
@@ -650,6 +706,7 @@
         private ToolStripMenuItem unitSatuanToolStripMenuItem;
         private ToolStripMenuItem gudangToolStripMenuItem;
         private ToolStripMenuItem akunToolStripMenuItem;
+        private ToolStripMenuItem jenisPpnToolStripMenuItem;
         private ToolStripMenuItem merkToolStripMenuItem;
         private ToolStripMenuItem rakToolStripMenuItem;
         private ToolStripMenuItem promosiDiskonToolStripMenuItem;

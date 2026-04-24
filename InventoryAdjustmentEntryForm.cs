@@ -259,8 +259,6 @@ namespace POS_qu
             using var tran = con.BeginTransaction();
             try
             {
-                EnsureTables(con, tran);
-
                 string prefix = _direction == InventoryAdjustmentDirection.In ? "ADJIN" : "ADJOUT";
                 string adjNo = GenerateAdjustmentNo(con, tran, prefix, dtpDate.Value.Date);
 
@@ -332,36 +330,6 @@ VALUES (@aid, @iid, @q, @bp, @n)
             return 0;
         }
 
-        private void EnsureTables(NpgsqlConnection con, NpgsqlTransaction tran)
-        {
-            using var cmd = new NpgsqlCommand(@"
-CREATE TABLE IF NOT EXISTS inventory_adjustments (
-    id BIGSERIAL PRIMARY KEY,
-    adjustment_no VARCHAR(30) NOT NULL UNIQUE,
-    direction VARCHAR(10) NOT NULL,
-    adjustment_date DATE NOT NULL,
-    warehouse_id INT NULL REFERENCES warehouses(id) ON DELETE SET NULL,
-    reason VARCHAR(100) NOT NULL,
-    note TEXT NULL,
-    created_by INT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS inventory_adjustment_items (
-    id BIGSERIAL PRIMARY KEY,
-    adjustment_id BIGINT NOT NULL REFERENCES inventory_adjustments(id) ON DELETE CASCADE,
-    item_id BIGINT NOT NULL REFERENCES items(id) ON DELETE RESTRICT,
-    qty DOUBLE PRECISION NOT NULL DEFAULT 0,
-    buy_price NUMERIC(15,2) NULL,
-    note TEXT NULL
-);
-
-CREATE INDEX IF NOT EXISTS idx_inventory_adjustments_dir_date ON inventory_adjustments(direction, adjustment_date);
-CREATE INDEX IF NOT EXISTS idx_inventory_adjustment_items_adj ON inventory_adjustment_items(adjustment_id);
-", con, tran);
-            cmd.ExecuteNonQuery();
-        }
-
         private string GenerateAdjustmentNo(NpgsqlConnection con, NpgsqlTransaction tran, string prefix, DateTime date)
         {
             string ymd = date.ToString("yyyyMMdd");
@@ -426,14 +394,23 @@ WHERE item_id = @iid AND warehouse_id = @w
 
         private void InsertStockLayer(NpgsqlConnection con, NpgsqlTransaction tran, long itemId, int warehouseId, double qty, decimal buyPrice)
         {
+            DateTime? expiredAt = null;
+            using (var expCmd = new NpgsqlCommand("SELECT expired_at FROM items WHERE id=@id", con, tran))
+            {
+                expCmd.Parameters.AddWithValue("@id", itemId);
+                var res = expCmd.ExecuteScalar();
+                if (res != null && res != DBNull.Value) expiredAt = Convert.ToDateTime(res).Date;
+            }
+
             using var cmd = new NpgsqlCommand(@"
-INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, created_at)
-VALUES (@iid, @w, @q, @bp, NOW())
+INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, expired_at, created_at)
+VALUES (@iid, @w, @q, @bp, @exp, NOW())
 ", con, tran);
             cmd.Parameters.AddWithValue("@iid", itemId);
             cmd.Parameters.AddWithValue("@w", warehouseId);
             cmd.Parameters.AddWithValue("@q", qty);
             cmd.Parameters.AddWithValue("@bp", buyPrice < 0 ? 0m : buyPrice);
+            cmd.Parameters.AddWithValue("@exp", (object?)expiredAt ?? DBNull.Value);
             cmd.ExecuteNonQuery();
         }
 
@@ -441,11 +418,26 @@ VALUES (@iid, @w, @q, @bp, NOW())
         {
             double remaining = qtyOut;
 
-            using var cmd = new NpgsqlCommand(@"
+            string method = "FIFO";
+            using (var mCmd = new NpgsqlCommand("SELECT COALESCE(NULLIF(valuation_method,''),'FIFO') FROM items WHERE id=@id", con, tran))
+            {
+                mCmd.Parameters.AddWithValue("@id", itemId);
+                var res = mCmd.ExecuteScalar();
+                if (res != null && res != DBNull.Value) method = res.ToString();
+            }
+
+            method = (method ?? "FIFO").Trim().ToUpperInvariant();
+            string orderBy = method == "LIFO"
+                ? "created_at DESC, id DESC"
+                : (method == "FEFO"
+                    ? "expired_at ASC NULLS LAST, created_at ASC, id ASC"
+                    : "created_at ASC, id ASC");
+
+            using var cmd = new NpgsqlCommand($@"
 SELECT id, qty_remaining
 FROM stock_layers
 WHERE item_id = @iid AND warehouse_id = @w AND qty_remaining > 0
-ORDER BY created_at ASC, id ASC
+ORDER BY {orderBy}
 ", con, tran);
             cmd.Parameters.AddWithValue("@iid", itemId);
             cmd.Parameters.AddWithValue("@w", warehouseId);
@@ -480,7 +472,7 @@ WHERE id = @id
             }
 
             if (remaining > 0.0000001)
-                throw new InvalidOperationException("Stock layer tidak cukup (FIFO).");
+                throw new InvalidOperationException("Stock layer tidak cukup (" + method + ").");
         }
     }
 }

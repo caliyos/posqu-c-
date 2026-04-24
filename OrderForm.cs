@@ -1,4 +1,4 @@
-﻿using POS_qu.Controllers;
+using POS_qu.Controllers;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -57,7 +57,8 @@ namespace POS_qu
 
         private string GenerateOrderNumber()
         {
-            return "ORD-" + DateTime.Now.ToString("yyyyMMdd-HHmmss");
+            var ns = new POS_qu.Services.DocumentNumberingService();
+            return ns.PeekNext("ORDER");
         }
 
   

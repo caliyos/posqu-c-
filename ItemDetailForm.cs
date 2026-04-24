@@ -136,7 +136,11 @@ namespace POS_qu
             cmbValuation.Items.Clear();
             cmbValuation.Items.Add("FIFO");
             cmbValuation.Items.Add("AVG");
-            if (cmbValuation.SelectedIndex < 0) cmbValuation.SelectedIndex = 0;
+            cmbValuation.Items.Add("LIFO");
+            cmbValuation.Items.Add("FEFO");
+            var defaultMethod = new SettingController().GetDefaultHppMethod();
+            int idxDef = cmbValuation.FindStringExact(defaultMethod ?? "FIFO");
+            cmbValuation.SelectedIndex = idxDef >= 0 ? idxDef : 0;
 
             txtStock.TextChanged += (s, e) => UpdateStockOutput();
             cmbUnit.SelectedIndexChanged += (s, e) => UpdateStockOutput();

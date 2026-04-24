@@ -170,6 +170,24 @@ namespace POS_qu
 
             DataGridViewRow row = dataGridView1.Rows[e.RowIndex];
 
+            if (dataGridView1.Columns[e.ColumnIndex].Name == "btnHppHistory")
+            {
+                if (row.Cells["id"]?.Value == null || row.Cells["id"].Value == DBNull.Value) return;
+                int itemId = Convert.ToInt32(row.Cells["id"].Value);
+                using var f = new HppHistoryForm(itemId);
+                f.ShowDialog(this);
+                return;
+            }
+
+            if (dataGridView1.Columns[e.ColumnIndex].Name == "stock")
+            {
+                if (row.Cells["id"]?.Value == null || row.Cells["id"].Value == DBNull.Value) return;
+                int itemId = Convert.ToInt32(row.Cells["id"].Value);
+                using var f = new HppHistoryForm(itemId, openStockCard: true);
+                f.ShowDialog(this);
+                return;
+            }
+
             // jika kolom checkbox diklik, toggle value
             if (dataGridView1.Columns[e.ColumnIndex].Name == "chkSelect")
             {
@@ -1113,6 +1131,25 @@ namespace POS_qu
 
         private void ConfigureGridColumns()
         {
+            if (!dataGridView1.Columns.Contains("btnHppHistory"))
+            {
+                var col = new DataGridViewButtonColumn
+                {
+                    Name = "btnHppHistory",
+                    HeaderText = "HPP",
+                    Text = "History",
+                    UseColumnTextForButtonValue = true,
+                    Width = 90,
+                    FlatStyle = FlatStyle.Flat
+                };
+
+                int insertIndex = 0;
+                if (dataGridView1.Columns.Contains("chkSelect"))
+                    insertIndex = Math.Min(dataGridView1.Columns["chkSelect"].Index + 1, dataGridView1.Columns.Count);
+
+                dataGridView1.Columns.Insert(insertIndex, col);
+            }
+
             if (dataGridView1.Columns.Contains("name"))
             {
                 var c = dataGridView1.Columns["name"];

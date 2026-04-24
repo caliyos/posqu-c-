@@ -10,6 +10,9 @@
     <Compile Update="BrandForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="BuyPriceHistoryForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="CasherNew.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -40,6 +43,12 @@
     <Compile Update="Helpers\RoundedTextBox.cs">
       <SubType>UserControl</SubType>
     </Compile>
+    <Compile Update="HppHistoryForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="HppMethodSettingForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="InventoryAdjustmentEntryForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -49,10 +58,19 @@
     <Compile Update="ItemDetailForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="JournalReportForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="LicenseActivationForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="Login.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="MenuNative.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="NumberingSettingForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="OrderDetailForm.cs">
@@ -68,6 +86,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="PriceUpdateForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="PrinterTestForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="ProductPage.cs">
@@ -86,6 +107,12 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="PurchaseOrderListForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="PurchaseReturnEntryForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="PurchaseReturnListForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="QuantityForm.cs">
@@ -134,6 +161,9 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="SupplierForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="TaxTypeForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Update="Terminal.cs">

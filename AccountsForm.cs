@@ -34,27 +34,9 @@ namespace POS_qu
             cmbType.Items.AddRange(new object[] { "asset", "revenue", "expense" });
             if (cmbType.Items.Count > 0) cmbType.SelectedIndex = 0;
 
-            EnsureTables();
             SeedDefaultAccounts();
             LoadData();
             ClearForm();
-        }
-
-        private void EnsureTables()
-        {
-            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
-            con.Open();
-            using var cmd = new NpgsqlCommand(@"
-CREATE TABLE IF NOT EXISTS accounts (
-    id BIGSERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL UNIQUE,
-    type VARCHAR(20) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMP NOT NULL DEFAULT NOW(),
-    CONSTRAINT ck_accounts_type CHECK (type IN ('asset','revenue','expense'))
-);
-", con);
-            cmd.ExecuteNonQuery();
         }
 
         private void SeedDefaultAccounts()
@@ -290,4 +272,3 @@ WHERE id = @id
         }
     }
 }
-

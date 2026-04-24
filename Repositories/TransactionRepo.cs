@@ -22,7 +22,8 @@ INSERT INTO transactions (
     ts_global_discount_amount, ts_grand_total, 
     ts_customer, ts_freename, terminal_id, shift_id, user_id, 
     created_by, created_at, order_id, ts_delivery_amount, cart_session_code,
-    ts_due_amount
+    ts_due_amount,
+    ts_total_before_tax, ts_tax_mode, ts_tax_rate, ts_tax_amount
 ) 
 VALUES (
     @ts_numbering, @ts_code, @ts_total, @ts_payment_amount, @ts_cashback, 
@@ -30,7 +31,8 @@ VALUES (
     @ts_global_discount_amount, @ts_grand_total, 
     @ts_customer, @ts_freename, @terminal_id, @shift_id, 
     @user_id, @created_by, @created_at, @order_id, @ts_delivery_amount, @cart_session_code,
-    @ts_due_amount
+    @ts_due_amount,
+    @ts_total_before_tax, @ts_tax_mode, @ts_tax_rate, @ts_tax_amount
 ) 
 RETURNING ts_id";
 
@@ -65,8 +67,11 @@ RETURNING ts_id";
 
                 cmd.Parameters.AddWithValue("@ts_delivery_amount", transaction.TsDelivery);
                 cmd.Parameters.AddWithValue("@cart_session_code", transaction.CartSessionCode ?? "");
-                cmd.Parameters.AddWithValue("@ts_delivery_amount", transaction.TsDelivery);
                 cmd.Parameters.AddWithValue("@ts_due_amount", transaction.TsDueAmount);
+                cmd.Parameters.AddWithValue("@ts_total_before_tax", transaction.TsTotalBeforeTax);
+                cmd.Parameters.AddWithValue("@ts_tax_mode", transaction.TsTaxMode ?? "NON");
+                cmd.Parameters.AddWithValue("@ts_tax_rate", transaction.TsTaxRate);
+                cmd.Parameters.AddWithValue("@ts_tax_amount", transaction.TsTaxAmount);
                 
 
                 return Convert.ToInt32(cmd.ExecuteScalar());
@@ -189,6 +194,22 @@ VALUES (
             }
         }
 
+        public decimal GetCurrentStockInWarehouse(
+     NpgsqlConnection con,
+     NpgsqlTransaction tran,
+     int itemId,
+     int warehouseId)
+        {
+            string sql = "SELECT COALESCE(qty,0) FROM stocks WHERE item_id = @id AND warehouse_id = @wh";
+            using (var cmd = new NpgsqlCommand(sql, con, tran))
+            {
+                cmd.Parameters.AddWithValue("@id", itemId);
+                cmd.Parameters.AddWithValue("@wh", warehouseId);
+                object result = cmd.ExecuteScalar();
+                return result != null && result != DBNull.Value ? Convert.ToDecimal(result) : 0;
+            }
+        }
+
         public string GetItemValuationMethod(NpgsqlConnection con, NpgsqlTransaction tran, int itemId)
         {
             string sql = "SELECT valuation_method FROM items WHERE id = @id";
@@ -212,7 +233,7 @@ VALUES (
         }
 
 
-        public void InsertStockLog(
+        public int InsertStockLog(
       NpgsqlConnection con,
       NpgsqlTransaction tran,
       StockLog stockLog)
@@ -220,10 +241,15 @@ VALUES (
             string query = @"
         INSERT INTO stock_log
         (product_id, tipe_transaksi, qty_masuk, qty_keluar, 
-         sisa_stock, keterangan, user_id, created_at, login_id)
+         sisa_stock, keterangan, user_id, created_at, login_id,
+         warehouse_id, ref_type, ref_id, supplier_id, unit_cost, method,
+         stock_layer_id, is_allocation, parent_id)
         VALUES
         (@product_id, @tipe_transaksi, @qty_masuk, @qty_keluar, 
-         @sisa_stock, @keterangan, @user_id, @created_at, @login_id)
+         @sisa_stock, @keterangan, @user_id, @created_at, @login_id,
+         @warehouse_id, @ref_type, @ref_id, @supplier_id, @unit_cost, @method,
+         @stock_layer_id, @is_allocation, @parent_id)
+        RETURNING id
     ";
 
             using (var cmd = new NpgsqlCommand(query, con, tran))
@@ -240,8 +266,17 @@ VALUES (
                     stockLog.LoginId.HasValue
                         ? (object)stockLog.LoginId.Value
                         : DBNull.Value);
+                cmd.Parameters.AddWithValue("@warehouse_id", stockLog.WarehouseId > 0 ? stockLog.WarehouseId : 1);
+                cmd.Parameters.AddWithValue("@ref_type", string.IsNullOrWhiteSpace(stockLog.RefType) ? (object)DBNull.Value : stockLog.RefType.Trim());
+                cmd.Parameters.AddWithValue("@ref_id", stockLog.RefId.HasValue ? (object)stockLog.RefId.Value : DBNull.Value);
+                cmd.Parameters.AddWithValue("@supplier_id", stockLog.SupplierId.HasValue ? (object)stockLog.SupplierId.Value : DBNull.Value);
+                cmd.Parameters.AddWithValue("@unit_cost", stockLog.UnitCost.HasValue ? (object)stockLog.UnitCost.Value : DBNull.Value);
+                cmd.Parameters.AddWithValue("@method", string.IsNullOrWhiteSpace(stockLog.Method) ? (object)DBNull.Value : stockLog.Method.Trim().ToUpperInvariant());
+                cmd.Parameters.AddWithValue("@stock_layer_id", stockLog.StockLayerId.HasValue ? (object)stockLog.StockLayerId.Value : DBNull.Value);
+                cmd.Parameters.AddWithValue("@is_allocation", stockLog.IsAllocation);
+                cmd.Parameters.AddWithValue("@parent_id", stockLog.ParentId.HasValue ? (object)stockLog.ParentId.Value : DBNull.Value);
 
-                cmd.ExecuteNonQuery();
+                return Convert.ToInt32(cmd.ExecuteScalar());
             }
         }
 

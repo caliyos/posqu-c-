@@ -106,13 +106,16 @@ namespace POS_qu.Services
                 {
                     try
                     {
+                        var numberingService = new POS_qu.Services.DocumentNumberingService();
+                        var saleNo = numberingService.Generate("SALE", DateTime.Now.Date, con, tran);
+
                         // ===============================
                         // BUILD TRANSACTION OBJECT
                         // ===============================
 
                         Transactions transaction = new Transactions
                         {
-                            TsNumbering = Utility.GenerateTransactionNumber(),
+                            TsNumbering = saleNo,
                             TsCode = Utility.getTrxNumbering(),
                             TsTotal = invoice.Items.Sum(x => x.Total),
                             TsPaymentAmount = invoice.PaymentAmount,
@@ -124,6 +127,10 @@ namespace POS_qu.Services
                             TsNote = invoice.GlobalNote ?? string.Empty,
                             TsDiscountTotal = 0,
                             TsGrandTotal = CalculateGrandTotal(invoice),
+                            TsTotalBeforeTax = CalculateGrandTotal(invoice),
+                            TsTaxMode = "NON",
+                            TsTaxRate = 0,
+                            TsTaxAmount = 0,
                             TsCustomer = null,
                             TsDelivery = invoice.DeliveryAmount,
                             TsFreename = "Guest",
@@ -173,42 +180,19 @@ namespace POS_qu.Services
                             CartSessionCode = invoice.CartSessionCode
                         }).ToList();
 
+                        DeductStockFillBuyPriceAndLog(
+                            con,
+                            tran,
+                            details,
+                            warehouseId: 1,
+                            transactionId: transactionId,
+                            transactionNumbering: transaction.TsNumbering,
+                            userId: sessionUser.UserId,
+                            loginId: sessionUser.LoginId
+                        );
+
                         if (details.Count > 0)
                             _repo.InsertTransactionDetails(con, tran, details);
-
-                        // ===============================
-                        // UPDATE STOCK USING STRATEGY (FIFO / AVERAGE)
-                        // ===============================
-
-                        foreach (var item in details)
-                        {
-                            if (item.ItemId > 0 && _repo.IsInventoryItem(con, tran, item.ItemId))
-                            {
-                                int stockNeeded = (int)(item.TsdQuantity * item.TsdConversionRate);
-                                
-                                string valMethod = _repo.GetItemValuationMethod(con, tran, item.ItemId);
-                                IStockValuationStrategy strategy = valMethod == "AVG" 
-                                    ? new POS_qu.Services.StockValuation.AverageStrategy() 
-                                    : new POS_qu.Services.StockValuation.FifoStrategy();
-
-                                // Default warehouseId = 1
-                                decimal cogs = strategy.CalculateCOGSAndDeductStock(item.ItemId, 1, stockNeeded, con, tran);
-
-                                decimal newStock = _repo.GetCurrentStock(con, tran, item.ItemId);
-                                _repo.InsertStockLog(con, tran, new StockLog
-                                {
-                                    ProductId = item.ItemId,
-                                    TipeTransaksi = "payment",
-                                    QtyMasuk = 0,
-                                    QtyKeluar = item.TsdQuantity,
-                                    SisaStock = newStock,
-                                    Keterangan = $"Payment Transaction #{transaction.TsNumbering}",
-                                    UserId = sessionUser.UserId,
-                                    CreatedAt = DateTime.Now,
-                                    LoginId = sessionUser.LoginId
-                                });
-                            }
-                        }
 
                         var journal = new JournalService();
                         journal.CreateJournalFromSale(transactionId, con, tran);
@@ -282,13 +266,16 @@ namespace POS_qu.Services
                     {
                         decimal dueAmount = grandTotal - paymentAmount;
 
+                        var numberingService = new POS_qu.Services.DocumentNumberingService();
+                        var saleNo = numberingService.Generate("SALE", DateTime.Now.Date, con, tran);
+
                         // ===============================
                         // BUILD TRANSACTION HEADER
                         // ===============================
 
                         Transactions transaction = new Transactions
                         {
-                            TsNumbering = Utility.GenerateTransactionNumber(),
+                            TsNumbering = saleNo,
                             TsCode = Utility.getTrxNumbering(),
                             TsTotal = invoice.Items.Sum(x => x.Total),
                             TsPaymentAmount = paymentAmount,
@@ -300,6 +287,10 @@ namespace POS_qu.Services
                             TsNote = note ?? "",
                             TsDiscountTotal = 0,
                             TsGrandTotal = grandTotal,
+                            TsTotalBeforeTax = grandTotal,
+                            TsTaxMode = "NON",
+                            TsTaxRate = 0,
+                            TsTaxAmount = 0,
                             TsCustomer = null,
                             TsDelivery = invoice.DeliveryAmount,
                             TsFreename = customerName ?? "Guest",
@@ -345,6 +336,17 @@ namespace POS_qu.Services
                             CartSessionCode = invoice.CartSessionCode
                         }).ToList();
 
+                        DeductStockFillBuyPriceAndLog(
+                            con,
+                            tran,
+                            details,
+                            warehouseId: 1,
+                            transactionId: transactionId,
+                            transactionNumbering: transaction.TsNumbering,
+                            userId: sessionUser.UserId,
+                            loginId: sessionUser.LoginId
+                        );
+
                         if (details.Count > 0)
                             _repo.InsertTransactionDetails(con, tran, details);
 
@@ -359,40 +361,6 @@ namespace POS_qu.Services
                             note,
                             sessionUser.UserId
                         );
-
-                        // ===============================
-                        // UPDATE STOCK USING STRATEGY + INSERT STOCK LOG
-                        // ===============================
-
-                        foreach (var item in details)
-                        {
-                            if (item.ItemId > 0 && _repo.IsInventoryItem(con, tran, item.ItemId))
-                            {
-                                int stockNeeded = (int)(item.TsdQuantity * item.TsdConversionRate);
-                                
-                                string valMethod = _repo.GetItemValuationMethod(con, tran, item.ItemId);
-                                IStockValuationStrategy strategy = valMethod == "AVG" 
-                                    ? new POS_qu.Services.StockValuation.AverageStrategy() 
-                                    : new POS_qu.Services.StockValuation.FifoStrategy();
-
-                                decimal cogs = strategy.CalculateCOGSAndDeductStock(item.ItemId, 1, stockNeeded, con, tran);
-
-                                // 🔹 INSERT STOCK LOG
-                                decimal newStock = _repo.GetCurrentStock(con, tran, item.ItemId);
-                                _repo.InsertStockLog(con, tran, new StockLog
-                                {
-                                    ProductId = item.ItemId,
-                                    TipeTransaksi = "installment",
-                                    QtyMasuk = 0,
-                                    QtyKeluar = item.TsdQuantity,
-                                    SisaStock = newStock,
-                                    Keterangan = $"Installment Transaction #{transaction.TsNumbering}",
-                                    UserId = sessionUser.UserId,
-                                    CreatedAt = DateTime.Now,
-                                    LoginId = sessionUser.LoginId
-                                });
-                            }
-                        }
 
                         // ===============================
                         // DELETE PENDING TRANSACTIONS
@@ -455,9 +423,12 @@ namespace POS_qu.Services
             using var tran = con.BeginTransaction();
             try
             {
+                var numberingService = new POS_qu.Services.DocumentNumberingService();
+                var saleNo = numberingService.Generate("SALE", DateTime.Now.Date, con, tran);
+
                 Transactions transaction = new Transactions
                 {
-                    TsNumbering = Utility.GenerateTransactionNumber(),
+                    TsNumbering = saleNo,
                     TsCode = Utility.getTrxNumbering(),
                     TsTotal = invoice.Items.Sum(x => x.Total),
                     TsPaymentAmount = invoice.PaymentAmount,
@@ -469,6 +440,10 @@ namespace POS_qu.Services
                     TsNote = invoice.GlobalNote ?? string.Empty,
                     TsDiscountTotal = 0,
                     TsGrandTotal = grandTotal,
+                    TsTotalBeforeTax = grandTotal,
+                    TsTaxMode = "NON",
+                    TsTaxRate = 0,
+                    TsTaxAmount = 0,
                     TsCustomer = null,
                     TsDelivery = invoice.DeliveryAmount,
                     TsFreename = "Guest",
@@ -509,37 +484,19 @@ namespace POS_qu.Services
                     CartSessionCode = invoice.CartSessionCode
                 }).ToList();
 
+                DeductStockFillBuyPriceAndLog(
+                    con,
+                    tran,
+                    details,
+                    warehouseId: 1,
+                    transactionId: transactionId,
+                    transactionNumbering: transaction.TsNumbering,
+                    userId: sessionUser.UserId,
+                    loginId: sessionUser.LoginId
+                );
+
                 if (details.Count > 0)
                     _repo.InsertTransactionDetails(con, tran, details);
-
-                foreach (var item in details)
-                {
-                    if (item.ItemId > 0 && _repo.IsInventoryItem(con, tran, item.ItemId))
-                    {
-                        int stockNeeded = (int)(item.TsdQuantity * item.TsdConversionRate);
-                        
-                        string valMethod = _repo.GetItemValuationMethod(con, tran, item.ItemId);
-                        IStockValuationStrategy strategy = valMethod == "AVG" 
-                            ? new POS_qu.Services.StockValuation.AverageStrategy() 
-                            : new POS_qu.Services.StockValuation.FifoStrategy();
-
-                        decimal cogs = strategy.CalculateCOGSAndDeductStock(item.ItemId, 1, stockNeeded, con, tran);
-
-                        decimal newStock = _repo.GetCurrentStock(con, tran, item.ItemId);
-                        _repo.InsertStockLog(con, tran, new StockLog
-                        {
-                            ProductId = item.ItemId,
-                            TipeTransaksi = "payment",
-                            QtyMasuk = 0,
-                            QtyKeluar = item.TsdQuantity,
-                            SisaStock = newStock,
-                            Keterangan = $"Split Payment #{transaction.TsNumbering}",
-                            UserId = sessionUser.UserId,
-                            CreatedAt = DateTime.Now,
-                            LoginId = sessionUser.LoginId
-                        });
-                    }
-                }
 
                 _repo.DeletePendingTransactions(con, tran, invoice.CartSessionCode);
                 tran.Commit();
@@ -573,9 +530,12 @@ namespace POS_qu.Services
             using var tran = con.BeginTransaction();
             try
             {
+                var numberingService = new POS_qu.Services.DocumentNumberingService();
+                var saleNo = numberingService.Generate("SALE", DateTime.Now.Date, con, tran);
+
                 Transactions transaction = new Transactions
                 {
-                    TsNumbering = Utility.GenerateTransactionNumber(),
+                    TsNumbering = saleNo,
                     TsCode = Utility.getTrxNumbering(),
                     TsTotal = -grandTotal,
                     TsPaymentAmount = 0,
@@ -587,6 +547,10 @@ namespace POS_qu.Services
                     TsNote = note ?? (invoice.GlobalNote ?? ""),
                     TsDiscountTotal = 0,
                     TsGrandTotal = -grandTotal,
+                    TsTotalBeforeTax = -grandTotal,
+                    TsTaxMode = "NON",
+                    TsTaxRate = 0,
+                    TsTaxAmount = 0,
                     TsCustomer = null,
                     TsDelivery = 0,
                     TsFreename = "Guest",
@@ -634,27 +598,32 @@ namespace POS_qu.Services
                 {
                     if (d.ItemId > 0 && _repo.IsInventoryItem(con, tran, d.ItemId))
                     {
-                        int stockIn = (int)(d.TsdQuantity * d.TsdConversionRate);
+                        decimal conv = d.TsdConversionRate <= 0 ? 1 : d.TsdConversionRate;
+                        decimal stockIn = d.TsdQuantity * conv;
                         
                         string valMethod = _repo.GetItemValuationMethod(con, tran, d.ItemId);
-                        IStockValuationStrategy strategy = valMethod == "AVG" 
-                            ? new POS_qu.Services.StockValuation.AverageStrategy() 
-                            : new POS_qu.Services.StockValuation.FifoStrategy();
+                        IStockValuationStrategy strategy = CreateStockValuationStrategy(valMethod);
 
-                        strategy.AddStockIn(d.ItemId, 1, stockIn, d.TsdBuyPrice, con, tran);
+                        decimal unitCostPerBase = stockIn != 0 ? (d.TsdBuyPrice / conv) : 0m;
+                        strategy.AddStockIn(d.ItemId, 1, stockIn, unitCostPerBase, con, tran);
 
-                        decimal newStock = _repo.GetCurrentStock(con, tran, d.ItemId);
+                        decimal newStock = _repo.GetCurrentStockInWarehouse(con, tran, d.ItemId, 1);
                         _repo.InsertStockLog(con, tran, new StockLog
                         {
                             ProductId = d.ItemId,
                             TipeTransaksi = "return",
-                            QtyMasuk = d.TsdQuantity,
+                            QtyMasuk = stockIn,
                             QtyKeluar = 0,
                             SisaStock = newStock,
                             Keterangan = $"Return Transaction #{transaction.TsNumbering}",
                             UserId = sessionUser.UserId,
                             CreatedAt = DateTime.Now,
-                            LoginId = sessionUser.LoginId
+                            LoginId = sessionUser.LoginId,
+                            WarehouseId = 1,
+                            RefType = "RETURN",
+                            RefId = transactionId,
+                            UnitCost = unitCostPerBase,
+                            Method = valMethod
                         });
                     }
                 }
@@ -870,20 +839,86 @@ namespace POS_qu.Services
 
         //////////////////////////////////// END CICILAN //////////////
 
+        private void DeductStockFillBuyPriceAndLog(
+            NpgsqlConnection con,
+            NpgsqlTransaction tran,
+            List<TransactionDetail> details,
+            int warehouseId,
+            int transactionId,
+            string transactionNumbering,
+            int userId,
+            int? loginId)
+        {
+            foreach (var d in details)
+            {
+                if (d.ItemId <= 0) continue;
+                if (!_repo.IsInventoryItem(con, tran, d.ItemId)) continue;
 
+                decimal conv = d.TsdConversionRate <= 0 ? 1 : d.TsdConversionRate;
+                decimal qtyBase = d.TsdQuantity * conv;
+                if (qtyBase == 0) continue;
 
+                string method = _repo.GetItemValuationMethod(con, tran, d.ItemId);
+                var strategy = CreateStockValuationStrategy(method);
+                var deduction = strategy.CalculateCOGSAndDeductStock(d.ItemId, warehouseId, qtyBase, con, tran);
 
+                decimal unitCostPerSoldUnit = d.TsdQuantity != 0 ? (deduction.TotalCogs / d.TsdQuantity) : 0m;
+                d.TsdBuyPrice = Math.Round(unitCostPerSoldUnit, 2);
 
+                decimal newStock = _repo.GetCurrentStockInWarehouse(con, tran, d.ItemId, warehouseId);
+                int parentId = _repo.InsertStockLog(con, tran, new StockLog
+                {
+                    ProductId = d.ItemId,
+                    TipeTransaksi = "transaction",
+                    QtyMasuk = 0,
+                    QtyKeluar = qtyBase,
+                    SisaStock = newStock,
+                    Keterangan = $"Transaction #{transactionNumbering}",
+                    UserId = userId,
+                    CreatedAt = DateTime.Now,
+                    LoginId = loginId,
+                    WarehouseId = warehouseId,
+                    RefType = "SALE",
+                    RefId = transactionId,
+                    Method = method,
+                    IsAllocation = false
+                });
 
+                foreach (var line in deduction.Lines)
+                {
+                    if (line.Qty == 0) continue;
+                    _repo.InsertStockLog(con, tran, new StockLog
+                    {
+                        ProductId = d.ItemId,
+                        TipeTransaksi = "transaction",
+                        QtyMasuk = 0,
+                        QtyKeluar = line.Qty,
+                        SisaStock = newStock,
+                        Keterangan = null,
+                        UserId = userId,
+                        CreatedAt = DateTime.Now,
+                        LoginId = loginId,
+                        WarehouseId = warehouseId,
+                        RefType = "SALE",
+                        RefId = transactionId,
+                        UnitCost = line.UnitCost,
+                        Method = method,
+                        StockLayerId = line.StockLayerId,
+                        IsAllocation = true,
+                        ParentId = parentId
+                    });
+                }
+            }
+        }
+
+        private static IStockValuationStrategy CreateStockValuationStrategy(string method)
+        {
+            method = (method ?? "FIFO").Trim().ToUpperInvariant();
+            if (method == "AVG") return new POS_qu.Services.StockValuation.AverageStrategy();
+            if (method == "LIFO") return new POS_qu.Services.StockValuation.LifoStrategy();
+            if (method == "FEFO") return new POS_qu.Services.StockValuation.FefoStrategy();
+            return new POS_qu.Services.StockValuation.FifoStrategy();
+        }
 
     }
-
-
-
-
-
-
-
-
-
 }

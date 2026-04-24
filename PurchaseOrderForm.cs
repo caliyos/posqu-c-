@@ -229,16 +229,20 @@ namespace POS_qu
 
             try
             {
+                var ns = new POS_qu.Services.DocumentNumberingService();
+                var poNo = ns.Generate("PO", DateTime.Today, conn, tran);
+
                 // Insert header (purchase_orders)
                 string insertPO = @"
-            INSERT INTO purchase_orders (supplier_id, order_date, status, total_amount, note, created_by, warehouse_id)
-            VALUES (@supplier_id, CURRENT_DATE, @status, @total_amount, @note, @created_by, @warehouse_id)
+            INSERT INTO purchase_orders (po_number, supplier_id, order_date, status, total_amount, note, created_by, warehouse_id)
+            VALUES (@po_number, @supplier_id, CURRENT_DATE, @status, @total_amount, @note, @created_by, @warehouse_id)
             RETURNING id;";
 
                 decimal totalAmount = dgvOrderDetails.Rows.Cast<DataGridViewRow>()
                     .Sum(r => Convert.ToDecimal(r.Cells["subtotal"].Value ?? 0));
 
                 using var cmdPO = new NpgsqlCommand(insertPO, conn, tran);
+                cmdPO.Parameters.AddWithValue("@po_number", poNo);
                 
                 // Handling null supplier
                 if (cmbSupplier.SelectedValue != null && int.TryParse(cmbSupplier.SelectedValue.ToString(), out int supplierId))
@@ -288,7 +292,7 @@ namespace POS_qu
                 }
 
                 tran.Commit();
-                MessageBox.Show("Pesanan Pembelian berhasil disimpan!");
+                MessageBox.Show("Pesanan Pembelian berhasil disimpan!\nNo PO: " + poNo);
 
                 // kasih sinyal ke pemanggil
                 this.DialogResult = DialogResult.OK;

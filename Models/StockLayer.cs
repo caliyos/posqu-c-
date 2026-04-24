@@ -10,5 +10,6 @@ namespace POS_qu.Models
         public double QtyRemaining { get; set; }
         public decimal BuyPrice { get; set; }
         public DateTime CreatedAt { get; set; }
+        public DateTime? ExpiredAt { get; set; }
     }
 }

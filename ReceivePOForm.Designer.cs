@@ -63,12 +63,21 @@ namespace POS_qu
             cmbWarehouse = new ComboBox();
             lblStatus = new Label();
             cmbStatus = new ComboBox();
+            lblPurchaseNo = new Label();
+            txtPurchaseNo = new TextBox();
+            chkManualPurchaseNo = new CheckBox();
+            lblTaxMode = new Label();
+            cmbTaxMode = new ComboBox();
+            lblTaxRate = new Label();
+            numTaxRate = new NumericUpDown();
             
             dgvOrderDetails = new DataGridView();
             
             pnlFooter = new Panel();
             label2 = new Label();
             txtNote = new RichTextBox();
+            lblSubtotal = new Label();
+            lblTaxAmount = new Label();
             lblTotalAmount = new Label();
             btnSave = new Button();
 
@@ -80,6 +89,7 @@ namespace POS_qu
             pnlFooter.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvItems).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvOrderDetails).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)numTaxRate).BeginInit();
             SuspendLayout();
 
             // 
@@ -285,11 +295,18 @@ namespace POS_qu
             groupBoxPO.Controls.Add(lblOrderDate);
             groupBoxPO.Controls.Add(cmbSupplier);
             groupBoxPO.Controls.Add(lblSupplier);
+            groupBoxPO.Controls.Add(numTaxRate);
+            groupBoxPO.Controls.Add(lblTaxRate);
+            groupBoxPO.Controls.Add(cmbTaxMode);
+            groupBoxPO.Controls.Add(lblTaxMode);
+            groupBoxPO.Controls.Add(chkManualPurchaseNo);
+            groupBoxPO.Controls.Add(txtPurchaseNo);
+            groupBoxPO.Controls.Add(lblPurchaseNo);
             groupBoxPO.Dock = DockStyle.Top;
             groupBoxPO.Font = new Font("Segoe UI Semibold", 10F);
             groupBoxPO.Location = new Point(20, 20);
             groupBoxPO.Name = "groupBoxPO";
-            groupBoxPO.Size = new Size(860, 180);
+            groupBoxPO.Size = new Size(860, 240);
             groupBoxPO.TabIndex = 0;
             groupBoxPO.Text = "Informasi Pesanan";
 
@@ -324,6 +341,40 @@ namespace POS_qu
             cmbStatus.Size = new Size(200, 33);
             cmbStatus.DropDownStyle = ComboBoxStyle.DropDownList;
 
+            lblPurchaseNo.AutoSize = true;
+            lblPurchaseNo.Font = new Font("Segoe UI", 10F);
+            lblPurchaseNo.Location = new Point(580, 40);
+            lblPurchaseNo.Text = "No Pembelian:";
+
+            txtPurchaseNo.Location = new Point(580, 70);
+            txtPurchaseNo.Size = new Size(250, 34);
+
+            chkManualPurchaseNo.AutoSize = true;
+            chkManualPurchaseNo.Font = new Font("Segoe UI", 10F);
+            chkManualPurchaseNo.Location = new Point(580, 110);
+            chkManualPurchaseNo.Text = "Nomor manual";
+
+            lblTaxMode.AutoSize = true;
+            lblTaxMode.Font = new Font("Segoe UI", 10F);
+            lblTaxMode.Location = new Point(580, 140);
+            lblTaxMode.Text = "PPN:";
+
+            cmbTaxMode.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbTaxMode.Font = new Font("Segoe UI", 10F);
+            cmbTaxMode.Location = new Point(580, 170);
+            cmbTaxMode.Size = new Size(150, 33);
+
+            lblTaxRate.AutoSize = true;
+            lblTaxRate.Font = new Font("Segoe UI", 10F);
+            lblTaxRate.Location = new Point(740, 140);
+            lblTaxRate.Text = "Rate %:";
+
+            numTaxRate.DecimalPlaces = 2;
+            numTaxRate.Font = new Font("Segoe UI", 10F);
+            numTaxRate.Location = new Point(740, 170);
+            numTaxRate.Maximum = new decimal(new int[] { 1000, 0, 0, 0 });
+            numTaxRate.Size = new Size(90, 34);
+
 
             // dgvOrderDetails
             dgvOrderDetails.AllowUserToAddRows = false;
@@ -341,7 +392,7 @@ namespace POS_qu
             dgvOrderDetails.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle3;
             dgvOrderDetails.ColumnHeadersHeight = 45;
             dgvOrderDetails.EnableHeadersVisualStyles = false;
-            dgvOrderDetails.Location = new Point(20, 220);
+            dgvOrderDetails.Location = new Point(20, 280);
             dgvOrderDetails.Name = "dgvOrderDetails";
             dgvOrderDetails.RowHeadersVisible = false;
             dataGridViewCellStyle4.Alignment = DataGridViewContentAlignment.MiddleLeft;
@@ -353,7 +404,7 @@ namespace POS_qu
             dataGridViewCellStyle4.SelectionForeColor = Color.FromArgb(51, 51, 51);
             dgvOrderDetails.RowsDefaultCellStyle = dataGridViewCellStyle4;
             dgvOrderDetails.RowTemplate.Height = 45;
-            dgvOrderDetails.Size = new Size(860, 400);
+            dgvOrderDetails.Size = new Size(860, 340);
             dgvOrderDetails.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             dgvOrderDetails.TabIndex = 1;
 
@@ -362,6 +413,8 @@ namespace POS_qu
             pnlFooter.BackColor = Color.White;
             pnlFooter.Controls.Add(label2);
             pnlFooter.Controls.Add(txtNote);
+            pnlFooter.Controls.Add(lblSubtotal);
+            pnlFooter.Controls.Add(lblTaxAmount);
             pnlFooter.Controls.Add(lblTotalAmount);
             pnlFooter.Controls.Add(btnSave);
             pnlFooter.Dock = DockStyle.Bottom;
@@ -383,6 +436,16 @@ namespace POS_qu
             lblTotalAmount.Font = new Font("Segoe UI Bold", 16F);
             lblTotalAmount.Location = new Point(450, 45);
             lblTotalAmount.Text = "Total: Rp 0";
+
+            lblSubtotal.AutoSize = true;
+            lblSubtotal.Font = new Font("Segoe UI", 10F);
+            lblSubtotal.Location = new Point(450, 20);
+            lblSubtotal.Text = "Subtotal: Rp 0";
+
+            lblTaxAmount.AutoSize = true;
+            lblTaxAmount.Font = new Font("Segoe UI", 10F);
+            lblTaxAmount.Location = new Point(450, 80);
+            lblTaxAmount.Text = "PPN: Rp 0";
 
             btnSave.BackColor = Color.FromArgb(0, 150, 136);
             btnSave.FlatAppearance.BorderSize = 0;
@@ -419,6 +482,7 @@ namespace POS_qu
             pnlFooter.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dgvItems).EndInit();
             ((System.ComponentModel.ISupportInitialize)dgvOrderDetails).EndInit();
+            ((System.ComponentModel.ISupportInitialize)numTaxRate).EndInit();
             ResumeLayout(false);
         }
 
@@ -454,12 +518,21 @@ namespace POS_qu
         private ComboBox cmbWarehouse;
         private Label lblStatus;
         private ComboBox cmbStatus;
+        private Label lblPurchaseNo;
+        private TextBox txtPurchaseNo;
+        private CheckBox chkManualPurchaseNo;
+        private Label lblTaxMode;
+        private ComboBox cmbTaxMode;
+        private Label lblTaxRate;
+        private NumericUpDown numTaxRate;
         
         private DataGridView dgvOrderDetails;
         
         private Panel pnlFooter;
         private Label label2;
         private RichTextBox txtNote;
+        private Label lblSubtotal;
+        private Label lblTaxAmount;
         private Label lblTotalAmount;
         private Button btnSave;
     }

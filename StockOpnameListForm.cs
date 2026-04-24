@@ -24,41 +24,9 @@ namespace POS_qu
 
         private void StockOpnameListForm_Load(object sender, EventArgs e)
         {
-            EnsureTables();
             ApplyGridStyle(dgvOpnames);
             ApplyGridStyle(dgvItems);
             LoadOpnames();
-        }
-
-        private void EnsureTables()
-        {
-            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
-            con.Open();
-            using var cmd = new NpgsqlCommand(@"
-CREATE TABLE IF NOT EXISTS stock_opnames (
-  id BIGSERIAL PRIMARY KEY,
-  opname_no VARCHAR(50) NOT NULL,
-  opname_date DATE NOT NULL,
-  warehouse_id INT NOT NULL REFERENCES warehouses(id),
-  mode VARCHAR(20) NOT NULL,
-  created_by INT NULL,
-  created_at TIMESTAMP NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS stock_opname_items (
-  id BIGSERIAL PRIMARY KEY,
-  opname_id BIGINT NOT NULL REFERENCES stock_opnames(id) ON DELETE CASCADE,
-  item_id BIGINT NOT NULL REFERENCES items(id),
-  unit_id INT NOT NULL,
-  conversion DOUBLE PRECISION NOT NULL DEFAULT 1,
-  system_qty_base DOUBLE PRECISION NOT NULL DEFAULT 0,
-  physical_qty_input DOUBLE PRECISION NOT NULL DEFAULT 0,
-  physical_qty_base DOUBLE PRECISION NOT NULL DEFAULT 0,
-  diff_qty_base DOUBLE PRECISION NOT NULL DEFAULT 0,
-  note TEXT
-);
-", con);
-            cmd.ExecuteNonQuery();
         }
 
         private void LoadOpnames()
@@ -149,4 +117,3 @@ ORDER BY i.name
         }
     }
 }
-
