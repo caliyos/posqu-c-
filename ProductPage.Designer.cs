@@ -32,6 +32,9 @@ namespace POS_qu
         private TextBox txtActionSearch;
         private Button btnActionStockAdj;
         private Button btnActionRefresh;
+        private Button btnViewBase;
+        private Button btnViewAll;
+        private Button btnPrintBarcode;
 
         private void InitializeComponent()
         {
@@ -71,6 +74,9 @@ namespace POS_qu
             txtActionSearch = new TextBox();
             btnActionStockAdj = new Button();
             btnActionRefresh = new Button();
+            btnViewBase = new Button();
+            btnViewAll = new Button();
+            btnPrintBarcode = new Button();
             
             Panel topContainer = new Panel();
             Panel bottomContainer = new Panel();
@@ -198,6 +204,9 @@ namespace POS_qu
             actionPanel.Controls.Add(txtActionSearch);
             actionPanel.Controls.Add(btnActionStockAdj);
             actionPanel.Controls.Add(btnActionRefresh);
+            actionPanel.Controls.Add(btnViewBase);
+            actionPanel.Controls.Add(btnViewAll);
+            actionPanel.Controls.Add(btnPrintBarcode);
             actionPanel.Dock = DockStyle.Top;
             actionPanel.Height = 60;
             actionPanel.Name = "actionPanel";
@@ -238,6 +247,33 @@ namespace POS_qu
             btnActionStockAdj.Size = new Size(130, 32);
             btnActionStockAdj.Text = "Update Stock";
             btnActionStockAdj.Click += btnStockAdjs_Click;
+
+            // btnViewBase
+            btnViewBase.BackColor = Color.White;
+            btnViewBase.FlatStyle = FlatStyle.Flat;
+            btnViewBase.Font = new Font("Segoe UI", 10F);
+            btnViewBase.Location = new Point(680, 15);
+            btnViewBase.Size = new Size(110, 32);
+            btnViewBase.Text = "Base View";
+            btnViewBase.Click += btnViewBase_Click;
+
+            // btnViewAll
+            btnViewAll.BackColor = Color.White;
+            btnViewAll.FlatStyle = FlatStyle.Flat;
+            btnViewAll.Font = new Font("Segoe UI", 10F);
+            btnViewAll.Location = new Point(800, 15);
+            btnViewAll.Size = new Size(110, 32);
+            btnViewAll.Text = "All View";
+            btnViewAll.Click += btnViewAll_Click;
+
+            // btnPrintBarcode
+            btnPrintBarcode.BackColor = Color.White;
+            btnPrintBarcode.FlatStyle = FlatStyle.Flat;
+            btnPrintBarcode.Font = new Font("Segoe UI", 10F);
+            btnPrintBarcode.Location = new Point(920, 15);
+            btnPrintBarcode.Size = new Size(140, 32);
+            btnPrintBarcode.Text = "Print Barcode";
+            btnPrintBarcode.Click += btnPrintBarcode_Click;
             
             // 
             // bottomContainer

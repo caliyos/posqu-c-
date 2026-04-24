@@ -21,6 +21,16 @@ namespace POS_qu
         private int? editingItemId = null;
         private List<UnitVariant> unitVariantsFromForm = new List<UnitVariant>(); // Store globally if needed
         private Item _item;
+        private BindingList<ItemMaterial> _materialsFromForm = new BindingList<ItemMaterial>();
+        private DataTable _unitsTable;
+        private Dictionary<int, string> _unitNameById = new Dictionary<int, string>();
+        private readonly Dictionary<int, DataTable> _allowedUnitsByComponentItemId = new Dictionary<int, DataTable>();
+        private readonly Dictionary<int, DataTable> _baseUnitOnlyByComponentItemId = new Dictionary<int, DataTable>();
+        private readonly Dictionary<int, Dictionary<int, decimal>> _unitConversionByComponentItemId = new Dictionary<int, Dictionary<int, decimal>>();
+        private readonly Dictionary<int, int> _baseUnitIdByComponentItemId = new Dictionary<int, int>();
+        private readonly Dictionary<int, decimal> _baseBuyPriceByComponentItemId = new Dictionary<int, decimal>();
+        private bool _syncingAssemblySellPrice;
+        private bool _syncingMaterialsGrid;
 
         public ItemDetailForm()
         {
@@ -41,7 +51,6 @@ namespace POS_qu
             StartPosition = FormStartPosition.CenterScreen;
             InitializeComponent();
             _productService = new ProductService(new ProductRepository());
-            _item = item;
             editingItemId = item.id;
             // DISABLE STOK DI MODE EDIT
             txtStock.Enabled = false;     // ✅ yang benar
@@ -50,8 +59,19 @@ namespace POS_qu
             if (cmbWarehouse != null) cmbWarehouse.Enabled = false;
 
             InitializeForm();
-            LoadItem(item); // Mode Edit
+            _item = LoadFullItemForEdit(item);
+            LoadItem(_item); // Mode Edit
            
+        }
+
+        private Item LoadFullItemForEdit(Item item)
+        {
+            if (item == null || item.id <= 0) return item ?? new Item();
+
+            var detail = _productService.GetProductDetail(item.id) ?? item;
+            detail.UnitVariants = _productService.GetItemUnitVariants(item.id) ?? new List<UnitVariant>();
+            detail.Prices = _productService.GetItemPrices(item.id) ?? new List<ItemPrice>();
+            return detail;
         }
 
         private void InitializeForm()
@@ -60,11 +80,13 @@ namespace POS_qu
             LoadCombos();
             
             ApplyProfessionalStyle();
+            InitializeMaterialsTab();
 
             // Event handler margin
             txtBuyPrice.TextChanged += (s, e) => UpdateMargin();
             txtSellPrice.TextChanged += (s, e) => UpdateMargin();
             txtDiscountFormula.TextChanged += (s, e) => UpdateMargin();
+            txtSellPrice.TextChanged += (s, e) => SyncSellPriceToAssembly();
 
             // DataGridView harga bertingkat
             dgvMultiPrice.DataSource = new BindingList<ItemPrice>();
@@ -311,6 +333,10 @@ namespace POS_qu
             dgvMultiPrice.DataSource = new BindingList<ItemPrice>(prices);
             _item.Prices = prices; // Ensure it's in the object too
 
+            var variants = _productService.GetItemUnitVariants(_item.id);
+            _item.UnitVariants = variants ?? new List<UnitVariant>();
+            unitVariantsFromForm = _item.UnitVariants.ToList();
+
             if (_item.ExpiredAt.HasValue)
                 dtpExpired.Value = _item.ExpiredAt.Value;
 
@@ -319,6 +345,18 @@ namespace POS_qu
                 int idx = cmbValuation.FindStringExact(_item.valuation_method);
                 cmbValuation.SelectedIndex = idx >= 0 ? idx : 0;
             }
+
+            _materialsFromForm.Clear();
+            if (_item.MaterialsList != null)
+            {
+                foreach (var m in _item.MaterialsList)
+                {
+                    _materialsFromForm.Add(m);
+                }
+            }
+            EnsureMaterialRowsValid();
+            UpdateMaterialsTotals();
+            SyncSellPriceToAssembly();
 
             UpdateStockOutput();
             LoadUnitVariantsUI();
@@ -393,6 +431,7 @@ namespace POS_qu
             _item.IsSellable = chk_IsSellable.Checked;
             _item.RequireNotePayment = chk_RequireNotePayment.Checked;
             _item.is_changeprice_p = chk_is_changeprice_p.Checked;
+            chk_HasMaterials.Checked = _materialsFromForm.Count > 0;
             _item.HasMaterials = chk_HasMaterials.Checked;
             _item.IsPackage = chk_IsPackage.Checked;
             _item.IsProduced = chk_IsProduced.Checked;
@@ -406,6 +445,7 @@ namespace POS_qu
 
             // UnitVariants sudah ada di _item.UnitVariants (dari btnUnitVariant)
             _item.UnitVariants = unitVariantsFromForm;
+            _item.MaterialsList = _materialsFromForm.ToList();
 
             try
             {
@@ -703,7 +743,7 @@ namespace POS_qu
                     // Update the local list
                     unitVariantsFromForm = variantForm.UnitVariants;
                     _item.UnitVariants = variantForm.UnitVariants; // kalau mau langsung update item
-                    //LoadUnitVariantsUI(); // Refresh the tab
+                    LoadUnitVariantsUI();
                 }
             }
         }
@@ -712,6 +752,8 @@ namespace POS_qu
         {
             LoadUnitVariantsUI();
             //LoadPriceLevelsUI();
+            SyncSellPriceToAssembly();
+            UpdateMaterialsTotals();
         }
 
    
@@ -734,6 +776,364 @@ namespace POS_qu
 
             dgvVariants.DataSource = null; // Reset binding
             dgvVariants.DataSource = _item.UnitVariants;
+        }
+
+        private void InitializeMaterialsTab()
+        {
+            dgvMaterials.AutoGenerateColumns = false;
+            _unitsTable = _productService.GetUnits();
+            _unitNameById = new Dictionary<int, string>();
+            if (_unitsTable != null)
+            {
+                foreach (DataRow row in _unitsTable.Rows)
+                {
+                    if (row["id"] == DBNull.Value) continue;
+                    int id = Convert.ToInt32(row["id"]);
+                    string display = row["display"]?.ToString() ?? "";
+                    if (!_unitNameById.ContainsKey(id)) _unitNameById.Add(id, display);
+                }
+            }
+
+            dgvMaterials.DataSource = _materialsFromForm;
+            dgvMaterials.DataBindingComplete += (s, e) =>
+            {
+                _syncingMaterialsGrid = true;
+                try
+                {
+                    foreach (DataGridViewRow dgvr in dgvMaterials.Rows)
+                    {
+                        if (dgvr.Index < 0) continue;
+                        if (dgvr.DataBoundItem is not ItemMaterial row) continue;
+
+                        ApplyBestUnitsToComboCell(dgvr.Index, row.ComponentItemId);
+                        if (dgvr.Cells["colMaterialUnit"] is DataGridViewComboBoxCell cell)
+                        {
+                            cell.Value = row.UnitId;
+                        }
+                    }
+                }
+                finally
+                {
+                    _syncingMaterialsGrid = false;
+                }
+            };
+
+            dgvMaterials.CellContentClick += (s, e) =>
+            {
+                if (e.RowIndex < 0) return;
+                if (dgvMaterials.Rows[e.RowIndex].DataBoundItem is not ItemMaterial row) return;
+
+                var colName = dgvMaterials.Columns[e.ColumnIndex].Name;
+                if (colName == "colMaterialBaseUnit")
+                {
+                    ApplyBaseUnitToComboCell(e.RowIndex, row.ComponentItemId);
+                    ApplyUnitCostForMaterialRow(row);
+                    UpdateMaterialsTotals();
+                    dgvMaterials.Refresh();
+                    return;
+                }
+
+                if (colName != "colMaterialViewUnits") return;
+
+                ApplyAllowedUnitsToComboCell(e.RowIndex, row.ComponentItemId);
+
+                dgvMaterials.CurrentCell = dgvMaterials.Rows[e.RowIndex].Cells["colMaterialUnit"];
+                if (!dgvMaterials.BeginEdit(true)) return;
+
+                if (dgvMaterials.EditingControl is DataGridViewComboBoxEditingControl combo)
+                {
+                    combo.DroppedDown = true;
+                }
+            };
+
+            dgvMaterials.CellBeginEdit += (s, e) =>
+            {
+                if (e.RowIndex < 0) return;
+                if (dgvMaterials.Columns[e.ColumnIndex].Name != "colMaterialUnit") return;
+                if (dgvMaterials.Rows[e.RowIndex].DataBoundItem is not ItemMaterial row) return;
+
+                ApplyAllowedUnitsToComboCell(e.RowIndex, row.ComponentItemId);
+            };
+
+            dgvMaterials.CurrentCellDirtyStateChanged += (s, e) =>
+            {
+                if (dgvMaterials.IsCurrentCellDirty)
+                {
+                    dgvMaterials.CommitEdit(DataGridViewDataErrorContexts.Commit);
+                }
+            };
+            dgvMaterials.CellValueChanged += (s, e) =>
+            {
+                if (e.RowIndex < 0) return;
+                if (_syncingMaterialsGrid) return;
+                if (dgvMaterials.Rows[e.RowIndex].DataBoundItem is not ItemMaterial row) return;
+
+                if (dgvMaterials.Columns[e.ColumnIndex].Name == "colMaterialUnit")
+                {
+                    ApplyAllowedUnitsToComboCell(e.RowIndex, row.ComponentItemId);
+                    ApplyUnitCostForMaterialRow(row);
+                }
+                UpdateMaterialsTotals();
+                dgvMaterials.Refresh();
+            };
+            dgvMaterials.DataError += (s, e) => { e.ThrowException = false; };
+        }
+
+        private void EnsureMaterialRowsValid()
+        {
+            foreach (var row in _materialsFromForm)
+            {
+                ApplyAllowedUnitsToComboCellByRow(row);
+                ApplyUnitCostForMaterialRow(row);
+            }
+            dgvMaterials.Refresh();
+        }
+
+        private void ApplyAllowedUnitsToComboCellByRow(ItemMaterial row)
+        {
+            if (row == null || row.ComponentItemId <= 0) return;
+            int rowIndex = _materialsFromForm.IndexOf(row);
+            if (rowIndex < 0) return;
+            ApplyAllowedUnitsToComboCell(rowIndex, row.ComponentItemId);
+        }
+
+        private void ApplyAllowedUnitsToComboCell(int rowIndex, int componentItemId)
+        {
+            if (rowIndex < 0) return;
+            if (componentItemId <= 0) return;
+            if (dgvMaterials.Rows[rowIndex].DataBoundItem is not ItemMaterial row) return;
+
+            var allowed = GetAllowedUnitsForComponent(componentItemId);
+            if (dgvMaterials.Rows[rowIndex].Cells["colMaterialUnit"] is DataGridViewComboBoxCell cell)
+            {
+                cell.DataSource = allowed;
+                cell.DisplayMember = "display";
+                cell.ValueMember = "id";
+            }
+
+            if (allowed.Rows.Count == 0) return;
+            if (row.UnitId <= 0)
+            {
+                row.UnitId = Convert.ToInt32(allowed.Rows[0]["id"]);
+                return;
+            }
+
+            bool ok = allowed.AsEnumerable().Any(r => Convert.ToInt32(r["id"]) == row.UnitId);
+            if (!ok)
+            {
+                row.UnitId = Convert.ToInt32(allowed.Rows[0]["id"]);
+            }
+        }
+
+        private void ApplyBaseUnitToComboCell(int rowIndex, int componentItemId)
+        {
+            if (rowIndex < 0) return;
+            if (componentItemId <= 0) return;
+            if (dgvMaterials.Rows[rowIndex].DataBoundItem is not ItemMaterial row) return;
+
+            var baseOnly = GetBaseUnitOnlyForComponent(componentItemId);
+            if (dgvMaterials.Rows[rowIndex].Cells["colMaterialUnit"] is DataGridViewComboBoxCell cell)
+            {
+                cell.DataSource = baseOnly;
+                cell.DisplayMember = "display";
+                cell.ValueMember = "id";
+            }
+
+            if (baseOnly.Rows.Count == 0) return;
+            row.UnitId = Convert.ToInt32(baseOnly.Rows[0]["id"]);
+            dgvMaterials.Rows[rowIndex].Cells["colMaterialUnit"].Value = row.UnitId;
+        }
+
+        private void ApplyBestUnitsToComboCell(int rowIndex, int componentItemId)
+        {
+            if (rowIndex < 0) return;
+            if (componentItemId <= 0) return;
+            if (dgvMaterials.Rows[rowIndex].DataBoundItem is not ItemMaterial row) return;
+
+            if (!_baseUnitIdByComponentItemId.ContainsKey(componentItemId))
+            {
+                GetAllowedUnitsForComponent(componentItemId);
+            }
+
+            int baseUnitId = _baseUnitIdByComponentItemId.TryGetValue(componentItemId, out var bu) ? bu : 1;
+            if (row.UnitId == baseUnitId || row.UnitId <= 0)
+            {
+                ApplyBaseUnitToComboCell(rowIndex, componentItemId);
+            }
+            else
+            {
+                ApplyAllowedUnitsToComboCell(rowIndex, componentItemId);
+                dgvMaterials.Rows[rowIndex].Cells["colMaterialUnit"].Value = row.UnitId;
+            }
+        }
+
+        private DataTable GetAllowedUnitsForComponent(int componentItemId)
+        {
+            if (_allowedUnitsByComponentItemId.TryGetValue(componentItemId, out var cached)) return cached;
+
+            var detail = _productService.GetProductDetail(componentItemId);
+            int baseUnitId = detail?.unitid > 0 ? detail.unitid : 1;
+            decimal baseBuy = detail?.buy_price ?? 0m;
+            var variants = _productService.GetItemUnitVariants(componentItemId) ?? new List<UnitVariant>();
+
+            _baseUnitIdByComponentItemId[componentItemId] = baseUnitId;
+            _baseBuyPriceByComponentItemId[componentItemId] = baseBuy;
+
+            var unitIds = new HashSet<int>();
+            unitIds.Add(baseUnitId);
+            foreach (var v in variants)
+            {
+                if (v.UnitId > 0) unitIds.Add(v.UnitId);
+            }
+
+            var conversionMap = new Dictionary<int, decimal>();
+            conversionMap[baseUnitId] = 1m;
+            foreach (var v in variants)
+            {
+                if (v.UnitId <= 0) continue;
+                decimal conv = v.Conversion > 0 ? v.Conversion : 1;
+                conversionMap[v.UnitId] = conv;
+            }
+            _unitConversionByComponentItemId[componentItemId] = conversionMap;
+
+            var dt = new DataTable();
+            dt.Columns.Add("id", typeof(int));
+            dt.Columns.Add("display", typeof(string));
+            foreach (var id in unitIds)
+            {
+                string name = _unitNameById.TryGetValue(id, out var n) ? n : id.ToString();
+                dt.Rows.Add(id, name);
+            }
+
+            _allowedUnitsByComponentItemId[componentItemId] = dt;
+            return dt;
+        }
+
+        private DataTable GetBaseUnitOnlyForComponent(int componentItemId)
+        {
+            if (_baseUnitOnlyByComponentItemId.TryGetValue(componentItemId, out var cached)) return cached;
+
+            if (!_baseUnitIdByComponentItemId.ContainsKey(componentItemId))
+            {
+                GetAllowedUnitsForComponent(componentItemId);
+            }
+
+            int baseUnitId = _baseUnitIdByComponentItemId.TryGetValue(componentItemId, out var bu) ? bu : 1;
+            string name = _unitNameById.TryGetValue(baseUnitId, out var n) ? n : baseUnitId.ToString();
+
+            var dt = new DataTable();
+            dt.Columns.Add("id", typeof(int));
+            dt.Columns.Add("display", typeof(string));
+            dt.Rows.Add(baseUnitId, name);
+
+            _baseUnitOnlyByComponentItemId[componentItemId] = dt;
+            return dt;
+        }
+
+        private void ApplyUnitCostForMaterialRow(ItemMaterial row)
+        {
+            if (row == null || row.ComponentItemId <= 0) return;
+
+            if (!_baseBuyPriceByComponentItemId.ContainsKey(row.ComponentItemId))
+            {
+                GetAllowedUnitsForComponent(row.ComponentItemId);
+            }
+
+            decimal baseBuy = _baseBuyPriceByComponentItemId.TryGetValue(row.ComponentItemId, out var bp) ? bp : 0m;
+            int baseUnitId = _baseUnitIdByComponentItemId.TryGetValue(row.ComponentItemId, out var bu) ? bu : 1;
+
+            decimal conv = 1m;
+            if (_unitConversionByComponentItemId.TryGetValue(row.ComponentItemId, out var map))
+            {
+                if (row.UnitId > 0 && map.TryGetValue(row.UnitId, out var c)) conv = c;
+                else if (map.TryGetValue(baseUnitId, out var bc)) conv = bc;
+            }
+
+            row.UnitCost = baseBuy * conv;
+        }
+
+        private void btnAddMaterial_Click(object sender, EventArgs e)
+        {
+            using (var f = new SearchFormItem(""))
+            {
+                if (f.ShowDialog() != DialogResult.OK) return;
+                if (f.SelectedItem == null || f.SelectedItem.id <= 0) return;
+
+                var detail = _productService.GetProductDetail(f.SelectedItem.id);
+                if (detail == null) return;
+
+                var row = new ItemMaterial
+                {
+                    ComponentItemId = detail.id,
+                    ComponentName = detail.name ?? f.SelectedItem.name ?? "",
+                    Qty = 1m,
+                    UnitId = detail.unitid > 0 ? detail.unitid : 1,
+                    UnitCost = detail.buy_price
+                };
+                _materialsFromForm.Add(row);
+                ApplyAllowedUnitsToComboCellByRow(row);
+                ApplyUnitCostForMaterialRow(row);
+                UpdateMaterialsTotals();
+            }
+        }
+
+        private void btnRemoveMaterial_Click(object sender, EventArgs e)
+        {
+            if (dgvMaterials.CurrentRow?.DataBoundItem is not ItemMaterial row) return;
+            _materialsFromForm.Remove(row);
+            UpdateMaterialsTotals();
+        }
+
+        private void txtAssemblySellPrice_TextChanged(object sender, EventArgs e)
+        {
+            if (_syncingAssemblySellPrice) return;
+            _syncingAssemblySellPrice = true;
+            txtSellPrice.Text = txtAssemblySellPrice.Text;
+            _syncingAssemblySellPrice = false;
+            UpdateMaterialsTotals();
+        }
+
+        private void SyncSellPriceToAssembly()
+        {
+            if (_syncingAssemblySellPrice) return;
+            _syncingAssemblySellPrice = true;
+            txtAssemblySellPrice.Text = txtSellPrice.Text;
+            _syncingAssemblySellPrice = false;
+            UpdateAssemblyMargin();
+        }
+
+        private void UpdateMaterialsTotals()
+        {
+            decimal totalHpp = 0m;
+            foreach (var m in _materialsFromForm)
+            {
+                if (m == null) continue;
+                totalHpp += (m.Qty * m.UnitCost);
+            }
+
+            lblTotalHppValue.Text = totalHpp.ToString("N0");
+            if (_materialsFromForm.Count > 0)
+            {
+                txtBuyPrice.Text = totalHpp.ToString("0.##");
+            }
+            UpdateAssemblyMargin();
+        }
+
+        private void UpdateAssemblyMargin()
+        {
+            decimal totalHpp = 0m;
+            foreach (var m in _materialsFromForm)
+            {
+                if (m == null) continue;
+                totalHpp += (m.Qty * m.UnitCost);
+            }
+
+            decimal sellPrice = 0m;
+            decimal.TryParse(txtAssemblySellPrice.Text, out sellPrice);
+
+            decimal margin = sellPrice - totalHpp;
+            decimal marginPercent = totalHpp > 0 ? (margin / totalHpp) * 100m : 0m;
+            lblAssemblyMarginValue.Text = $"{margin:N0} ({marginPercent:+0.##;-0.##}%)";
         }
     }
 }

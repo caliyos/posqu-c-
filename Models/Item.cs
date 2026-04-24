@@ -80,5 +80,7 @@ namespace POS_qu.Models
         // VALUATION METHOD (FIFO / AVG)
         public string valuation_method { get; set; } = "FIFO";
 
+        public List<ItemMaterial> MaterialsList { get; set; } = new List<ItemMaterial>();
+
     }
 }

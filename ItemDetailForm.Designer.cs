@@ -69,6 +69,23 @@ namespace POS_qu
             btnAddPrice = new Button();
             dgvMultiPrice = new DataGridView();
             Bahan = new TabPage();
+            lblAssemblyTitle = new Label();
+            btnAddMaterial = new Button();
+            btnRemoveMaterial = new Button();
+            dgvMaterials = new DataGridView();
+            colMaterialItem = new DataGridViewTextBoxColumn();
+            colMaterialQty = new DataGridViewTextBoxColumn();
+            colMaterialBaseUnit = new DataGridViewButtonColumn();
+            colMaterialViewUnits = new DataGridViewButtonColumn();
+            colMaterialUnit = new DataGridViewComboBoxColumn();
+            colMaterialPrice = new DataGridViewTextBoxColumn();
+            colMaterialSubtotal = new DataGridViewTextBoxColumn();
+            lblTotalHppTitle = new Label();
+            lblTotalHppValue = new Label();
+            lblAssemblySellPrice = new Label();
+            txtAssemblySellPrice = new TextBox();
+            lblAssemblyMarginTitle = new Label();
+            lblAssemblyMarginValue = new Label();
             pnlPricing = new Panel();
             lblStockOut = new Label();
             lblStockValueHpp = new Label();
@@ -102,6 +119,7 @@ namespace POS_qu
             ((System.ComponentModel.ISupportInitialize)dgvVariants).BeginInit();
             Harga.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvMultiPrice).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dgvMaterials).BeginInit();
             pnlPricing.SuspendLayout();
             panel2.SuspendLayout();
             SuspendLayout();
@@ -342,7 +360,7 @@ namespace POS_qu
             chk_IsProduced.Name = "chk_IsProduced";
             chk_IsProduced.Size = new Size(139, 32);
             chk_IsProduced.TabIndex = 14;
-            chk_IsProduced.Text = "Di produksi";
+            chk_IsProduced.Text = "Rakitan (ASM)";
             chk_IsProduced.UseVisualStyleBackColor = true;
             // 
             // chk_IsPackage
@@ -583,13 +601,205 @@ namespace POS_qu
             // 
             // Bahan
             // 
+            Bahan.Controls.Add(lblAssemblyMarginValue);
+            Bahan.Controls.Add(lblAssemblyMarginTitle);
+            Bahan.Controls.Add(txtAssemblySellPrice);
+            Bahan.Controls.Add(lblAssemblySellPrice);
+            Bahan.Controls.Add(lblTotalHppValue);
+            Bahan.Controls.Add(lblTotalHppTitle);
+            Bahan.Controls.Add(dgvMaterials);
+            Bahan.Controls.Add(btnRemoveMaterial);
+            Bahan.Controls.Add(btnAddMaterial);
+            Bahan.Controls.Add(lblAssemblyTitle);
             Bahan.Location = new Point(4, 38);
             Bahan.Margin = new Padding(2);
             Bahan.Name = "Bahan";
             Bahan.Size = new Size(1159, 387);
             Bahan.TabIndex = 2;
-            Bahan.Text = "Item Berbahan";
+            Bahan.Text = "Item Berbahan / Rakitan";
             Bahan.UseVisualStyleBackColor = true;
+            // 
+            // lblAssemblyTitle
+            // 
+            lblAssemblyTitle.AutoSize = true;
+            lblAssemblyTitle.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            lblAssemblyTitle.Location = new Point(16, 16);
+            lblAssemblyTitle.Margin = new Padding(2, 0, 2, 0);
+            lblAssemblyTitle.Name = "lblAssemblyTitle";
+            lblAssemblyTitle.Size = new Size(246, 28);
+            lblAssemblyTitle.TabIndex = 0;
+            lblAssemblyTitle.Text = "Komponen Item Rakitan";
+            // 
+            // btnAddMaterial
+            // 
+            btnAddMaterial.BackColor = Color.FromArgb(40, 167, 69);
+            btnAddMaterial.FlatAppearance.BorderSize = 0;
+            btnAddMaterial.FlatStyle = FlatStyle.Flat;
+            btnAddMaterial.ForeColor = Color.White;
+            btnAddMaterial.Location = new Point(16, 56);
+            btnAddMaterial.Margin = new Padding(2);
+            btnAddMaterial.Name = "btnAddMaterial";
+            btnAddMaterial.Size = new Size(160, 35);
+            btnAddMaterial.TabIndex = 1;
+            btnAddMaterial.Text = "Tambah Item";
+            btnAddMaterial.UseVisualStyleBackColor = false;
+            btnAddMaterial.Click += btnAddMaterial_Click;
+            // 
+            // btnRemoveMaterial
+            // 
+            btnRemoveMaterial.BackColor = Color.FromArgb(220, 53, 69);
+            btnRemoveMaterial.FlatAppearance.BorderSize = 0;
+            btnRemoveMaterial.FlatStyle = FlatStyle.Flat;
+            btnRemoveMaterial.ForeColor = Color.White;
+            btnRemoveMaterial.Location = new Point(188, 56);
+            btnRemoveMaterial.Margin = new Padding(2);
+            btnRemoveMaterial.Name = "btnRemoveMaterial";
+            btnRemoveMaterial.Size = new Size(160, 35);
+            btnRemoveMaterial.TabIndex = 2;
+            btnRemoveMaterial.Text = "Hapus Item";
+            btnRemoveMaterial.UseVisualStyleBackColor = false;
+            btnRemoveMaterial.Click += btnRemoveMaterial_Click;
+            // 
+            // dgvMaterials
+            // 
+            dgvMaterials.AllowUserToAddRows = false;
+            dgvMaterials.BackgroundColor = Color.White;
+            dgvMaterials.BorderStyle = BorderStyle.None;
+            dgvMaterials.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dgvMaterials.Columns.AddRange(new DataGridViewColumn[] { colMaterialItem, colMaterialQty, colMaterialBaseUnit, colMaterialViewUnits, colMaterialUnit, colMaterialPrice, colMaterialSubtotal });
+            dgvMaterials.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvMaterials.Location = new Point(16, 104);
+            dgvMaterials.Margin = new Padding(2);
+            dgvMaterials.Name = "dgvMaterials";
+            dgvMaterials.RowHeadersVisible = false;
+            dgvMaterials.RowHeadersWidth = 62;
+            dgvMaterials.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvMaterials.Size = new Size(1124, 190);
+            dgvMaterials.TabIndex = 3;
+            // 
+            // colMaterialItem
+            // 
+            colMaterialItem.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            colMaterialItem.DataPropertyName = "ComponentName";
+            colMaterialItem.HeaderText = "Item";
+            colMaterialItem.MinimumWidth = 8;
+            colMaterialItem.Name = "colMaterialItem";
+            colMaterialItem.ReadOnly = true;
+            // 
+            // colMaterialQty
+            // 
+            colMaterialQty.DataPropertyName = "Qty";
+            colMaterialQty.HeaderText = "Qty";
+            colMaterialQty.MinimumWidth = 8;
+            colMaterialQty.Name = "colMaterialQty";
+            colMaterialQty.Width = 90;
+            // 
+            // colMaterialBaseUnit
+            // 
+            colMaterialBaseUnit.HeaderText = "";
+            colMaterialBaseUnit.MinimumWidth = 8;
+            colMaterialBaseUnit.Name = "colMaterialBaseUnit";
+            colMaterialBaseUnit.Text = "BASE";
+            colMaterialBaseUnit.UseColumnTextForButtonValue = true;
+            colMaterialBaseUnit.Width = 60;
+            // 
+            // colMaterialViewUnits
+            // 
+            colMaterialViewUnits.HeaderText = "";
+            colMaterialViewUnits.MinimumWidth = 8;
+            colMaterialViewUnits.Name = "colMaterialViewUnits";
+            colMaterialViewUnits.Text = "ALL";
+            colMaterialViewUnits.UseColumnTextForButtonValue = true;
+            colMaterialViewUnits.Width = 50;
+            // 
+            // colMaterialUnit
+            // 
+            colMaterialUnit.DataPropertyName = "UnitId";
+            colMaterialUnit.DisplayMember = "display";
+            colMaterialUnit.HeaderText = "Satuan";
+            colMaterialUnit.MinimumWidth = 8;
+            colMaterialUnit.Name = "colMaterialUnit";
+            colMaterialUnit.ValueMember = "id";
+            colMaterialUnit.Width = 140;
+            // 
+            // colMaterialPrice
+            // 
+            colMaterialPrice.DataPropertyName = "UnitCost";
+            colMaterialPrice.HeaderText = "Harga";
+            colMaterialPrice.MinimumWidth = 8;
+            colMaterialPrice.Name = "colMaterialPrice";
+            colMaterialPrice.ReadOnly = true;
+            colMaterialPrice.Width = 140;
+            // 
+            // colMaterialSubtotal
+            // 
+            colMaterialSubtotal.DataPropertyName = "Subtotal";
+            colMaterialSubtotal.HeaderText = "Total";
+            colMaterialSubtotal.MinimumWidth = 8;
+            colMaterialSubtotal.Name = "colMaterialSubtotal";
+            colMaterialSubtotal.ReadOnly = true;
+            colMaterialSubtotal.Width = 160;
+            // 
+            // lblTotalHppTitle
+            // 
+            lblTotalHppTitle.AutoSize = true;
+            lblTotalHppTitle.Location = new Point(16, 312);
+            lblTotalHppTitle.Margin = new Padding(2, 0, 2, 0);
+            lblTotalHppTitle.Name = "lblTotalHppTitle";
+            lblTotalHppTitle.Size = new Size(111, 20);
+            lblTotalHppTitle.TabIndex = 4;
+            lblTotalHppTitle.Text = "Harga Pokok (HPP)";
+            // 
+            // lblTotalHppValue
+            // 
+            lblTotalHppValue.AutoSize = true;
+            lblTotalHppValue.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblTotalHppValue.Location = new Point(188, 308);
+            lblTotalHppValue.Margin = new Padding(2, 0, 2, 0);
+            lblTotalHppValue.Name = "lblTotalHppValue";
+            lblTotalHppValue.Size = new Size(18, 23);
+            lblTotalHppValue.TabIndex = 5;
+            lblTotalHppValue.Text = "0";
+            // 
+            // lblAssemblySellPrice
+            // 
+            lblAssemblySellPrice.AutoSize = true;
+            lblAssemblySellPrice.Location = new Point(16, 344);
+            lblAssemblySellPrice.Margin = new Padding(2, 0, 2, 0);
+            lblAssemblySellPrice.Name = "lblAssemblySellPrice";
+            lblAssemblySellPrice.Size = new Size(79, 20);
+            lblAssemblySellPrice.TabIndex = 6;
+            lblAssemblySellPrice.Text = "Harga Jual";
+            // 
+            // txtAssemblySellPrice
+            // 
+            txtAssemblySellPrice.Location = new Point(188, 340);
+            txtAssemblySellPrice.Margin = new Padding(2);
+            txtAssemblySellPrice.Name = "txtAssemblySellPrice";
+            txtAssemblySellPrice.Size = new Size(220, 27);
+            txtAssemblySellPrice.TabIndex = 7;
+            txtAssemblySellPrice.TextChanged += txtAssemblySellPrice_TextChanged;
+            // 
+            // lblAssemblyMarginTitle
+            // 
+            lblAssemblyMarginTitle.AutoSize = true;
+            lblAssemblyMarginTitle.Location = new Point(430, 344);
+            lblAssemblyMarginTitle.Margin = new Padding(2, 0, 2, 0);
+            lblAssemblyMarginTitle.Name = "lblAssemblyMarginTitle";
+            lblAssemblyMarginTitle.Size = new Size(56, 20);
+            lblAssemblyMarginTitle.TabIndex = 8;
+            lblAssemblyMarginTitle.Text = "Margin";
+            // 
+            // lblAssemblyMarginValue
+            // 
+            lblAssemblyMarginValue.AutoSize = true;
+            lblAssemblyMarginValue.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
+            lblAssemblyMarginValue.Location = new Point(510, 340);
+            lblAssemblyMarginValue.Margin = new Padding(2, 0, 2, 0);
+            lblAssemblyMarginValue.Name = "lblAssemblyMarginValue";
+            lblAssemblyMarginValue.Size = new Size(18, 23);
+            lblAssemblyMarginValue.TabIndex = 9;
+            lblAssemblyMarginValue.Text = "0";
             // 
             // pnlPricing
             // 
@@ -938,6 +1148,7 @@ namespace POS_qu
             ((System.ComponentModel.ISupportInitialize)dgvVariants).EndInit();
             Harga.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvMultiPrice).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dgvMaterials).EndInit();
             pnlPricing.ResumeLayout(false);
             pnlPricing.PerformLayout();
             panel2.ResumeLayout(false);
@@ -1016,5 +1227,22 @@ namespace POS_qu
         private DataGridView dgvVariants;
         private ComboBox cmbSort;
         private Label label13;
+        private Label lblAssemblyTitle;
+        private Button btnAddMaterial;
+        private Button btnRemoveMaterial;
+        private DataGridView dgvMaterials;
+        private DataGridViewTextBoxColumn colMaterialItem;
+        private DataGridViewTextBoxColumn colMaterialQty;
+        private DataGridViewButtonColumn colMaterialBaseUnit;
+        private DataGridViewButtonColumn colMaterialViewUnits;
+        private DataGridViewComboBoxColumn colMaterialUnit;
+        private DataGridViewTextBoxColumn colMaterialPrice;
+        private DataGridViewTextBoxColumn colMaterialSubtotal;
+        private Label lblTotalHppTitle;
+        private Label lblTotalHppValue;
+        private Label lblAssemblySellPrice;
+        private TextBox txtAssemblySellPrice;
+        private Label lblAssemblyMarginTitle;
+        private Label lblAssemblyMarginValue;
     }
 }

@@ -17,7 +17,6 @@ using POS_qu.Services;
 using POS_qu.Repositories;
 using System.Transactions;
 using System.Security.Cryptography.Xml;
-using DocumentFormat.OpenXml.Office2010.Excel;
 using Npgsql;
 
 namespace POS_qu
@@ -31,6 +30,7 @@ namespace POS_qu
         private DataGridViewManager dgvManager;
         private List<UnitVariant> unitVariantsFromForm = new List<UnitVariant>(); // Store globally if needed
         private System.Data.DataTable _dtFull;
+        private bool _viewAllUnits;
 
         private readonly IActivityService _activityService;
         private readonly IStockAdjustmentService _stockService;
@@ -152,6 +152,7 @@ namespace POS_qu
 
             dataGridView1.CellClick += dataGridView1_CellClick;
             dataGridView1.DataBindingComplete += (s, ev) => { ConfigureGridColumns(); UpdateSummaryFromGrid(); };
+            dataGridView1.CellFormatting += dataGridView1_CellFormatting;
             dataGridView1.CellDoubleClick += (s, ev) =>
             {
                 if (ev.RowIndex < 0) return;
@@ -183,6 +184,81 @@ namespace POS_qu
             }
         }
 
+        private void btnViewBase_Click(object sender, EventArgs e)
+        {
+            _viewAllUnits = false;
+            LoadItems();
+        }
+
+        private void btnViewAll_Click(object sender, EventArgs e)
+        {
+            _viewAllUnits = true;
+            LoadItems();
+        }
+
+        private void btnPrintBarcode_Click(object sender, EventArgs e)
+        {
+            var ids = new HashSet<int>();
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (row.IsNewRow) continue;
+                if (!Convert.ToBoolean(row.Cells["chkSelect"].Value ?? false)) continue;
+                if (row.Cells["id"]?.Value == null) continue;
+                ids.Add(Convert.ToInt32(row.Cells["id"].Value));
+            }
+
+            using var f = new BarcodePrintForm(ids);
+            f.ShowDialog(this);
+        }
+
+        private void UpdateViewModeButtonsAppearance()
+        {
+            if (btnViewBase == null || btnViewAll == null) return;
+
+            if (_viewAllUnits)
+            {
+                btnViewAll.BackColor = Color.FromArgb(0, 120, 215);
+                btnViewAll.ForeColor = Color.White;
+                btnViewBase.BackColor = Color.White;
+                btnViewBase.ForeColor = Color.Black;
+            }
+            else
+            {
+                btnViewBase.BackColor = Color.FromArgb(0, 120, 215);
+                btnViewBase.ForeColor = Color.White;
+                btnViewAll.BackColor = Color.White;
+                btnViewAll.ForeColor = Color.Black;
+            }
+        }
+
+        private void dataGridView1_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (!_viewAllUnits) return;
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            if (dataGridView1.Columns[e.ColumnIndex].Name != "stock") return;
+
+            var row = dataGridView1.Rows[e.RowIndex];
+            if (row.DataBoundItem is not DataRowView drv) return;
+            var dr = drv.Row;
+
+            if (!dr.Table.Columns.Contains("is_variant") || dr["is_variant"] == DBNull.Value) return;
+            bool isVariant = Convert.ToBoolean(dr["is_variant"]);
+            if (!isVariant) return;
+
+            decimal stock = 0m;
+            if (dr.Table.Columns.Contains("stock") && dr["stock"] != DBNull.Value) decimal.TryParse(dr["stock"].ToString(), out stock);
+            decimal min = 0m;
+            if (dr.Table.Columns.Contains("min_stock") && dr["min_stock"] != DBNull.Value) decimal.TryParse(dr["min_stock"].ToString(), out min);
+
+            if (min > 0m && stock <= min)
+            {
+                e.CellStyle.BackColor = Color.FromArgb(217, 83, 79);
+                e.CellStyle.ForeColor = Color.White;
+                e.CellStyle.SelectionBackColor = Color.FromArgb(217, 83, 79);
+                e.CellStyle.SelectionForeColor = Color.White;
+            }
+        }
+
 
         private void btnEdit_Click(object sender, EventArgs e)
         {
@@ -209,31 +285,12 @@ namespace POS_qu
             DataGridViewRow rowSelected = selectedRows[0];
             int itemId = Convert.ToInt32(rowSelected.Cells["id"].Value);
 
-            // Mapping manual dari DataGridView ke Item seperti sebelumnya
-            Item selectedItem = new Item
+            var selectedItem = _productService.GetProductDetail(itemId);
+            if (selectedItem == null)
             {
-                id = itemId,
-                name = rowSelected.Cells["name"].Value.ToString(),
-                buy_price = Convert.ToDecimal(rowSelected.Cells["buy_price"].Value),
-                sell_price = Convert.ToDecimal(rowSelected.Cells["sell_price"].Value),
-                stock = Convert.ToInt32(rowSelected.Cells["stock"].Value),
-                barcode = rowSelected.Cells["barcode"].Value.ToString(),
-                unitid = rowSelected.Cells["unit_id"].Value == DBNull.Value ? 1 : Convert.ToInt32(rowSelected.Cells["unit_id"].Value),
-                unit = rowSelected.Cells["unit_name"].Value.ToString(),
-                category_id = rowSelected.Cells["category_id"].Value == DBNull.Value ? 0 : Convert.ToInt32(rowSelected.Cells["category_id"].Value),
-                supplier_id = rowSelected.Cells["supplier_id"].Value == DBNull.Value ? 0 : Convert.ToInt32(rowSelected.Cells["supplier_id"].Value),
-                note = rowSelected.Cells["note"].Value.ToString(),
-                picture = rowSelected.Cells["picture"].Value?.ToString(),
-                is_inventory_p = Convert.ToBoolean(rowSelected.Cells["is_inventory_p"].Value),
-                IsPurchasable = Convert.ToBoolean(rowSelected.Cells["is_purchasable"].Value),
-                IsSellable = Convert.ToBoolean(rowSelected.Cells["is_sellable"].Value),
-                RequireNotePayment = Convert.ToBoolean(rowSelected.Cells["is_note_payment"].Value),
-                is_changeprice_p = Convert.ToBoolean(rowSelected.Cells["is_changeprice_p"].Value),
-                discount_formula = rowSelected.Cells["discount_formula"].Value.ToString(),
-                HasMaterials = Convert.ToBoolean(rowSelected.Cells["is_have_bahan"].Value),
-                IsPackage = Convert.ToBoolean(rowSelected.Cells["is_box"].Value),
-                IsProduced = Convert.ToBoolean(rowSelected.Cells["is_produksi"].Value)
-            };
+                MessageBox.Show("Item tidak ditemukan.");
+                return;
+            }
 
             selectedItem.UnitVariants = _productService.GetItemUnitVariants(itemId);
 
@@ -247,7 +304,7 @@ namespace POS_qu
 
         private void btnDelete_Click_1(object sender, EventArgs e)
         {
-            var selectedItems = new List<int>();
+            var selectedItems = new HashSet<int>();
 
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
@@ -293,52 +350,19 @@ namespace POS_qu
             dataGridView1.MultiSelect = false;
 
             _productService = new ProductService(new ProductRepository());
-            DataTable dt = _productService.GetAllProducts();
+            DataTable dt = _viewAllUnits ? GetAllProductsExpandedByUnitVariant() : _productService.GetAllProducts();
             _dtFull = dt?.Copy();
 
-            // Tambahkan kolom dummy untuk variant
-            if (!dt.Columns.Contains("btnVariant"))
-                dt.Columns.Add("btnVariant", typeof(string));
-
-            // 1️⃣ Tambahkan kolom dummy di DataTable
-            if (!dt.Columns.Contains("UnitVariant"))
-                dt.Columns.Add("UnitVariant", typeof(string));
-            // 1b️⃣ Tambahkan kolom nilai stok dan nilai jual
-            if (!dt.Columns.Contains("stock_value"))
-                dt.Columns.Add("stock_value", typeof(decimal));
-            if (!dt.Columns.Contains("retail_value"))
-                dt.Columns.Add("retail_value", typeof(decimal));
-
-            // 2️⃣ Isi "+" jika item punya variant
-            foreach (DataRow row in dt.Rows)
+            if (dt == null)
             {
-                int itemId = Convert.ToInt32(row["id"]);
-                var variants = _productService.GetItemUnitVariants(itemId);
-                row["UnitVariant"] = variants.Count > 0 ? "+" : "";
-                // Hitung nilai
-                try
-                {
-                    decimal buy = row.Table.Columns.Contains("buy_price") && row["buy_price"] != DBNull.Value ? Convert.ToDecimal(row["buy_price"]) : 0m;
-                    decimal sell = row.Table.Columns.Contains("sell_price") && row["sell_price"] != DBNull.Value ? Convert.ToDecimal(row["sell_price"]) : 0m;
-                    int stok = row.Table.Columns.Contains("stock") && row["stock"] != DBNull.Value ? Convert.ToInt32(row["stock"]) : 0;
-                    row["stock_value"] = buy * stok;
-                    row["retail_value"] = sell * stok;
-                }
-                catch
-                {
-                    row["stock_value"] = 0m;
-                    row["retail_value"] = 0m;
-                }
+                dataGridView1.DataSource = null;
+                return;
             }
 
+            EnsureValueColumns(dt);
+            UpdateValueColumns(dt);
 
-
-            // 3️⃣ Bind ke DataGridView
             dataGridView1.DataSource = dt;
-
-            // 4️⃣ Pindahkan kolom UnitVariant ke posisi pertama
-            if (dataGridView1.Columns.Contains("UnitVariant"))
-                dataGridView1.Columns["UnitVariant"].DisplayIndex = 1;
             if (dataGridView1.Columns.Contains("stock_value"))
             {
                 dataGridView1.Columns["stock_value"].HeaderText = "Nilai Stok (HPP)";
@@ -352,17 +376,15 @@ namespace POS_qu
                 dataGridView1.Columns["retail_value"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
 
-            if (!dataGridView1.Columns.Contains("chkSelect"))
-            {
-                var chkColumn = new DataGridViewCheckBoxColumn();
-                chkColumn.Name = "chkSelect";
-                chkColumn.HeaderText = ""; // bisa tambahkan "Pilih"
-                chkColumn.Width = 30;
-                dataGridView1.Columns.Insert(0, chkColumn);
-            }
-
             dgvManager = new DataGridViewManager(dataGridView1, dt, 100);
             dgvManager.PagingInfoLabel = lblPagingInfo;
+            dgvManager.OnAfterLoadPage += () =>
+            {
+                EnsureSelectCheckboxColumn();
+                ApplyProfessionalGridStyle();
+                ConfigureGridColumns();
+                UpdateSummaryFromGrid();
+            };
             dgvManager.LoadPage();
 
             cmbPageSize.Items.AddRange(new object[] { "10", "50", "100", "200", "500", "1000" });
@@ -371,6 +393,124 @@ namespace POS_qu
 
             ApplyProfessionalGridStyle();
             UpdateSummaryFromGrid();
+            UpdateViewModeButtonsAppearance();
+        }
+
+        private void EnsureSelectCheckboxColumn()
+        {
+            if (dataGridView1.Columns.Contains("chkSelect")) return;
+
+            var chkColumn = new DataGridViewCheckBoxColumn
+            {
+                Name = "chkSelect",
+                HeaderText = "",
+                Width = 30,
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.None
+            };
+            dataGridView1.Columns.Insert(0, chkColumn);
+        }
+
+        private void EnsureValueColumns(DataTable dt)
+        {
+            if (!dt.Columns.Contains("stock_value"))
+                dt.Columns.Add("stock_value", typeof(decimal));
+            if (!dt.Columns.Contains("retail_value"))
+                dt.Columns.Add("retail_value", typeof(decimal));
+        }
+
+        private void UpdateValueColumns(DataTable dt)
+        {
+            foreach (DataRow row in dt.Rows)
+            {
+                try
+                {
+                    decimal buy = row.Table.Columns.Contains("buy_price") && row["buy_price"] != DBNull.Value ? Convert.ToDecimal(row["buy_price"]) : 0m;
+                    decimal sell = row.Table.Columns.Contains("sell_price") && row["sell_price"] != DBNull.Value ? Convert.ToDecimal(row["sell_price"]) : 0m;
+                    decimal stok = row.Table.Columns.Contains("stock") && row["stock"] != DBNull.Value ? Convert.ToDecimal(row["stock"]) : 0m;
+                    row["stock_value"] = buy * stok;
+                    row["retail_value"] = sell * stok;
+                }
+                catch
+                {
+                    row["stock_value"] = 0m;
+                    row["retail_value"] = 0m;
+                }
+            }
+        }
+
+        private DataTable GetAllProductsExpandedByUnitVariant()
+        {
+            var baseDt = _productService.GetAllProducts();
+            if (baseDt == null) return null;
+
+            var dt = baseDt.Clone();
+            if (!dt.Columns.Contains("min_stock")) dt.Columns.Add("min_stock", typeof(decimal));
+            if (!dt.Columns.Contains("conversion")) dt.Columns.Add("conversion", typeof(int));
+            if (!dt.Columns.Contains("is_variant")) dt.Columns.Add("is_variant", typeof(bool));
+            if (!dt.Columns.Contains("base_stock")) dt.Columns.Add("base_stock", typeof(decimal));
+            if (!dt.Columns.Contains("base_buy_price")) dt.Columns.Add("base_buy_price", typeof(decimal));
+
+            foreach (DataRow src in baseDt.Rows)
+            {
+                int itemId = src["id"] != DBNull.Value ? Convert.ToInt32(src["id"]) : 0;
+                if (itemId <= 0) continue;
+
+                decimal baseStock = src.Table.Columns.Contains("stock") && src["stock"] != DBNull.Value ? Convert.ToDecimal(src["stock"]) : 0m;
+                decimal baseBuy = src.Table.Columns.Contains("buy_price") && src["buy_price"] != DBNull.Value ? Convert.ToDecimal(src["buy_price"]) : 0m;
+                int baseUnitId = src.Table.Columns.Contains("unit_id") && src["unit_id"] != DBNull.Value ? Convert.ToInt32(src["unit_id"]) : 0;
+
+                var baseRow = dt.NewRow();
+                foreach (DataColumn c in baseDt.Columns)
+                    baseRow[c.ColumnName] = src[c.ColumnName];
+                baseRow["min_stock"] = 0m;
+                baseRow["conversion"] = 1;
+                baseRow["is_variant"] = false;
+                baseRow["base_stock"] = baseStock;
+                baseRow["base_buy_price"] = baseBuy;
+                dt.Rows.Add(baseRow);
+
+                var variants = _productService.GetItemUnitVariants(itemId) ?? new List<UnitVariant>();
+                foreach (var v in variants)
+                {
+                    if (v == null) continue;
+                    if (v.UnitId == baseUnitId) continue;
+                    if (v.Conversion <= 0) continue;
+
+                    var r = dt.NewRow();
+                    foreach (DataColumn c in baseDt.Columns)
+                        r[c.ColumnName] = src[c.ColumnName];
+
+                    if (dt.Columns.Contains("unit_id")) r["unit_id"] = v.UnitId;
+                    if (dt.Columns.Contains("unit_name")) r["unit_name"] = v.UnitName ?? "";
+                    if (dt.Columns.Contains("sell_price")) r["sell_price"] = v.SellPrice;
+                    if (dt.Columns.Contains("buy_price")) r["buy_price"] = baseBuy * v.Conversion;
+                    if (dt.Columns.Contains("stock"))
+                    {
+                        var stockColType = dt.Columns["stock"].DataType;
+                        var stockConv = baseStock / v.Conversion;
+                        if (stockColType == typeof(int) || stockColType == typeof(long) || stockColType == typeof(short))
+                        {
+                            var floored = stockConv < 0m ? 0m : Math.Floor(stockConv);
+                            if (stockColType == typeof(int)) r["stock"] = Convert.ToInt32(floored);
+                            else if (stockColType == typeof(short)) r["stock"] = Convert.ToInt16(floored);
+                            else r["stock"] = Convert.ToInt64(floored);
+                        }
+                        else
+                        {
+                            r["stock"] = stockConv;
+                        }
+                    }
+
+                    r["min_stock"] = v.MinQty;
+                    r["conversion"] = v.Conversion;
+                    r["is_variant"] = true;
+                    r["base_stock"] = baseStock;
+                    r["base_buy_price"] = baseBuy;
+                    dt.Rows.Add(r);
+                }
+            }
+
+            return dt;
         }
 
 
@@ -806,7 +946,7 @@ namespace POS_qu
 
         private void btnStockAdjs_Click(object sender, EventArgs e)
         {
-            var selectedItems = new List<int>();
+            var selectedItems = new HashSet<int>();
 
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
@@ -912,24 +1052,56 @@ namespace POS_qu
             try
             {
                 int rows = dataGridView1.Rows.Count;
-                long sumQty = 0;
+                decimal sumQty = 0m;
                 decimal sumStockValue = 0m, sumRetailValue = 0m;
                 int invCount = 0, nonInvCount = 0;
-                foreach (DataGridViewRow r in dataGridView1.Rows)
+
+                if (_viewAllUnits)
                 {
-                    if (r.IsNewRow) continue;
-                    int q = 0;
-                    if (r.Cells["stock"]?.Value != null && int.TryParse(r.Cells["stock"].Value.ToString(), out var qtmp)) q = qtmp;
-                    sumQty += q;
-                    if (r.Cells["stock_value"]?.Value != null && decimal.TryParse(r.Cells["stock_value"].Value.ToString(), out var sv)) sumStockValue += sv;
-                    if (r.Cells["retail_value"]?.Value != null && decimal.TryParse(r.Cells["retail_value"].Value.ToString(), out var rv)) sumRetailValue += rv;
-                    bool inv = false;
-                    if (r.Cells["is_inventory_p"]?.Value != null) bool.TryParse(r.Cells["is_inventory_p"].Value.ToString(), out inv);
-                    if (inv) invCount++; else nonInvCount++;
+                    var seen = new HashSet<int>();
+                    foreach (DataGridViewRow r in dataGridView1.Rows)
+                    {
+                        if (r.IsNewRow) continue;
+                        if (r.Cells["id"]?.Value == null) continue;
+                        int id = Convert.ToInt32(r.Cells["id"].Value);
+                        if (!seen.Add(id)) continue;
+
+                        decimal baseStock = 0m;
+                        if (r.Cells["base_stock"]?.Value != null && decimal.TryParse(r.Cells["base_stock"].Value.ToString(), out var bs)) baseStock = bs;
+                        decimal baseBuy = 0m;
+                        if (r.Cells["base_buy_price"]?.Value != null && decimal.TryParse(r.Cells["base_buy_price"].Value.ToString(), out var bb)) baseBuy = bb;
+                        decimal baseSell = 0m;
+                        if (r.Cells["sell_price"]?.Value != null && decimal.TryParse(r.Cells["sell_price"].Value.ToString(), out var sp)) baseSell = sp;
+
+                        sumQty += baseStock;
+                        sumStockValue += baseBuy * baseStock;
+                        sumRetailValue += baseSell * baseStock;
+
+                        bool inv = false;
+                        if (r.Cells["is_inventory_p"]?.Value != null) bool.TryParse(r.Cells["is_inventory_p"].Value.ToString(), out inv);
+                        if (inv) invCount++; else nonInvCount++;
+                    }
+                }
+                else
+                {
+                    foreach (DataGridViewRow r in dataGridView1.Rows)
+                    {
+                        if (r.IsNewRow) continue;
+                        decimal q = 0m;
+                        if (r.Cells["stock"]?.Value != null && decimal.TryParse(r.Cells["stock"].Value.ToString(), out var qtmp)) q = qtmp;
+                        sumQty += q;
+                        if (r.Cells["stock_value"]?.Value != null && decimal.TryParse(r.Cells["stock_value"].Value.ToString(), out var sv)) sumStockValue += sv;
+                        if (r.Cells["retail_value"]?.Value != null && decimal.TryParse(r.Cells["retail_value"].Value.ToString(), out var rv)) sumRetailValue += rv;
+                        bool inv = false;
+                        if (r.Cells["is_inventory_p"]?.Value != null) bool.TryParse(r.Cells["is_inventory_p"].Value.ToString(), out inv);
+                        if (inv) invCount++; else nonInvCount++;
+                    }
                 }
                 // Gunakan label dari designer
                 label9.Text = $"Nilai Stock (HPP): {sumStockValue:N0} | Nilai Jual: {sumRetailValue:N0}";
-                label10.Text = $"Jumlah Stock: {sumQty:N0} | Total Item: {rows:N0} (Inv:{invCount:N0}/Non:{nonInvCount:N0})";
+                label10.Text = _viewAllUnits
+                    ? $"Mode: All Unit | Stock (Base): {sumQty:N0} | Total Item: {invCount + nonInvCount:N0} (Inv:{invCount:N0}/Non:{nonInvCount:N0})"
+                    : $"Jumlah Stock: {sumQty:N0} | Total Item: {rows:N0} (Inv:{invCount:N0}/Non:{nonInvCount:N0})";
                 int total = _dtFull?.Rows.Count ?? rows;
                 lblPagingInfo.Text = $"Menampilkan {rows:N0} dari {total:N0}";
             }
@@ -985,6 +1157,7 @@ namespace POS_qu
                 var c = dataGridView1.Columns["stock"];
                 c.HeaderText = "Stok";
                 c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                c.DefaultCellStyle.Format = _viewAllUnits ? "N2" : "N0";
                 c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 c.FillWeight = 90;
             }
@@ -1011,7 +1184,8 @@ namespace POS_qu
             {
                 "reserved_stock","unit_id","category_id","supplier_id","note","picture","is_purchasable","is_sellable",
                 "is_note_payment","is_changeprice_p","is_have_bahan","is_box","is_produksi","discount_formula","flag",
-                "created_at","updated_at","category_name","supplier_name","btnVariant"
+                "created_at","updated_at","category_name","supplier_name","btnVariant",
+                "min_stock","conversion","is_variant","base_stock","base_buy_price"
             };
             foreach (var key in hideCols)
             {
@@ -1023,30 +1197,12 @@ namespace POS_qu
         private void OpenEditForRow(DataGridViewRow rowSelected)
         {
             int itemId = Convert.ToInt32(rowSelected.Cells["id"].Value);
-            Item selectedItem = new Item
+            var selectedItem = _productService.GetProductDetail(itemId);
+            if (selectedItem == null)
             {
-                id = itemId,
-                name = rowSelected.Cells["name"].Value.ToString(),
-                buy_price = Convert.ToDecimal(rowSelected.Cells["buy_price"].Value),
-                sell_price = Convert.ToDecimal(rowSelected.Cells["sell_price"].Value),
-                stock = Convert.ToInt32(rowSelected.Cells["stock"].Value),
-                barcode = rowSelected.Cells["barcode"].Value.ToString(),
-                unitid = rowSelected.Cells["unit_id"].Value == DBNull.Value ? 1 : Convert.ToInt32(rowSelected.Cells["unit_id"].Value),
-                unit = rowSelected.Cells["unit_name"].Value.ToString(),
-                category_id = rowSelected.Cells["category_id"].Value == DBNull.Value ? 0 : Convert.ToInt32(rowSelected.Cells["category_id"].Value),
-                supplier_id = rowSelected.Cells["supplier_id"].Value == DBNull.Value ? 0 : Convert.ToInt32(rowSelected.Cells["supplier_id"].Value),
-                note = rowSelected.Cells["note"].Value.ToString(),
-                picture = rowSelected.Cells["picture"].Value?.ToString(),
-                is_inventory_p = Convert.ToBoolean(rowSelected.Cells["is_inventory_p"].Value),
-                IsPurchasable = Convert.ToBoolean(rowSelected.Cells["is_purchasable"].Value),
-                IsSellable = Convert.ToBoolean(rowSelected.Cells["is_sellable"].Value),
-                RequireNotePayment = Convert.ToBoolean(rowSelected.Cells["is_note_payment"].Value),
-                is_changeprice_p = Convert.ToBoolean(rowSelected.Cells["is_changeprice_p"].Value),
-                discount_formula = rowSelected.Cells["discount_formula"].Value.ToString(),
-                HasMaterials = Convert.ToBoolean(rowSelected.Cells["is_have_bahan"].Value),
-                IsPackage = Convert.ToBoolean(rowSelected.Cells["is_box"].Value),
-                IsProduced = Convert.ToBoolean(rowSelected.Cells["is_produksi"].Value)
-            };
+                MessageBox.Show("Item tidak ditemukan.");
+                return;
+            }
             selectedItem.UnitVariants = _productService.GetItemUnitVariants(itemId);
             using (var detailForm = new ItemDetailForm(selectedItem))
             {

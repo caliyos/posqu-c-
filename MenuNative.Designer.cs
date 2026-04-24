@@ -38,6 +38,7 @@
             gudangToolStripMenuItem = new ToolStripMenuItem();
             productToolStripMenuItem = new ToolStripMenuItem();
             manajemenProdukToolStripMenuItem = new ToolStripMenuItem();
+            saldoAwalToolStripMenuItem = new ToolStripMenuItem();
             casherToolStripMenuItem = new ToolStripMenuItem();
             daftarTransaksiToolStripMenuItem = new ToolStripMenuItem();
             casherToolStripMenuItem1 = new ToolStripMenuItem();
@@ -50,6 +51,8 @@
             stockToolStripMenuItem = new ToolStripMenuItem();
             pengeluaranToolStripMenuItem = new ToolStripMenuItem();
             pembayaranToolStripMenuItem = new ToolStripMenuItem();
+            printingToolStripMenuItem = new ToolStripMenuItem();
+            printBarcodeToolStripMenuItem = new ToolStripMenuItem();
             settingsToolStripMenuItem = new ToolStripMenuItem();
             logoToolStripMenuItem = new ToolStripMenuItem();
             networkingToolStripMenuItem = new ToolStripMenuItem();
@@ -195,7 +198,7 @@
             // 
       
             menuStrip1.ImageScalingSize = new Size(24, 24);
-            menuStrip1.Items.AddRange(new ToolStripItem[] { masterToolStripMenuItem, productToolStripMenuItem, casherToolStripMenuItem, pembelianToolStripMenuItem, reportsToolStripMenuItem, settingsToolStripMenuItem, helpToolStripMenuItem, aboutToolStripMenuItem });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { masterToolStripMenuItem, productToolStripMenuItem, casherToolStripMenuItem, pembelianToolStripMenuItem, reportsToolStripMenuItem, printingToolStripMenuItem, settingsToolStripMenuItem, helpToolStripMenuItem, aboutToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Padding = new Padding(5, 2, 0, 2);
@@ -262,7 +265,7 @@
             // 
             // productToolStripMenuItem
             // 
-            productToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { manajemenProdukToolStripMenuItem });
+            productToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { manajemenProdukToolStripMenuItem, saldoAwalToolStripMenuItem });
             productToolStripMenuItem.Name = "productToolStripMenuItem";
             productToolStripMenuItem.Size = new Size(74, 24);
             productToolStripMenuItem.Text = "Product";
@@ -274,6 +277,14 @@
             manajemenProdukToolStripMenuItem.Size = new Size(220, 26);
             manajemenProdukToolStripMenuItem.Text = "Manajemen Produk";
             manajemenProdukToolStripMenuItem.Click += manajemenProdukToolStripMenuItem_Click;
+            // 
+            // saldoAwalToolStripMenuItem
+            // 
+            saldoAwalToolStripMenuItem.Name = "saldoAwalToolStripMenuItem";
+            saldoAwalToolStripMenuItem.Size = new Size(220, 26);
+            saldoAwalToolStripMenuItem.Text = "Saldo Awal Stock";
+            saldoAwalToolStripMenuItem.Visible = false;
+            saldoAwalToolStripMenuItem.Click += saldoAwalToolStripMenuItem_Click;
             // 
             // casherToolStripMenuItem
             // 
@@ -332,6 +343,20 @@
             reportsToolStripMenuItem.Name = "reportsToolStripMenuItem";
             reportsToolStripMenuItem.Size = new Size(74, 24);
             reportsToolStripMenuItem.Text = "Reports";
+            // 
+            // printingToolStripMenuItem
+            // 
+            printingToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { printBarcodeToolStripMenuItem });
+            printingToolStripMenuItem.Name = "printingToolStripMenuItem";
+            printingToolStripMenuItem.Size = new Size(76, 24);
+            printingToolStripMenuItem.Text = "Printing";
+            // 
+            // printBarcodeToolStripMenuItem
+            // 
+            printBarcodeToolStripMenuItem.Name = "printBarcodeToolStripMenuItem";
+            printBarcodeToolStripMenuItem.Size = new Size(189, 26);
+            printBarcodeToolStripMenuItem.Text = "Print Barcode";
+            printBarcodeToolStripMenuItem.Click += printBarcodeToolStripMenuItem_Click;
             // 
             // penjualanToolStripMenuItem
             // 
@@ -492,6 +517,8 @@
         private ToolStripMenuItem productToolStripMenuItem;
         private ToolStripMenuItem casherToolStripMenuItem;
         private ToolStripMenuItem reportsToolStripMenuItem;
+        private ToolStripMenuItem printingToolStripMenuItem;
+        private ToolStripMenuItem printBarcodeToolStripMenuItem;
         private ToolStripMenuItem settingsToolStripMenuItem;
         private ToolStripMenuItem helpToolStripMenuItem;
         private ToolStripMenuItem logoToolStripMenuItem;
@@ -519,6 +546,7 @@
         private ToolStripMenuItem pelangganCustomerToolStripMenuItem;
         private ToolStripMenuItem supplierToolStripMenuItem;
         private ToolStripMenuItem manajemenProdukToolStripMenuItem;
+        private ToolStripMenuItem saldoAwalToolStripMenuItem;
         private ToolStripMenuItem kategoriBarangToolStripMenuItem;
         private ToolStripMenuItem unitSatuanToolStripMenuItem;
         private ToolStripMenuItem gudangToolStripMenuItem;

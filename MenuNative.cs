@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
 using POS_qu;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -211,11 +211,46 @@ namespace POSqu_menu
                         using var frm = new ReturnListForm();
                         frm.ShowDialog(this);
                     };
+
+                if (saldoAwalToolStripMenuItem != null)
+                {
+                    saldoAwalToolStripMenuItem.Visible = ShouldShowSaldoAwalMenu();
+                }
             }
             catch (Exception ex)
             {
                 label2.Text = "❌ Error memuat sesi: " + ex.Message;
             }
+        }
+
+        private bool ShouldShowSaldoAwalMenu()
+        {
+            try
+            {
+                using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+                conn.Open();
+                using var cmd = new NpgsqlCommand("SELECT 1 FROM transactions WHERE deleted_at IS NULL LIMIT 1", conn);
+                var v = cmd.ExecuteScalar();
+                return v == null || v == DBNull.Value;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private void saldoAwalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var f = new SaldoAwalForm();
+            f.ShowDialog(this);
+            if (saldoAwalToolStripMenuItem != null)
+                saldoAwalToolStripMenuItem.Visible = ShouldShowSaldoAwalMenu();
+        }
+
+        private void printBarcodeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var f = new POS_qu.BarcodePrintForm();
+            f.ShowDialog(this);
         }
 
         private ToolStripMenuItem FindMenuItemByName(ToolStripItemCollection items, string name)

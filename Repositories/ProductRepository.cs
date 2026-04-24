@@ -80,6 +80,7 @@ COALESCE((SELECT SUM(s.qty)
             using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 con.Open();
+                EnsureItemMaterialsTable(con, null);
                 string sql = @"
                     SELECT items.*, 
                            COALESCE((SELECT SUM(qty) FROM stocks WHERE item_id = items.id), 0) AS stock_qty,
@@ -107,12 +108,26 @@ COALESCE((SELECT SUM(s.qty)
                                 sell_price = reader["sell_price"] != DBNull.Value ? Convert.ToDecimal(reader["sell_price"]) : 0,
                                 stock = Convert.ToInt32(reader["stock_qty"]),
                                 reserved_stock = Convert.ToInt32(reader["reserved_qty"]),
-                                IsSellable = reader["is_active"] != DBNull.Value ? Convert.ToBoolean(reader["is_active"]) : true,
+                                is_inventory_p = reader["is_inventory_p"] != DBNull.Value && Convert.ToBoolean(reader["is_inventory_p"]),
+                                IsPurchasable = reader["is_purchasable"] != DBNull.Value && Convert.ToBoolean(reader["is_purchasable"]),
+                                IsSellable = reader["is_sellable"] != DBNull.Value && Convert.ToBoolean(reader["is_sellable"]),
+                                RequireNotePayment = reader["is_note_payment"] != DBNull.Value && Convert.ToBoolean(reader["is_note_payment"]),
+                                is_changeprice_p = reader["is_changeprice_p"] != DBNull.Value && Convert.ToBoolean(reader["is_changeprice_p"]),
+                                HasMaterials = reader["is_have_bahan"] != DBNull.Value && Convert.ToBoolean(reader["is_have_bahan"]),
+                                IsPackage = reader["is_box"] != DBNull.Value && Convert.ToBoolean(reader["is_box"]),
+                                IsProduced = reader["is_produksi"] != DBNull.Value && Convert.ToBoolean(reader["is_produksi"]),
+                                discount_formula = reader["discount_formula"]?.ToString() ?? "",
+                                ExpiredAt = reader["expired_at"] != DBNull.Value ? Convert.ToDateTime(reader["expired_at"]) : null,
                                 note = reader["note"]?.ToString(),
                                 valuation_method = reader["valuation_method"]?.ToString() ?? "FIFO"
                             };
                         }
                     }
+                }
+
+                if (item != null)
+                {
+                    item.MaterialsList = GetItemMaterials(item.id, con);
                 }
             }
             return item;
@@ -128,8 +143,18 @@ COALESCE((SELECT SUM(s.qty)
                 {
                     try
                     {
-                        string sql = @"INSERT INTO items (barcode, name, category_id, unit, supplier_id, brand_id, rack_id, buy_price, sell_price, valuation_method, is_active, note) 
-                                       VALUES (@barcode, @name, @category_id, @unit_id, @supplier_id, @brand_id, @rack_id, @buy_price, @sell_price, @valuation_method, @is_active, @note) RETURNING id";
+                        EnsureItemMaterialsTable(con, tran);
+                        string sql = @"INSERT INTO items (
+                                            barcode, name, category_id, unit, supplier_id, brand_id, rack_id,
+                                            buy_price, sell_price, valuation_method, is_active, note,
+                                            is_inventory_p, is_purchasable, is_sellable, is_note_payment, is_changeprice_p,
+                                            is_have_bahan, is_box, is_produksi, discount_formula, expired_at
+                                       ) VALUES (
+                                            @barcode, @name, @category_id, @unit_id, @supplier_id, @brand_id, @rack_id,
+                                            @buy_price, @sell_price, @valuation_method, @is_active, @note,
+                                            @is_inventory_p, @is_purchasable, @is_sellable, @is_note_payment, @is_changeprice_p,
+                                            @is_have_bahan, @is_box, @is_produksi, @discount_formula, @expired_at
+                                       ) RETURNING id";
                         
                         using (var cmd = new NpgsqlCommand(sql, con, tran))
                         {
@@ -145,6 +170,17 @@ COALESCE((SELECT SUM(s.qty)
                             cmd.Parameters.AddWithValue("@valuation_method", item.valuation_method ?? "FIFO");
                             cmd.Parameters.AddWithValue("@is_active", item.IsSellable);
                             cmd.Parameters.AddWithValue("@note", (object)item.note ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@is_inventory_p", item.is_inventory_p);
+                            cmd.Parameters.AddWithValue("@is_purchasable", item.IsPurchasable);
+                            cmd.Parameters.AddWithValue("@is_sellable", item.IsSellable);
+                            cmd.Parameters.AddWithValue("@is_note_payment", item.RequireNotePayment);
+                            cmd.Parameters.AddWithValue("@is_changeprice_p", item.is_changeprice_p);
+                            bool hasBahan = item.HasMaterials || (item.MaterialsList != null && item.MaterialsList.Count > 0);
+                            cmd.Parameters.AddWithValue("@is_have_bahan", hasBahan);
+                            cmd.Parameters.AddWithValue("@is_box", item.IsPackage);
+                            cmd.Parameters.AddWithValue("@is_produksi", item.IsProduced);
+                            cmd.Parameters.AddWithValue("@discount_formula", (object)(item.discount_formula ?? "") ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@expired_at", item.ExpiredAt.HasValue ? (object)item.ExpiredAt.Value.Date : DBNull.Value);
 
                             newItemId = Convert.ToInt32(cmd.ExecuteScalar());
                         }
@@ -212,6 +248,8 @@ COALESCE((SELECT SUM(s.qty)
                             }
                         }
 
+                        SaveItemMaterials(newItemId, item.MaterialsList ?? new List<ItemMaterial>(), con, tran);
+
                         tran.Commit();
                     }
                     catch
@@ -233,10 +271,17 @@ COALESCE((SELECT SUM(s.qty)
                 {
                     try
                     {
+                        EnsureItemMaterialsTable(con, tran);
                         string sql = @"UPDATE items SET 
                                        barcode = @barcode, name = @name, category_id = @category_id, 
-                                       unit = @unit_id, supplier_id = @supplier_id, brand_id = @brand_id, rack_id = @rack_id, buy_price = @buy_price, 
-                                       sell_price = @sell_price, valuation_method = @valuation_method, is_active = @is_active, note = @note 
+                                       unit = @unit_id, supplier_id = @supplier_id, brand_id = @brand_id, rack_id = @rack_id,
+                                       buy_price = @buy_price, sell_price = @sell_price, valuation_method = @valuation_method,
+                                       is_active = @is_active, note = @note,
+                                       is_inventory_p = @is_inventory_p, is_purchasable = @is_purchasable, is_sellable = @is_sellable,
+                                       is_note_payment = @is_note_payment, is_changeprice_p = @is_changeprice_p,
+                                       is_have_bahan = @is_have_bahan, is_box = @is_box, is_produksi = @is_produksi,
+                                       discount_formula = @discount_formula, expired_at = @expired_at,
+                                       updated_at = NOW()
                                        WHERE id = @id";
                         
                         using (var cmd = new NpgsqlCommand(sql, con, tran))
@@ -254,6 +299,17 @@ COALESCE((SELECT SUM(s.qty)
                             cmd.Parameters.AddWithValue("@valuation_method", item.valuation_method ?? "FIFO");
                             cmd.Parameters.AddWithValue("@is_active", item.IsSellable);
                             cmd.Parameters.AddWithValue("@note", (object)item.note ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@is_inventory_p", item.is_inventory_p);
+                            cmd.Parameters.AddWithValue("@is_purchasable", item.IsPurchasable);
+                            cmd.Parameters.AddWithValue("@is_sellable", item.IsSellable);
+                            cmd.Parameters.AddWithValue("@is_note_payment", item.RequireNotePayment);
+                            cmd.Parameters.AddWithValue("@is_changeprice_p", item.is_changeprice_p);
+                            bool hasBahan = item.HasMaterials || (item.MaterialsList != null && item.MaterialsList.Count > 0);
+                            cmd.Parameters.AddWithValue("@is_have_bahan", hasBahan);
+                            cmd.Parameters.AddWithValue("@is_box", item.IsPackage);
+                            cmd.Parameters.AddWithValue("@is_produksi", item.IsProduced);
+                            cmd.Parameters.AddWithValue("@discount_formula", (object)(item.discount_formula ?? "") ?? DBNull.Value);
+                            cmd.Parameters.AddWithValue("@expired_at", item.ExpiredAt.HasValue ? (object)item.ExpiredAt.Value.Date : DBNull.Value);
 
                             cmd.ExecuteNonQuery();
                         }
@@ -309,6 +365,8 @@ COALESCE((SELECT SUM(s.qty)
                             }
                         }
 
+                        SaveItemMaterials(item.id, item.MaterialsList ?? new List<ItemMaterial>(), con, tran);
+
                         tran.Commit();
                     }
                     catch
@@ -316,6 +374,86 @@ COALESCE((SELECT SUM(s.qty)
                         tran.Rollback();
                         throw;
                     }
+                }
+            }
+        }
+
+        private void EnsureItemMaterialsTable(NpgsqlConnection con, NpgsqlTransaction tran)
+        {
+            string sql = @"
+                CREATE TABLE IF NOT EXISTS item_materials (
+                    id SERIAL PRIMARY KEY,
+                    parent_item_id INT NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+                    component_item_id INT NOT NULL REFERENCES items(id),
+                    qty NUMERIC(15,4) NOT NULL DEFAULT 0,
+                    unit_id INT NOT NULL REFERENCES units(id),
+                    unit_cost NUMERIC(15,2) NOT NULL DEFAULT 0,
+                    created_at TIMESTAMP DEFAULT NOW()
+                );";
+            using (var cmd = new NpgsqlCommand(sql, con, tran))
+            {
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        private List<ItemMaterial> GetItemMaterials(int parentItemId, NpgsqlConnection con)
+        {
+            var list = new List<ItemMaterial>();
+            string sql = @"
+                SELECT im.id, im.parent_item_id, im.component_item_id, im.qty, im.unit_id, im.unit_cost,
+                       i.name AS component_name, u.name AS unit_name
+                FROM item_materials im
+                JOIN items i ON i.id = im.component_item_id
+                LEFT JOIN units u ON u.id = im.unit_id
+                WHERE im.parent_item_id = @id
+                ORDER BY im.id ASC";
+            using (var cmd = new NpgsqlCommand(sql, con))
+            {
+                cmd.Parameters.AddWithValue("@id", parentItemId);
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        list.Add(new ItemMaterial
+                        {
+                            Id = Convert.ToInt32(reader["id"]),
+                            ParentItemId = Convert.ToInt32(reader["parent_item_id"]),
+                            ComponentItemId = Convert.ToInt32(reader["component_item_id"]),
+                            ComponentName = reader["component_name"]?.ToString() ?? "",
+                            Qty = reader["qty"] != DBNull.Value ? Convert.ToDecimal(reader["qty"]) : 0m,
+                            UnitId = reader["unit_id"] != DBNull.Value ? Convert.ToInt32(reader["unit_id"]) : 0,
+                            UnitName = reader["unit_name"]?.ToString() ?? "",
+                            UnitCost = reader["unit_cost"] != DBNull.Value ? Convert.ToDecimal(reader["unit_cost"]) : 0m
+                        });
+                    }
+                }
+            }
+            return list;
+        }
+
+        private void SaveItemMaterials(int parentItemId, List<ItemMaterial> materials, NpgsqlConnection con, NpgsqlTransaction tran)
+        {
+            EnsureItemMaterialsTable(con, tran);
+            using (var delCmd = new NpgsqlCommand("DELETE FROM item_materials WHERE parent_item_id = @id", con, tran))
+            {
+                delCmd.Parameters.AddWithValue("@id", parentItemId);
+                delCmd.ExecuteNonQuery();
+            }
+
+            if (materials == null || materials.Count == 0) return;
+
+            foreach (var m in materials)
+            {
+                string sql = @"INSERT INTO item_materials (parent_item_id, component_item_id, qty, unit_id, unit_cost)
+                               VALUES (@parent_item_id, @component_item_id, @qty, @unit_id, @unit_cost)";
+                using (var cmd = new NpgsqlCommand(sql, con, tran))
+                {
+                    cmd.Parameters.AddWithValue("@parent_item_id", parentItemId);
+                    cmd.Parameters.AddWithValue("@component_item_id", m.ComponentItemId);
+                    cmd.Parameters.AddWithValue("@qty", m.Qty);
+                    cmd.Parameters.AddWithValue("@unit_id", m.UnitId > 0 ? m.UnitId : 1);
+                    cmd.Parameters.AddWithValue("@unit_cost", m.UnitCost);
+                    cmd.ExecuteNonQuery();
                 }
             }
         }
@@ -388,10 +526,13 @@ COALESCE((SELECT SUM(s.qty)
             {
                 con.Open();
                 string sql = @"
-                    SELECT iv.id, iv.unit_id, iv.conversion, iv.sell_price, u.name AS unit_name
+                    SELECT iv.id, iv.unit_id, iv.conversion, iv.sell_price, u.name AS unit_name,
+                           iv.minqty, iv.is_base_unit, iv.barcode_suffix
                     FROM unit_variants iv
                     LEFT JOIN units u ON iv.unit_id = u.id
-                    WHERE iv.item_id = @id";
+                    WHERE iv.item_id = @id
+                    AND iv.is_active = TRUE
+                    ORDER BY iv.is_base_unit DESC, u.name";
                 using (var cmd = new NpgsqlCommand(sql, con))
                 {
                     cmd.Parameters.AddWithValue("@id", itemId);
@@ -405,8 +546,10 @@ COALESCE((SELECT SUM(s.qty)
                                 UnitId = Convert.ToInt32(reader["unit_id"]),
                                 Conversion = Convert.ToInt32(reader["conversion"]),
                                 SellPrice = Convert.ToDecimal(reader["sell_price"]),
-                                //BarcodeSuffix = reader["barcode"]?.ToString(),
-                                UnitName = reader["unit_name"]?.ToString()
+                                UnitName = reader["unit_name"]?.ToString() ?? "",
+                                MinQty = reader["minqty"] == DBNull.Value ? 0m : Convert.ToDecimal(reader["minqty"]),
+                                IsBaseUnit = reader["is_base_unit"] != DBNull.Value && Convert.ToBoolean(reader["is_base_unit"]),
+                                BarcodeSuffix = reader["barcode_suffix"] == DBNull.Value ? null : reader["barcode_suffix"]?.ToString()
                             });
                         }
                     }

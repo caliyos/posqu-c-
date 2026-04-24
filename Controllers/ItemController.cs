@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿    ﻿﻿﻿﻿﻿﻿﻿  using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿    ﻿﻿﻿﻿﻿﻿﻿  using Npgsql;
     using System;
     using System.Collections.Generic;
     using System.Data;
@@ -553,20 +553,20 @@ using System.ComponentModel;
                 items.barcode, 
                 items.buy_price, 
                 items.sell_price, 
-                items.stock, 
+                COALESCE((SELECT SUM(s.qty) FROM stocks s WHERE s.item_id = items.id), 0) AS stock,
                 units.name AS unit, 
                 items.unit AS unit_id, 
-                items.group, 
+                items.""group"", 
                 items.note,   
                 items.picture, 
-                items.reserved_stock
+                COALESCE((SELECT SUM(s.reserved_qty) FROM stocks s WHERE s.item_id = items.id), 0) AS reserved_stock
             FROM 
                 items
             LEFT JOIN 
                 units ON items.unit = units.id
             WHERE 
                 items.deleted_at IS NULL
-                AND items.stock > 0
+                AND COALESCE((SELECT SUM(s.qty) FROM stocks s WHERE s.item_id = items.id), 0) > 0
         ";
                 using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
                 {
@@ -591,20 +591,20 @@ using System.ComponentModel;
                 items.barcode, 
                 items.buy_price, 
                 items.sell_price, 
-                items.stock, 
+                COALESCE((SELECT SUM(s.qty) FROM stocks s WHERE s.item_id = items.id), 0) AS stock,
                 units.name AS unit, 
                 items.unit AS unit_id, 
-                items.group, 
+                items.""group"", 
                 items.note,   
                 items.picture, 
-                items.reserved_stock
+                COALESCE((SELECT SUM(s.reserved_qty) FROM stocks s WHERE s.item_id = items.id), 0) AS reserved_stock
             FROM 
                 items
             LEFT JOIN 
                 units ON items.unit = units.id
             WHERE 
                 items.deleted_at IS NULL
-                AND items.stock < 1
+                AND COALESCE((SELECT SUM(s.qty) FROM stocks s WHERE s.item_id = items.id), 0) < 1
         ";
                 using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
                 {
@@ -625,9 +625,11 @@ using System.ComponentModel;
             items.barcode, 
             items.buy_price, 
             items.sell_price, 
-            items.stock, 
+            COALESCE((SELECT SUM(s.qty) FROM stocks s WHERE s.item_id = items.id), 0) AS stock,
             units.name AS unit, 
-            items.reserved_stock  FROM 
+            items.unit AS unit_id,
+            COALESCE((SELECT SUM(s.reserved_qty) FROM stocks s WHERE s.item_id = items.id), 0) AS reserved_stock
+            FROM 
             items
         LEFT JOIN 
             units ON items.unit = units.id
@@ -693,9 +695,9 @@ using System.ComponentModel;
                         items.barcode,
                         items.buy_price,
                         items.sell_price,
-                        items.stock,
+                        COALESCE((SELECT SUM(s.qty) FROM stocks s WHERE s.item_id = items.id), 0) AS stock,
                         units.name AS unit,
-                        items.reserved_stock,
+                        COALESCE((SELECT SUM(s.reserved_qty) FROM stocks s WHERE s.item_id = items.id), 0) AS reserved_stock,
                         items.supplier_id,
                         suppliers.name AS supplier_name
                     FROM items
