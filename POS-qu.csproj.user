@@ -103,6 +103,12 @@
     <Compile Update="StockAdjustment.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="StockOpnameForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="StockOpnameListForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="StockReports.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -2,9 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Drawing.Printing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using ClosedXML.Excel;
 using POS_qu.Core.Interfaces;
 using POS_qu.Repositories;
 using POS_qu.Services;
@@ -73,6 +76,25 @@ namespace POS_qu
         private void BuildTemplateList()
         {
             cmbTemplate.Items.Clear();
+            cmbTemplate.Items.Add(new TemplateItem("Retail/POS • A4 Auto 40x30 mm", LabelTemplate.A4Auto(40f, 30f, 6f, 8f, 2f)));
+            cmbTemplate.Items.Add(new TemplateItem("Retail/POS • A4 Auto 50x30 mm", LabelTemplate.A4Auto(50f, 30f, 6f, 8f, 2f)));
+            cmbTemplate.Items.Add(new TemplateItem("Retail/POS • A4 Auto 60x40 mm", LabelTemplate.A4Auto(60f, 40f, 6f, 8f, 2f)));
+
+            cmbTemplate.Items.Add(new TemplateItem("Supermarket • A4 Auto 58x40 mm", LabelTemplate.A4Auto(58f, 40f, 6f, 8f, 2f)));
+            cmbTemplate.Items.Add(new TemplateItem("Supermarket • A4 Auto 70x50 mm", LabelTemplate.A4Auto(70f, 50f, 6f, 8f, 2f)));
+
+            cmbTemplate.Items.Add(new TemplateItem("Gudang/Logistik • Roll 100x150 mm (4x6\")", LabelTemplate.Roll(100f, 150f)));
+            cmbTemplate.Items.Add(new TemplateItem("Gudang/Logistik • Roll 100x100 mm", LabelTemplate.Roll(100f, 100f)));
+            cmbTemplate.Items.Add(new TemplateItem("Gudang/Logistik • Roll 80x50 mm", LabelTemplate.Roll(80f, 50f)));
+
+            cmbTemplate.Items.Add(new TemplateItem("Industri • Roll 30x20 mm", LabelTemplate.Roll(30f, 20f)));
+            cmbTemplate.Items.Add(new TemplateItem("Industri • Roll 25x15 mm", LabelTemplate.Roll(25f, 15f)));
+
+            cmbTemplate.Items.Add(new TemplateItem("Thermal Roll • 58 mm x 30 mm", LabelTemplate.Roll(58f, 30f)));
+            cmbTemplate.Items.Add(new TemplateItem("Thermal Roll • 58 mm x 40 mm", LabelTemplate.Roll(58f, 40f)));
+            cmbTemplate.Items.Add(new TemplateItem("Thermal Roll • 80 mm x 40 mm", LabelTemplate.Roll(80f, 40f)));
+            cmbTemplate.Items.Add(new TemplateItem("Thermal Roll • 80 mm x 50 mm", LabelTemplate.Roll(80f, 50f)));
+
             cmbTemplate.Items.Add(new TemplateItem("A4 3x8 (38x21mm)", LabelTemplate.A4Grid(3, 8, 38f, 21f, 6f, 8f, 6f)));
             cmbTemplate.Items.Add(new TemplateItem("A4 3x10 (35x20mm)", LabelTemplate.A4Grid(3, 10, 35f, 20f, 6f, 8f, 6f)));
             cmbTemplate.Items.Add(new TemplateItem("A4 2x7 (50x30mm)", LabelTemplate.A4Grid(2, 7, 50f, 30f, 6f, 8f, 6f)));
@@ -85,6 +107,16 @@ namespace POS_qu
                 return;
             _template = ti.Template;
             _doc.DefaultPageSettings.Landscape = false;
+            _doc.DefaultPageSettings.Margins = new Margins(0, 0, 0, 0);
+
+            if (_template.Kind == TemplateKind.Roll)
+            {
+                _doc.DefaultPageSettings.PaperSize = CreateCustomPaperSizeMm("Roll", _template.PageWidthMm, _template.PageHeightMm);
+            }
+            else
+            {
+                _doc.DefaultPageSettings.PaperSize = new PaperSize("A4", 827, 1169);
+            }
         }
 
         private void LoadItems()
@@ -239,9 +271,72 @@ namespace POS_qu
             _doc.Print();
         }
 
+        private void btnExportExcel_Click(object sender, EventArgs e)
+        {
+            _jobs = BuildJobsFromGrid();
+            if (_jobs.Count == 0)
+            {
+                MessageBox.Show("Pilih item dulu (centang) untuk export.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            ApplyTemplateFromUI();
+            if (_template == null) return;
+
+            using var sfd = new SaveFileDialog
+            {
+                Filter = "Excel Files (*.xlsx)|*.xlsx",
+                FileName = "barcode_labels.xlsx"
+            };
+            if (sfd.ShowDialog(this) != DialogResult.OK) return;
+
+            bool showName = chkShowName.Checked;
+            bool showPrice = chkShowPrice.Checked;
+            var expanded = ExpandJobs(_jobs);
+
+            var streams = new List<MemoryStream>();
+            try
+            {
+                using var wb = new XLWorkbook();
+                var ws = wb.AddWorksheet("Labels");
+                ExportLabelsToWorksheet(ws, expanded, showName, showPrice, streams);
+
+                var wsData = wb.AddWorksheet("Data");
+                ExportDataSheet(wsData, expanded);
+
+                wb.SaveAs(sfd.FileName);
+            }
+            finally
+            {
+                foreach (var ms in streams)
+                {
+                    try { ms.Dispose(); } catch { }
+                }
+            }
+
+            MessageBox.Show("Export Excel berhasil.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private void btnPageSetup_Click(object sender, EventArgs e)
+        {
+            ApplyTemplateFromUI();
+            pageSetupDialog1.Document = _doc;
+            pageSetupDialog1.ShowDialog(this);
+            RefreshPreview();
+        }
+
         private void btnClose_Click(object sender, EventArgs e)
         {
             Close();
+        }
+
+        private static PaperSize CreateCustomPaperSizeMm(string name, float widthMm, float heightMm)
+        {
+            int w = (int)Math.Round((widthMm / 25.4f) * 100f);
+            int h = (int)Math.Round((heightMm / 25.4f) * 100f);
+            if (w < 100) w = 100;
+            if (h < 100) h = 100;
+            return new PaperSize(name, w, h);
         }
 
         private void Doc_BeginPrint(object? sender, PrintEventArgs e)
@@ -389,6 +484,7 @@ namespace POS_qu
 
         private sealed class LabelTemplate
         {
+            public TemplateKind Kind { get; }
             public int Columns { get; }
             public int Rows { get; }
             public float LabelWidthMm { get; }
@@ -396,9 +492,12 @@ namespace POS_qu
             public float MarginLeftMm { get; }
             public float MarginTopMm { get; }
             public float GapMm { get; }
+            public float PageWidthMm { get; }
+            public float PageHeightMm { get; }
 
-            private LabelTemplate(int cols, int rows, float wMm, float hMm, float marginLeftMm, float marginTopMm, float gapMm)
+            private LabelTemplate(TemplateKind kind, int cols, int rows, float wMm, float hMm, float marginLeftMm, float marginTopMm, float gapMm, float pageWidthMm, float pageHeightMm)
             {
+                Kind = kind;
                 Columns = cols;
                 Rows = rows;
                 LabelWidthMm = wMm;
@@ -406,10 +505,26 @@ namespace POS_qu
                 MarginLeftMm = marginLeftMm;
                 MarginTopMm = marginTopMm;
                 GapMm = gapMm;
+                PageWidthMm = pageWidthMm;
+                PageHeightMm = pageHeightMm;
             }
 
             public static LabelTemplate A4Grid(int cols, int rows, float wMm, float hMm, float marginLeftMm, float marginTopMm, float gapMm)
-                => new LabelTemplate(cols, rows, wMm, hMm, marginLeftMm, marginTopMm, gapMm);
+                => new LabelTemplate(TemplateKind.A4Sheet, cols, rows, wMm, hMm, marginLeftMm, marginTopMm, gapMm, 210f, 297f);
+
+            public static LabelTemplate A4Auto(float wMm, float hMm, float marginLeftMm, float marginTopMm, float gapMm)
+            {
+                float pageW = 210f;
+                float pageH = 297f;
+
+                int cols = Math.Max(1, (int)Math.Floor((pageW - marginLeftMm * 2 + gapMm) / (wMm + gapMm)));
+                int rows = Math.Max(1, (int)Math.Floor((pageH - marginTopMm * 2 + gapMm) / (hMm + gapMm)));
+
+                return new LabelTemplate(TemplateKind.A4Sheet, cols, rows, wMm, hMm, marginLeftMm, marginTopMm, gapMm, pageW, pageH);
+            }
+
+            public static LabelTemplate Roll(float widthMm, float heightMm)
+                => new LabelTemplate(TemplateKind.Roll, 1, 1, widthMm, heightMm, 0f, 0f, 0f, widthMm, heightMm);
 
             public List<RectangleF> GetLabelRects(Rectangle marginBoundsPx, float dpiX, float dpiY)
             {
@@ -423,6 +538,11 @@ namespace POS_qu
                 float gapX = mmToPxX(GapMm);
                 float gapY = mmToPxY(GapMm);
 
+                if (Kind == TemplateKind.Roll)
+                {
+                    return new List<RectangleF> { new RectangleF(marginBoundsPx.Left, marginBoundsPx.Top, marginBoundsPx.Width, marginBoundsPx.Height) };
+                }
+
                 var list = new List<RectangleF>(Columns * Rows);
                 for (int r = 0; r < Rows; r++)
                 {
@@ -435,6 +555,159 @@ namespace POS_qu
                 }
                 return list;
             }
+        }
+
+        private enum TemplateKind
+        {
+            A4Sheet = 0,
+            Roll = 1
+        }
+
+        private void ExportDataSheet(IXLWorksheet ws, List<LabelJob> expanded)
+        {
+            ws.Cell(1, 1).Value = "Barcode";
+            ws.Cell(1, 2).Value = "Nama";
+            ws.Cell(1, 3).Value = "Unit";
+            ws.Cell(1, 4).Value = "Harga";
+
+            int r = 2;
+            foreach (var j in expanded)
+            {
+                ws.Cell(r, 1).Value = j.Barcode ?? "";
+                ws.Cell(r, 2).Value = j.Name ?? "";
+                ws.Cell(r, 3).Value = j.Unit ?? "";
+                ws.Cell(r, 4).Value = j.Price;
+                r++;
+            }
+            ws.Columns().AdjustToContents();
+        }
+
+        private void ExportLabelsToWorksheet(IXLWorksheet ws, List<LabelJob> expanded, bool showName, bool showPrice, List<MemoryStream> streams)
+        {
+            ws.PageSetup.PageOrientation = XLPageOrientation.Portrait;
+            ws.PageSetup.PaperSize = XLPaperSize.A4Paper;
+
+            float cellMm = 5f;
+            int labelCols = Math.Max(4, (int)Math.Round(_template.LabelWidthMm / cellMm));
+            int labelRows = Math.Max(4, (int)Math.Round(_template.LabelHeightMm / cellMm));
+            int gapCols = Math.Max(0, (int)Math.Round(_template.GapMm / cellMm));
+            int gapRows = Math.Max(0, (int)Math.Round(_template.GapMm / cellMm));
+            int marginCols = Math.Max(0, (int)Math.Round(_template.MarginLeftMm / cellMm));
+            int marginRows = Math.Max(0, (int)Math.Round(_template.MarginTopMm / cellMm));
+
+            double pxPerCell = (cellMm / 25.4f) * 96f;
+            double colWidth = pxPerCell / 7.0;
+            double rowHeight = (cellMm / 25.4f) * 72f;
+
+            int colsPerPage = _template.Kind == TemplateKind.Roll ? 1 : _template.Columns;
+            int rowsPerPage = _template.Kind == TemplateKind.Roll ? expanded.Count : _template.Rows;
+
+            int totalCols = marginCols * 2 + colsPerPage * labelCols + Math.Max(0, colsPerPage - 1) * gapCols;
+            for (int c = 1; c <= totalCols; c++)
+                ws.Column(c).Width = colWidth;
+
+            int currentIndex = 0;
+            int page = 0;
+
+            while (currentIndex < expanded.Count)
+            {
+                int baseRow = page * (marginRows * 2 + rowsPerPage * labelRows + Math.Max(0, rowsPerPage - 1) * gapRows) + 1;
+                int rowsThisPage = _template.Kind == TemplateKind.Roll ? Math.Min(expanded.Count - currentIndex, 1) : rowsPerPage;
+
+                int totalRowsThisPage = marginRows * 2 + rowsPerPage * labelRows + Math.Max(0, rowsPerPage - 1) * gapRows;
+                for (int r = baseRow; r < baseRow + totalRowsThisPage; r++)
+                    ws.Row(r).Height = rowHeight;
+
+                for (int r = 0; r < rowsPerPage; r++)
+                {
+                    for (int c = 0; c < colsPerPage; c++)
+                    {
+                        if (currentIndex >= expanded.Count) break;
+                        if (_template.Kind == TemplateKind.Roll && (r != 0 || c != 0)) continue;
+
+                        int startRow = baseRow + marginRows + r * (labelRows + gapRows);
+                        int startCol = 1 + marginCols + c * (labelCols + gapCols);
+
+                        var job = expanded[currentIndex];
+                        WriteOneLabel(ws, startRow, startCol, labelRows, labelCols, job, showName, showPrice, streams);
+                        currentIndex++;
+                    }
+                }
+
+                page++;
+            }
+
+            var used = ws.RangeUsed();
+            if (used != null)
+            {
+                ws.PageSetup.PrintAreas.Clear();
+                ws.PageSetup.PrintAreas.Add(used.RangeAddress.ToString());
+            }
+        }
+
+        private void WriteOneLabel(IXLWorksheet ws, int startRow, int startCol, int labelRows, int labelCols, LabelJob job, bool showName, bool showPrice, List<MemoryStream> streams)
+        {
+            int endRow = startRow + labelRows - 1;
+            int endCol = startCol + labelCols - 1;
+
+            var outer = ws.Range(startRow, startCol, endRow, endCol);
+            outer.Style.Border.OutsideBorder = XLBorderStyleValues.Thin;
+            outer.Style.Border.InsideBorder = XLBorderStyleValues.Thin;
+
+            string code = (job.Barcode ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(code)) code = "-";
+
+            int headerRow = startRow;
+            int footerRow = endRow;
+
+            var header = ws.Range(headerRow, startCol, headerRow, endCol);
+            header.Merge();
+            header.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Left;
+            header.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            header.Style.Font.FontName = "Segoe UI";
+            header.Style.Font.FontSize = 9;
+            string headerLeft = showName ? $"{job.Name}{(string.IsNullOrWhiteSpace(job.Unit) ? "" : $" ({job.Unit})")}" : "";
+            string headerRight = showPrice && job.Price > 0 ? $"Rp {job.Price:N0}" : "";
+            header.Value = string.IsNullOrWhiteSpace(headerRight) ? headerLeft : $"{headerLeft} | {headerRight}";
+            if (!string.IsNullOrWhiteSpace(headerRight)) header.Style.Font.Bold = true;
+
+            int barcodeTop = startRow + 1;
+            int barcodeBottom = endRow - 1;
+            if (barcodeBottom <= barcodeTop) barcodeBottom = barcodeTop;
+
+            var barcodeArea = ws.Range(barcodeTop, startCol, barcodeBottom, endCol);
+            barcodeArea.Merge();
+            barcodeArea.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            barcodeArea.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+
+            int widthPx = (int)Math.Round((labelCols * 5f / 25.4f) * 96f) - 12;
+            int heightPx = (int)Math.Round(((barcodeBottom - barcodeTop + 1) * 5f / 25.4f) * 96f) - 12;
+            if (widthPx < 60) widthPx = 60;
+            if (heightPx < 30) heightPx = 30;
+
+            using (var bmp = Code128Renderer.Render(code, widthPx, heightPx))
+            {
+                var bytes = BitmapToPngBytes(bmp);
+                var ms = new MemoryStream(bytes);
+                streams.Add(ms);
+                var pic = ws.AddPicture(ms).MoveTo(ws.Cell(barcodeTop, startCol));
+                pic.WithSize(widthPx, heightPx);
+            }
+
+            var footer = ws.Range(footerRow, startCol, footerRow, endCol);
+            footer.Merge();
+            footer.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            footer.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+            footer.Style.Font.FontName = "Segoe UI";
+            footer.Style.Font.FontSize = 9;
+            footer.Value = code;
+        }
+
+        private static byte[] BitmapToPngBytes(Bitmap bmp)
+        {
+            using var ms = new MemoryStream();
+            bmp.Save(ms, ImageFormat.Png);
+            return ms.ToArray();
         }
 
         private static class Code128Renderer
@@ -527,4 +800,3 @@ namespace POS_qu
         }
     }
 }
-

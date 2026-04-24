@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
 using POS_qu;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -250,6 +250,18 @@ namespace POSqu_menu
         private void printBarcodeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             using var f = new POS_qu.BarcodePrintForm();
+            f.ShowDialog(this);
+        }
+
+        private void stockOpnameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var f = new POS_qu.StockOpnameForm();
+            f.ShowDialog(this);
+        }
+
+        private void daftarStockOpnameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var f = new POS_qu.StockOpnameListForm();
             f.ShowDialog(this);
         }
 

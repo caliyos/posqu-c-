@@ -39,6 +39,9 @@
             productToolStripMenuItem = new ToolStripMenuItem();
             manajemenProdukToolStripMenuItem = new ToolStripMenuItem();
             saldoAwalToolStripMenuItem = new ToolStripMenuItem();
+            stockMenuToolStripMenuItem = new ToolStripMenuItem();
+            stockOpnameToolStripMenuItem = new ToolStripMenuItem();
+            daftarStockOpnameToolStripMenuItem = new ToolStripMenuItem();
             casherToolStripMenuItem = new ToolStripMenuItem();
             daftarTransaksiToolStripMenuItem = new ToolStripMenuItem();
             casherToolStripMenuItem1 = new ToolStripMenuItem();
@@ -198,7 +201,7 @@
             // 
       
             menuStrip1.ImageScalingSize = new Size(24, 24);
-            menuStrip1.Items.AddRange(new ToolStripItem[] { masterToolStripMenuItem, productToolStripMenuItem, casherToolStripMenuItem, pembelianToolStripMenuItem, reportsToolStripMenuItem, printingToolStripMenuItem, settingsToolStripMenuItem, helpToolStripMenuItem, aboutToolStripMenuItem });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { masterToolStripMenuItem, productToolStripMenuItem, stockMenuToolStripMenuItem, casherToolStripMenuItem, pembelianToolStripMenuItem, reportsToolStripMenuItem, printingToolStripMenuItem, settingsToolStripMenuItem, helpToolStripMenuItem, aboutToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Padding = new Padding(5, 2, 0, 2);
@@ -285,6 +288,27 @@
             saldoAwalToolStripMenuItem.Text = "Saldo Awal Stock";
             saldoAwalToolStripMenuItem.Visible = false;
             saldoAwalToolStripMenuItem.Click += saldoAwalToolStripMenuItem_Click;
+            // 
+            // stockMenuToolStripMenuItem
+            // 
+            stockMenuToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { stockOpnameToolStripMenuItem, daftarStockOpnameToolStripMenuItem });
+            stockMenuToolStripMenuItem.Name = "stockMenuToolStripMenuItem";
+            stockMenuToolStripMenuItem.Size = new Size(58, 24);
+            stockMenuToolStripMenuItem.Text = "Stock";
+            // 
+            // stockOpnameToolStripMenuItem
+            // 
+            stockOpnameToolStripMenuItem.Name = "stockOpnameToolStripMenuItem";
+            stockOpnameToolStripMenuItem.Size = new Size(224, 26);
+            stockOpnameToolStripMenuItem.Text = "Stock Opname";
+            stockOpnameToolStripMenuItem.Click += stockOpnameToolStripMenuItem_Click;
+            // 
+            // daftarStockOpnameToolStripMenuItem
+            // 
+            daftarStockOpnameToolStripMenuItem.Name = "daftarStockOpnameToolStripMenuItem";
+            daftarStockOpnameToolStripMenuItem.Size = new Size(224, 26);
+            daftarStockOpnameToolStripMenuItem.Text = "Daftar Stock Opname";
+            daftarStockOpnameToolStripMenuItem.Click += daftarStockOpnameToolStripMenuItem_Click;
             // 
             // casherToolStripMenuItem
             // 
@@ -547,6 +571,9 @@
         private ToolStripMenuItem supplierToolStripMenuItem;
         private ToolStripMenuItem manajemenProdukToolStripMenuItem;
         private ToolStripMenuItem saldoAwalToolStripMenuItem;
+        private ToolStripMenuItem stockMenuToolStripMenuItem;
+        private ToolStripMenuItem stockOpnameToolStripMenuItem;
+        private ToolStripMenuItem daftarStockOpnameToolStripMenuItem;
         private ToolStripMenuItem kategoriBarangToolStripMenuItem;
         private ToolStripMenuItem unitSatuanToolStripMenuItem;
         private ToolStripMenuItem gudangToolStripMenuItem;

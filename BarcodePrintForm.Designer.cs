@@ -35,6 +35,8 @@ namespace POS_qu
             panelLeftBottom = new Panel();
             btnPreview = new Button();
             btnPrint = new Button();
+            btnExportExcel = new Button();
+            btnPageSetup = new Button();
             btnClose = new Button();
             panelRightTop = new Panel();
             lblPreview = new Label();
@@ -218,6 +220,8 @@ namespace POS_qu
             panelLeftBottom.BackColor = Color.White;
             panelLeftBottom.Controls.Add(btnPreview);
             panelLeftBottom.Controls.Add(btnPrint);
+            panelLeftBottom.Controls.Add(btnExportExcel);
+            panelLeftBottom.Controls.Add(btnPageSetup);
             panelLeftBottom.Controls.Add(btnClose);
             panelLeftBottom.Dock = DockStyle.Bottom;
             panelLeftBottom.Location = new Point(0, 760);
@@ -253,15 +257,41 @@ namespace POS_qu
             btnPrint.UseVisualStyleBackColor = false;
             btnPrint.Click += btnPrint_Click;
             // 
+            // btnExportExcel
+            // 
+            btnExportExcel.BackColor = Color.White;
+            btnExportExcel.FlatStyle = FlatStyle.Flat;
+            btnExportExcel.Font = new Font("Segoe UI", 10F);
+            btnExportExcel.Location = new Point(248, 12);
+            btnExportExcel.Name = "btnExportExcel";
+            btnExportExcel.Size = new Size(130, 36);
+            btnExportExcel.TabIndex = 2;
+            btnExportExcel.Text = "Export Excel";
+            btnExportExcel.UseVisualStyleBackColor = false;
+            btnExportExcel.Click += btnExportExcel_Click;
+            // 
+            // btnPageSetup
+            // 
+            btnPageSetup.BackColor = Color.White;
+            btnPageSetup.FlatStyle = FlatStyle.Flat;
+            btnPageSetup.Font = new Font("Segoe UI", 10F);
+            btnPageSetup.Location = new Point(386, 12);
+            btnPageSetup.Name = "btnPageSetup";
+            btnPageSetup.Size = new Size(120, 36);
+            btnPageSetup.TabIndex = 3;
+            btnPageSetup.Text = "Page Setup";
+            btnPageSetup.UseVisualStyleBackColor = false;
+            btnPageSetup.Click += btnPageSetup_Click;
+            // 
             // btnClose
             // 
             btnClose.BackColor = Color.White;
             btnClose.FlatStyle = FlatStyle.Flat;
             btnClose.Font = new Font("Segoe UI", 10F);
-            btnClose.Location = new Point(248, 12);
+            btnClose.Location = new Point(514, 12);
             btnClose.Name = "btnClose";
             btnClose.Size = new Size(110, 36);
-            btnClose.TabIndex = 2;
+            btnClose.TabIndex = 4;
             btnClose.Text = "Tutup";
             btnClose.UseVisualStyleBackColor = false;
             btnClose.Click += btnClose_Click;
@@ -331,6 +361,8 @@ namespace POS_qu
         private Panel panelLeftBottom;
         private Button btnPreview;
         private Button btnPrint;
+        private Button btnExportExcel;
+        private Button btnPageSetup;
         private Button btnClose;
         private Panel panelRightTop;
         private Label lblPreview;
@@ -346,4 +378,3 @@ namespace POS_qu
         private DataGridViewTextBoxColumn colQtyLabels;
     }
 }
-
