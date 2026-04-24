@@ -253,6 +253,7 @@ foreach ($suppliers as $supplier) {
 // =====================================================
 // 7️⃣ ITEMS & UNIT VARIANTS
 // =====================================================
+$defaultStock = 10;
 try {
     echo "🧹 Clearing related tables...\n";
 
@@ -298,7 +299,7 @@ $item = [
     'buy_price' => 1000,
     'sell_price' => 1500,
     'barcode' => '899100000002',
-    'stock' => 100,
+    'stock' => $defaultStock,
     'reserved_stock' => 0,
     'unit' => 1,
     'category_id' => 1,
