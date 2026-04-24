@@ -1,4 +1,4 @@
-﻿using POS_qu.Controllers;
+using POS_qu.Controllers;
 using POS_qu.Helpers;
 using System;
 using System.Data;
@@ -18,6 +18,7 @@ namespace POS_qu
             btnEdit.Click += btnEdit_Click;
             btnAdd.Click += btnAdd_Click;
             btnRefresh.Click += btnRefresh_Click;
+            btnClose.Click += (s, e) => Close();
            
         }
 

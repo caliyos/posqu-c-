@@ -12,6 +12,7 @@ namespace POS_qu
         public BrandForm()
         {
             InitializeComponent();
+            btnClose.Click += (s, e) => Close();
             LoadData();
         }
 

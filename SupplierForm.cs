@@ -1,4 +1,4 @@
-﻿using POS_qu.Controllers;
+using POS_qu.Controllers;
 using POS_qu.Models;
 using System;
 using System.Collections.Generic;
@@ -25,6 +25,7 @@ namespace POS_qu
             btnAdd.Click += BtnAdd_Click;
             btnUpdate.Click += BtnUpdate_Click;
             btnDelete.Click += BtnDelete_Click;
+            btnClose.Click += (s, e) => Close();
 
             dataGridViewSuppliers.SelectionChanged += DataGridViewSuppliers_SelectionChanged;
 

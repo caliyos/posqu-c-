@@ -14,6 +14,7 @@ namespace POS_qu
             InitializeComponent();
             this.StartPosition = FormStartPosition.CenterScreen;
             this.Load += WarehouseForm_Load;
+            btnClose.Click += (s, e) => Close();
             
             btnAdd.Click += btnAdd_Click;
             btnEdit.Click += btnEdit_Click;

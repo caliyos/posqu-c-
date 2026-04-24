@@ -1,4 +1,4 @@
-﻿namespace POS_qu
+namespace POS_qu
 {
     partial class CategoryForm
     {
@@ -28,6 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
+            panelHeader = new Panel();
+            lblTitle = new Label();
+            btnClose = new Button();
+            panelContent = new Panel();
             txtName = new TextBox();
             txtKode = new TextBox();
             txtDescription = new TextBox();
@@ -41,7 +45,66 @@
             btnRefresh = new Button();
             cmbParentCategory = new ComboBox();
             label2 = new Label();
+            panelHeader.SuspendLayout();
+            panelContent.SuspendLayout();
             SuspendLayout();
+            // 
+            // panelHeader
+            // 
+            panelHeader.BackColor = Color.White;
+            panelHeader.Controls.Add(btnClose);
+            panelHeader.Controls.Add(lblTitle);
+            panelHeader.Dock = DockStyle.Top;
+            panelHeader.Location = new Point(0, 0);
+            panelHeader.Name = "panelHeader";
+            panelHeader.Size = new Size(1101, 70);
+            panelHeader.TabIndex = 100;
+            // 
+            // lblTitle
+            // 
+            lblTitle.AutoSize = true;
+            lblTitle.Font = new Font("Segoe UI Semibold", 16F, FontStyle.Bold);
+            lblTitle.ForeColor = Color.FromArgb(51, 51, 51);
+            lblTitle.Location = new Point(20, 15);
+            lblTitle.Name = "lblTitle";
+            lblTitle.Size = new Size(122, 37);
+            lblTitle.TabIndex = 0;
+            lblTitle.Text = "Kategori";
+            // 
+            // btnClose
+            // 
+            btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnClose.BackColor = Color.White;
+            btnClose.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnClose.FlatStyle = FlatStyle.Flat;
+            btnClose.Font = new Font("Segoe UI", 10F);
+            btnClose.Location = new Point(941, 15);
+            btnClose.Name = "btnClose";
+            btnClose.Size = new Size(140, 40);
+            btnClose.TabIndex = 1;
+            btnClose.Text = "Tutup";
+            btnClose.UseVisualStyleBackColor = false;
+            // 
+            // panelContent
+            // 
+            panelContent.Controls.Add(cmbParentCategory);
+            panelContent.Controls.Add(treeViewCategories);
+            panelContent.Controls.Add(label2);
+            panelContent.Controls.Add(label1);
+            panelContent.Controls.Add(lbl2);
+            panelContent.Controls.Add(lbl);
+            panelContent.Controls.Add(btnRefresh);
+            panelContent.Controls.Add(btnDelete);
+            panelContent.Controls.Add(btnUpdate);
+            panelContent.Controls.Add(btnAdd);
+            panelContent.Controls.Add(txtDescription);
+            panelContent.Controls.Add(txtKode);
+            panelContent.Controls.Add(txtName);
+            panelContent.Dock = DockStyle.Fill;
+            panelContent.Location = new Point(0, 70);
+            panelContent.Name = "panelContent";
+            panelContent.Size = new Size(1101, 529);
+            panelContent.TabIndex = 101;
             // 
             // txtName
             // 
@@ -66,30 +129,41 @@
             // 
             // btnAdd
             // 
+            btnAdd.BackColor = Color.FromArgb(0, 120, 215);
+            btnAdd.FlatAppearance.BorderSize = 0;
+            btnAdd.FlatStyle = FlatStyle.Flat;
+            btnAdd.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            btnAdd.ForeColor = Color.White;
             btnAdd.Location = new Point(32, 320);
             btnAdd.Name = "btnAdd";
             btnAdd.Size = new Size(112, 34);
             btnAdd.TabIndex = 5;
             btnAdd.Text = "add";
-            btnAdd.UseVisualStyleBackColor = true;
+            btnAdd.UseVisualStyleBackColor = false;
             // 
             // btnUpdate
             // 
+            btnUpdate.BackColor = Color.White;
+            btnUpdate.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnUpdate.FlatStyle = FlatStyle.Flat;
             btnUpdate.Location = new Point(152, 320);
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(112, 34);
             btnUpdate.TabIndex = 6;
             btnUpdate.Text = "update";
-            btnUpdate.UseVisualStyleBackColor = true;
+            btnUpdate.UseVisualStyleBackColor = false;
             // 
             // btnDelete
             // 
+            btnDelete.BackColor = Color.White;
+            btnDelete.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnDelete.FlatStyle = FlatStyle.Flat;
             btnDelete.Location = new Point(272, 320);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(112, 34);
             btnDelete.TabIndex = 7;
             btnDelete.Text = "delete";
-            btnDelete.UseVisualStyleBackColor = true;
+            btnDelete.UseVisualStyleBackColor = false;
             // 
             // lbl
             // 
@@ -120,6 +194,7 @@
             // 
             // treeViewCategories
             // 
+            treeViewCategories.BackColor = Color.White;
             treeViewCategories.Location = new Point(584, 16);
             treeViewCategories.Name = "treeViewCategories";
             treeViewCategories.Size = new Size(440, 464);
@@ -127,12 +202,15 @@
             // 
             // btnRefresh
             // 
+            btnRefresh.BackColor = Color.White;
+            btnRefresh.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnRefresh.FlatStyle = FlatStyle.Flat;
             btnRefresh.Location = new Point(408, 320);
             btnRefresh.Name = "btnRefresh";
             btnRefresh.Size = new Size(112, 34);
             btnRefresh.TabIndex = 8;
             btnRefresh.Text = "refresh";
-            btnRefresh.UseVisualStyleBackColor = true;
+            btnRefresh.UseVisualStyleBackColor = false;
             btnRefresh.Click += btnRefresh_Click;
             // 
             // cmbParentCategory
@@ -156,27 +234,24 @@
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.FromArgb(245, 246, 250);
             ClientSize = new Size(1101, 599);
-            Controls.Add(cmbParentCategory);
-            Controls.Add(treeViewCategories);
-            Controls.Add(label2);
-            Controls.Add(label1);
-            Controls.Add(lbl2);
-            Controls.Add(lbl);
-            Controls.Add(btnRefresh);
-            Controls.Add(btnDelete);
-            Controls.Add(btnUpdate);
-            Controls.Add(btnAdd);
-            Controls.Add(txtDescription);
-            Controls.Add(txtKode);
-            Controls.Add(txtName);
+            Controls.Add(panelContent);
+            Controls.Add(panelHeader);
             Name = "CategoryForm";
-            Text = "Category";
+            Text = "Master Kategori";
+            panelHeader.ResumeLayout(false);
+            panelHeader.PerformLayout();
+            panelContent.ResumeLayout(false);
+            panelContent.PerformLayout();
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
+        private Panel panelHeader;
+        private Label lblTitle;
+        private Button btnClose;
+        private Panel panelContent;
         private TextBox txtName;
         private TextBox txtKode;
         private TextBox txtDescription;

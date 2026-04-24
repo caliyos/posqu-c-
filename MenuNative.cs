@@ -265,6 +265,46 @@ namespace POSqu_menu
             f.ShowDialog(this);
         }
 
+        private void daftarItemMasukToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var f = new POS_qu.InventoryAdjustmentListForm(POS_qu.InventoryAdjustmentDirection.In);
+            f.ShowDialog(this);
+        }
+
+        private void daftarItemKeluarToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var f = new POS_qu.InventoryAdjustmentListForm(POS_qu.InventoryAdjustmentDirection.Out);
+            f.ShowDialog(this);
+        }
+
+        private void ubahHargaToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var f = new POS_qu.PriceUpdateForm();
+            f.ShowDialog(this);
+        }
+
+        private void daftarProgramToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var f = new POS_qu.PromotionListForm();
+            f.ShowDialog(this);
+        }
+
+        private void buatProgramToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using var f = new POS_qu.PromotionProgramForm();
+            f.ShowDialog(this);
+        }
+
+        private void ruleSyaratToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("Rule / Syarat: gunakan kolom Priority + Periode + Tipe pada Program untuk menentukan konflik.\nVersi berikutnya bisa ditambah rule per item/kategori.", "Info");
+        }
+
+        private void historyLogToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show("History / Log promo belum diaktifkan.", "Info");
+        }
+
         private ToolStripMenuItem FindMenuItemByName(ToolStripItemCollection items, string name)
         {
             foreach (ToolStripItem it in items)
@@ -478,6 +518,14 @@ namespace POSqu_menu
             using (UnitForm f = new UnitForm())
             {
                 f.ShowDialog(this); // owner = form utama
+            }
+        }
+
+        private void akunToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            using (AccountsForm f = new AccountsForm())
+            {
+                f.ShowDialog(this);
             }
         }
 

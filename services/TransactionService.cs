@@ -88,6 +88,9 @@ namespace POS_qu.Services
             decimal paymentAmount,
             string paymentMethod)
         {
+            var promoService = new PromotionService();
+            promoService.ApplyBestPromotion(invoice);
+
             var paymentResult = ProcessPayment(invoice, paymentAmount, paymentMethod);
 
             if (!paymentResult.IsSuccess)
@@ -206,6 +209,9 @@ namespace POS_qu.Services
                                 });
                             }
                         }
+
+                        var journal = new JournalService();
+                        journal.CreateJournalFromSale(transactionId, con, tran);
 
                         // ===============================
                         // DELETE PENDING TRANSACTION

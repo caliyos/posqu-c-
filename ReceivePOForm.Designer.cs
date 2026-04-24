@@ -35,6 +35,8 @@ namespace POS_qu
             
             pnlHeader = new Panel();
             lblTitle = new Label();
+            lblMode = new Label();
+            cmbMode = new ComboBox();
             button1 = new Button();
             
             pnlLeft = new Panel();
@@ -85,6 +87,8 @@ namespace POS_qu
             // 
             pnlHeader.BackColor = Color.White;
             pnlHeader.Controls.Add(button1);
+            pnlHeader.Controls.Add(cmbMode);
+            pnlHeader.Controls.Add(lblMode);
             pnlHeader.Controls.Add(lblTitle);
             pnlHeader.Dock = DockStyle.Top;
             pnlHeader.Location = new Point(0, 0);
@@ -101,7 +105,29 @@ namespace POS_qu
             lblTitle.Name = "lblTitle";
             lblTitle.Size = new Size(335, 45);
             lblTitle.TabIndex = 0;
-            lblTitle.Text = "Penerimaan Barang (PO)";
+            lblTitle.Text = "Pembelian / Penerimaan Barang";
+            // 
+            // lblMode
+            // 
+            lblMode.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lblMode.AutoSize = true;
+            lblMode.Font = new Font("Segoe UI", 10F);
+            lblMode.ForeColor = Color.FromArgb(51, 51, 51);
+            lblMode.Location = new Point(820, 24);
+            lblMode.Name = "lblMode";
+            lblMode.Size = new Size(61, 28);
+            lblMode.TabIndex = 2;
+            lblMode.Text = "Mode:";
+            // 
+            // cmbMode
+            // 
+            cmbMode.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            cmbMode.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbMode.Font = new Font("Segoe UI", 10F);
+            cmbMode.Location = new Point(890, 20);
+            cmbMode.Name = "cmbMode";
+            cmbMode.Size = new Size(440, 36);
+            cmbMode.TabIndex = 3;
             // 
             // button1
             // 
@@ -400,6 +426,8 @@ namespace POS_qu
 
         private Panel pnlHeader;
         private Label lblTitle;
+        private Label lblMode;
+        private ComboBox cmbMode;
         private Button button1;
 
         private Panel pnlLeft;

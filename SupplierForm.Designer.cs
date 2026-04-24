@@ -1,4 +1,4 @@
-﻿namespace POS_qu
+namespace POS_qu
 {
     partial class SupplierForm
     {
@@ -28,6 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
+            panelHeader = new Panel();
+            lblTitle = new Label();
+            btnClose = new Button();
+            panelContent = new Panel();
             label1 = new Label();
             label2 = new Label();
             label3 = new Label();
@@ -47,8 +51,73 @@
             btnUpdate = new Button();
             btnDelete = new Button();
             btnRefresh = new Button();
+            panelHeader.SuspendLayout();
+            panelContent.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewSuppliers).BeginInit();
             SuspendLayout();
+            // 
+            // panelHeader
+            // 
+            panelHeader.BackColor = Color.White;
+            panelHeader.Controls.Add(btnClose);
+            panelHeader.Controls.Add(lblTitle);
+            panelHeader.Dock = DockStyle.Top;
+            panelHeader.Location = new Point(0, 0);
+            panelHeader.Name = "panelHeader";
+            panelHeader.Size = new Size(1559, 70);
+            panelHeader.TabIndex = 100;
+            // 
+            // lblTitle
+            // 
+            lblTitle.AutoSize = true;
+            lblTitle.Font = new Font("Segoe UI Semibold", 16F, FontStyle.Bold);
+            lblTitle.ForeColor = Color.FromArgb(51, 51, 51);
+            lblTitle.Location = new Point(20, 15);
+            lblTitle.Name = "lblTitle";
+            lblTitle.Size = new Size(127, 37);
+            lblTitle.TabIndex = 0;
+            lblTitle.Text = "Supplier";
+            // 
+            // btnClose
+            // 
+            btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnClose.BackColor = Color.White;
+            btnClose.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnClose.FlatStyle = FlatStyle.Flat;
+            btnClose.Font = new Font("Segoe UI", 10F);
+            btnClose.Location = new Point(1399, 15);
+            btnClose.Name = "btnClose";
+            btnClose.Size = new Size(140, 40);
+            btnClose.TabIndex = 1;
+            btnClose.Text = "Tutup";
+            btnClose.UseVisualStyleBackColor = false;
+            // 
+            // panelContent
+            // 
+            panelContent.Controls.Add(btnRefresh);
+            panelContent.Controls.Add(btnDelete);
+            panelContent.Controls.Add(btnUpdate);
+            panelContent.Controls.Add(btnAdd);
+            panelContent.Controls.Add(dataGridViewSuppliers);
+            panelContent.Controls.Add(txtNote);
+            panelContent.Controls.Add(txtAddress);
+            panelContent.Controls.Add(txtEmail);
+            panelContent.Controls.Add(txtPhone);
+            panelContent.Controls.Add(txtContact);
+            panelContent.Controls.Add(txtKode);
+            panelContent.Controls.Add(txtName);
+            panelContent.Controls.Add(label7);
+            panelContent.Controls.Add(label6);
+            panelContent.Controls.Add(label5);
+            panelContent.Controls.Add(label4);
+            panelContent.Controls.Add(label3);
+            panelContent.Controls.Add(label2);
+            panelContent.Controls.Add(label1);
+            panelContent.Dock = DockStyle.Fill;
+            panelContent.Location = new Point(0, 70);
+            panelContent.Name = "panelContent";
+            panelContent.Size = new Size(1559, 605);
+            panelContent.TabIndex = 101;
             // 
             // label1
             // 
@@ -164,83 +233,97 @@
             // 
             // dataGridViewSuppliers
             // 
-            dataGridViewSuppliers.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewSuppliers.AllowUserToAddRows = false;
+            dataGridViewSuppliers.AllowUserToDeleteRows = false;
+            dataGridViewSuppliers.BackgroundColor = Color.White;
+            dataGridViewSuppliers.BorderStyle = BorderStyle.None;
+            dataGridViewSuppliers.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dataGridViewSuppliers.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+            dataGridViewSuppliers.ColumnHeadersHeight = 45;
+            dataGridViewSuppliers.EnableHeadersVisualStyles = false;
             dataGridViewSuppliers.Location = new Point(760, 32);
             dataGridViewSuppliers.Name = "dataGridViewSuppliers";
+            dataGridViewSuppliers.RowHeadersVisible = false;
             dataGridViewSuppliers.RowHeadersWidth = 62;
+            dataGridViewSuppliers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dataGridViewSuppliers.Size = new Size(776, 528);
             dataGridViewSuppliers.TabIndex = 2;
             // 
             // btnAdd
             // 
+            btnAdd.BackColor = Color.FromArgb(0, 120, 215);
+            btnAdd.FlatAppearance.BorderSize = 0;
+            btnAdd.FlatStyle = FlatStyle.Flat;
+            btnAdd.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            btnAdd.ForeColor = Color.White;
             btnAdd.Location = new Point(40, 400);
             btnAdd.Name = "btnAdd";
             btnAdd.Size = new Size(112, 34);
             btnAdd.TabIndex = 8;
             btnAdd.Text = "add";
-            btnAdd.UseVisualStyleBackColor = true;
+            btnAdd.UseVisualStyleBackColor = false;
             // 
             // btnUpdate
             // 
+            btnUpdate.BackColor = Color.White;
+            btnUpdate.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnUpdate.FlatStyle = FlatStyle.Flat;
             btnUpdate.Location = new Point(168, 400);
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(112, 34);
             btnUpdate.TabIndex = 9;
             btnUpdate.Text = "update";
-            btnUpdate.UseVisualStyleBackColor = true;
+            btnUpdate.UseVisualStyleBackColor = false;
             // 
             // btnDelete
             // 
+            btnDelete.BackColor = Color.White;
+            btnDelete.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnDelete.FlatStyle = FlatStyle.Flat;
             btnDelete.Location = new Point(304, 400);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(112, 34);
             btnDelete.TabIndex = 10;
             btnDelete.Text = "delete";
-            btnDelete.UseVisualStyleBackColor = true;
+            btnDelete.UseVisualStyleBackColor = false;
             // 
             // btnRefresh
             // 
+            btnRefresh.BackColor = Color.White;
+            btnRefresh.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnRefresh.FlatStyle = FlatStyle.Flat;
             btnRefresh.Location = new Point(440, 400);
             btnRefresh.Name = "btnRefresh";
             btnRefresh.Size = new Size(112, 34);
             btnRefresh.TabIndex = 11;
             btnRefresh.Text = "refresh";
-            btnRefresh.UseVisualStyleBackColor = true;
+            btnRefresh.UseVisualStyleBackColor = false;
             btnRefresh.Click += btnRefresh_Click;
             // 
             // SupplierForm
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.FromArgb(245, 246, 250);
             ClientSize = new Size(1559, 675);
-            Controls.Add(btnRefresh);
-            Controls.Add(btnDelete);
-            Controls.Add(btnUpdate);
-            Controls.Add(btnAdd);
-            Controls.Add(dataGridViewSuppliers);
-            Controls.Add(txtNote);
-            Controls.Add(txtAddress);
-            Controls.Add(txtEmail);
-            Controls.Add(txtPhone);
-            Controls.Add(txtContact);
-            Controls.Add(txtKode);
-            Controls.Add(txtName);
-            Controls.Add(label7);
-            Controls.Add(label6);
-            Controls.Add(label5);
-            Controls.Add(label4);
-            Controls.Add(label3);
-            Controls.Add(label2);
-            Controls.Add(label1);
+            Controls.Add(panelContent);
+            Controls.Add(panelHeader);
             Name = "SupplierForm";
-            Text = "SupplierForm";
+            Text = "Master Supplier";
+            panelHeader.ResumeLayout(false);
+            panelHeader.PerformLayout();
+            panelContent.ResumeLayout(false);
+            panelContent.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewSuppliers).EndInit();
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
 
+        private Panel panelHeader;
+        private Label lblTitle;
+        private Button btnClose;
+        private Panel panelContent;
         private Label label1;
         private Label label2;
         private Label label3;

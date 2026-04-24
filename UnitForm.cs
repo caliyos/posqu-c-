@@ -1,4 +1,4 @@
-﻿using POS_qu.Controllers;
+using POS_qu.Controllers;
 using POS_qu.Helpers;
 using System;
 using System.Data;
@@ -13,6 +13,7 @@ namespace POS_qu
             InitializeComponent();
             this.StartPosition = FormStartPosition.CenterScreen; 
             this.Load += UnitForm_Load; // ⬅️ WAJIB
+            btnClose.Click += (s, e) => Close();
         }
 
         private DataGridViewManager dgvManager;

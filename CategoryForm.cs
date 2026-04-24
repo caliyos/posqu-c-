@@ -1,4 +1,4 @@
-﻿using POS_qu.Controllers;
+using POS_qu.Controllers;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -25,6 +25,7 @@ namespace POS_qu
             btnAdd.Click += btnAdd_Click;
             btnUpdate.Click += btnUpdate_Click;
             btnDelete.Click += btnDelete_Click;
+            btnClose.Click += (s, e) => Close();
             // **Bind TreeView event**
             treeViewCategories.AfterSelect += treeViewCategories_AfterSelect;
         }

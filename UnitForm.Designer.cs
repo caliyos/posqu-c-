@@ -1,4 +1,4 @@
-﻿namespace POS_qu
+namespace POS_qu
 {
     partial class UnitForm
     {
@@ -28,6 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
+            pnlHeader = new Panel();
+            lblTitle = new Label();
+            btnClose = new Button();
+            pnlContent = new Panel();
             cmbPageSize = new ComboBox();
             lblPageNumber = new Label();
             btnLast = new Button();
@@ -47,8 +51,73 @@
             btnRefresh = new Button();
             txtOrder = new TextBox();
             label1 = new Label();
+            pnlHeader.SuspendLayout();
+            pnlContent.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvUnits).BeginInit();
             SuspendLayout();
+            // 
+            // pnlHeader
+            // 
+            pnlHeader.BackColor = Color.White;
+            pnlHeader.Controls.Add(btnClose);
+            pnlHeader.Controls.Add(lblTitle);
+            pnlHeader.Dock = DockStyle.Top;
+            pnlHeader.Location = new Point(0, 0);
+            pnlHeader.Name = "pnlHeader";
+            pnlHeader.Size = new Size(1241, 70);
+            pnlHeader.TabIndex = 100;
+            // 
+            // lblTitle
+            // 
+            lblTitle.AutoSize = true;
+            lblTitle.Font = new Font("Segoe UI Semibold", 16F, FontStyle.Bold);
+            lblTitle.ForeColor = Color.FromArgb(51, 51, 51);
+            lblTitle.Location = new Point(20, 15);
+            lblTitle.Name = "lblTitle";
+            lblTitle.Size = new Size(80, 37);
+            lblTitle.TabIndex = 0;
+            lblTitle.Text = "Unit";
+            // 
+            // btnClose
+            // 
+            btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnClose.BackColor = Color.White;
+            btnClose.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnClose.FlatStyle = FlatStyle.Flat;
+            btnClose.Font = new Font("Segoe UI", 10F);
+            btnClose.Location = new Point(1081, 15);
+            btnClose.Name = "btnClose";
+            btnClose.Size = new Size(140, 40);
+            btnClose.TabIndex = 1;
+            btnClose.Text = "Tutup";
+            btnClose.UseVisualStyleBackColor = false;
+            // 
+            // pnlContent
+            // 
+            pnlContent.Controls.Add(cmbPageSize);
+            pnlContent.Controls.Add(lblPageNumber);
+            pnlContent.Controls.Add(btnLast);
+            pnlContent.Controls.Add(btnNext);
+            pnlContent.Controls.Add(btnPrev);
+            pnlContent.Controls.Add(btnFirst);
+            pnlContent.Controls.Add(lblPagingInfo);
+            pnlContent.Controls.Add(txtSearch);
+            pnlContent.Controls.Add(dgvUnits);
+            pnlContent.Controls.Add(lblUnit);
+            pnlContent.Controls.Add(txtUnitName);
+            pnlContent.Controls.Add(label1);
+            pnlContent.Controls.Add(lblAbbr);
+            pnlContent.Controls.Add(txtOrder);
+            pnlContent.Controls.Add(txtAbbr);
+            pnlContent.Controls.Add(btnAdd);
+            pnlContent.Controls.Add(btnEdit);
+            pnlContent.Controls.Add(btnDelete);
+            pnlContent.Controls.Add(btnRefresh);
+            pnlContent.Dock = DockStyle.Fill;
+            pnlContent.Location = new Point(0, 70);
+            pnlContent.Name = "pnlContent";
+            pnlContent.Size = new Size(1241, 504);
+            pnlContent.TabIndex = 101;
             // 
             // cmbPageSize
             // 
@@ -179,42 +248,60 @@
             // 
             // btnAdd
             // 
+            btnAdd.BackColor = Color.FromArgb(0, 120, 215);
+            btnAdd.FlatAppearance.BorderSize = 0;
+            btnAdd.FlatStyle = FlatStyle.Flat;
+            btnAdd.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            btnAdd.ForeColor = Color.White;
             btnAdd.Location = new Point(768, 223);
             btnAdd.Margin = new Padding(2, 2, 2, 2);
             btnAdd.Name = "btnAdd";
             btnAdd.Size = new Size(80, 32);
             btnAdd.TabIndex = 24;
             btnAdd.Text = "Add";
+            btnAdd.UseVisualStyleBackColor = false;
             btnAdd.Click += btnAdd_Click;
             // 
             // btnEdit
             // 
+            btnEdit.BackColor = Color.White;
+            btnEdit.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnEdit.FlatStyle = FlatStyle.Flat;
             btnEdit.Location = new Point(856, 223);
             btnEdit.Margin = new Padding(2, 2, 2, 2);
             btnEdit.Name = "btnEdit";
             btnEdit.Size = new Size(80, 32);
             btnEdit.TabIndex = 25;
             btnEdit.Text = "Edit";
+            btnEdit.UseVisualStyleBackColor = false;
             btnEdit.Click += btnEdit_Click;
             // 
             // btnDelete
             // 
+            btnDelete.BackColor = Color.White;
+            btnDelete.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnDelete.FlatStyle = FlatStyle.Flat;
             btnDelete.Location = new Point(944, 223);
             btnDelete.Margin = new Padding(2, 2, 2, 2);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new Size(80, 32);
             btnDelete.TabIndex = 26;
             btnDelete.Text = "Delete";
+            btnDelete.UseVisualStyleBackColor = false;
             btnDelete.Click += btnDelete_Click;
             // 
             // btnRefresh
             // 
+            btnRefresh.BackColor = Color.White;
+            btnRefresh.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnRefresh.FlatStyle = FlatStyle.Flat;
             btnRefresh.Location = new Point(1032, 223);
             btnRefresh.Margin = new Padding(2, 2, 2, 2);
             btnRefresh.Name = "btnRefresh";
             btnRefresh.Size = new Size(80, 32);
             btnRefresh.TabIndex = 27;
             btnRefresh.Text = "Refresh";
+            btnRefresh.UseVisualStyleBackColor = false;
             btnRefresh.Click += btnRefresh_Click;
             // 
             // txtOrder
@@ -238,36 +325,27 @@
             // 
             AutoScaleDimensions = new SizeF(8F, 20F);
             AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.FromArgb(245, 246, 250);
             ClientSize = new Size(1241, 574);
-            Controls.Add(cmbPageSize);
-            Controls.Add(lblPageNumber);
-            Controls.Add(btnLast);
-            Controls.Add(btnNext);
-            Controls.Add(btnPrev);
-            Controls.Add(btnFirst);
-            Controls.Add(lblPagingInfo);
-            Controls.Add(txtSearch);
-            Controls.Add(dgvUnits);
-            Controls.Add(lblUnit);
-            Controls.Add(txtUnitName);
-            Controls.Add(label1);
-            Controls.Add(lblAbbr);
-            Controls.Add(txtOrder);
-            Controls.Add(txtAbbr);
-            Controls.Add(btnAdd);
-            Controls.Add(btnEdit);
-            Controls.Add(btnDelete);
-            Controls.Add(btnRefresh);
+            Controls.Add(pnlContent);
+            Controls.Add(pnlHeader);
             Margin = new Padding(2, 2, 2, 2);
             Name = "UnitForm";
-            Text = "UnitForm";
+            Text = "Master Unit";
+            pnlHeader.ResumeLayout(false);
+            pnlHeader.PerformLayout();
+            pnlContent.ResumeLayout(false);
+            pnlContent.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dgvUnits).EndInit();
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
 
+        private Panel pnlHeader;
+        private Label lblTitle;
+        private Button btnClose;
+        private Panel pnlContent;
         private ComboBox cmbPageSize;
         private Label lblPageNumber;
         private Button btnLast;

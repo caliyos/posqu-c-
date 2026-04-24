@@ -15,6 +15,11 @@ namespace POS_qu
 {
     public partial class ReceivePOForm : Form
     {
+        private enum ReceivePurchaseMode
+        {
+            FromApprovedPo = 0,
+            DirectPurchase = 1
+        }
 
         private readonly ItemController _itemController;
 
@@ -28,6 +33,7 @@ namespace POS_qu
 
 
         private int _poId = 0;
+        private ReceivePurchaseMode _mode = ReceivePurchaseMode.FromApprovedPo;
 
         public ReceivePOForm()
         {
@@ -36,24 +42,23 @@ namespace POS_qu
             LoadSuppliers();
             LoadStatuses();
             LoadWarehouses();
-            LoadApprovedPOs(); // Load PO yang status APPROVED
             InitOrderDetailsGrid();
 
-            // Ubah teks UI
-            lblSearch.Text = "Cari PO (Approved):";
-            btnAddItem.Text = "Muat Data PO >";
-            btnAddItem.Click -= btnAddItem_Click;
-            btnAddItem.Click += btnLoadPO_Click;
-            
-            // disable field header karena diambil dari PO
-            cmbSupplier.Enabled = false;
-            dtpOrderDate.Enabled = false;
+            cmbMode.Items.Clear();
+            cmbMode.Items.Add("Dari Pesanan Pembelian (PO Approved)");
+            cmbMode.Items.Add("Beli Langsung (Tanpa PO)");
+            cmbMode.SelectedIndexChanged += cmbMode_SelectedIndexChanged;
+            cmbMode.SelectedIndex = 0;
+
+            btnAddItem.Click += btnAddItem_Click;
 
             txtSearch.TextChanged += txtSearch_TextChanged;
             btnSave.Click += btnSave_Click;
 
             this.WindowState = FormWindowState.Maximized;
             dgvOrderDetails.CellEndEdit += dgvOrderDetails_CellEndEdit;
+
+            ApplyMode();
         }
 
         private void LoadApprovedPOs()
@@ -92,7 +97,54 @@ namespace POS_qu
 
         private void txtSearch_TextChanged(object? sender, EventArgs e)
         {
-            LoadApprovedPOs();
+            if (_mode == ReceivePurchaseMode.FromApprovedPo) LoadApprovedPOs();
+            else LoadPurchasableItems();
+        }
+
+        private void cmbMode_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            var idx = cmbMode.SelectedIndex;
+            _mode = idx == 1 ? ReceivePurchaseMode.DirectPurchase : ReceivePurchaseMode.FromApprovedPo;
+            ApplyMode();
+        }
+
+        private void ApplyMode()
+        {
+            _poId = 0;
+            dgvOrderDetails.Rows.Clear();
+            txtNote.Text = "";
+            dtpOrderDate.Value = DateTime.Today;
+
+            if (_mode == ReceivePurchaseMode.FromApprovedPo)
+            {
+                lblTitle.Text = "Pembelian / Penerimaan Barang (Dari PO)";
+                Text = lblTitle.Text;
+
+                lblSearch.Text = "Cari PO (Approved):";
+                btnAddItem.Text = "Muat Data PO >";
+                btnSave.Text = "Terima & Update Stok";
+                button1.Text = "Daftar Pembelian";
+
+                cmbSupplier.Enabled = false;
+                dtpOrderDate.Enabled = false;
+
+                LoadApprovedPOs();
+            }
+            else
+            {
+                lblTitle.Text = "Pembelian / Penerimaan Barang (Beli Langsung)";
+                Text = lblTitle.Text;
+
+                lblSearch.Text = "Cari Produk:";
+                btnAddItem.Text = "Tambah Item >";
+                btnSave.Text = "Simpan Pembelian & Update Stok";
+                button1.Text = "Daftar Pembelian";
+
+                cmbSupplier.Enabled = true;
+                dtpOrderDate.Enabled = true;
+
+                LoadPurchasableItems();
+            }
         }
 
         private void btnLoadPO_Click(object? sender, EventArgs e)
@@ -152,13 +204,18 @@ namespace POS_qu
 
         private void LoadSuppliers()
         {
-            //DataTable dt = ItemController.GetSuppliers();
-            //cmbSupplier.DataSource = dt;
-            //cmbSupplier.DisplayMember = "name";
-            //cmbSupplier.ValueMember = "id";
-            //cmbSupplier.SelectedIndex = -1; // default kosong
-
-
+            try
+            {
+                DataTable dt = _itemController.GetSuppliers();
+                cmbSupplier.DataSource = dt;
+                cmbSupplier.DisplayMember = "display";
+                cmbSupplier.ValueMember = "id";
+                cmbSupplier.SelectedIndex = -1;
+            }
+            catch
+            {
+                cmbSupplier.DataSource = null;
+            }
         }
 
         private void LoadStatuses()
@@ -199,6 +256,60 @@ namespace POS_qu
                     col.ReadOnly = true;
                 }
             };
+        }
+
+        private void LoadPurchasableItems()
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            string query = @"
+SELECT
+    items.id,
+    items.barcode,
+    items.name,
+    units.name AS unit_name,
+    items.buy_price
+FROM items
+LEFT JOIN units ON items.unit = units.id
+WHERE items.deleted_at IS NULL
+  AND items.is_purchasable = TRUE
+  AND (@search = '' OR items.name ILIKE @search OR items.barcode ILIKE @search)
+ORDER BY items.name ASC";
+
+            using var cmd = new NpgsqlCommand(query, conn);
+            cmd.Parameters.AddWithValue("@search", "%" + (txtSearch.Text ?? "") + "%");
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+
+            dgvItems.DataSource = dt;
+            if (dgvItems.Columns.Contains("id")) dgvItems.Columns["id"].Visible = false;
+
+            if (dgvItems.Columns.Contains("barcode"))
+            {
+                dgvItems.Columns["barcode"].HeaderText = "Barcode";
+                dgvItems.Columns["barcode"].Width = 160;
+            }
+
+            if (dgvItems.Columns.Contains("name"))
+            {
+                dgvItems.Columns["name"].HeaderText = "Nama";
+                dgvItems.Columns["name"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            }
+
+            if (dgvItems.Columns.Contains("unit_name"))
+            {
+                dgvItems.Columns["unit_name"].HeaderText = "Satuan";
+                dgvItems.Columns["unit_name"].Width = 100;
+            }
+
+            if (dgvItems.Columns.Contains("buy_price"))
+            {
+                dgvItems.Columns["buy_price"].HeaderText = "Harga Beli";
+                dgvItems.Columns["buy_price"].DefaultCellStyle.Format = "N0";
+                dgvItems.Columns["buy_price"].Width = 120;
+            }
         }
 
         private void InitOrderDetailsGrid()
@@ -274,30 +385,53 @@ namespace POS_qu
 
         private void btnAddItem_Click(object? sender, EventArgs e)
         {
-            if (dgvItems.CurrentRow != null)
+            if (_mode == ReceivePurchaseMode.FromApprovedPo)
             {
-                string itemId = dgvItems.CurrentRow.Cells["id"].Value.ToString();
-                string name = dgvItems.CurrentRow.Cells["name"].Value.ToString();
-                string unit = dgvItems.CurrentRow.Cells["unit"].Value.ToString();
-                decimal unitPrice = 0;
-                decimal.TryParse(dgvItems.CurrentRow.Cells["buy_price"].Value?.ToString(), out unitPrice);
-
-                decimal quantity = 1;
-
-                // Hitung subtotal
-                decimal subtotal = quantity * unitPrice;
-
-                dgvOrderDetails.Rows.Add(itemId, name, quantity, unit, unitPrice, subtotal, ""); // tambahkan subtotal
-                UpdateTotalAmount();
+                btnLoadPO_Click(sender, e);
+                return;
             }
+
+            if (dgvItems.CurrentRow == null)
+            {
+                MessageBox.Show("Pilih item dari daftar sebelah kiri.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            long itemId = Convert.ToInt64(dgvItems.CurrentRow.Cells["id"].Value);
+            string name = dgvItems.CurrentRow.Cells["name"].Value?.ToString() ?? "";
+            string unit = dgvItems.CurrentRow.Cells["unit_name"].Value?.ToString() ?? "";
+            decimal unitPrice = 0m;
+            if (dgvItems.CurrentRow.Cells["buy_price"].Value != null && dgvItems.CurrentRow.Cells["buy_price"].Value != DBNull.Value)
+                unitPrice = Convert.ToDecimal(dgvItems.CurrentRow.Cells["buy_price"].Value);
+
+            var existing = dgvOrderDetails.Rows
+                .Cast<DataGridViewRow>()
+                .FirstOrDefault(r => !r.IsNewRow && Convert.ToInt64(r.Cells["item_id"].Value) == itemId);
+
+            if (existing != null)
+            {
+                decimal qtyOld = 0m;
+                decimal.TryParse(existing.Cells["quantity"].Value?.ToString(), out qtyOld);
+                existing.Cells["quantity"].Value = qtyOld + 1m;
+                existing.Cells["unit_price"].Value = unitPrice;
+                existing.Cells["unit"].Value = unit;
+                existing.Cells["subtotal"].Value = (qtyOld + 1m) * unitPrice;
+                UpdateTotalAmount();
+                return;
+            }
+
+            decimal quantity = 1m;
+            decimal subtotal = quantity * unitPrice;
+            dgvOrderDetails.Rows.Add(itemId, name, quantity, unit, unitPrice, subtotal, "");
+            UpdateTotalAmount();
         }
 
 
         private void btnSave_Click(object? sender, EventArgs e)
         {
-            if (dgvOrderDetails.Rows.Count == 0 || _poId == 0)
+            if (dgvOrderDetails.Rows.Count == 0)
             {
-                MessageBox.Show("Muat PO terlebih dahulu dan pastikan ada item!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Pastikan ada item!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -317,27 +451,68 @@ namespace POS_qu
                     warehouseId = wid;
                 }
 
-                string updatePO = @"
-                    UPDATE purchase_orders 
-                    SET status = 'RECEIVED', 
-                        total_amount = @total, 
-                        note = @note,
-                        warehouse_id = @warehouse_id,
-                        updated_at = NOW()
-                    WHERE id = @id";
+                var user = POS_qu.Models.SessionUser.GetCurrentUser();
+                int createdBy = user?.UserId ?? 0;
+                if (createdBy <= 0)
+                    throw new InvalidOperationException("Session user tidak ditemukan. Silakan login ulang.");
 
-                using var cmdPO = new NpgsqlCommand(updatePO, conn, tran);
-                cmdPO.Parameters.AddWithValue("@id", _poId);
-                cmdPO.Parameters.AddWithValue("@total", totalAmount);
-                cmdPO.Parameters.AddWithValue("@note", txtNote.Text ?? "");
-                cmdPO.Parameters.AddWithValue("@warehouse_id", warehouseId);
-                cmdPO.ExecuteNonQuery();
+                if (_mode == ReceivePurchaseMode.DirectPurchase)
+                {
+                    long? supplierId = null;
+                    if (cmbSupplier.SelectedValue != null && long.TryParse(cmbSupplier.SelectedValue.ToString(), out var sid) && sid > 0)
+                        supplierId = sid;
 
-                // 2. Hapus item lama, ganti dengan yang baru (karena bisa jadi qty/harga diubah saat terima)
-                string delItems = "DELETE FROM purchase_order_items WHERE po_id = @po_id";
-                using var cmdDel = new NpgsqlCommand(delItems, conn, tran);
-                cmdDel.Parameters.AddWithValue("@po_id", _poId);
-                cmdDel.ExecuteNonQuery();
+                    bool hasWhCol = HasColumn(conn, tran, "purchase_orders", "warehouse_id");
+                    string insertPoSql = hasWhCol
+                        ? @"INSERT INTO purchase_orders (supplier_id, order_date, status, total_amount, note, created_by, warehouse_id, created_at, updated_at)
+                           VALUES (@supplier_id, @order_date, 'RECEIVED', @total_amount, @note, @created_by, @warehouse_id, NOW(), NOW())
+                           RETURNING id"
+                        : @"INSERT INTO purchase_orders (supplier_id, order_date, status, total_amount, note, created_by, created_at, updated_at)
+                           VALUES (@supplier_id, @order_date, 'RECEIVED', @total_amount, @note, @created_by, NOW(), NOW())
+                           RETURNING id";
+
+                    using var cmdIns = new NpgsqlCommand(insertPoSql, conn, tran);
+                    cmdIns.Parameters.AddWithValue("@supplier_id", (object?)supplierId ?? DBNull.Value);
+                    cmdIns.Parameters.AddWithValue("@order_date", dtpOrderDate.Value.Date);
+                    cmdIns.Parameters.AddWithValue("@total_amount", totalAmount);
+                    cmdIns.Parameters.AddWithValue("@note", txtNote.Text ?? "");
+                    cmdIns.Parameters.AddWithValue("@created_by", createdBy);
+                    if (hasWhCol) cmdIns.Parameters.AddWithValue("@warehouse_id", warehouseId);
+
+                    var newIdObj = cmdIns.ExecuteScalar();
+                    _poId = newIdObj != null ? Convert.ToInt32(newIdObj) : 0;
+                    if (_poId <= 0) throw new InvalidOperationException("Gagal membuat pembelian baru.");
+                }
+                else
+                {
+                    if (_poId == 0)
+                    {
+                        MessageBox.Show("Muat PO terlebih dahulu.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
+                    string updatePO = @"
+                        UPDATE purchase_orders 
+                        SET status = 'RECEIVED', 
+                            total_amount = @total, 
+                            note = @note,
+                            warehouse_id = @warehouse_id,
+                            updated_at = NOW()
+                        WHERE id = @id";
+
+                    using var cmdPO = new NpgsqlCommand(updatePO, conn, tran);
+                    cmdPO.Parameters.AddWithValue("@id", _poId);
+                    cmdPO.Parameters.AddWithValue("@total", totalAmount);
+                    cmdPO.Parameters.AddWithValue("@note", txtNote.Text ?? "");
+                    cmdPO.Parameters.AddWithValue("@warehouse_id", warehouseId);
+                    cmdPO.ExecuteNonQuery();
+
+                    // 2. Hapus item lama, ganti dengan yang baru (karena bisa jadi qty/harga diubah saat terima)
+                    string delItems = "DELETE FROM purchase_order_items WHERE po_id = @po_id";
+                    using var cmdDel = new NpgsqlCommand(delItems, conn, tran);
+                    cmdDel.Parameters.AddWithValue("@po_id", _poId);
+                    cmdDel.ExecuteNonQuery();
+                }
 
                 // Insert details dan Update Stock
                 foreach (DataGridViewRow row in dgvOrderDetails.Rows)
@@ -404,15 +579,33 @@ namespace POS_qu
                     layerCmd.ExecuteNonQuery();
                 }
 
+                var journal = new POS_qu.Services.JournalService();
+                journal.CreateJournalFromPurchase(_poId, conn, tran);
+
                 tran.Commit();
-                MessageBox.Show("Barang berhasil diterima dan stok telah diperbarui!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Berhasil simpan dan stok telah diperbarui!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 this.DialogResult = DialogResult.OK;
                 this.Close(); // Tutup form setelah selesai
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error saat terima barang: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private bool HasColumn(NpgsqlConnection con, NpgsqlTransaction tran, string table, string column)
+        {
+            using var cmd = new NpgsqlCommand(@"
+SELECT 1
+FROM information_schema.columns
+WHERE table_schema = current_schema()
+  AND table_name = @t
+  AND column_name = @c
+LIMIT 1", con, tran);
+            cmd.Parameters.AddWithValue("@t", table);
+            cmd.Parameters.AddWithValue("@c", column);
+            var obj = cmd.ExecuteScalar();
+            return obj != null;
         }
 
         private void button1_Click(object? sender, EventArgs e)

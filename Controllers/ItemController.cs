@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿    ﻿﻿﻿﻿﻿﻿﻿  using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿    ﻿﻿﻿﻿﻿﻿﻿  using Npgsql;
     using System;
     using System.Collections.Generic;
     using System.Data;
@@ -88,7 +88,16 @@ using System.ComponentModel;
             using (var conn = new Npgsql.NpgsqlConnection(DbConfig.ConnectionString))
             {
                 conn.Open();
-                string query = "SELECT * FROM items WHERE id = @id LIMIT 1";
+                string query = @"
+SELECT
+    items.*,
+    COALESCE((SELECT SUM(s.qty) FROM stocks s WHERE s.item_id = items.id), 0) AS stock_qty,
+    COALESCE((SELECT SUM(s.reserved_qty) FROM stocks s WHERE s.item_id = items.id), 0) AS reserved_qty,
+    units.name AS unit_name
+FROM items
+LEFT JOIN units ON items.unit = units.id
+WHERE items.id = @id
+LIMIT 1";
                 using (var cmd = new Npgsql.NpgsqlCommand(query, conn))
                 {
                     cmd.Parameters.AddWithValue("id", id);
@@ -99,18 +108,16 @@ using System.ComponentModel;
                             return new Item
                             {
                                 id = reader.GetInt32(reader.GetOrdinal("id")),
-                                name = reader.GetString(reader.GetOrdinal("name")),
-                                buy_price = reader.GetDecimal(reader.GetOrdinal("buy_price")),
-                                sell_price = reader.GetDecimal(reader.GetOrdinal("sell_price")),
-                                barcode = reader.GetString(reader.GetOrdinal("barcode")),
+                                name = reader.IsDBNull(reader.GetOrdinal("name")) ? "" : reader.GetString(reader.GetOrdinal("name")),
+                                buy_price = reader.IsDBNull(reader.GetOrdinal("buy_price")) ? 0m : reader.GetDecimal(reader.GetOrdinal("buy_price")),
+                                sell_price = reader.IsDBNull(reader.GetOrdinal("sell_price")) ? 0m : reader.GetDecimal(reader.GetOrdinal("sell_price")),
+                                barcode = reader.IsDBNull(reader.GetOrdinal("barcode")) ? "" : reader.GetString(reader.GetOrdinal("barcode")),
 
-                                // stock dan reserved_stock numeric → convert ke int
-                                stock = Convert.ToInt32(reader.GetDouble(reader.GetOrdinal("stock"))),
-                                reserved_stock = Convert.ToInt32(reader.GetDouble(reader.GetOrdinal("reserved_stock"))),
+                                stock = reader["stock_qty"] != DBNull.Value ? Convert.ToInt32(Convert.ToDouble(reader["stock_qty"])) : 0,
+                                reserved_stock = reader["reserved_qty"] != DBNull.Value ? Convert.ToInt32(Convert.ToDouble(reader["reserved_qty"])) : 0,
 
-                                // unit numeric di DB tapi di class string → convert
-                                unit = reader.GetDecimal(reader.GetOrdinal("unit")).ToString(),
-                                //unitid = reader.GetInt32(reader.GetOrdinal("unit_id")),
+                                unitid = reader.IsDBNull(reader.GetOrdinal("unit")) ? 0 : Convert.ToInt32(reader["unit"]),
+                                unit = reader["unit_name"] == DBNull.Value ? "" : reader["unit_name"].ToString(),
                                 category_id = reader.IsDBNull(reader.GetOrdinal("category_id")) ? 0 : reader.GetInt32(reader.GetOrdinal("category_id")),
                                 supplier_id = reader.IsDBNull(reader.GetOrdinal("supplier_id")) ? 0 : reader.GetInt32(reader.GetOrdinal("supplier_id")),
                                 note = reader.IsDBNull(reader.GetOrdinal("note")) ? "" : reader.GetString(reader.GetOrdinal("note")),

@@ -15,6 +15,10 @@ namespace POS_qu
 
         private void InitializeComponent()
         {
+            pnlHeader = new System.Windows.Forms.Panel();
+            lblTitle = new System.Windows.Forms.Label();
+            btnClose = new System.Windows.Forms.Button();
+            pnlContent = new System.Windows.Forms.Panel();
             cmbPageSize = new System.Windows.Forms.ComboBox();
             lblPageNumber = new System.Windows.Forms.Label();
             btnLast = new System.Windows.Forms.Button();
@@ -33,8 +37,72 @@ namespace POS_qu
             btnEdit = new System.Windows.Forms.Button();
             btnDelete = new System.Windows.Forms.Button();
             btnRefresh = new System.Windows.Forms.Button();
+            pnlHeader.SuspendLayout();
+            pnlContent.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvWarehouses).BeginInit();
             SuspendLayout();
+            // 
+            // pnlHeader
+            // 
+            pnlHeader.BackColor = System.Drawing.Color.White;
+            pnlHeader.Controls.Add(btnClose);
+            pnlHeader.Controls.Add(lblTitle);
+            pnlHeader.Dock = System.Windows.Forms.DockStyle.Top;
+            pnlHeader.Location = new System.Drawing.Point(0, 0);
+            pnlHeader.Name = "pnlHeader";
+            pnlHeader.Size = new System.Drawing.Size(1551, 70);
+            pnlHeader.TabIndex = 100;
+            // 
+            // lblTitle
+            // 
+            lblTitle.AutoSize = true;
+            lblTitle.Font = new System.Drawing.Font("Segoe UI Semibold", 16F, System.Drawing.FontStyle.Bold);
+            lblTitle.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+            lblTitle.Location = new System.Drawing.Point(20, 15);
+            lblTitle.Name = "lblTitle";
+            lblTitle.Size = new System.Drawing.Size(127, 37);
+            lblTitle.TabIndex = 0;
+            lblTitle.Text = "Gudang";
+            // 
+            // btnClose
+            // 
+            btnClose.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
+            btnClose.BackColor = System.Drawing.Color.White;
+            btnClose.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200);
+            btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnClose.Font = new System.Drawing.Font("Segoe UI", 10F);
+            btnClose.Location = new System.Drawing.Point(1391, 15);
+            btnClose.Name = "btnClose";
+            btnClose.Size = new System.Drawing.Size(140, 40);
+            btnClose.TabIndex = 1;
+            btnClose.Text = "Tutup";
+            btnClose.UseVisualStyleBackColor = false;
+            // 
+            // pnlContent
+            // 
+            pnlContent.Controls.Add(cmbPageSize);
+            pnlContent.Controls.Add(lblPageNumber);
+            pnlContent.Controls.Add(btnLast);
+            pnlContent.Controls.Add(btnNext);
+            pnlContent.Controls.Add(btnPrev);
+            pnlContent.Controls.Add(btnFirst);
+            pnlContent.Controls.Add(lblPagingInfo);
+            pnlContent.Controls.Add(txtSearch);
+            pnlContent.Controls.Add(dgvWarehouses);
+            pnlContent.Controls.Add(lblName);
+            pnlContent.Controls.Add(txtName);
+            pnlContent.Controls.Add(lblType);
+            pnlContent.Controls.Add(cmbType);
+            pnlContent.Controls.Add(chkIsActive);
+            pnlContent.Controls.Add(btnAdd);
+            pnlContent.Controls.Add(btnEdit);
+            pnlContent.Controls.Add(btnDelete);
+            pnlContent.Controls.Add(btnRefresh);
+            pnlContent.Dock = System.Windows.Forms.DockStyle.Fill;
+            pnlContent.Location = new System.Drawing.Point(0, 70);
+            pnlContent.Name = "pnlContent";
+            pnlContent.Size = new System.Drawing.Size(1551, 647);
+            pnlContent.TabIndex = 101;
             
             // cmbPageSize
             cmbPageSize.FormattingEnabled = true;
@@ -134,58 +202,68 @@ namespace POS_qu
             chkIsActive.Checked = true;
             
             // btnAdd
+            btnAdd.BackColor = System.Drawing.Color.FromArgb(0, 120, 215);
+            btnAdd.FlatAppearance.BorderSize = 0;
+            btnAdd.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnAdd.Font = new System.Drawing.Font("Segoe UI Semibold", 10F, System.Drawing.FontStyle.Bold);
+            btnAdd.ForeColor = System.Drawing.Color.White;
             btnAdd.Location = new System.Drawing.Point(960, 230);
             btnAdd.Name = "btnAdd";
             btnAdd.Size = new System.Drawing.Size(100, 40);
             btnAdd.Text = "Add";
+            btnAdd.UseVisualStyleBackColor = false;
             
             // btnEdit
+            btnEdit.BackColor = System.Drawing.Color.White;
+            btnEdit.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200);
+            btnEdit.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btnEdit.Location = new System.Drawing.Point(1070, 230);
             btnEdit.Name = "btnEdit";
             btnEdit.Size = new System.Drawing.Size(100, 40);
             btnEdit.Text = "Edit";
+            btnEdit.UseVisualStyleBackColor = false;
             
             // btnDelete
+            btnDelete.BackColor = System.Drawing.Color.White;
+            btnDelete.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200);
+            btnDelete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btnDelete.Location = new System.Drawing.Point(1180, 230);
             btnDelete.Name = "btnDelete";
             btnDelete.Size = new System.Drawing.Size(100, 40);
             btnDelete.Text = "Delete";
+            btnDelete.UseVisualStyleBackColor = false;
             
             // btnRefresh
+            btnRefresh.BackColor = System.Drawing.Color.White;
+            btnRefresh.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200);
+            btnRefresh.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btnRefresh.Location = new System.Drawing.Point(1290, 230);
             btnRefresh.Name = "btnRefresh";
             btnRefresh.Size = new System.Drawing.Size(100, 40);
             btnRefresh.Text = "Refresh";
+            btnRefresh.UseVisualStyleBackColor = false;
             
             // WarehouseForm
             AutoScaleDimensions = new System.Drawing.SizeF(10F, 25F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            BackColor = System.Drawing.Color.FromArgb(245, 246, 250);
             ClientSize = new System.Drawing.Size(1551, 717);
-            Controls.Add(cmbPageSize);
-            Controls.Add(lblPageNumber);
-            Controls.Add(btnLast);
-            Controls.Add(btnNext);
-            Controls.Add(btnPrev);
-            Controls.Add(btnFirst);
-            Controls.Add(lblPagingInfo);
-            Controls.Add(txtSearch);
-            Controls.Add(dgvWarehouses);
-            Controls.Add(lblName);
-            Controls.Add(txtName);
-            Controls.Add(lblType);
-            Controls.Add(cmbType);
-            Controls.Add(chkIsActive);
-            Controls.Add(btnAdd);
-            Controls.Add(btnEdit);
-            Controls.Add(btnDelete);
-            Controls.Add(btnRefresh);
+            Controls.Add(pnlContent);
+            Controls.Add(pnlHeader);
             Name = "WarehouseForm";
             Text = "Master Data Gudang";
+            pnlHeader.ResumeLayout(false);
+            pnlHeader.PerformLayout();
+            pnlContent.ResumeLayout(false);
+            pnlContent.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dgvWarehouses).EndInit();
             ResumeLayout(false);
-            PerformLayout();
         }
 
+        private System.Windows.Forms.Panel pnlHeader;
+        private System.Windows.Forms.Label lblTitle;
+        private System.Windows.Forms.Button btnClose;
+        private System.Windows.Forms.Panel pnlContent;
         private System.Windows.Forms.ComboBox cmbPageSize;
         private System.Windows.Forms.Label lblPageNumber;
         private System.Windows.Forms.Button btnLast;
