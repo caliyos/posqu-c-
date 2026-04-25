@@ -6,6 +6,9 @@ namespace POS_qu
         private Microsoft.Web.WebView2.WinForms.WebView2 webView;
         private System.Windows.Forms.Panel panelRight;
         private System.Windows.Forms.Label lblTitle;
+        private System.Windows.Forms.Label lblPubKey;
+        private System.Windows.Forms.TextBox txtPubKeyPath;
+        private System.Windows.Forms.Button btnBrowsePubKey;
         private System.Windows.Forms.TextBox txtLicenseKey;
         private System.Windows.Forms.Button btnActivate;
         private System.Windows.Forms.Label lblDeviceId;
@@ -30,6 +33,9 @@ namespace POS_qu
             lblDeviceId = new System.Windows.Forms.Label();
             btnActivate = new System.Windows.Forms.Button();
             txtLicenseKey = new System.Windows.Forms.TextBox();
+            btnBrowsePubKey = new System.Windows.Forms.Button();
+            txtPubKeyPath = new System.Windows.Forms.TextBox();
+            lblPubKey = new System.Windows.Forms.Label();
             lblTitle = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)webView).BeginInit();
             panelRight.SuspendLayout();
@@ -55,6 +61,9 @@ namespace POS_qu
             panelRight.Controls.Add(lblDeviceId);
             panelRight.Controls.Add(btnActivate);
             panelRight.Controls.Add(txtLicenseKey);
+            panelRight.Controls.Add(btnBrowsePubKey);
+            panelRight.Controls.Add(txtPubKeyPath);
+            panelRight.Controls.Add(lblPubKey);
             panelRight.Controls.Add(lblTitle);
             panelRight.Dock = System.Windows.Forms.DockStyle.Right;
             panelRight.Location = new System.Drawing.Point(820, 0);
@@ -81,7 +90,7 @@ namespace POS_qu
             // 
             lblStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
             lblStatus.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-            lblStatus.Location = new System.Drawing.Point(19, 245);
+            lblStatus.Location = new System.Drawing.Point(19, 325);
             lblStatus.Name = "lblStatus";
             lblStatus.Size = new System.Drawing.Size(382, 340);
             lblStatus.TabIndex = 4;
@@ -104,7 +113,7 @@ namespace POS_qu
             btnActivate.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             btnActivate.Font = new System.Drawing.Font("Segoe UI Semibold", 10F, System.Drawing.FontStyle.Bold);
             btnActivate.ForeColor = System.Drawing.Color.White;
-            btnActivate.Location = new System.Drawing.Point(19, 188);
+            btnActivate.Location = new System.Drawing.Point(19, 268);
             btnActivate.Name = "btnActivate";
             btnActivate.Size = new System.Drawing.Size(382, 44);
             btnActivate.TabIndex = 2;
@@ -114,11 +123,46 @@ namespace POS_qu
             // txtLicenseKey
             // 
             txtLicenseKey.Font = new System.Drawing.Font("Segoe UI", 10F);
-            txtLicenseKey.Location = new System.Drawing.Point(19, 136);
+            txtLicenseKey.Location = new System.Drawing.Point(19, 216);
             txtLicenseKey.Name = "txtLicenseKey";
             txtLicenseKey.PlaceholderText = "Masukkan license key, contoh: TEST-XXXX-XXXX";
             txtLicenseKey.Size = new System.Drawing.Size(382, 30);
             txtLicenseKey.TabIndex = 1;
+            // 
+            // btnBrowsePubKey
+            // 
+            btnBrowsePubKey.BackColor = System.Drawing.Color.FromArgb(0, 120, 215);
+            btnBrowsePubKey.FlatAppearance.BorderSize = 0;
+            btnBrowsePubKey.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnBrowsePubKey.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold);
+            btnBrowsePubKey.ForeColor = System.Drawing.Color.White;
+            btnBrowsePubKey.Location = new System.Drawing.Point(321, 164);
+            btnBrowsePubKey.Name = "btnBrowsePubKey";
+            btnBrowsePubKey.Size = new System.Drawing.Size(80, 30);
+            btnBrowsePubKey.TabIndex = 8;
+            btnBrowsePubKey.Text = "Browse";
+            btnBrowsePubKey.UseVisualStyleBackColor = false;
+            // 
+            // txtPubKeyPath
+            // 
+            txtPubKeyPath.Font = new System.Drawing.Font("Segoe UI", 10F);
+            txtPubKeyPath.Location = new System.Drawing.Point(19, 164);
+            txtPubKeyPath.Name = "txtPubKeyPath";
+            txtPubKeyPath.PlaceholderText = "Pilih public key (.pem)";
+            txtPubKeyPath.ReadOnly = true;
+            txtPubKeyPath.Size = new System.Drawing.Size(296, 30);
+            txtPubKeyPath.TabIndex = 7;
+            // 
+            // lblPubKey
+            // 
+            lblPubKey.AutoSize = true;
+            lblPubKey.Font = new System.Drawing.Font("Segoe UI", 9F);
+            lblPubKey.ForeColor = System.Drawing.Color.FromArgb(90, 90, 90);
+            lblPubKey.Location = new System.Drawing.Point(19, 138);
+            lblPubKey.Name = "lblPubKey";
+            lblPubKey.Size = new System.Drawing.Size(195, 20);
+            lblPubKey.TabIndex = 6;
+            lblPubKey.Text = "Public Key (PEM) untuk Verify";
             // 
             // lblTitle
             // 
@@ -148,4 +192,3 @@ namespace POS_qu
         }
     }
 }
-

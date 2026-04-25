@@ -1,5 +1,6 @@
 using POS_qu.Helpers;
 using System;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -17,6 +18,7 @@ namespace POS_qu
 
             Load += LicenseActivationForm_Load;
             btnClose.Click += (s, e) => Close();
+            btnBrowsePubKey.Click += (s, e) => BrowsePublicKey();
             btnActivate.Click += async (s, e) => await ActivateAsync();
         }
 
@@ -32,6 +34,8 @@ namespace POS_qu
                 _deviceId = await DeviceIdProvider.GetOrCreateAsync();
                 lblDeviceId.Text = "Device ID: " + _deviceId;
 
+                RefreshPublicKeyDisplay();
+
                 var existing = await LicenseManager.LoadAsync();
                 if (existing != null)
                 {
@@ -43,6 +47,52 @@ namespace POS_qu
                 webView.CoreWebView2.Settings.AreDevToolsEnabled = true;
                 webView.CoreWebView2.Settings.IsStatusBarEnabled = false;
                 webView.CoreWebView2.Navigate(LicenseServerBaseUrl);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void RefreshPublicKeyDisplay()
+        {
+            var env = Environment.GetEnvironmentVariable("POSQU_LICENSE_PUBLIC_KEY_PEM");
+            if (!string.IsNullOrWhiteSpace(env))
+            {
+                txtPubKeyPath.Text = "<ENV:POSQU_LICENSE_PUBLIC_KEY_PEM>";
+                return;
+            }
+
+            if (File.Exists(LocalFirstPaths.PublicKeyPemPath))
+            {
+                txtPubKeyPath.Text = LocalFirstPaths.PublicKeyPemPath;
+                return;
+            }
+
+            txtPubKeyPath.Text = "";
+        }
+
+        private void BrowsePublicKey()
+        {
+            try
+            {
+                using var dlg = new OpenFileDialog();
+                dlg.Title = "Pilih Public Key (PEM)";
+                dlg.Filter = "PEM files (*.pem)|*.pem|All files (*.*)|*.*";
+                dlg.Multiselect = false;
+                dlg.CheckFileExists = true;
+
+                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+
+                var pem = File.ReadAllText(dlg.FileName);
+                if (string.IsNullOrWhiteSpace(pem) || !pem.Contains("BEGIN PUBLIC KEY", StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException("File PEM tidak valid. Pastikan berisi 'BEGIN PUBLIC KEY'.");
+
+                Directory.CreateDirectory(LocalFirstPaths.DataDir);
+                File.WriteAllText(LocalFirstPaths.PublicKeyPemPath, pem);
+                txtPubKeyPath.Text = LocalFirstPaths.PublicKeyPemPath;
+
+                MessageBox.Show("Public key tersimpan. Sekarang kamu bisa aktivasi license.", "OK", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
