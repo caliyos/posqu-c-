@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
 using POS_qu;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -269,12 +269,15 @@ namespace POSqu_menu
                 miSync.Click -= syncNowToolStripMenuItem_Click_LocalFirst;
                 miSync.Click += syncNowToolStripMenuItem_Click_LocalFirst;
             }
+
+            RefreshProFeatureMenuState();
         }
 
         private void licensesToolStripMenuItem_Click_LocalFirst(object sender, EventArgs e)
         {
             using var f = new POS_qu.LicenseActivationForm();
             f.ShowDialog(this);
+            RefreshProFeatureMenuState();
         }
 
         private async void proFeatureLockedToolStripMenuItem_Click_LocalFirst(object sender, EventArgs e)
@@ -309,7 +312,27 @@ namespace POSqu_menu
             f.ShowDialog(this);
 
             lic = await POS_qu.Helpers.LicenseManager.LoadAsync();
-            return POS_qu.Helpers.LicenseManager.IsValidNow(lic);
+            var ok = POS_qu.Helpers.LicenseManager.IsValidNow(lic);
+            RefreshProFeatureMenuState();
+            return ok;
+        }
+
+        private async void RefreshProFeatureMenuState()
+        {
+            try
+            {
+                var miReports = FindMenuItemByName(menuStrip1.Items, "reportsToolStripMenuItem");
+                if (miReports == null) return;
+                var miPro = FindMenuItemByName(miReports.DropDownItems, "proFeatureLockedToolStripMenuItem");
+                if (miPro == null) return;
+
+                var lic = await POS_qu.Helpers.LicenseManager.LoadAsync();
+                bool ok = POS_qu.Helpers.LicenseManager.IsValidNow(lic);
+                miPro.Text = ok ? "Pro Feature" : "Pro Feature (Locked)";
+            }
+            catch
+            {
+            }
         }
 
         private bool ShouldShowSaldoAwalMenu()

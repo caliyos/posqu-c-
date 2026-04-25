@@ -114,7 +114,7 @@ namespace POS_qu
             if (dt == null || dt.Rows.Count == 0) return;
 
             var grouped = dt.AsEnumerable()
-                .Where(row => row["stock"] != DBNull.Value && row["unit"] != DBNull.Value)
+                .Where(row => row["stock"] != DBNull.Value  && row["unit"] != DBNull.Value)
                 .GroupBy(row => row["unit"].ToString())
                 .Select(g => new
                 {
