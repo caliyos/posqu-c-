@@ -36,6 +36,7 @@ namespace POS_qu
             listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + S", "Fokus ke kolom input cari barang" }));
             listShortcut.Items.Add(new ListViewItem(new[] { "F4", "Pilih Customer" }));
             listShortcut.Items.Add(new ListViewItem(new[] { "F3", "Simpan Draft" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "F8", "Fokus ke cart (grid item)" }));
             listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + D", "Buka Draft" }));
             listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + B", "Bon / Cicilan" }));
             listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + M", "Monitoring Piutang / Bon" }));
@@ -46,6 +47,20 @@ namespace POS_qu
             listShortcut.Items.Add(new ListViewItem(new[] { "F12", "Buka bantuan Shortcut" }));
             listShortcut.Items.Add(new ListViewItem(new[] { "Enter (di Search)", "Pilih item dari list" }));
             listShortcut.Items.Add(new ListViewItem(new[] { "Double Click (di Search)", "Pilih item dari list" }));
+
+            listShortcut.Items.Add(new ListViewItem(new[] { "Tab", "Pindah fokus ke field/tombol berikutnya" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Shift + Tab", "Kembali ke field/tombol sebelumnya" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Esc", "Tutup modal / batal" }));
+
+            listShortcut.Items.Add(new ListViewItem(new[] { "Payment: F2", "Fokus ke nominal Bayar" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Payment: F3", "Fokus ke Metode Bayar" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Payment: F4", "Fokus ke Global Discount" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Payment: F5", "Fokus ke Delivery Amount" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Payment: F6", "Fokus ke Note" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Payment: F7", "Uang Pas (isi bayar = total)" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Payment: F9", "Proses Bayar" }));
+
+            listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + Alt + P", "Setting shortcut nominal bayar" }));
         }
 
 

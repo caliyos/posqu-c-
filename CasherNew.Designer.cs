@@ -26,6 +26,7 @@ namespace POS_qu
             button6 = new Button();
             btnPendingList = new Button();
             btnCustomer = new Button();
+            btnPaymentShortcuts = new Button();
             lblShiftInfo = new Label();
             lblDateTime = new Label();
             lblSessionCode = new Label();
@@ -71,6 +72,7 @@ namespace POS_qu
             pnlHeader.Controls.Add(button6);
             pnlHeader.Controls.Add(btnPendingList);
             pnlHeader.Controls.Add(btnCustomer);
+            pnlHeader.Controls.Add(btnPaymentShortcuts);
             pnlHeader.Controls.Add(lblShiftInfo);
             pnlHeader.Controls.Add(lblDateTime);
             pnlHeader.Controls.Add(lblSessionCode);
@@ -141,14 +143,26 @@ namespace POS_qu
             btnCustomer.Text = "Pelanggan (F4)";
             btnCustomer.UseVisualStyleBackColor = false;
             // 
+            // btnPaymentShortcuts
+            // 
+            btnPaymentShortcuts.BackColor = Color.FromArgb(240, 240, 240);
+            btnPaymentShortcuts.FlatAppearance.BorderSize = 0;
+            btnPaymentShortcuts.FlatStyle = FlatStyle.Flat;
+            btnPaymentShortcuts.Location = new Point(555, 10);
+            btnPaymentShortcuts.Name = "btnPaymentShortcuts";
+            btnPaymentShortcuts.Size = new Size(150, 40);
+            btnPaymentShortcuts.TabIndex = 5;
+            btnPaymentShortcuts.Text = "Shortcut Bayar";
+            btnPaymentShortcuts.UseVisualStyleBackColor = false;
+            // 
             // lblShiftInfo
             // 
             lblShiftInfo.AutoSize = true;
             lblShiftInfo.Font = new Font("Segoe UI", 11F);
-            lblShiftInfo.Location = new Point(560, 20);
+            lblShiftInfo.Location = new Point(710, 20);
             lblShiftInfo.Name = "lblShiftInfo";
             lblShiftInfo.Size = new Size(76, 30);
-            lblShiftInfo.TabIndex = 5;
+            lblShiftInfo.TabIndex = 6;
             lblShiftInfo.Text = "Shift: -";
             // 
             // lblDateTime
@@ -160,7 +174,7 @@ namespace POS_qu
             lblDateTime.Name = "lblDateTime";
             lblDateTime.Padding = new Padding(0, 10, 20, 0);
             lblDateTime.Size = new Size(251, 40);
-            lblDateTime.TabIndex = 6;
+            lblDateTime.TabIndex = 7;
             lblDateTime.Text = "2026-03-27 12:00:00";
             // 
             // lblSessionCode
@@ -173,7 +187,7 @@ namespace POS_qu
             lblSessionCode.Name = "lblSessionCode";
             lblSessionCode.Padding = new Padding(0, 10, 20, 0);
             lblSessionCode.Size = new Size(125, 40);
-            lblSessionCode.TabIndex = 7;
+            lblSessionCode.TabIndex = 8;
             lblSessionCode.Text = "Session: -";
             // 
             // tlpMain
@@ -553,6 +567,7 @@ namespace POS_qu
         private System.Windows.Forms.Button button6;
         private System.Windows.Forms.Button btnPendingList;
         private System.Windows.Forms.Button btnCustomer;
+        private System.Windows.Forms.Button btnPaymentShortcuts;
 
         private System.Windows.Forms.TableLayoutPanel tlpMain;
         

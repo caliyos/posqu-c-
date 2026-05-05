@@ -22,6 +22,9 @@ namespace POS_qu
 {
     public partial class CasherNew : Form
     {
+        private readonly Dictionary<Control, Color> _focusOriginalBackColor = new();
+        private readonly Dictionary<Button, (Color BackColor, Color ForeColor)> _focusOriginalButtonColors = new();
+        private readonly Dictionary<Control, Color> _focusOriginalBorderColor = new();
 
         private CartActivity cartrepo;
         private IActivityService activityService;
@@ -108,10 +111,104 @@ namespace POS_qu
             {
                 btnCustomTransaction.Click += BtnCustomTransaction_Click;
             }
+            if (btnPaymentShortcuts != null)
+            {
+                btnPaymentShortcuts.Click += BtnPaymentShortcuts_Click;
+            }
 
             PromptOpenShiftIfNeeded();
             PromptResumeCartIfAny();
             UpdateShiftInfoUI();
+
+            ConfigureKeyboardFirstUx();
+        }
+
+        private void ConfigureKeyboardFirstUx()
+        {
+            if (txtCariBarang != null)
+            {
+                txtCariBarang.TabStop = true;
+                txtCariBarang.TabIndex = 0;
+                txtCariBarang.Focus();
+            }
+            SetupFocusHighlight(this);
+            ConfigureCartGridKeyboardUi();
+        }
+
+        private void ConfigureCartGridKeyboardUi()
+        {
+            if (dataGridViewCart4 == null) return;
+            dataGridViewCart4.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dataGridViewCart4.MultiSelect = false;
+            dataGridViewCart4.StandardTab = true;
+            dataGridViewCart4.DefaultCellStyle.SelectionBackColor = Color.FromArgb(0, 122, 255);
+            dataGridViewCart4.DefaultCellStyle.SelectionForeColor = Color.White;
+            dataGridViewCart4.RowHeadersVisible = false;
+        }
+
+        private void SetupFocusHighlight(Control root)
+        {
+            if (root == null) return;
+            WireFocusHandlers(root);
+        }
+
+        private void WireFocusHandlers(Control c)
+        {
+            if (c == null) return;
+
+            if (c is TextBox || c is ComboBox || c is NumericUpDown)
+            {
+                if (!_focusOriginalBackColor.ContainsKey(c))
+                    _focusOriginalBackColor[c] = c.BackColor;
+
+                c.Enter += (_, __) =>
+                {
+                    c.BackColor = Color.FromArgb(255, 249, 196);
+                    c.ForeColor = Color.Black;
+                };
+                c.Leave += (_, __) =>
+                {
+                    if (_focusOriginalBackColor.TryGetValue(c, out var orig))
+                        c.BackColor = orig;
+                };
+            }
+
+            if (c is Button b)
+            {
+                if (!_focusOriginalButtonColors.ContainsKey(b))
+                    _focusOriginalButtonColors[b] = (b.BackColor, b.ForeColor);
+
+                b.FlatStyle = FlatStyle.Flat;
+                b.FlatAppearance.BorderSize = Math.Max(1, b.FlatAppearance.BorderSize);
+                b.Enter += (_, __) =>
+                {
+                    b.FlatAppearance.BorderSize = 3;
+                    b.FlatAppearance.BorderColor = Color.FromArgb(255, 193, 7);
+                };
+                b.Leave += (_, __) =>
+                {
+                    b.FlatAppearance.BorderSize = 1;
+                    b.FlatAppearance.BorderColor = Color.FromArgb(220, 220, 220);
+                };
+            }
+
+            if (c is DataGridView dgv)
+            {
+                dgv.Enter += (_, __) =>
+                {
+                    dgv.BorderStyle = BorderStyle.FixedSingle;
+                    dgv.BackgroundColor = Color.White;
+                };
+                dgv.Leave += (_, __) =>
+                {
+                    dgv.BorderStyle = BorderStyle.FixedSingle;
+                };
+            }
+
+            foreach (Control child in c.Controls)
+            {
+                WireFocusHandlers(child);
+            }
         }
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
@@ -154,6 +251,19 @@ namespace POS_qu
                     txtCariBarang.Focus();
                     return true;
 
+                case Keys.F2:
+                    txtCariBarang.Focus();
+                    return true;
+
+                case Keys.F8:
+                    if (dataGridViewCart4 != null)
+                    {
+                        dataGridViewCart4.Focus();
+                        if (dataGridViewCart4.CurrentCell == null && dataGridViewCart4.Rows.Count > 0)
+                            dataGridViewCart4.CurrentCell = dataGridViewCart4.Rows[0].Cells[0];
+                    }
+                    return true;
+
                 case Keys.Control | Keys.F:
                     OpenSearchShortcut();
                     return true;
@@ -189,9 +299,295 @@ namespace POS_qu
                 case Keys.Control | Keys.Shift | Keys.C:
                     CloseShift();
                     return true;
+
+                case Keys.Control | Keys.Alt | Keys.P:
+                    ShowPaymentShortcutSettingsModal();
+                    return true;
             }
 
             return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void BtnPaymentShortcuts_Click(object? sender, EventArgs e)
+        {
+            ShowPaymentShortcutSettingsModal();
+        }
+
+        private void ShowPaymentShortcutSettingsModal()
+        {
+            try
+            {
+                using var modal = new Form
+                {
+                    Text = "Setting Shortcut Nominal Bayar",
+                    StartPosition = FormStartPosition.CenterParent,
+                    Size = new Size(760, 560),
+                    FormBorderStyle = FormBorderStyle.FixedDialog,
+                    MaximizeBox = false,
+                    MinimizeBox = false,
+                    KeyPreview = true
+                };
+
+                var header = new Panel { Dock = DockStyle.Top, Height = 64, Padding = new Padding(16), BackColor = Color.White };
+                var title = new Label
+                {
+                    Text = "Shortcut Nominal Pembayaran",
+                    Dock = DockStyle.Fill,
+                    Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
+                    ForeColor = Color.FromArgb(51, 51, 51),
+                    TextAlign = ContentAlignment.MiddleLeft
+                };
+                header.Controls.Add(title);
+
+                var grid = new DataGridView
+                {
+                    Dock = DockStyle.Fill,
+                    BackgroundColor = Color.White,
+                    AllowUserToAddRows = false,
+                    AllowUserToDeleteRows = false,
+                    RowHeadersVisible = false,
+                    SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                    MultiSelect = false,
+                    AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                    Font = new Font("Segoe UI", 10F)
+                };
+                grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(0, 122, 255);
+                grid.DefaultCellStyle.SelectionForeColor = Color.White;
+
+                var dt = LoadPaymentShortcutAmounts();
+                var bs = new BindingSource { DataSource = dt };
+                grid.DataSource = bs;
+                if (grid.Columns.Contains("id")) grid.Columns["id"].Visible = false;
+                if (grid.Columns.Contains("amount")) grid.Columns["amount"].HeaderText = "Nominal";
+                if (grid.Columns.Contains("sort_order")) grid.Columns["sort_order"].HeaderText = "Urutan";
+                if (grid.Columns.Contains("is_active")) grid.Columns["is_active"].HeaderText = "Aktif";
+                if (grid.Columns.Contains("amount")) grid.Columns["amount"].DefaultCellStyle.Format = "N0";
+
+                var footer = new Panel { Dock = DockStyle.Bottom, Height = 70, Padding = new Padding(16), BackColor = Color.White };
+
+                var btnAdd = new Button
+                {
+                    Text = "Tambah (F2)",
+                    Width = 140,
+                    Height = 42,
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = Color.FromArgb(0, 122, 255),
+                    ForeColor = Color.White
+                };
+                btnAdd.FlatAppearance.BorderSize = 0;
+
+                var btnDeactivate = new Button
+                {
+                    Text = "Nonaktifkan (Del)",
+                    Width = 170,
+                    Height = 42,
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = Color.FromArgb(220, 53, 69),
+                    ForeColor = Color.White
+                };
+                btnDeactivate.FlatAppearance.BorderSize = 0;
+
+                var btnSave = new Button
+                {
+                    Text = "Simpan (Ctrl+S)",
+                    Width = 170,
+                    Height = 42,
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = Color.FromArgb(40, 167, 69),
+                    ForeColor = Color.White
+                };
+                btnSave.FlatAppearance.BorderSize = 0;
+
+                var btnClose = new Button
+                {
+                    Text = "Tutup (Esc)",
+                    Width = 140,
+                    Height = 42,
+                    FlatStyle = FlatStyle.Flat,
+                    BackColor = Color.FromArgb(108, 117, 125),
+                    ForeColor = Color.White
+                };
+                btnClose.FlatAppearance.BorderSize = 0;
+
+                btnAdd.Click += (_, __) =>
+                {
+                    var maxSort = 0;
+                    foreach (DataRow r in dt.Rows)
+                    {
+                        if (r.RowState == DataRowState.Deleted) continue;
+                        var so = Convert.ToInt32(r["sort_order"]);
+                        if (so > maxSort) maxSort = so;
+                    }
+
+                    var nr = dt.NewRow();
+                    nr["id"] = 0;
+                    nr["amount"] = 0m;
+                    nr["sort_order"] = maxSort + 1;
+                    nr["is_active"] = true;
+                    dt.Rows.Add(nr);
+
+                    if (grid.Rows.Count > 0)
+                    {
+                        grid.CurrentCell = grid.Rows[grid.Rows.Count - 1].Cells[grid.Columns["amount"].Index];
+                        grid.BeginEdit(true);
+                    }
+                };
+
+                btnDeactivate.Click += (_, __) =>
+                {
+                    if (grid.CurrentRow == null) return;
+                    var rowView = grid.CurrentRow.DataBoundItem as DataRowView;
+                    if (rowView == null) return;
+                    rowView["is_active"] = false;
+                };
+
+                btnSave.Click += (_, __) =>
+                {
+                    grid.EndEdit();
+                    bs.EndEdit();
+                    SavePaymentShortcutAmounts(dt);
+                    MessageBox.Show("Setting shortcut pembayaran tersimpan.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    var refreshed = LoadPaymentShortcutAmounts();
+                    bs.DataSource = refreshed;
+                    grid.DataSource = bs;
+                };
+
+                btnClose.Click += (_, __) => modal.Close();
+
+                footer.Controls.Add(btnClose);
+                footer.Controls.Add(btnSave);
+                footer.Controls.Add(btnDeactivate);
+                footer.Controls.Add(btnAdd);
+
+                btnClose.Dock = DockStyle.Right;
+                btnSave.Dock = DockStyle.Right;
+                btnDeactivate.Dock = DockStyle.Left;
+                btnAdd.Dock = DockStyle.Left;
+
+                modal.KeyDown += (_, e) =>
+                {
+                    if (e.KeyCode == Keys.Escape)
+                    {
+                        modal.Close();
+                        e.Handled = true;
+                        return;
+                    }
+                    if (e.KeyCode == Keys.F2)
+                    {
+                        btnAdd.PerformClick();
+                        e.Handled = true;
+                        return;
+                    }
+                    if (e.KeyCode == Keys.Delete)
+                    {
+                        btnDeactivate.PerformClick();
+                        e.Handled = true;
+                        return;
+                    }
+                    if (e.Control && e.KeyCode == Keys.S)
+                    {
+                        btnSave.PerformClick();
+                        e.Handled = true;
+                        return;
+                    }
+                };
+
+                modal.Controls.Add(grid);
+                modal.Controls.Add(footer);
+                modal.Controls.Add(header);
+
+                modal.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private static DataTable LoadPaymentShortcutAmounts()
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            using (var cmd = new NpgsqlCommand(@"
+CREATE TABLE IF NOT EXISTS payment_shortcut_amounts(
+    id SERIAL PRIMARY KEY,
+    amount NUMERIC(18,2) NOT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
+);", conn))
+            {
+                cmd.ExecuteNonQuery();
+            }
+
+            using (var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM payment_shortcut_amounts;", conn))
+            {
+                var count = Convert.ToInt32(cmd.ExecuteScalar());
+                if (count == 0)
+                {
+                    using var seed = new NpgsqlCommand(@"
+INSERT INTO payment_shortcut_amounts(amount, sort_order, is_active) VALUES
+(20000, 1, TRUE),
+(50000, 2, TRUE),
+(100000, 3, TRUE),
+(200000, 4, TRUE),
+(500000, 5, TRUE);
+", conn);
+                    seed.ExecuteNonQuery();
+                }
+            }
+
+            using var da = new NpgsqlDataAdapter(@"
+SELECT id, amount, sort_order, is_active
+FROM payment_shortcut_amounts
+ORDER BY sort_order ASC, amount ASC;", conn);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        private static void SavePaymentShortcutAmounts(DataTable dt)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+            using var tran = conn.BeginTransaction();
+
+            foreach (DataRow r in dt.Rows)
+            {
+                if (r.RowState == DataRowState.Deleted) continue;
+
+                var id = Convert.ToInt32(r["id"]);
+                var amount = Convert.ToDecimal(r["amount"]);
+                var sort = Convert.ToInt32(r["sort_order"]);
+                var active = Convert.ToBoolean(r["is_active"]);
+
+                if (amount <= 0m) continue;
+
+                if (id <= 0)
+                {
+                    using var cmd = new NpgsqlCommand(@"
+INSERT INTO payment_shortcut_amounts(amount, sort_order, is_active)
+VALUES (@a, @s, @act);", conn, tran);
+                    cmd.Parameters.AddWithValue("@a", amount);
+                    cmd.Parameters.AddWithValue("@s", sort);
+                    cmd.Parameters.AddWithValue("@act", active);
+                    cmd.ExecuteNonQuery();
+                }
+                else
+                {
+                    using var cmd = new NpgsqlCommand(@"
+UPDATE payment_shortcut_amounts
+SET amount=@a, sort_order=@s, is_active=@act
+WHERE id=@id;", conn, tran);
+                    cmd.Parameters.AddWithValue("@id", id);
+                    cmd.Parameters.AddWithValue("@a", amount);
+                    cmd.Parameters.AddWithValue("@s", sort);
+                    cmd.Parameters.AddWithValue("@act", active);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            tran.Commit();
         }
 
         private void OpenSearchShortcut()
@@ -1332,60 +1728,176 @@ WHERE deleted_at IS NULL
                     );
                 };
 
-                if (paymentModal.ShowDialog() != DialogResult.OK)
-                    return;
-
-                // Update invoice dari modal
-                _currentInvoice.GlobalDiscountIsAmount = paymentModal.GlobalDiscountIsAmount;
-                _currentInvoice.GlobalDiscountPercent = paymentModal.GlobalDiscountPercent;
-                _currentInvoice.GlobalDiscountValue = paymentModal.GlobalDiscountIsAmount ? paymentModal.GlobalDiscountAmount : 0m;
-                _currentInvoice.DeliveryAmount = paymentModal.DeliveryAmount;
-                _currentInvoice.GlobalNote = paymentModal.GlobalNote;
-                RecalculateInvoiceTotals(_currentInvoice);
-
-                TransactionResult result;
-                if (paymentModal.IsSplitPayment && paymentModal.SplitPayments != null)
+                paymentModal.ProcessPaymentHandler = () =>
                 {
-                    var parts = paymentModal.SplitPayments.ToList();
-                    result = _transactionService.ProcessSplitPaymentAndSave(
+                    _currentInvoice.GlobalDiscountIsAmount = paymentModal.GlobalDiscountIsAmount;
+                    _currentInvoice.GlobalDiscountPercent = paymentModal.GlobalDiscountPercent;
+                    _currentInvoice.GlobalDiscountValue = paymentModal.GlobalDiscountIsAmount ? paymentModal.GlobalDiscountAmount : 0m;
+                    _currentInvoice.DeliveryAmount = paymentModal.DeliveryAmount;
+                    _currentInvoice.GlobalNote = paymentModal.GlobalNote;
+                    RecalculateInvoiceTotals(_currentInvoice);
+
+                    TransactionResult result;
+                    decimal paid;
+                    string methodLabel;
+
+                    if (paymentModal.IsSplitPayment && paymentModal.SplitPayments != null)
+                    {
+                        var parts = paymentModal.SplitPayments.ToList();
+                        paid = parts.Sum(x => x.Amount);
+                        methodLabel = "Split Bill";
+                        result = _transactionService.ProcessSplitPaymentAndSave(_currentInvoice, parts);
+                    }
+                    else
+                    {
+                        paid = paymentModal.PaymentAmount;
+                        methodLabel = paymentModal.PaymentMethod;
+                        result = _transactionService.ProcessPaymentAndSave(_currentInvoice, paid, methodLabel);
+                    }
+
+                    if (!result.IsSuccess)
+                    {
+                        return new PaymentModalForm.PaymentProcessResult
+                        {
+                            IsSuccess = false,
+                            Message = result.Message ?? "Gagal memproses pembayaran."
+                        };
+                    }
+
+                    var change = paid - _currentInvoice.GrandTotal;
+                    if (change < 0m) change = 0m;
+
+                    var receiptText = BuildReceiptText(
                         _currentInvoice,
-                        parts
+                        SessionUser.GetCurrentUser().TerminalName,
+                        SessionUser.GetCurrentUser().Username,
+                        SessionUser.GetCurrentUser().ShiftId.ToString(),
+                        "Paid",
+                        methodLabel,
+                        paid,
+                        change
                     );
-                }
-                else
-                {
-                    // 🔹 PROCESS + SAVE + LOG
-                    result = _transactionService.ProcessPaymentAndSave(
-                        _currentInvoice,
-                        paymentModal.PaymentAmount,
-                        paymentModal.PaymentMethod
-                    );
-                }
 
-                if (!result.IsSuccess)
-                {
-                    MessageBox.Show(result.Message);
-                    return;
-                }
+                    return new PaymentModalForm.PaymentProcessResult
+                    {
+                        IsSuccess = true,
+                        ReceiptText = receiptText
+                    };
+                };
+
+                paymentModal.ShowDialog();
+                if (!paymentModal.IsPaid) return;
 
                 _currentInvoice = new InvoiceData();
-
-
                 RenderInvoice(_currentInvoice);
                 RenderReceiptUI(
-                    _currentInvoice,    
-                    SessionUser.GetCurrentUser().TerminalName,                
-                    SessionUser.GetCurrentUser().Username,           
-                    SessionUser.GetCurrentUser().ShiftId.ToString(),             
-                    "Unpaid",             
+                    _currentInvoice,
+                    SessionUser.GetCurrentUser().TerminalName,
+                    SessionUser.GetCurrentUser().Username,
+                    SessionUser.GetCurrentUser().ShiftId.ToString(),
+                    "Unpaid",
                     _currentInvoice.GrandTotal.ToString(),
-                    "-",               
-                    "0"                
+                    "-",
+                    "0"
                 );
                 UpdateInvoiceSummary();
                 StartNewTransaction();
-                MessageBox.Show("Payment successful!");
             }
+        }
+
+        private string BuildReceiptText(
+            InvoiceData invoice,
+            string terminal,
+            string user,
+            string shift,
+            string statusBayar,
+            string metodeBayar,
+            decimal jumlahBayar,
+            decimal kembalian
+        )
+        {
+            RecalculateInvoiceTotals(invoice);
+
+            string judul = "", alamat = "", telepon = "", footer = "";
+            bool showNamaToko = true, showAlamat = true, showTelepon = true, showFooter = true;
+
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                conn.Open();
+                string query = "SELECT * FROM struk_setting ORDER BY updated_at DESC LIMIT 1;";
+                using (var cmd = new NpgsqlCommand(query, conn))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    if (reader.Read())
+                    {
+                        judul = reader["judul"]?.ToString()?.Trim() ?? "";
+                        alamat = reader["alamat"]?.ToString()?.Trim() ?? "";
+                        telepon = reader["telepon"]?.ToString()?.Trim() ?? "";
+                        footer = reader["footer"]?.ToString()?.Trim() ?? "";
+                        showNamaToko = reader["is_visible_nama_toko"] as bool? ?? true;
+                        showAlamat = reader["is_visible_alamat"] as bool? ?? true;
+                        showTelepon = reader["is_visible_telepon"] as bool? ?? true;
+                        showFooter = reader["is_visible_footer"] as bool? ?? true;
+                    }
+                }
+            }
+
+            var lines = new List<string>();
+            void Add(string s) => lines.Add(s ?? "");
+
+            if (showNamaToko && !string.IsNullOrEmpty(judul)) Add(judul);
+            if (showAlamat && !string.IsNullOrEmpty(alamat)) Add(alamat);
+            if (showTelepon && !string.IsNullOrEmpty(telepon)) Add(telepon);
+            Add(new string('-', 32));
+            Add($"Terminal : {terminal}");
+            Add($"Kasir    : {user}");
+            Add($"Shift    : {shift}");
+            Add($"Tanggal  : {DateTime.Now:yyyy-MM-dd}");
+            Add($"Waktu    : {DateTime.Now:HH:mm:ss}");
+            Add(new string('-', 32));
+
+            foreach (var item in invoice.Items)
+            {
+                var qtySatuan = $"{item.Qty} {(string.IsNullOrEmpty(item.UnitVariant) ? item.Unit : item.UnitVariant)}";
+                var lineSub = item.Price * item.Qty;
+                if (lineSub < 0m) lineSub = 0m;
+                var d = $"{qtySatuan} x {item.Price:N0} = {lineSub:N0}";
+                if (item.DiscountAmount > 0m)
+                {
+                    if (item.DiscountPercent > 0m) d += $"  Disc {item.DiscountPercent:N0}% (-{item.DiscountAmount:N0})";
+                    else d += $"  Disc -{item.DiscountAmount:N0}";
+                }
+                Add(item.Name ?? "");
+                Add(d);
+                Add($"Total: {item.Total:N0}");
+                if (!string.IsNullOrWhiteSpace(item.Note)) Add($"Note: {item.Note}");
+                Add("");
+            }
+
+            Add(new string('-', 32));
+            Add($"Subtotal".PadRight(20) + $"{invoice.Subtotal:N0}".PadLeft(10));
+            Add($"Item Discount".PadRight(20) + $"-{invoice.TotalDiscount:N0}".PadLeft(10));
+            if (invoice.GlobalDiscountIsAmount && invoice.GlobalDiscountValue > 0)
+                Add($"Global Disc (Rp)".PadRight(20) + $"-{invoice.GlobalDiscountValue:N0}".PadLeft(10));
+            else if (invoice.GlobalDiscountPercent > 0)
+                Add($"Global Disc ({invoice.GlobalDiscountPercent:N0}%)".PadRight(20) + $"-{invoice.GlobalDiscountValue:N0}".PadLeft(10));
+            if (!string.IsNullOrEmpty(invoice.GlobalNote))
+                Add($"Note: {invoice.GlobalNote}");
+            if (invoice.DeliveryAmount > 0)
+                Add($"Delivery".PadRight(20) + $"{invoice.DeliveryAmount:N0}".PadLeft(10));
+            Add(new string('-', 32));
+            Add($"Grand Total".PadRight(20) + $"{invoice.GrandTotal:N0}".PadLeft(10));
+
+            Add(new string('-', 32));
+            Add($"Status Bayar : {statusBayar}");
+            Add($"Metode Bayar : {metodeBayar}");
+            Add($"Jumlah Bayar : {jumlahBayar:N0}");
+            Add($"Kembalian    : {kembalian:N0}");
+            Add(new string('-', 32));
+
+            if (showFooter && !string.IsNullOrEmpty(footer)) Add(footer);
+
+            return string.Join(Environment.NewLine, lines);
         }
 
 

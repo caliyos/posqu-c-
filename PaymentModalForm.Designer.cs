@@ -56,6 +56,7 @@ namespace POS_qu
         private RadioButton rdoGlobalPercent;
         private RadioButton rdoGlobalAmount;
         private TextBox txtGlobalDiscountAmount;
+        private Panel panelKeypad;
 
         protected override void Dispose(bool disposing)
         {
@@ -108,6 +109,7 @@ namespace POS_qu
             rdoGlobalPercent = new RadioButton();
             rdoGlobalAmount = new RadioButton();
             txtGlobalDiscountAmount = new TextBox();
+            panelKeypad = new Panel();
             label2 = new Label();
             label3 = new Label();
             txtDeliveryAmount = new TextBox();
@@ -138,6 +140,7 @@ namespace POS_qu
             panelCard.Controls.Add(panelBankTransfer);
             panelCard.Controls.Add(panelEwalletDetails);
             panelCard.Controls.Add(panelCardDetails);
+            panelCard.Controls.Add(panelKeypad);
             panelCard.Controls.Add(btnPay);
             panelCard.Controls.Add(cmbPaymentMethod);
             panelCard.Controls.Add(lblPaymentMethod);
@@ -563,18 +566,29 @@ namespace POS_qu
             txtGlobalNote.TabIndex = 13;
             txtGlobalNote.TextChanged += txtGlobalNote_TextChanged;
             // 
+            // panelKeypad
+            // 
+            panelKeypad.BackColor = Color.FromArgb(245, 246, 250);
+            panelKeypad.BorderStyle = BorderStyle.FixedSingle;
+            panelKeypad.Dock = DockStyle.Right;
+            panelKeypad.Name = "panelKeypad";
+            panelKeypad.Padding = new Padding(10);
+            panelKeypad.Size = new Size(420, 548);
+            panelKeypad.TabIndex = 30;
+            // 
             // PaymentModalForm
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(980, 620);
+            ClientSize = new Size(1440, 820);
             Controls.Add(panelRoot);
-            FormBorderStyle = FormBorderStyle.FixedDialog;
-            MaximizeBox = false;
-            MinimumSize = new Size(980, 620);
+            FormBorderStyle = FormBorderStyle.Sizable;
+            MaximizeBox = true;
+            MinimumSize = new Size(1200, 720);
             Name = "PaymentModalForm";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Pembayaran";
+            WindowState = FormWindowState.Maximized;
             Load += PaymentModalForm_Load;
             panelRoot.ResumeLayout(false);
             panelCard.ResumeLayout(false);
