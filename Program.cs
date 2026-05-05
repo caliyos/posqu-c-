@@ -1,5 +1,6 @@
 
 using System;
+using System.Threading;
 using Npgsql;
 using POSqu_menu;
 using QuestPDF.Infrastructure;
@@ -38,8 +39,26 @@ namespace POS_qu
             ApplicationConfiguration.Initialize();
             //Application.Run(new Form3_crud());
 
-
-
+            Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
+            Application.ThreadException += (_, e) =>
+            {
+                MessageBox.Show(
+                    e.Exception?.Message ?? "Terjadi error.",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            };
+            AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+            {
+                var ex = e.ExceptionObject as Exception;
+                MessageBox.Show(
+                    ex?.Message ?? "Terjadi error.",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+            };
 
             try
             {

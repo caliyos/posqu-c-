@@ -192,38 +192,40 @@ namespace POS_qu
                 selectedVariant = ShowVariantPicker(this, variants);
             }
 
-
-            if (selectedVariant != null)
+            try
             {
-                // User pilih variant
-                _currentInvoice = _cartService.AddItemByVariant(
+                if (selectedVariant != null)
+                {
+                    _currentInvoice = _cartService.AddItemByVariant(
+                        _currentInvoice,
+                        selectedVariant.Id,
+                        1
+                    );
+                }
+                else
+                {
+                    _currentInvoice = _cartService.AddItemByName(_currentInvoice, selectedItem.name, 1);
+                }
+
+                RenderInvoice(_currentInvoice);
+                var lastItem = _currentInvoice.Items.Last();
+                AddInvoiceItemToPanel(lastItem);
+                RenderReceiptUI(
                     _currentInvoice,
-                    selectedVariant.Id,
-                    1
+                    SessionUser.GetCurrentUser().TerminalName,
+                    SessionUser.GetCurrentUser().Username,
+                    SessionUser.GetCurrentUser().ShiftId.ToString(),
+                    "Unpaid",
+                    _currentInvoice.GrandTotal.ToString(),
+                    "-",
+                    "0"
                 );
+                UpdateInvoiceSummary();
             }
-            else
+            catch (Exception ex)
             {
-                // Tidak ada variant / user batal → pakai base item
-                _currentInvoice = _cartService.AddItemByName(_currentInvoice, selectedItem.name, 1);
+                MessageBox.Show(ex.Message, "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
-
-
-            //_currentInvoice = _cartService.AddItemByName(_currentInvoice, search.SelectedItem.name, 1);
-            RenderInvoice(_currentInvoice);
-            var lastItem = _currentInvoice.Items.Last();
-            AddInvoiceItemToPanel(lastItem);
-            RenderReceiptUI(
-                _currentInvoice,
-                SessionUser.GetCurrentUser().TerminalName,
-                SessionUser.GetCurrentUser().Username,
-                SessionUser.GetCurrentUser().ShiftId.ToString(),
-                "Unpaid",
-                _currentInvoice.GrandTotal.ToString(),
-                "-",
-                "0"
-            );
-            UpdateInvoiceSummary();
 
         }
 
@@ -969,7 +971,7 @@ namespace POS_qu
         {
 
             using (PaymentModalForm paymentModal =
-                new PaymentModalForm(_currentInvoice.GrandTotal))
+                new PaymentModalForm(_currentInvoice.GrandTotal, _currentInvoice.CustomerName))
             {
                 // 🔹 Realtime preview (UI only)
                 paymentModal.PaymentAmountChanged += (amount) =>

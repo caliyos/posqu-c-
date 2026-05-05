@@ -13,11 +13,14 @@ namespace POS_qu
     public partial class PaymentModalForm : Form
     {
         private decimal totalAmount;
-        public PaymentModalForm(decimal totalAmount)
+        public PaymentModalForm(decimal totalAmount, string? customerName = null)
         {
             InitializeComponent();
-            lblTotal.Text = "Total: " + totalAmount.ToString("C");
             this.totalAmount = totalAmount;
+            lblTotal.Text = "Rp " + totalAmount.ToString("N0");
+            if (lblCustomerValue != null)
+                lblCustomerValue.Text = string.IsNullOrWhiteSpace(customerName) ? "Umum" : customerName;
+            UpdatePayButtonState();
 
             //txtCashback.Text = "0";
             this.Load += (_, __) =>
@@ -41,7 +44,7 @@ namespace POS_qu
         {
             get
             {
-                return PaymentMethod == "Split Payment";
+                return PaymentMethod == "Split Bill" || PaymentMethod == "Split Payment";
             }
         }
         public IEnumerable<(string Method, decimal Amount)>? SplitPayments { get; set; }
@@ -162,6 +165,7 @@ namespace POS_qu
                     panelBankTransfer.Visible = true;
                     break;
                 case "Split Payment":
+                case "Split Bill":
                     panelSplitPayment.Visible = true;
                     break;
             }
@@ -219,6 +223,11 @@ namespace POS_qu
             bool valid = paid >= totalAmount && cmbPaymentMethod.SelectedItem != null;
 
             btnPay.Enabled = valid;
+            if (lblChangeValue != null)
+            {
+                var shown = change > 0 ? change : 0m;
+                lblChangeValue.Text = "Rp " + shown.ToString("N0");
+            }
         }
 
         private static decimal ParseMoney(string text)

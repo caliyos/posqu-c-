@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.Windows.Forms;
 using POS_qu.Controllers;
 using POS_qu.Helpers;
@@ -31,10 +32,22 @@ namespace POS_qu
 
             // Dapatkan data dari database
             itemsDataTable = itemController.GetItems(searchTerm);
+            EnsureComputedColumns(itemsDataTable);
 
             // DataGridView setup
             dataGridViewSearchResults.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dataGridViewSearchResults.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridViewSearchResults.MultiSelect = false;
+            dataGridViewSearchResults.RowHeadersVisible = false;
+            dataGridViewSearchResults.AllowUserToResizeRows = false;
+            dataGridViewSearchResults.RowTemplate.Height = 40;
+            dataGridViewSearchResults.EnableHeadersVisualStyles = false;
+            dataGridViewSearchResults.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(245, 246, 250);
+            dataGridViewSearchResults.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(51, 51, 51);
+            dataGridViewSearchResults.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            dataGridViewSearchResults.DefaultCellStyle.SelectionBackColor = Color.FromArgb(229, 241, 255);
+            dataGridViewSearchResults.DefaultCellStyle.SelectionForeColor = Color.FromArgb(20, 20, 20);
+            dataGridViewSearchResults.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(250, 250, 252);
             dataGridViewSearchResults.KeyDown += DataGridViewSearchResults_KeyDown;
             dataGridViewSearchResults.CellDoubleClick += (s, ev) =>
             {
@@ -84,11 +97,89 @@ namespace POS_qu
             {
                 // Format columns to show as "Rp."
                 FormatCurrencyColumns();
-                SetColumnWidths();
+                ConfigureCashierColumns();
             };
             StartPosition = FormStartPosition.CenterScreen;
         }
 
+        private static void EnsureComputedColumns(DataTable dt)
+        {
+            if (dt == null) return;
+            if (!dt.Columns.Contains("stock") || !dt.Columns.Contains("reserved_stock")) return;
+            if (dt.Columns.Contains("ready_stock")) return;
+            dt.Columns.Add("ready_stock", typeof(int), "stock - reserved_stock");
+        }
+
+        private void ConfigureCashierColumns()
+        {
+            if (dataGridViewSearchResults.Columns.Count == 0) return;
+
+            void Hide(string col)
+            {
+                if (dataGridViewSearchResults.Columns.Contains(col))
+                    dataGridViewSearchResults.Columns[col].Visible = false;
+            }
+
+            Hide("id");
+            Hide("unit_id");
+            Hide("buy_price");
+
+            if (dataGridViewSearchResults.Columns.Contains("barcode"))
+            {
+                var c = dataGridViewSearchResults.Columns["barcode"];
+                c.HeaderText = "Barcode";
+                c.FillWeight = 20;
+            }
+            if (dataGridViewSearchResults.Columns.Contains("name"))
+            {
+                var c = dataGridViewSearchResults.Columns["name"];
+                c.HeaderText = "Nama Barang";
+                c.FillWeight = 45;
+            }
+            if (dataGridViewSearchResults.Columns.Contains("unit"))
+            {
+                var c = dataGridViewSearchResults.Columns["unit"];
+                c.HeaderText = "Satuan";
+                c.FillWeight = 10;
+            }
+            if (dataGridViewSearchResults.Columns.Contains("sell_price"))
+            {
+                var c = dataGridViewSearchResults.Columns["sell_price"];
+                c.HeaderText = "Harga";
+                c.FillWeight = 15;
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+            if (dataGridViewSearchResults.Columns.Contains("stock"))
+            {
+                var c = dataGridViewSearchResults.Columns["stock"];
+                c.HeaderText = "Stok";
+                c.FillWeight = 10;
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+            if (dataGridViewSearchResults.Columns.Contains("reserved_stock"))
+            {
+                var c = dataGridViewSearchResults.Columns["reserved_stock"];
+                c.HeaderText = "Reserved";
+                c.FillWeight = 10;
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+            if (dataGridViewSearchResults.Columns.Contains("ready_stock"))
+            {
+                var c = dataGridViewSearchResults.Columns["ready_stock"];
+                c.HeaderText = "Ready";
+                c.FillWeight = 10;
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                c.DefaultCellStyle.ForeColor = Color.FromArgb(40, 167, 69);
+                c.DefaultCellStyle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            }
+
+            var order = new[] { "barcode", "name", "unit", "sell_price", "stock", "reserved_stock", "ready_stock" };
+            for (int i = 0; i < order.Length; i++)
+            {
+                if (!dataGridViewSearchResults.Columns.Contains(order[i])) continue;
+                dataGridViewSearchResults.Columns[order[i]].DisplayIndex = i;
+            }
+        }
 
         private void FormatCurrencyColumns()
         {
@@ -192,6 +283,7 @@ namespace POS_qu
 
             // Dapatkan data baru dari database
             itemsDataTable = itemController.GetItems(searchTerm);
+            EnsureComputedColumns(itemsDataTable);
 
             // Reset data di DataGridViewManager
             dgvManager.Reset(itemsDataTable);

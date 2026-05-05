@@ -78,7 +78,7 @@ namespace POS_qu
             pnlHeader.Location = new Point(0, 0);
             pnlHeader.Name = "pnlHeader";
             pnlHeader.Padding = new Padding(10);
-            pnlHeader.Size = new Size(1366, 60);
+            pnlHeader.Size = new Size(1486, 60);
             pnlHeader.TabIndex = 0;
             // 
             // btnOpenCashier
@@ -147,7 +147,7 @@ namespace POS_qu
             lblShiftInfo.Font = new Font("Segoe UI", 11F);
             lblShiftInfo.Location = new Point(560, 20);
             lblShiftInfo.Name = "lblShiftInfo";
-            lblShiftInfo.Size = new Size(67, 25);
+            lblShiftInfo.Size = new Size(76, 30);
             lblShiftInfo.TabIndex = 5;
             lblShiftInfo.Text = "Shift: -";
             // 
@@ -156,10 +156,10 @@ namespace POS_qu
             lblDateTime.AutoSize = true;
             lblDateTime.Dock = DockStyle.Right;
             lblDateTime.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
-            lblDateTime.Location = new Point(1027, 10);
+            lblDateTime.Location = new Point(1100, 10);
             lblDateTime.Name = "lblDateTime";
             lblDateTime.Padding = new Padding(0, 10, 20, 0);
-            lblDateTime.Size = new Size(217, 35);
+            lblDateTime.Size = new Size(251, 40);
             lblDateTime.TabIndex = 6;
             lblDateTime.Text = "2026-03-27 12:00:00";
             // 
@@ -169,10 +169,10 @@ namespace POS_qu
             lblSessionCode.Dock = DockStyle.Right;
             lblSessionCode.Font = new Font("Segoe UI", 11F);
             lblSessionCode.ForeColor = Color.Gray;
-            lblSessionCode.Location = new Point(1244, 10);
+            lblSessionCode.Location = new Point(1351, 10);
             lblSessionCode.Name = "lblSessionCode";
             lblSessionCode.Padding = new Padding(0, 10, 20, 0);
-            lblSessionCode.Size = new Size(112, 35);
+            lblSessionCode.Size = new Size(125, 40);
             lblSessionCode.TabIndex = 7;
             lblSessionCode.Text = "Session: -";
             // 
@@ -189,7 +189,7 @@ namespace POS_qu
             tlpMain.Padding = new Padding(10);
             tlpMain.RowCount = 1;
             tlpMain.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            tlpMain.Size = new Size(1366, 708);
+            tlpMain.Size = new Size(1486, 836);
             tlpMain.TabIndex = 0;
             // 
             // pnlLeft
@@ -200,7 +200,7 @@ namespace POS_qu
             pnlLeft.Location = new Point(10, 10);
             pnlLeft.Margin = new Padding(0, 0, 10, 0);
             pnlLeft.Name = "pnlLeft";
-            pnlLeft.Size = new Size(864, 688);
+            pnlLeft.Size = new Size(942, 816);
             pnlLeft.TabIndex = 0;
             // 
             // dataGridViewCart4
@@ -244,7 +244,7 @@ namespace POS_qu
             dataGridViewCart4.RowHeadersWidth = 51;
             dataGridViewCart4.RowTemplate.Height = 45;
             dataGridViewCart4.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dataGridViewCart4.Size = new Size(864, 628);
+            dataGridViewCart4.Size = new Size(942, 756);
             dataGridViewCart4.TabIndex = 0;
             // 
             // pnlLeftTop
@@ -255,7 +255,7 @@ namespace POS_qu
             pnlLeftTop.Location = new Point(0, 0);
             pnlLeftTop.Name = "pnlLeftTop";
             pnlLeftTop.Padding = new Padding(0, 0, 0, 10);
-            pnlLeftTop.Size = new Size(864, 60);
+            pnlLeftTop.Size = new Size(942, 60);
             pnlLeftTop.TabIndex = 1;
             // 
             // txtCariBarang
@@ -266,7 +266,7 @@ namespace POS_qu
             txtCariBarang.Location = new Point(0, 0);
             txtCariBarang.Name = "txtCariBarang";
             txtCariBarang.PlaceholderText = "Ketik nama barang atau scan barcode...";
-            txtCariBarang.Size = new Size(714, 47);
+            txtCariBarang.Size = new Size(792, 55);
             txtCariBarang.TabIndex = 0;
             // 
             // btnCustomTransaction
@@ -277,7 +277,7 @@ namespace POS_qu
             btnCustomTransaction.FlatStyle = FlatStyle.Flat;
             btnCustomTransaction.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             btnCustomTransaction.ForeColor = Color.White;
-            btnCustomTransaction.Location = new Point(714, 0);
+            btnCustomTransaction.Location = new Point(792, 0);
             btnCustomTransaction.Margin = new Padding(10, 0, 0, 0);
             btnCustomTransaction.Name = "btnCustomTransaction";
             btnCustomTransaction.Size = new Size(150, 50);
@@ -292,9 +292,9 @@ namespace POS_qu
             pnlRight.Controls.Add(pnlRightBottom);
             pnlRight.Controls.Add(pnlRightTop);
             pnlRight.Dock = DockStyle.Fill;
-            pnlRight.Location = new Point(887, 13);
+            pnlRight.Location = new Point(965, 13);
             pnlRight.Name = "pnlRight";
-            pnlRight.Size = new Size(466, 682);
+            pnlRight.Size = new Size(508, 810);
             pnlRight.TabIndex = 1;
             // 
             // flpInvoice
@@ -306,7 +306,7 @@ namespace POS_qu
             flpInvoice.Location = new Point(0, 50);
             flpInvoice.Name = "flpInvoice";
             flpInvoice.Padding = new Padding(15);
-            flpInvoice.Size = new Size(466, 352);
+            flpInvoice.Size = new Size(508, 480);
             flpInvoice.TabIndex = 0;
             flpInvoice.WrapContents = false;
             // 
@@ -321,9 +321,9 @@ namespace POS_qu
             pnlRightBottom.Controls.Add(lblTotal);
             pnlRightBottom.Controls.Add(tlpButtons);
             pnlRightBottom.Dock = DockStyle.Bottom;
-            pnlRightBottom.Location = new Point(0, 402);
+            pnlRightBottom.Location = new Point(0, 530);
             pnlRightBottom.Name = "pnlRightBottom";
-            pnlRightBottom.Size = new Size(466, 280);
+            pnlRightBottom.Size = new Size(508, 280);
             pnlRightBottom.TabIndex = 1;
             // 
             // lblNumItemsText
@@ -332,7 +332,7 @@ namespace POS_qu
             lblNumItemsText.Font = new Font("Segoe UI", 11F);
             lblNumItemsText.Location = new Point(20, 15);
             lblNumItemsText.Name = "lblNumItemsText";
-            lblNumItemsText.Size = new Size(61, 25);
+            lblNumItemsText.Size = new Size(71, 30);
             lblNumItemsText.TabIndex = 0;
             lblNumItemsText.Text = "Items:";
             // 
@@ -342,7 +342,7 @@ namespace POS_qu
             labelNumOfItems.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             labelNumOfItems.Location = new Point(80, 15);
             labelNumOfItems.Name = "labelNumOfItems";
-            labelNumOfItems.Size = new Size(23, 25);
+            labelNumOfItems.Size = new Size(26, 30);
             labelNumOfItems.TabIndex = 1;
             labelNumOfItems.Text = "0";
             // 
@@ -352,7 +352,7 @@ namespace POS_qu
             lblKembalianText.Font = new Font("Segoe UI", 11F);
             lblKembalianText.Location = new Point(20, 45);
             lblKembalianText.Name = "lblKembalianText";
-            lblKembalianText.Size = new Size(105, 25);
+            lblKembalianText.Size = new Size(119, 30);
             lblKembalianText.TabIndex = 2;
             lblKembalianText.Text = "Kembalian:";
             // 
@@ -363,7 +363,7 @@ namespace POS_qu
             lblKembalian.ForeColor = Color.FromArgb(40, 167, 69);
             lblKembalian.Location = new Point(120, 45);
             lblKembalian.Name = "lblKembalian";
-            lblKembalian.Size = new Size(23, 25);
+            lblKembalian.Size = new Size(26, 30);
             lblKembalian.TabIndex = 3;
             lblKembalian.Text = "0";
             // 
@@ -373,19 +373,19 @@ namespace POS_qu
             lblTotalText.Font = new Font("Segoe UI", 16F, FontStyle.Bold);
             lblTotalText.Location = new Point(20, 80);
             lblTotalText.Name = "lblTotalText";
-            lblTotalText.Size = new Size(82, 37);
+            lblTotalText.Size = new Size(94, 45);
             lblTotalText.TabIndex = 4;
             lblTotalText.Text = "Total";
             // 
             // lblTotal
             // 
             lblTotal.Dock = DockStyle.Top;
-            lblTotal.Font = new Font("Segoe UI", 24F, FontStyle.Bold);
+            lblTotal.Font = new Font("Segoe UI", 34F, FontStyle.Bold);
             lblTotal.ForeColor = Color.FromArgb(0, 122, 255);
             lblTotal.Location = new Point(0, 0);
             lblTotal.Name = "lblTotal";
-            lblTotal.Padding = new Padding(0, 70, 20, 0);
-            lblTotal.Size = new Size(466, 23);
+            lblTotal.Padding = new Padding(0, 55, 20, 0);
+            lblTotal.Size = new Size(508, 140);
             lblTotal.TabIndex = 5;
             lblTotal.Text = "0";
             lblTotal.TextAlign = ContentAlignment.MiddleRight;
@@ -408,7 +408,7 @@ namespace POS_qu
             tlpButtons.RowStyles.Add(new RowStyle(SizeType.Percent, 40F));
             tlpButtons.RowStyles.Add(new RowStyle(SizeType.Percent, 30F));
             tlpButtons.RowStyles.Add(new RowStyle(SizeType.Percent, 30F));
-            tlpButtons.Size = new Size(466, 150);
+            tlpButtons.Size = new Size(508, 150);
             tlpButtons.TabIndex = 6;
             // 
             // button1
@@ -423,9 +423,9 @@ namespace POS_qu
             button1.Location = new Point(12, 12);
             button1.Margin = new Padding(2);
             button1.Name = "button1";
-            button1.Size = new Size(442, 48);
+            button1.Size = new Size(484, 48);
             button1.TabIndex = 0;
-            button1.Text = "Bayar (Ctrl+P)";
+            button1.Text = "Bayar";
             button1.UseVisualStyleBackColor = false;
             // 
             // button2
@@ -439,7 +439,7 @@ namespace POS_qu
             button2.Location = new Point(12, 64);
             button2.Margin = new Padding(2);
             button2.Name = "button2";
-            button2.Size = new Size(219, 35);
+            button2.Size = new Size(240, 35);
             button2.TabIndex = 1;
             button2.Text = "Simpan Draft";
             button2.UseVisualStyleBackColor = false;
@@ -452,10 +452,10 @@ namespace POS_qu
             button3.FlatStyle = FlatStyle.Flat;
             button3.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             button3.ForeColor = Color.White;
-            button3.Location = new Point(235, 64);
+            button3.Location = new Point(256, 64);
             button3.Margin = new Padding(2);
             button3.Name = "button3";
-            button3.Size = new Size(219, 35);
+            button3.Size = new Size(240, 35);
             button3.TabIndex = 2;
             button3.Text = "Simpan Bon";
             button3.UseVisualStyleBackColor = false;
@@ -471,7 +471,7 @@ namespace POS_qu
             button4.Location = new Point(12, 103);
             button4.Margin = new Padding(2);
             button4.Name = "button4";
-            button4.Size = new Size(219, 35);
+            button4.Size = new Size(240, 35);
             button4.TabIndex = 3;
             button4.Text = "Lihat Draft";
             button4.UseVisualStyleBackColor = false;
@@ -484,10 +484,10 @@ namespace POS_qu
             button5.FlatStyle = FlatStyle.Flat;
             button5.Font = new Font("Segoe UI", 10F);
             button5.ForeColor = Color.Black;
-            button5.Location = new Point(235, 103);
+            button5.Location = new Point(256, 103);
             button5.Margin = new Padding(2);
             button5.Name = "button5";
-            button5.Size = new Size(219, 35);
+            button5.Size = new Size(240, 35);
             button5.TabIndex = 4;
             button5.Text = "Lihat Bon";
             button5.UseVisualStyleBackColor = false;
@@ -500,7 +500,7 @@ namespace POS_qu
             pnlRightTop.Location = new Point(0, 0);
             pnlRightTop.Name = "pnlRightTop";
             pnlRightTop.Padding = new Padding(15, 10, 15, 0);
-            pnlRightTop.Size = new Size(466, 50);
+            pnlRightTop.Size = new Size(508, 50);
             pnlRightTop.TabIndex = 2;
             // 
             // lblCurrentOrder
@@ -510,16 +510,16 @@ namespace POS_qu
             lblCurrentOrder.Font = new Font("Segoe UI", 14F, FontStyle.Bold);
             lblCurrentOrder.Location = new Point(15, 10);
             lblCurrentOrder.Name = "lblCurrentOrder";
-            lblCurrentOrder.Size = new Size(174, 32);
+            lblCurrentOrder.Size = new Size(199, 38);
             lblCurrentOrder.TabIndex = 0;
             lblCurrentOrder.Text = "Current Order";
             // 
             // CasherNew
             // 
-            AutoScaleDimensions = new SizeF(9F, 23F);
+            AutoScaleDimensions = new SizeF(11F, 28F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(244, 246, 249);
-            ClientSize = new Size(1366, 768);
+            ClientSize = new Size(1486, 896);
             Controls.Add(tlpMain);
             Controls.Add(pnlHeader);
             Font = new Font("Segoe UI", 10F, FontStyle.Regular, GraphicsUnit.Point, 0);

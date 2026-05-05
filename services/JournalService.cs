@@ -6,8 +6,11 @@ namespace POS_qu.Services
 {
     public sealed class JournalService
     {
+        public static bool Enabled { get; set; } = false;
+
         public void CreateJournalFromSale(int transactionId, NpgsqlConnection con, NpgsqlTransaction tran)
         {
+            if (!Enabled) return;
             if (transactionId <= 0) throw new ArgumentOutOfRangeException(nameof(transactionId));
             DeleteJournalByReference("sale", transactionId, con, tran);
 
@@ -46,6 +49,7 @@ namespace POS_qu.Services
 
         public void CreateJournalFromPurchase(int purchaseOrderId, NpgsqlConnection con, NpgsqlTransaction tran)
         {
+            if (!Enabled) return;
             if (purchaseOrderId <= 0) throw new ArgumentOutOfRangeException(nameof(purchaseOrderId));
             DeleteJournalByReference("purchase", purchaseOrderId, con, tran);
 
@@ -69,6 +73,7 @@ namespace POS_qu.Services
 
         public void DeleteJournalForSale(int transactionId, NpgsqlConnection con, NpgsqlTransaction tran)
         {
+            if (!Enabled) return;
             DeleteJournalByReference("sale", transactionId, con, tran);
         }
 
