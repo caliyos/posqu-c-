@@ -50,15 +50,45 @@ namespace POS_qu.Services
 
         public decimal CalculateGrandTotal(InvoiceData invoice)
         {
-            decimal subtotal = invoice.Items.Sum(x => x.Total);
+            if (invoice == null || invoice.Items == null) return 0m;
 
-            decimal discountAmount = subtotal * invoice.GlobalDiscountPercent / 100;
+            decimal subTotal = 0m;
+            decimal itemDiscount = 0m;
+            foreach (var i in invoice.Items)
+            {
+                decimal lineSub = i.Price * i.Qty;
+                if (lineSub < 0m) lineSub = 0m;
+                subTotal += lineSub;
 
-            decimal afterDiscount = subtotal - discountAmount;
+                decimal disc = i.DiscountAmount;
+                if (disc < 0m) disc = 0m;
+                if (disc > lineSub) disc = lineSub;
+                itemDiscount += disc;
+            }
 
-            decimal finalTotal = afterDiscount + invoice.DeliveryAmount;
+            decimal net = subTotal - itemDiscount;
+            if (net < 0m) net = 0m;
 
-            return finalTotal;
+            decimal globalDiscValue;
+            if (invoice.GlobalDiscountIsAmount)
+            {
+                globalDiscValue = invoice.GlobalDiscountValue;
+            }
+            else
+            {
+                var p = invoice.GlobalDiscountPercent;
+                if (p < 0m) p = 0m;
+                if (p > 100m) p = 100m;
+                globalDiscValue = Math.Round((net * p) / 100m, 2, MidpointRounding.AwayFromZero);
+            }
+
+            if (globalDiscValue < 0m) globalDiscValue = 0m;
+            if (globalDiscValue > net) globalDiscValue = net;
+
+            var delivery = invoice.DeliveryAmount;
+            if (delivery < 0m) delivery = 0m;
+
+            return (net - globalDiscValue) + delivery;
         }
         public TransactionResult ProcessPayment(
        InvoiceData invoice,

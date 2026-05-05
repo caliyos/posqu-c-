@@ -29,10 +29,19 @@ namespace POS_qu
             };
         }
 
+        public void SetTotalAmount(decimal newTotalAmount)
+        {
+            totalAmount = newTotalAmount < 0 ? 0 : newTotalAmount;
+            if (lblTotal != null)
+                lblTotal.Text = "Rp " + totalAmount.ToString("N0");
+            UpdatePayButtonState();
+        }
+
         // ================================
         // ✅ EVENTS untuk komunikasi ke form utama
         // ================================
         public event Action<decimal> GlobalDiscountChanged;
+        public event Action<decimal> GlobalDiscountAmountChanged;
         public event Action<decimal> PaymentAmountChanged;
         public event Action<string> GlobalNoteChanged;         // ✅ NEW
         public event Action<decimal> DeliveryAmountChanged;    // ✅ NEW
@@ -80,7 +89,9 @@ namespace POS_qu
         public string PaymentMethod => cmbPaymentMethod.SelectedItem?.ToString() ?? "Cash";
 
         public decimal GlobalDiscountPercent { get; private set; }
+        public decimal GlobalDiscountAmount { get; private set; }
         public decimal GrandTotal { get; private set; }
+        public bool GlobalDiscountIsAmount => rdoGlobalAmount != null && rdoGlobalAmount.Checked;
 
         // ✅ NEW: Properti untuk Global Note dan Delivery Amount
         public string GlobalNote => txtGlobalNote?.Text?.Trim() ?? "";
@@ -174,6 +185,7 @@ namespace POS_qu
 
         private void txtGlobalDiscountPercent_TextChanged(object sender, EventArgs e)
         {
+            if (rdoGlobalAmount != null && rdoGlobalAmount.Checked) return;
             if (!decimal.TryParse(txtGlobalDiscountPercent.Text, out decimal discountPercent))
                 discountPercent = 0;
 
@@ -186,6 +198,13 @@ namespace POS_qu
             GlobalDiscountPercent = discountPercent;
 
             GlobalDiscountChanged?.Invoke(discountPercent);
+        }
+
+        private void txtGlobalDiscountAmount_TextChanged(object sender, EventArgs e)
+        {
+            if (rdoGlobalPercent != null && rdoGlobalPercent.Checked) return;
+            GlobalDiscountAmount = ParseMoney(txtGlobalDiscountAmount.Text);
+            GlobalDiscountAmountChanged?.Invoke(GlobalDiscountAmount);
         }
 
 
@@ -256,11 +275,40 @@ namespace POS_qu
                 txtCardPart.Leave += (s, e) => txtCardPart.Text = FormatN0(txtCardPart.Text);
                 txtCardPart.TextChanged += (s, e) => UpdatePayButtonState();
             }
+
+            if (txtGlobalDiscountAmount != null)
+            {
+                txtGlobalDiscountAmount.Leave += (s, e) => txtGlobalDiscountAmount.Text = FormatN0(txtGlobalDiscountAmount.Text);
+            }
             if (txtDeliveryAmount != null)
             {
                 txtDeliveryAmount.Leave += (s, e) => txtDeliveryAmount.Text = FormatN0(txtDeliveryAmount.Text);
             }
+
+            if (rdoGlobalPercent != null && rdoGlobalAmount != null)
+            {
+                rdoGlobalPercent.CheckedChanged += (s, e) => ApplyGlobalDiscountMode();
+                rdoGlobalAmount.CheckedChanged += (s, e) => ApplyGlobalDiscountMode();
+                rdoGlobalPercent.Checked = true;
+                ApplyGlobalDiscountMode();
+            }
         }
+
+        private void ApplyGlobalDiscountMode()
+        {
+            bool isAmount = rdoGlobalAmount != null && rdoGlobalAmount.Checked;
+            if (txtGlobalDiscountPercent != null) txtGlobalDiscountPercent.Visible = !isAmount;
+            if (txtGlobalDiscountAmount != null) txtGlobalDiscountAmount.Visible = isAmount;
+            if (isAmount)
+            {
+                txtGlobalDiscountAmount_TextChanged(this, EventArgs.Empty);
+            }
+            else
+            {
+                txtGlobalDiscountPercent_TextChanged(this, EventArgs.Empty);
+            }
+        }
+
         private static string FormatN0(string input)
         {
             var v = ParseMoney(input);

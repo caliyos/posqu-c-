@@ -53,6 +53,9 @@ namespace POS_qu
         // 🔹 Diskon keseluruhan
         private Label lblGlobalDiscount;
         private TextBox txtGlobalDiscountPercent;
+        private RadioButton rdoGlobalPercent;
+        private RadioButton rdoGlobalAmount;
+        private TextBox txtGlobalDiscountAmount;
 
         protected override void Dispose(bool disposing)
         {
@@ -102,6 +105,9 @@ namespace POS_qu
             txtCardPart = new TextBox();
             lblGlobalDiscount = new Label();
             txtGlobalDiscountPercent = new TextBox();
+            rdoGlobalPercent = new RadioButton();
+            rdoGlobalAmount = new RadioButton();
+            txtGlobalDiscountAmount = new TextBox();
             label2 = new Label();
             label3 = new Label();
             txtDeliveryAmount = new TextBox();
@@ -144,6 +150,9 @@ namespace POS_qu
             panelCard.Controls.Add(label3);
             panelCard.Controls.Add(label2);
             panelCard.Controls.Add(txtGlobalDiscountPercent);
+            panelCard.Controls.Add(txtGlobalDiscountAmount);
+            panelCard.Controls.Add(rdoGlobalAmount);
+            panelCard.Controls.Add(rdoGlobalPercent);
             panelCard.Controls.Add(lblGlobalDiscount);
             panelCard.Controls.Add(lblCustomerValue);
             panelCard.Controls.Add(lblCustomerCaption);
@@ -478,21 +487,52 @@ namespace POS_qu
             lblGlobalDiscount.Name = "lblGlobalDiscount";
             lblGlobalDiscount.Size = new Size(172, 25);
             lblGlobalDiscount.TabIndex = 14;
-            lblGlobalDiscount.Text = "Global Discount (%):";
+            lblGlobalDiscount.Text = "Global Discount";
+            // 
+            // rdoGlobalPercent
+            // 
+            rdoGlobalPercent.AutoSize = true;
+            rdoGlobalPercent.Location = new Point(570, 300);
+            rdoGlobalPercent.Name = "rdoGlobalPercent";
+            rdoGlobalPercent.Size = new Size(92, 29);
+            rdoGlobalPercent.TabIndex = 22;
+            rdoGlobalPercent.TabStop = true;
+            rdoGlobalPercent.Text = "Percent";
+            rdoGlobalPercent.UseVisualStyleBackColor = true;
+            // 
+            // rdoGlobalAmount
+            // 
+            rdoGlobalAmount.AutoSize = true;
+            rdoGlobalAmount.Location = new Point(670, 300);
+            rdoGlobalAmount.Name = "rdoGlobalAmount";
+            rdoGlobalAmount.Size = new Size(100, 29);
+            rdoGlobalAmount.TabIndex = 23;
+            rdoGlobalAmount.TabStop = true;
+            rdoGlobalAmount.Text = "Nominal";
+            rdoGlobalAmount.UseVisualStyleBackColor = true;
             // 
             // txtGlobalDiscountPercent
             // 
-            txtGlobalDiscountPercent.Location = new Point(570, 300);
+            txtGlobalDiscountPercent.Location = new Point(570, 334);
             txtGlobalDiscountPercent.Name = "txtGlobalDiscountPercent";
             txtGlobalDiscountPercent.Size = new Size(350, 31);
             txtGlobalDiscountPercent.TabIndex = 11;
             txtGlobalDiscountPercent.Text = "0";
             txtGlobalDiscountPercent.TextChanged += txtGlobalDiscountPercent_TextChanged;
             // 
+            // txtGlobalDiscountAmount
+            // 
+            txtGlobalDiscountAmount.Location = new Point(570, 334);
+            txtGlobalDiscountAmount.Name = "txtGlobalDiscountAmount";
+            txtGlobalDiscountAmount.Size = new Size(350, 31);
+            txtGlobalDiscountAmount.TabIndex = 24;
+            txtGlobalDiscountAmount.Text = "0";
+            txtGlobalDiscountAmount.TextChanged += txtGlobalDiscountAmount_TextChanged;
+            // 
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(570, 344);
+            label2.Location = new Point(570, 378);
             label2.Name = "label2";
             label2.Size = new Size(145, 25);
             label2.TabIndex = 14;
@@ -501,7 +541,7 @@ namespace POS_qu
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(570, 414);
+            label3.Location = new Point(570, 448);
             label3.Name = "label3";
             label3.Size = new Size(107, 25);
             label3.TabIndex = 14;
@@ -509,7 +549,7 @@ namespace POS_qu
             // 
             // txtDeliveryAmount
             // 
-            txtDeliveryAmount.Location = new Point(570, 374);
+            txtDeliveryAmount.Location = new Point(570, 408);
             txtDeliveryAmount.Name = "txtDeliveryAmount";
             txtDeliveryAmount.Size = new Size(350, 31);
             txtDeliveryAmount.TabIndex = 12;
@@ -517,7 +557,7 @@ namespace POS_qu
             // 
             // txtGlobalNote
             // 
-            txtGlobalNote.Location = new Point(570, 444);
+            txtGlobalNote.Location = new Point(570, 478);
             txtGlobalNote.Name = "txtGlobalNote";
             txtGlobalNote.Size = new Size(350, 31);
             txtGlobalNote.TabIndex = 13;

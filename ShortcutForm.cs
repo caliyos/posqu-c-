@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -27,35 +27,25 @@ namespace POS_qu
 
         private void LoadShortcut()
         {
-            listShortcut.Items.Add(new ListViewItem(new[]
-            {
-        "Ctrl + N", "Buat Data Baru"
-    }));
+            listShortcut.Items.Clear();
 
-            listShortcut.Items.Add(new ListViewItem(new[]
-            {
-        "Ctrl + S", "Simpan Data"
-    }));
-
-            listShortcut.Items.Add(new ListViewItem(new[]
-            {
-        "Ctrl + E", "Edit Data"
-    }));
-
-            listShortcut.Items.Add(new ListViewItem(new[]
-            {
-        "Ctrl + D", "Hapus Data"
-    }));
-
-            listShortcut.Items.Add(new ListViewItem(new[]
-            {
-        "F5", "Refresh"
-    }));
-
-            listShortcut.Items.Add(new ListViewItem(new[]
-            {
-        "Esc", "Tutup Window"
-    }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + N", "Transaksi Baru (kosongkan cart)" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + P", "Bayar / Payment" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + K", "Cari Barang (Search) + pilih item" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + F", "Cari Barang (Search) + pilih item" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + S", "Fokus ke kolom input cari barang" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "F4", "Pilih Customer" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "F3", "Simpan Draft" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + D", "Buka Draft" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + B", "Bon / Cicilan" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + M", "Monitoring Piutang / Bon" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + I", "Daftar Pending (sementara belum tersedia)" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + Shift + O", "Buka Shift Kasir" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + Shift + C", "Tutup Shift Kasir" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "F1", "Buka bantuan Shortcut" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "F12", "Buka bantuan Shortcut" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Enter (di Search)", "Pilih item dari list" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Double Click (di Search)", "Pilih item dari list" }));
         }
 
 

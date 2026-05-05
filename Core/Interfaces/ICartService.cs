@@ -14,6 +14,7 @@ namespace POS_qu.Core.Interfaces
         InvoiceData updateItemByVariant(InvoiceData currentInvoice, int variantId, int qty);
         InvoiceData AddItemByName(InvoiceData currentInvoice, string name, int qty);
         InvoiceData UpdateItemQty(int pt_id, int newQty, InvoiceData invoice);
+        InvoiceData UpdateItemQtyWithMeta(int pt_id, int newQty, decimal discountPercent, decimal discountAmount, string note, InvoiceData invoice);
         InvoiceData UpdateCartItemStock(InvoiceItem item, InvoiceData invoice);
         InvoiceData RemoveItem(int itemId, int unitid, InvoiceData invoice, bool isPaymentMode = false);
         

@@ -230,22 +230,31 @@ public class CartService : ICartService
 
     public InvoiceData UpdateItemQty(int pt_id, int newQty, InvoiceData invoice)
     {
+        return UpdateItemQtyWithMeta(pt_id, newQty, 0m, 0m, "", invoice);
+    }
+
+    public InvoiceData UpdateItemQtyWithMeta(int pt_id, int newQty, decimal discountPercent, decimal discountAmount, string note, InvoiceData invoice)
+    {
         var product = _repo.GetSinglePendingItemById(pt_id);
         if (product == null)
             throw new Exception("Produk tidak ditemukan");
 
-
         var invoiceItem = MapToInvoiceItem(product);
+        invoiceItem.pt_id = pt_id;
         invoiceItem.IsEditMode = true;
         invoiceItem.EnteredQuantity = newQty;
         invoiceItem.PreviousQuantity = 0;
         invoiceItem.AdditionalQuantity = newQty;
+        invoiceItem.DiscountPercent = discountPercent < 0 ? 0 : discountPercent;
+        invoiceItem.DiscountAmount = discountAmount < 0 ? 0 : discountAmount;
+        invoiceItem.Note = note ?? "";
+
         var _invoice = UpdateCartItemStock(invoiceItem, invoice);
 
         var rows = _repo.GetPendingItems(Session.CartSessionCode);
-        return InvoiceBuilder.FromPending(rows);
-
-
+        var updated = InvoiceBuilder.FromPending(rows);
+        CopyInvoiceMeta(invoice, updated);
+        return updated;
     }
 
 
@@ -322,7 +331,38 @@ public class CartService : ICartService
                 item.IsMultiPrice = 0;
             }
 
-            decimal total = price * newQty;
+            decimal discountPercent = item.DiscountPercent;
+            decimal discountAmountFixed = item.DiscountAmount;
+            string note = item.Note ?? "";
+            if (existingQty > 0 && item.ItemId > 0)
+            {
+                var meta = _repo.GetPendingTransactionMeta(conn, tran, session.TerminalId, item.ItemId, item.UnitId, invoice.CartSessionCode);
+                if (discountPercent <= 0m && discountAmountFixed <= 0m)
+                {
+                    discountPercent = meta.DiscountPercent;
+                    discountAmountFixed = meta.DiscountAmount;
+                }
+                if (string.IsNullOrWhiteSpace(note)) note = meta.Note;
+            }
+
+            decimal subTotal = price * newQty;
+            decimal discountTotal;
+            decimal discountPercentToStore;
+            if (discountAmountFixed > 0m && discountPercent <= 0m)
+            {
+                discountPercentToStore = 0m;
+                discountTotal = discountAmountFixed;
+            }
+            else
+            {
+                if (discountPercent < 0m) discountPercent = 0m;
+                if (discountPercent > 100m) discountPercent = 100m;
+                discountPercentToStore = discountPercent;
+                discountTotal = Math.Round((subTotal * discountPercent) / 100m, 2, MidpointRounding.AwayFromZero);
+            }
+            if (discountTotal < 0m) discountTotal = 0m;
+            if (discountTotal > subTotal) discountTotal = subTotal;
+            decimal total = subTotal - discountTotal;
 
             bool updateSuccess;
 
@@ -337,7 +377,10 @@ public class CartService : ICartService
                     item.UnitId,
                     price,
                     total,
-                    item.ConversionRate
+                    item.ConversionRate,
+                    discountPercentToStore,
+                    discountTotal,
+                    note
                 );
             }
             else
@@ -351,7 +394,10 @@ public class CartService : ICartService
                     total,
                     item.Unit,
                     price,
-                    invoice.CartSessionCode
+                    invoice.CartSessionCode,
+                    discountPercentToStore,
+                    discountTotal,
+                    note
                 );
             }
 
@@ -389,7 +435,23 @@ public class CartService : ICartService
         // Reload cart
         var rows = _repo.GetPendingItems(Session.CartSessionCode);
 
-        return InvoiceBuilder.FromPending(rows);
+        var updated = InvoiceBuilder.FromPending(rows);
+        CopyInvoiceMeta(invoice, updated);
+        return updated;
+    }
+
+    private static void CopyInvoiceMeta(InvoiceData from, InvoiceData to)
+    {
+        if (from == null || to == null) return;
+        to.CartSessionCode = from.CartSessionCode;
+        to.CustomerId = from.CustomerId;
+        to.CustomerName = from.CustomerName;
+        to.PriceLevelId = from.PriceLevelId;
+        to.GlobalDiscountPercent = from.GlobalDiscountPercent;
+        to.GlobalDiscountIsAmount = from.GlobalDiscountIsAmount;
+        to.GlobalDiscountValue = from.GlobalDiscountValue;
+        to.DeliveryAmount = from.DeliveryAmount;
+        to.GlobalNote = from.GlobalNote;
     }
 
 

@@ -118,12 +118,32 @@ namespace POS_qu
         {
             switch (keyData)
             {
+                case Keys.Control | Keys.N:
+                    if (_currentInvoice != null && _currentInvoice.Items != null && _currentInvoice.Items.Count > 0)
+                    {
+                        var confirm = MessageBox.Show(
+                            "Mulai transaksi baru? Cart saat ini akan dikosongkan.",
+                            "Konfirmasi",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Question
+                        );
+                        if (confirm != DialogResult.Yes) return true;
+                    }
+                    StartNewTransaction();
+                    RenderInvoice(_currentInvoice);
+                    UpdateInvoiceSummary();
+                    return true;
+
+                case Keys.Control | Keys.P:
+                    button1.PerformClick();
+                    return true;
+
                 case Keys.Control | Keys.K:
                     OpenSearchShortcut();
                     return true;
 
                 case Keys.F1:
-                    ShowShortcutsHelp();
+                    button6.PerformClick();
                     return true;
                     
                 case Keys.F4:
@@ -135,11 +155,31 @@ namespace POS_qu
                     return true;
 
                 case Keys.Control | Keys.F:
-                    // SearchAndAddItem();
+                    OpenSearchShortcut();
                     return true;
 
                 case Keys.Control | Keys.I:
-                    // BtnToggleInfo.PerformClick();
+                    if (btnPendingList != null) btnPendingList.PerformClick();
+                    return true;
+
+                case Keys.F3:
+                    button2.PerformClick();
+                    return true;
+
+                case Keys.Control | Keys.D:
+                    button4.PerformClick();
+                    return true;
+
+                case Keys.Control | Keys.B:
+                    button3.PerformClick();
+                    return true;
+
+                case Keys.Control | Keys.M:
+                    button5.PerformClick();
+                    return true;
+
+                case Keys.F12:
+                    button6.PerformClick();
                     return true;
 
                 case Keys.Control | Keys.Shift | Keys.O:
@@ -293,7 +333,154 @@ namespace POS_qu
 
         private void CloseShift()
         {
-            MessageBox.Show("Fitur Close Shift sementara tidak tersedia.", "Info");
+            try
+            {
+                var session = SessionUser.GetCurrentUser();
+                var sc = new POS_qu.Controllers.ShiftController();
+                var open = sc.GetOpenShift(session.UserId, session.TerminalId);
+                if (open == null)
+                {
+                    MessageBox.Show("Shift belum dibuka.", "Info");
+                    return;
+                }
+
+                int shiftId = Convert.ToInt32(open["id"]);
+                decimal openingCash = (decimal)open["opening_cash"];
+
+                decimal cashSales = 0m;
+                using (var con = new Npgsql.NpgsqlConnection(POS_qu.Helpers.DbConfig.ConnectionString))
+                {
+                    con.Open();
+                    using var cmd = new Npgsql.NpgsqlCommand(@"
+SELECT COALESCE(SUM(COALESCE(ts_grand_total,0)),0)
+FROM transactions
+WHERE deleted_at IS NULL
+  AND shift_id = @sid
+  AND ts_status = 1
+  AND (COALESCE(ts_method,'') = 'Cash' OR COALESCE(ts_method,'') = 'RETURN')
+", con);
+                    cmd.Parameters.AddWithValue("@sid", shiftId);
+                    var obj = cmd.ExecuteScalar();
+                    cashSales = obj == null || obj == DBNull.Value ? 0m : Convert.ToDecimal(obj);
+                }
+
+                decimal expectedCash = openingCash + cashSales;
+
+                decimal? closingCash = null;
+                using (var modal = new Form())
+                {
+                    modal.Text = "Tutup Shift";
+                    modal.Size = new Size(460, 340);
+                    modal.StartPosition = FormStartPosition.CenterParent;
+                    modal.FormBorderStyle = FormBorderStyle.FixedDialog;
+                    modal.MaximizeBox = false;
+                    modal.MinimizeBox = false;
+                    modal.Padding = new Padding(18);
+
+                    var lblTitle = new Label
+                    {
+                        Text = $"Shift #{shiftId}",
+                        Dock = DockStyle.Top,
+                        Height = 34,
+                        Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold)
+                    };
+
+                    var pnl = new Panel { Dock = DockStyle.Fill, Padding = new Padding(0, 12, 0, 0) };
+
+                    var lblExpected = new Label
+                    {
+                        Text = $"Expected Cash: Rp {expectedCash:N0}",
+                        Dock = DockStyle.Top,
+                        Height = 28,
+                        Font = new Font("Segoe UI", 11F, FontStyle.Bold),
+                        ForeColor = Color.FromArgb(0, 122, 255)
+                    };
+
+                    var lblInput = new Label
+                    {
+                        Text = "Closing Cash (uang fisik di laci):",
+                        Dock = DockStyle.Top,
+                        Height = 24,
+                        Font = new Font("Segoe UI", 10F)
+                    };
+
+                    var txt = new TextBox
+                    {
+                        Dock = DockStyle.Top,
+                        Font = new Font("Segoe UI", 14F, FontStyle.Bold),
+                        Height = 38,
+                        TextAlign = HorizontalAlignment.Right
+                    };
+
+                    var spacer = new Panel { Dock = DockStyle.Top, Height = 12 };
+
+                    var pnlButtons = new Panel { Dock = DockStyle.Bottom, Height = 56 };
+                    var btnOk = new Button
+                    {
+                        Text = "Tutup Shift",
+                        Dock = DockStyle.Right,
+                        Width = 140,
+                        BackColor = Color.FromArgb(220, 53, 69),
+                        ForeColor = Color.White,
+                        FlatStyle = FlatStyle.Flat
+                    };
+                    btnOk.FlatAppearance.BorderSize = 0;
+
+                    var btnCancel = new Button
+                    {
+                        Text = "Batal",
+                        Dock = DockStyle.Right,
+                        Width = 90
+                    };
+
+                    decimal ParseMoney(string t)
+                    {
+                        var clean = (t ?? "").Replace("Rp", "").Replace(".", "").Replace(",", "").Trim();
+                        if (decimal.TryParse(clean, out var v)) return v;
+                        return 0m;
+                    }
+
+                    btnOk.Click += (s, e) =>
+                    {
+                        var v = ParseMoney(txt.Text);
+                        if (v <= 0m)
+                        {
+                            MessageBox.Show("Isi Closing Cash yang valid.");
+                            return;
+                        }
+                        closingCash = v;
+                        modal.DialogResult = DialogResult.OK;
+                        modal.Close();
+                    };
+                    btnCancel.Click += (s, e) => modal.Close();
+
+                    pnlButtons.Controls.Add(btnCancel);
+                    pnlButtons.Controls.Add(btnOk);
+
+                    pnl.Controls.Add(pnlButtons);
+                    pnl.Controls.Add(spacer);
+                    pnl.Controls.Add(txt);
+                    pnl.Controls.Add(lblInput);
+                    pnl.Controls.Add(lblExpected);
+
+                    modal.Controls.Add(pnl);
+                    modal.Controls.Add(lblTitle);
+
+                    modal.AcceptButton = btnOk;
+                    modal.CancelButton = btnCancel;
+
+                    if (modal.ShowDialog(this) != DialogResult.OK || closingCash == null) return;
+                }
+
+                sc.CloseShift(shiftId, expectedCash, closingCash.Value);
+                SessionUser.UpdateShiftId(0);
+                UpdateShiftInfoUI();
+                MessageBox.Show("Shift berhasil ditutup.", "Info");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Gagal Tutup Shift", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void btnOpenCashier_Click(object sender, EventArgs e) => OpenShift();
@@ -680,59 +867,96 @@ namespace POS_qu
 
 
             // Panel utama per item, tipis seperti struk
+            int w = Math.Max(240, flpInvoice.ClientSize.Width - 35);
             var panel = new Panel
             {
-                Width = flpInvoice.Width - 10,
+                Width = w,
                 AutoSize = true,
                 BackColor = Color.White,
                 BorderStyle = BorderStyle.None,
+                Padding = new Padding(0),
                 Margin = new Padding(0, 0, 0, 2) // spasi tipis antar item
             };
 
-            // Nama item
-            var lblName = new Label
+            var stack = new FlowLayoutPanel
             {
-                Text = item.Name,
-                Font = new Font("Consolas", 10, FontStyle.Bold),
                 AutoSize = true,
+                WrapContents = false,
+                FlowDirection = FlowDirection.TopDown,
+                Margin = new Padding(0),
+                Padding = new Padding(0),
+                Width = w
+            };
+
+            var lblDetail = new Label
+            {
+                Text = $"{item.Name}",
+                Font = new Font("Consolas", 9, FontStyle.Regular),
+                AutoSize = false,
+                Width = w,
+                Height = 18,
                 ForeColor = Color.Black
             };
 
-            // Detail qty, unit, harga, diskon, pajak
-            var lblDetail = new Label
+            decimal lineSubTotal = item.Price * item.Qty;
+            if (lineSubTotal < 0m) lineSubTotal = 0m;
+
+            string detail2 = $"{qtySatuan} x {item.Price:N0} = {lineSubTotal:N0}";
+            if (item.DiscountAmount > 0)
             {
-                Text = $"{item.Name} | {item.Qty} {item.Unit} {item.Price:N0}  Diskon: {item.DiscountAmount:N0}  Pajak: {item.Tax:N0}",
+                if (item.DiscountPercent > 0)
+                    detail2 += $"  Disc {item.DiscountPercent:N0}% (-{item.DiscountAmount:N0})";
+                else
+                    detail2 += $"  Disc -{item.DiscountAmount:N0}";
+            }
+            if (item.Tax > 0)
+                detail2 += $"  Tax {item.Tax:N0}";
+
+            var lblDetail2 = new Label
+            {
+                Text = detail2,
                 Font = new Font("Consolas", 9, FontStyle.Regular),
-                AutoSize = true,
+                AutoSize = false,
+                Width = w,
+                Height = 18,
                 ForeColor = Color.Black
             };
 
             var lblTotal = new Label
             {
-                Text = $"  Total: {item.Total:N0}",
+                Text = $"Total: {item.Total:N0}",
                 Font = new Font("Consolas", 10, FontStyle.Bold),
-                AutoSize = true,
-                ForeColor = Color.Black
-            };
-
-            var lblQty = new Label
-            {
-                Text = $"{item.Qty} {item.Unit}",
-                Font = new Font("Consolas", 9, FontStyle.Regular),
                 AutoSize = false,
-                Width = 100,
+                Width = w,
+                Height = 20,
                 TextAlign = ContentAlignment.MiddleRight,
-                Location = new Point(panel.Width - 100, 0)
+                Margin = new Padding(0, 0, 0, 0)
             };
 
+            stack.Controls.Add(lblDetail);
+            stack.Controls.Add(lblDetail2);
+            stack.Controls.Add(lblTotal);
 
-            panel.Controls.Add(lblDetail);
+            if (!string.IsNullOrWhiteSpace(item.Note))
+            {
+                var lblNote = new Label
+                {
+                    Text = $"  Note: {item.Note}",
+                    Font = new Font("Consolas", 9, FontStyle.Italic),
+                    AutoSize = false,
+                    Width = w,
+                    Height = 18,
+                    ForeColor = Color.FromArgb(80, 80, 80)
+                };
+                stack.Controls.Add(lblNote);
+            }
+            panel.Controls.Add(stack);
 
             var separator = new Label
             {
                 BorderStyle = BorderStyle.Fixed3D,
                 Height = 1,
-                Width = panel.Width,
+                Width = w,
                 Margin = new Padding(0, 2, 0, 2)
             };
 
@@ -750,6 +974,7 @@ namespace POS_qu
     string metodeBayar,
     string kembalian)
         {
+            RecalculateInvoiceTotals(invoice);
             flpInvoice.Controls.Clear();
 
             string judul = "", alamat = "", telepon = "", footer = "";
@@ -824,7 +1049,9 @@ namespace POS_qu
             AddLabel(new string('-', 32));
             AddLabel($"Subtotal".PadRight(20) + $"{invoice.Subtotal:N0}".PadLeft(10));
             AddLabel($"Item Discount".PadRight(20) + $"-{invoice.TotalDiscount:N0}".PadLeft(10));
-            if (invoice.GlobalDiscountPercent > 0)
+            if (invoice.GlobalDiscountIsAmount && invoice.GlobalDiscountValue > 0)
+                AddLabel($"Global Disc (Rp)".PadRight(20) + $"-{invoice.GlobalDiscountValue:N0}".PadLeft(10));
+            else if (invoice.GlobalDiscountPercent > 0)
                 AddLabel($"Global Disc ({invoice.GlobalDiscountPercent:N0}%)".PadRight(20) + $"-{invoice.GlobalDiscountValue:N0}".PadLeft(10));
             if (!string.IsNullOrEmpty(invoice.GlobalNote))
                 AddLabel($"Note".PadRight(20) + $"{invoice.GlobalNote}");
@@ -851,9 +1078,57 @@ namespace POS_qu
 
         private void UpdateInvoiceSummary()
         {
+            RecalculateInvoiceTotals(_currentInvoice);
             lblTotal.Text = _currentInvoice.GrandTotal.ToString("N0");
             labelNumOfItems.Text = _currentInvoice.Items.Sum(x => x.Qty).ToString();
             lblKembalian.Text = _currentInvoice.ChangeAmount.ToString("N0");
+        }
+
+        private void RecalculateInvoiceTotals(InvoiceData invoice)
+        {
+            if (invoice == null) return;
+            if (invoice.Items == null) invoice.Items = new List<InvoiceItem>();
+
+            decimal subTotal = 0m;
+            decimal itemDiscount = 0m;
+            foreach (var i in invoice.Items)
+            {
+                var lineSub = i.Price * i.Qty;
+                if (lineSub < 0m) lineSub = 0m;
+                subTotal += lineSub;
+
+                var disc = i.DiscountAmount;
+                if (disc < 0m) disc = 0m;
+                if (disc > lineSub) disc = lineSub;
+                itemDiscount += disc;
+            }
+
+            var netAfterItemDiscount = subTotal - itemDiscount;
+            if (netAfterItemDiscount < 0m) netAfterItemDiscount = 0m;
+
+            decimal globalDiscValue;
+            if (invoice.GlobalDiscountIsAmount)
+            {
+                globalDiscValue = invoice.GlobalDiscountValue;
+            }
+            else
+            {
+                var globalDiscPercent = invoice.GlobalDiscountPercent;
+                if (globalDiscPercent < 0m) globalDiscPercent = 0m;
+                if (globalDiscPercent > 100m) globalDiscPercent = 100m;
+                globalDiscValue = Math.Round((netAfterItemDiscount * globalDiscPercent) / 100m, 2, MidpointRounding.AwayFromZero);
+            }
+            if (globalDiscValue < 0m) globalDiscValue = 0m;
+            if (globalDiscValue > netAfterItemDiscount) globalDiscValue = netAfterItemDiscount;
+
+            var delivery = invoice.DeliveryAmount;
+            if (delivery < 0m) delivery = 0m;
+
+            invoice.Subtotal = subTotal;
+            invoice.TotalDiscount = itemDiscount;
+            invoice.GlobalDiscountValue = globalDiscValue;
+            invoice.GrandTotal = (netAfterItemDiscount - globalDiscValue) + delivery;
+            if (invoice.GrandTotal < 0m) invoice.GrandTotal = 0m;
         }
 
 
@@ -862,15 +1137,20 @@ namespace POS_qu
             BindingSource bs = new BindingSource();
             bs.DataSource = invoice.Items.Select(i => new
             {
+                PtId = i.pt_id,
                 i.Name,
                 i.Qty,
                 Satuan =  i.Unit ,
                 Harga = i.Price,
+                Diskon = i.DiscountPercent > 0 ? $"{i.DiscountPercent:N0}%" : (i.DiscountAmount > 0 ? $"-{i.DiscountAmount:N0}" : "0"),
+                Catatan = i.Note ?? "",
                 Total = i.Total
             }).ToList();
 
 
             dataGridViewCart4.DataSource = bs;
+            if (dataGridViewCart4.Columns.Contains("PtId"))
+                dataGridViewCart4.Columns["PtId"].Visible = false;
             dataGridViewCart4.Columns["Harga"].DefaultCellStyle.Format = "N0";
             dataGridViewCart4.Columns["Total"].DefaultCellStyle.Format = "N0";
             labelNumOfItems.Text = invoice.Items.Sum(x => x.Qty).ToString();
@@ -881,18 +1161,25 @@ namespace POS_qu
             if (e.RowIndex < 0) return;
 
             var row = dataGridViewCart4.Rows[e.RowIndex];
-            string itemName = row.Cells["Name"].Value.ToString();
-
-            var item = _currentInvoice.Items.FirstOrDefault(x => x.Name == itemName);
+            int ptId = Convert.ToInt32(row.Cells["PtId"].Value);
+            var item = _currentInvoice.Items.FirstOrDefault(x => x.pt_id == ptId);
             if (item == null) return;
 
             var modal = new FormUpdateItem(_currentInvoice, item, _cartService, updatedInvoice =>
             {
-
                 _currentInvoice = updatedInvoice;
-
+                RecalculateInvoiceTotals(_currentInvoice);
                 RenderInvoice(_currentInvoice);
-                RefreshInvoicePanel();
+                RenderReceiptUI(
+                    _currentInvoice,
+                    SessionUser.GetCurrentUser().TerminalName,
+                    SessionUser.GetCurrentUser().Username,
+                    SessionUser.GetCurrentUser().ShiftId.ToString(),
+                    "Unpaid",
+                    _currentInvoice.GrandTotal.ToString(),
+                    "-",
+                    "0"
+                );
                 UpdateInvoiceSummary();
             });
 
@@ -910,26 +1197,15 @@ namespace POS_qu
                 if (dataGridViewCart4.CurrentRow == null) return;
 
                 var row = dataGridViewCart4.CurrentRow;
-                string itemName = row.Cells["Name"].Value.ToString();
-
-                // Cari item di _currentInvoice
-                var item = _currentInvoice.Items.FirstOrDefault(x => x.Name == itemName);
+                int ptId = Convert.ToInt32(row.Cells["PtId"].Value);
+                var item = _currentInvoice.Items.FirstOrDefault(x => x.pt_id == ptId);
                 if (item == null) return;
 
                 // Buka modal
                 var modal = new FormUpdateItem(_currentInvoice, item, _cartService, updatedInvoice =>
                 {
-                    RefreshInvoicePanel();
                     _currentInvoice = updatedInvoice;
-
-                    if (_currentInvoice.Items.Any())
-                    {
-                        var lastItem = _currentInvoice.Items.Last();
-                        AddInvoiceItemToPanel(lastItem);
-                    }
-
-
-              
+                    RecalculateInvoiceTotals(_currentInvoice);
                     RenderReceiptUI(
                         _currentInvoice,     
                         SessionUser.GetCurrentUser().TerminalName,               
@@ -970,6 +1246,7 @@ namespace POS_qu
         private void button1_Click(object sender, EventArgs e)
         {
 
+            RecalculateInvoiceTotals(_currentInvoice);
             using (PaymentModalForm paymentModal =
                 new PaymentModalForm(_currentInvoice.GrandTotal, _currentInvoice.CustomerName))
             {
@@ -982,13 +1259,89 @@ namespace POS_qu
                     lblKembalian.Text = change.ToString("N0");
                 };
 
+                paymentModal.GlobalDiscountChanged += (percent) =>
+                {
+                    _currentInvoice.GlobalDiscountIsAmount = false;
+                    _currentInvoice.GlobalDiscountPercent = percent;
+                    _currentInvoice.GlobalDiscountValue = 0m;
+                    RecalculateInvoiceTotals(_currentInvoice);
+                    paymentModal.SetTotalAmount(_currentInvoice.GrandTotal);
+                    RenderReceiptUI(
+                        _currentInvoice,
+                        SessionUser.GetCurrentUser().TerminalName,
+                        SessionUser.GetCurrentUser().Username,
+                        SessionUser.GetCurrentUser().ShiftId.ToString(),
+                        "Unpaid",
+                        _currentInvoice.GrandTotal.ToString(),
+                        "-",
+                        "0"
+                    );
+                    UpdateInvoiceSummary();
+                };
+
+                paymentModal.GlobalDiscountAmountChanged += (amount) =>
+                {
+                    _currentInvoice.GlobalDiscountIsAmount = true;
+                    _currentInvoice.GlobalDiscountPercent = 0m;
+                    _currentInvoice.GlobalDiscountValue = amount;
+                    RecalculateInvoiceTotals(_currentInvoice);
+                    paymentModal.SetTotalAmount(_currentInvoice.GrandTotal);
+                    RenderReceiptUI(
+                        _currentInvoice,
+                        SessionUser.GetCurrentUser().TerminalName,
+                        SessionUser.GetCurrentUser().Username,
+                        SessionUser.GetCurrentUser().ShiftId.ToString(),
+                        "Unpaid",
+                        _currentInvoice.GrandTotal.ToString(),
+                        "-",
+                        "0"
+                    );
+                    UpdateInvoiceSummary();
+                };
+
+                paymentModal.DeliveryAmountChanged += (delivery) =>
+                {
+                    _currentInvoice.DeliveryAmount = delivery;
+                    RecalculateInvoiceTotals(_currentInvoice);
+                    paymentModal.SetTotalAmount(_currentInvoice.GrandTotal);
+                    RenderReceiptUI(
+                        _currentInvoice,
+                        SessionUser.GetCurrentUser().TerminalName,
+                        SessionUser.GetCurrentUser().Username,
+                        SessionUser.GetCurrentUser().ShiftId.ToString(),
+                        "Unpaid",
+                        _currentInvoice.GrandTotal.ToString(),
+                        "-",
+                        "0"
+                    );
+                    UpdateInvoiceSummary();
+                };
+
+                paymentModal.GlobalNoteChanged += (note) =>
+                {
+                    _currentInvoice.GlobalNote = note ?? "";
+                    RenderReceiptUI(
+                        _currentInvoice,
+                        SessionUser.GetCurrentUser().TerminalName,
+                        SessionUser.GetCurrentUser().Username,
+                        SessionUser.GetCurrentUser().ShiftId.ToString(),
+                        "Unpaid",
+                        _currentInvoice.GrandTotal.ToString(),
+                        "-",
+                        "0"
+                    );
+                };
+
                 if (paymentModal.ShowDialog() != DialogResult.OK)
                     return;
 
                 // Update invoice dari modal
+                _currentInvoice.GlobalDiscountIsAmount = paymentModal.GlobalDiscountIsAmount;
                 _currentInvoice.GlobalDiscountPercent = paymentModal.GlobalDiscountPercent;
+                _currentInvoice.GlobalDiscountValue = paymentModal.GlobalDiscountIsAmount ? paymentModal.GlobalDiscountAmount : 0m;
                 _currentInvoice.DeliveryAmount = paymentModal.DeliveryAmount;
                 _currentInvoice.GlobalNote = paymentModal.GlobalNote;
+                RecalculateInvoiceTotals(_currentInvoice);
 
                 TransactionResult result;
                 if (paymentModal.IsSplitPayment && paymentModal.SplitPayments != null)

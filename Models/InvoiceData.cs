@@ -45,6 +45,7 @@ namespace POS_qu.Models
         public decimal TotalDiscount { get; set; }          // Total diskon dari tiap item
         public decimal GlobalDiscountPercent { get; set; }  // Diskon global dalam persen
         public decimal GlobalDiscountValue { get; set; }    // Nilai diskon global dalam rupiah
+        public bool GlobalDiscountIsAmount { get; set; }    // Jika true, GlobalDiscountValue dianggap nominal (bukan hasil persen)
         public decimal DeliveryAmount { get; set; }         // Ongkir
         public decimal GrandTotal { get; set; }             // Total akhir (setelah semua diskon dan ongkir)
         

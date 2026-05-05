@@ -31,6 +31,7 @@ namespace POS_qu
         private List<UnitVariant> unitVariantsFromForm = new List<UnitVariant>(); // Store globally if needed
         private System.Data.DataTable _dtFull;
         private bool _viewAllUnits;
+        private bool _lowStockSort;
 
         private readonly IActivityService _activityService;
         private readonly IStockAdjustmentService _stockService;
@@ -214,6 +215,12 @@ namespace POS_qu
             LoadItems();
         }
 
+        private void btnLowStock_Click(object sender, EventArgs e)
+        {
+            _lowStockSort = !_lowStockSort;
+            LoadItems();
+        }
+
         private void btnPrintBarcode_Click(object sender, EventArgs e)
         {
             var ids = new HashSet<int>();
@@ -251,17 +258,12 @@ namespace POS_qu
 
         private void dataGridView1_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
-            if (!_viewAllUnits) return;
             if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
             if (dataGridView1.Columns[e.ColumnIndex].Name != "stock") return;
 
             var row = dataGridView1.Rows[e.RowIndex];
             if (row.DataBoundItem is not DataRowView drv) return;
             var dr = drv.Row;
-
-            if (!dr.Table.Columns.Contains("is_variant") || dr["is_variant"] == DBNull.Value) return;
-            bool isVariant = Convert.ToBoolean(dr["is_variant"]);
-            if (!isVariant) return;
 
             decimal stock = 0m;
             if (dr.Table.Columns.Contains("stock") && dr["stock"] != DBNull.Value) decimal.TryParse(dr["stock"].ToString(), out stock);
@@ -369,6 +371,8 @@ namespace POS_qu
 
             _productService = new ProductService(new ProductRepository());
             DataTable dt = _viewAllUnits ? GetAllProductsExpandedByUnitVariant() : _productService.GetAllProducts();
+            if (dt != null && _lowStockSort)
+                dt = SortLowStock(dt);
             _dtFull = dt?.Copy();
 
             if (dt == null)
@@ -412,6 +416,43 @@ namespace POS_qu
             ApplyProfessionalGridStyle();
             UpdateSummaryFromGrid();
             UpdateViewModeButtonsAppearance();
+            UpdateLowStockButtonAppearance();
+        }
+
+        private void UpdateLowStockButtonAppearance()
+        {
+            if (btnLowStock == null) return;
+            if (_lowStockSort)
+            {
+                btnLowStock.BackColor = Color.FromArgb(0, 120, 215);
+                btnLowStock.ForeColor = Color.White;
+            }
+            else
+            {
+                btnLowStock.BackColor = Color.White;
+                btnLowStock.ForeColor = Color.Black;
+            }
+        }
+
+        private static DataTable SortLowStock(DataTable dt)
+        {
+            if (dt == null) return dt;
+            if (!dt.Columns.Contains("stock") || !dt.Columns.Contains("min_stock")) return dt;
+
+            var rows = dt.AsEnumerable()
+                .OrderBy(r =>
+                {
+                    decimal stock = r["stock"] != DBNull.Value ? Convert.ToDecimal(r["stock"]) : 0m;
+                    decimal min = r["min_stock"] != DBNull.Value ? Convert.ToDecimal(r["min_stock"]) : 0m;
+                    if (min <= 0m) return decimal.MaxValue;
+                    return stock - min;
+                })
+                .ThenBy(r => r["stock"] != DBNull.Value ? Convert.ToDecimal(r["stock"]) : 0m);
+
+            var sorted = dt.Clone();
+            foreach (var r in rows)
+                sorted.ImportRow(r);
+            return sorted;
         }
 
         private void EnsureSelectCheckboxColumn()
@@ -480,7 +521,8 @@ namespace POS_qu
                 var baseRow = dt.NewRow();
                 foreach (DataColumn c in baseDt.Columns)
                     baseRow[c.ColumnName] = src[c.ColumnName];
-                baseRow["min_stock"] = 0m;
+                decimal baseMin = src.Table.Columns.Contains("min_stock") && src["min_stock"] != DBNull.Value ? Convert.ToDecimal(src["min_stock"]) : 0m;
+                baseRow["min_stock"] = baseMin;
                 baseRow["conversion"] = 1;
                 baseRow["is_variant"] = false;
                 baseRow["base_stock"] = baseStock;

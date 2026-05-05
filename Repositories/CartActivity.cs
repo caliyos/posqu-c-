@@ -543,13 +543,19 @@ LIMIT 1;";
       decimal newTotal,
       string unit,
       decimal sell_price,
-      string cartSessionCode
+      string cartSessionCode,
+      decimal discountPercentage,
+      decimal discountTotal,
+      string? note
   )
         {
             string query = @"
 UPDATE pending_transactions
 SET quantity = @newQuantity,
     sell_price = @sell_price,
+    discount_percentage = @discountPercentage,
+    discount_total = @discountTotal,
+    note = @note,
     total = @newTotal,
     updated_at = CURRENT_TIMESTAMP
 WHERE terminal_id = @terminalId
@@ -561,6 +567,9 @@ WHERE terminal_id = @terminalId
             cmd.Parameters.AddWithValue("@newQuantity", newQuantity);
             cmd.Parameters.AddWithValue("@newTotal", newTotal);
             cmd.Parameters.AddWithValue("@sell_price", sell_price);
+            cmd.Parameters.AddWithValue("@discountPercentage", discountPercentage);
+            cmd.Parameters.AddWithValue("@discountTotal", discountTotal);
+            cmd.Parameters.AddWithValue("@note", string.IsNullOrWhiteSpace(note) ? (object)DBNull.Value : note);
             cmd.Parameters.AddWithValue("@terminalId", terminalId);
             cmd.Parameters.AddWithValue("@itemId", itemId);
             cmd.Parameters.AddWithValue("@unit", unit);
@@ -569,6 +578,36 @@ WHERE terminal_id = @terminalId
             int affected = cmd.ExecuteNonQuery();
 
             return affected > 0;
+        }
+
+        public (decimal DiscountPercent, decimal DiscountAmount, string Note) GetPendingTransactionMeta(
+            NpgsqlConnection conn,
+            NpgsqlTransaction tran,
+            int terminalId,
+            int itemId,
+            int unitId,
+            string cartSessionCode
+        )
+        {
+            using var cmd = new NpgsqlCommand(@"
+SELECT COALESCE(discount_percentage,0) AS disc, COALESCE(discount_total,0) AS disc_total, COALESCE(note,'') AS note
+FROM pending_transactions
+WHERE terminal_id = @terminalId
+  AND item_id = @itemId
+  AND unitid = @unitId
+  AND cart_session_code = @cartSessionCode
+LIMIT 1
+", conn, tran);
+            cmd.Parameters.AddWithValue("@terminalId", terminalId);
+            cmd.Parameters.AddWithValue("@itemId", itemId);
+            cmd.Parameters.AddWithValue("@unitId", unitId);
+            cmd.Parameters.AddWithValue("@cartSessionCode", cartSessionCode);
+            using var r = cmd.ExecuteReader();
+            if (!r.Read()) return (0m, 0m, "");
+            var disc = r["disc"] != DBNull.Value ? Convert.ToDecimal(r["disc"]) : 0m;
+            var discTotal = r["disc_total"] != DBNull.Value ? Convert.ToDecimal(r["disc_total"]) : 0m;
+            var note = r["note"]?.ToString() ?? "";
+            return (disc, discTotal, note);
         }
 
 
@@ -639,13 +678,16 @@ WHERE terminal_id = @terminalId
       int unitid,
       decimal sell_price,
       decimal total,
-      decimal conversionRate
+      decimal conversionRate,
+      decimal discountPercentage,
+      decimal discountTotal,
+      string? note
   )
         {
             string sql = @"
 INSERT INTO pending_transactions
 (cart_session_code, terminal_id, cashier_id, item_id, barcode,
- quantity, unitid, unit, sell_price, buy_price, total, tsd_conversion_rate)
+ quantity, unitid, unit, sell_price, buy_price, discount_percentage, discount_total, tax, total, note, tsd_conversion_rate)
 SELECT
     @session,
     @terminal,
@@ -657,7 +699,11 @@ SELECT
     @unit,                         
     @sell_price,
     i.buy_price,
+    @discountPercentage,
+    @discountTotal,
+    0,
     @total,
+    @note,
     @conversionRate
 FROM items i
 WHERE i.id = @item
@@ -670,6 +716,9 @@ WHERE i.id = @item
             cmd.Parameters.AddWithValue("@unit", unit);
             cmd.Parameters.AddWithValue("@unitid", unitid);
             cmd.Parameters.AddWithValue("@sell_price", sell_price);
+            cmd.Parameters.AddWithValue("@discountPercentage", discountPercentage);
+            cmd.Parameters.AddWithValue("@discountTotal", discountTotal);
+            cmd.Parameters.AddWithValue("@note", string.IsNullOrWhiteSpace(note) ? (object)DBNull.Value : note);
             cmd.Parameters.AddWithValue("@total", total);
             cmd.Parameters.AddWithValue("@conversionRate", conversionRate);
 

@@ -33,6 +33,7 @@ namespace POS_qu
         private Button btnActionRefresh;
         private Button btnViewBase;
         private Button btnViewAll;
+        private Button btnLowStock;
         private Button btnPrintBarcode;
 
         private void InitializeComponent()
@@ -74,6 +75,7 @@ namespace POS_qu
             btnActionRefresh = new Button();
             btnViewBase = new Button();
             btnViewAll = new Button();
+            btnLowStock = new Button();
             btnPrintBarcode = new Button();
             
             Panel topContainer = new Panel();
@@ -203,6 +205,7 @@ namespace POS_qu
             actionPanel.Controls.Add(btnActionRefresh);
             actionPanel.Controls.Add(btnViewBase);
             actionPanel.Controls.Add(btnViewAll);
+            actionPanel.Controls.Add(btnLowStock);
             actionPanel.Controls.Add(btnPrintBarcode);
             actionPanel.Dock = DockStyle.Top;
             actionPanel.Height = 60;
@@ -254,11 +257,20 @@ namespace POS_qu
             btnViewAll.Text = "All View";
             btnViewAll.Click += btnViewAll_Click;
 
+            // btnLowStock
+            btnLowStock.BackColor = Color.White;
+            btnLowStock.FlatStyle = FlatStyle.Flat;
+            btnLowStock.Font = new Font("Segoe UI", 10F);
+            btnLowStock.Location = new Point(780, 15);
+            btnLowStock.Size = new Size(150, 32);
+            btnLowStock.Text = "Stok Mau Habis";
+            btnLowStock.Click += btnLowStock_Click;
+
             // btnPrintBarcode
             btnPrintBarcode.BackColor = Color.White;
             btnPrintBarcode.FlatStyle = FlatStyle.Flat;
             btnPrintBarcode.Font = new Font("Segoe UI", 10F);
-            btnPrintBarcode.Location = new Point(780, 15);
+            btnPrintBarcode.Location = new Point(940, 15);
             btnPrintBarcode.Size = new Size(140, 32);
             btnPrintBarcode.Text = "Print Barcode";
             btnPrintBarcode.Click += btnPrintBarcode_Click;

@@ -33,6 +33,8 @@ COALESCE((SELECT SUM(s.qty)
                 items.unit AS unit_id,
                 units.name AS unit_name,
 
+COALESCE(uvbase.minqty, 0) AS min_stock,
+
                 items.category_id,
                 categories.name AS category_name,
 
@@ -58,6 +60,14 @@ COALESCE((SELECT SUM(s.qty)
                 items.created_at,
                 items.updated_at
             FROM items
+            LEFT JOIN LATERAL (
+                SELECT iv.minqty
+                FROM unit_variants iv
+                WHERE iv.item_id = items.id
+                  AND iv.is_active = TRUE
+                  AND iv.is_base_unit = TRUE
+                LIMIT 1
+            ) uvbase ON TRUE
             LEFT JOIN units       ON items.unit = units.id
             LEFT JOIN categories  ON items.category_id = categories.id
             LEFT JOIN suppliers   ON items.supplier_id = suppliers.id
