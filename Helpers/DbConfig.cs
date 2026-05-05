@@ -10,9 +10,7 @@ namespace POS_qu.Helpers
     {
         private static readonly string programDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Posqu");
         private static readonly string configJsonPath = Path.Combine(programDataDir, "config.json");
-        private static readonly string legacyPath = @"D:\dbconfigposqu.config";
-        private static readonly string defaultTimeZone = "Asia/Makassar"; // ✅ ganti sesuai kebutuhan kamu
-
+        private static readonly string defaultTimeZone = "Asia/Makassar"; 
         public static string ConnectionString { get; private set; }
 
         static DbConfig()
@@ -42,24 +40,6 @@ namespace POS_qu.Helpers
                         Password = cfg.Password ?? "",
                         Database = cfg.Database ?? "postgres"
                     };
-                    ConnectionString = builder.ConnectionString;
-                    return;
-                }
-
-                if (File.Exists(legacyPath))
-                {
-                    string connString = File.ReadAllText(legacyPath).Trim();
-                    var builder = new NpgsqlConnectionStringBuilder(connString);
-                    var cfg = new PosquConfig
-                    {   
-                        Host = builder.Host,
-                        Port = builder.Port,
-                        Username = builder.Username,
-                        Password = builder.Password,
-                        Database = builder.Database
-                    };
-                    Directory.CreateDirectory(programDataDir);
-                    File.WriteAllText(configJsonPath, JsonSerializer.Serialize(cfg, new JsonSerializerOptions { WriteIndented = true }));
                     ConnectionString = builder.ConnectionString;
                     return;
                 }

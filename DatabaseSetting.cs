@@ -1,64 +1,16 @@
 using Npgsql;
-using System;
-using System.IO;
-using System.Windows.Forms;
 using POS_qu.Helpers;
-using System.Collections.Generic;
 using System.Text.Json;
 
 namespace POS_qu
 {
-    public class DatabaseSetting : Form
+    public partial class DatabaseSetting : Form
     {
         private readonly string configPath = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Posqu", "config.json");
-        private TextBox txtHost, txtPort, txtUser, txtPass, txtDb;
-        private Button btnTest, btnRunPhpMigrations, btnRunPhpSeeders, btnResetSchema, btnCreateDb, btnSetupAll, btnSaveConfig;
-        private TextBox txtLog;
-        private ProgressBar progress;
 
         public DatabaseSetting()
         {
-            Text = "Initial Setup - POSqu";
-            Width = 980;
-            Height = 600;
-            FormBorderStyle = FormBorderStyle.FixedDialog;
-            MaximizeBox = false;
-            StartPosition = FormStartPosition.CenterScreen;
-
-            var grpConn = new GroupBox { Text = "Koneksi Database", Left = 20, Top = 20, Width = 600, Height = 220 };
-            var lbl1 = new Label { Text = "Host/IP", Left = 20, Top = 40, Width = 120 };
-            var lbl2 = new Label { Text = "Port", Left = 20, Top = 80, Width = 120 };
-            var lbl3 = new Label { Text = "User", Left = 20, Top = 120, Width = 120 };
-            var lbl4 = new Label { Text = "Password", Left = 20, Top = 160, Width = 120 };
-            var lbl5 = new Label { Text = "Database", Left = 20, Top = 200, Width = 120 };
-
-            txtHost = new TextBox { Left = 160, Top = 36, Width = 280, Text = "localhost" };
-            txtPort = new TextBox { Left = 160, Top = 76, Width = 280, Text = "5432" };
-            txtUser = new TextBox { Left = 160, Top = 116, Width = 280, Text = "postgres" };
-            txtPass = new TextBox { Left = 160, Top = 156, Width = 280, UseSystemPasswordChar = true };
-            txtDb = new TextBox { Left = 160, Top = 196, Width = 280 };
-
-            btnTest = new Button { Left = 460, Top = 36, Width = 120, Height = 34, Text = "Test" };
-            btnResetSchema = new Button { Left = 460, Top = 76, Width = 120, Height = 34, Text = "Reset Schema" };
-            btnCreateDb = new Button { Left = 460, Top = 116, Width = 120, Height = 34, Text = "Create DB" };
-            btnSaveConfig = new Button { Left = 460, Top = 156, Width = 120, Height = 34, Text = "Save Config" };
-
-            grpConn.Controls.AddRange(new Control[] { lbl1, lbl2, lbl3, lbl4, lbl5, txtHost, txtPort, txtUser, txtPass, txtDb, btnTest, btnResetSchema, btnCreateDb, btnSaveConfig });
-
-            var grpSetup = new GroupBox { Text = "Initial Setup", Left = 640, Top = 20, Width = 300, Height = 220 };
-            btnRunPhpMigrations = new Button { Left = 20, Top = 40, Width = 260, Height = 40, Text = "Run Migrations (PHP)" };
-            btnRunPhpSeeders = new Button { Left = 20, Top = 90, Width = 260, Height = 40, Text = "Run Seeders (PHP)" };
-            btnSetupAll = new Button { Left = 20, Top = 140, Width = 260, Height = 40, Text = "Setup Otomatis" };
-            progress = new ProgressBar { Left = 20, Top = 190, Width = 260, Height = 20, Minimum = 0, Maximum = 100, Value = 0 };
-            grpSetup.Controls.AddRange(new Control[] { btnRunPhpMigrations, btnRunPhpSeeders, btnSetupAll, progress });
-
-            txtLog = new TextBox { Left = 20, Top = 260, Width = 920, Height = 280, Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical };
-
-            Controls.AddRange(new Control[] {
-                grpConn,
-                grpSetup,
-                txtLog
-            });
+            InitializeComponent();
 
             btnTest.Click += BtnTest_Click;
             btnResetSchema.Click += BtnResetSchema_Click;
@@ -173,27 +125,27 @@ namespace POS_qu
                         return;
                     }
                 }
-                var legacy = @"D:\dbconfigposqu.config";
-                if (File.Exists(legacy))
-                {
-                    var conn = File.ReadAllText(legacy).Trim();
-                    var map = ParseConnString(conn);
-                    if (map.TryGetValue("HOST", out var host)) txtHost.Text = host;
-                    if (map.TryGetValue("PORT", out var port)) txtPort.Text = port;
-                    if (map.TryGetValue("USERNAME", out var user)) txtUser.Text = user;
-                    if (map.TryGetValue("USER", out var user2)) txtUser.Text = user2;
-                    if (map.TryGetValue("PASSWORD", out var pass)) txtPass.Text = pass;
-                    if (map.TryGetValue("DATABASE", out var db)) txtDb.Text = db;
-                }
+                //var legacy = @"D:\dbconfigposqu.config";
+                //if (File.Exists(legacy))
+                //{
+                //    var conn = File.ReadAllText(legacy).Trim();
+                //    var map = ParseConnString(conn);
+                //    if (map.TryGetValue("HOST", out var host)) txtHost.Text = host;
+                //    if (map.TryGetValue("PORT", out var port)) txtPort.Text = port;
+                //    if (map.TryGetValue("USERNAME", out var user)) txtUser.Text = user;
+                //    if (map.TryGetValue("USER", out var user2)) txtUser.Text = user2;
+                //    if (map.TryGetValue("PASSWORD", out var pass)) txtPass.Text = pass;
+                //    if (map.TryGetValue("DATABASE", out var db)) txtDb.Text = db;
+                //}
             }
             catch
             {
             }
         }
 
-        private static Dictionary<string,string> ParseConnString(string conn)
+        private static Dictionary<string, string> ParseConnString(string conn)
         {
-            var dict = new Dictionary<string,string>(StringComparer.OrdinalIgnoreCase);
+            var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             var parts = conn.Split(';');
             foreach (var p in parts)
             {
@@ -315,6 +267,11 @@ namespace POS_qu
             var root = Array.Find(cand, Directory.Exists);
             if (root == null) throw new DirectoryNotFoundException("Folder 'migration' tidak ditemukan.");
             return root;
+        }
+
+        private void DatabaseSetting_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

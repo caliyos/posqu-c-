@@ -691,7 +691,7 @@ WHERE i.id = @item
             string sql = @"
 UPDATE stocks
 SET reserved_qty = reserved_qty + @baseQtyDiff
-WHERE item_id = (SELECT id FROM items WHERE barcode = @barcode LIMIT 1)
+WHERE item_id = @itemId
 AND warehouse_id = 1
 AND (reserved_qty + @baseQtyDiff) >= 0
 AND (reserved_qty + @baseQtyDiff) <= qty;
