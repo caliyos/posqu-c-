@@ -19,6 +19,8 @@ namespace POS_qu
         {
             panelTop = new Panel();
             lblTitle = new Label();
+            lblWarehouse = new Label();
+            cmbWarehouse = new ComboBox();
             btnRefresh = new Button();
             btnClose = new Button();
             splitContainer1 = new SplitContainer();
@@ -37,13 +39,15 @@ namespace POS_qu
             // 
             panelTop.BackColor = Color.White;
             panelTop.Controls.Add(lblTitle);
+            panelTop.Controls.Add(cmbWarehouse);
+            panelTop.Controls.Add(lblWarehouse);
             panelTop.Controls.Add(btnRefresh);
             panelTop.Controls.Add(btnClose);
             panelTop.Dock = DockStyle.Top;
             panelTop.Location = new Point(0, 0);
             panelTop.Name = "panelTop";
             panelTop.Padding = new Padding(12);
-            panelTop.Size = new Size(1280, 58);
+            panelTop.Size = new Size(1280, 92);
             panelTop.TabIndex = 0;
             // 
             // lblTitle
@@ -56,12 +60,32 @@ namespace POS_qu
             lblTitle.TabIndex = 0;
             lblTitle.Text = "Daftar Stock Opname";
             // 
+            // lblWarehouse
+            // 
+            lblWarehouse.AutoSize = true;
+            lblWarehouse.Font = new Font("Segoe UI", 10F);
+            lblWarehouse.Location = new Point(12, 54);
+            lblWarehouse.Name = "lblWarehouse";
+            lblWarehouse.Size = new Size(73, 23);
+            lblWarehouse.TabIndex = 3;
+            lblWarehouse.Text = "Gudang";
+            // 
+            // cmbWarehouse
+            // 
+            cmbWarehouse.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbWarehouse.Font = new Font("Segoe UI", 10F);
+            cmbWarehouse.FormattingEnabled = true;
+            cmbWarehouse.Location = new Point(95, 50);
+            cmbWarehouse.Name = "cmbWarehouse";
+            cmbWarehouse.Size = new Size(360, 31);
+            cmbWarehouse.TabIndex = 4;
+            // 
             // btnRefresh
             // 
             btnRefresh.BackColor = Color.White;
             btnRefresh.FlatStyle = FlatStyle.Flat;
             btnRefresh.Font = new Font("Segoe UI", 10F);
-            btnRefresh.Location = new Point(996, 12);
+            btnRefresh.Location = new Point(996, 50);
             btnRefresh.Name = "btnRefresh";
             btnRefresh.Size = new Size(110, 34);
             btnRefresh.TabIndex = 1;
@@ -74,7 +98,7 @@ namespace POS_qu
             btnClose.BackColor = Color.White;
             btnClose.FlatStyle = FlatStyle.Flat;
             btnClose.Font = new Font("Segoe UI", 10F);
-            btnClose.Location = new Point(1116, 12);
+            btnClose.Location = new Point(1116, 50);
             btnClose.Name = "btnClose";
             btnClose.Size = new Size(140, 34);
             btnClose.TabIndex = 2;
@@ -85,7 +109,7 @@ namespace POS_qu
             // splitContainer1
             // 
             splitContainer1.Dock = DockStyle.Fill;
-            splitContainer1.Location = new Point(0, 58);
+            splitContainer1.Location = new Point(0, 92);
             splitContainer1.Name = "splitContainer1";
             splitContainer1.Orientation = Orientation.Horizontal;
             // 
@@ -163,6 +187,8 @@ namespace POS_qu
 
         private Panel panelTop;
         private Label lblTitle;
+        private Label lblWarehouse;
+        private ComboBox cmbWarehouse;
         private Button btnRefresh;
         private Button btnClose;
         private SplitContainer splitContainer1;
@@ -170,4 +196,3 @@ namespace POS_qu
         private DataGridView dgvItems;
     }
 }
-

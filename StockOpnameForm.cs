@@ -20,6 +20,7 @@ namespace POS_qu
     {
         private readonly IProductService _productService;
         private readonly WarehouseController _warehouseController;
+        private readonly int _prefillWarehouseId;
 
         private DataTable _warehouses;
         private readonly List<OpnameRow> _rows = new List<OpnameRow>();
@@ -33,13 +34,14 @@ namespace POS_qu
         private readonly Dictionary<string, int> _warehouseIdByKey = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<int, ItemUnitsInfo> _unitsInfoByItemId = new Dictionary<int, ItemUnitsInfo>();
 
-        public StockOpnameForm()
+        public StockOpnameForm(int? prefillWarehouseId = null)
         {
             InitializeComponent();
             StartPosition = FormStartPosition.CenterScreen;
 
             _productService = new ProductService(new ProductRepository());
             _warehouseController = new WarehouseController();
+            _prefillWarehouseId = prefillWarehouseId.HasValue && prefillWarehouseId.Value > 0 ? prefillWarehouseId.Value : 0;
 
             Load += StockOpnameForm_Load;
 
@@ -86,7 +88,17 @@ namespace POS_qu
             cmbWarehouse.DataSource = _warehouses;
             cmbWarehouse.DisplayMember = "name";
             cmbWarehouse.ValueMember = "id";
-            if (_warehouses != null && _warehouses.Rows.Count > 0) cmbWarehouse.SelectedIndex = 0;
+            if (_warehouses != null && _warehouses.Rows.Count > 0)
+            {
+                if (_prefillWarehouseId > 0)
+                {
+                    try { cmbWarehouse.SelectedValue = _prefillWarehouseId; } catch { cmbWarehouse.SelectedIndex = 0; }
+                }
+                else
+                {
+                    cmbWarehouse.SelectedIndex = 0;
+                }
+            }
 
             _warehouseIdByKey.Clear();
             if (_warehouses == null) return;

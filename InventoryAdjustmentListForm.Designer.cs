@@ -5,6 +5,8 @@ namespace POS_qu
         private System.ComponentModel.IContainer components = null;
         private System.Windows.Forms.Panel panelTop;
         private System.Windows.Forms.Label lblTitle;
+        private System.Windows.Forms.Label lblWarehouse;
+        private System.Windows.Forms.ComboBox cmbWarehouse;
         private System.Windows.Forms.Label lblSearch;
         private System.Windows.Forms.TextBox txtSearch;
         private System.Windows.Forms.Button btnAdd;
@@ -28,6 +30,8 @@ namespace POS_qu
         {
             panelTop = new System.Windows.Forms.Panel();
             lblTitle = new System.Windows.Forms.Label();
+            lblWarehouse = new System.Windows.Forms.Label();
+            cmbWarehouse = new System.Windows.Forms.ComboBox();
             lblSearch = new System.Windows.Forms.Label();
             txtSearch = new System.Windows.Forms.TextBox();
             btnAdd = new System.Windows.Forms.Button();
@@ -54,12 +58,14 @@ namespace POS_qu
             panelTop.Controls.Add(btnAdd);
             panelTop.Controls.Add(txtSearch);
             panelTop.Controls.Add(lblSearch);
+            panelTop.Controls.Add(cmbWarehouse);
+            panelTop.Controls.Add(lblWarehouse);
             panelTop.Controls.Add(lblTitle);
             panelTop.Dock = System.Windows.Forms.DockStyle.Top;
             panelTop.Location = new System.Drawing.Point(0, 0);
             panelTop.Name = "panelTop";
             panelTop.Padding = new System.Windows.Forms.Padding(12);
-            panelTop.Size = new System.Drawing.Size(1182, 70);
+            panelTop.Size = new System.Drawing.Size(1182, 108);
             panelTop.TabIndex = 0;
             // 
             // lblTitle
@@ -72,67 +78,85 @@ namespace POS_qu
             lblTitle.TabIndex = 0;
             lblTitle.Text = "Daftar Adjust";
             // 
+            // lblWarehouse
+            // 
+            lblWarehouse.AutoSize = true;
+            lblWarehouse.Location = new System.Drawing.Point(190, 14);
+            lblWarehouse.Name = "lblWarehouse";
+            lblWarehouse.Size = new System.Drawing.Size(70, 20);
+            lblWarehouse.TabIndex = 1;
+            lblWarehouse.Text = "Gudang:";
+            // 
+            // cmbWarehouse
+            // 
+            cmbWarehouse.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            cmbWarehouse.FormattingEnabled = true;
+            cmbWarehouse.Location = new System.Drawing.Point(265, 10);
+            cmbWarehouse.Name = "cmbWarehouse";
+            cmbWarehouse.Size = new System.Drawing.Size(325, 28);
+            cmbWarehouse.TabIndex = 2;
+            // 
             // lblSearch
             // 
             lblSearch.AutoSize = true;
-            lblSearch.Location = new System.Drawing.Point(15, 42);
+            lblSearch.Location = new System.Drawing.Point(15, 74);
             lblSearch.Name = "lblSearch";
             lblSearch.Size = new System.Drawing.Size(52, 20);
-            lblSearch.TabIndex = 1;
+            lblSearch.TabIndex = 3;
             lblSearch.Text = "Cari :";
             // 
             // txtSearch
             // 
             txtSearch.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right;
-            txtSearch.Location = new System.Drawing.Point(70, 39);
+            txtSearch.Location = new System.Drawing.Point(70, 71);
             txtSearch.Name = "txtSearch";
             txtSearch.Size = new System.Drawing.Size(520, 27);
-            txtSearch.TabIndex = 2;
+            txtSearch.TabIndex = 4;
             // 
             // btnAdd
             // 
             btnAdd.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnAdd.Location = new System.Drawing.Point(600, 37);
+            btnAdd.Location = new System.Drawing.Point(600, 69);
             btnAdd.Name = "btnAdd";
             btnAdd.Size = new System.Drawing.Size(120, 30);
-            btnAdd.TabIndex = 3;
+            btnAdd.TabIndex = 5;
             btnAdd.Text = "Tambah";
             btnAdd.UseVisualStyleBackColor = true;
             // 
             // btnPrint
             // 
             btnPrint.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnPrint.Location = new System.Drawing.Point(730, 37);
+            btnPrint.Location = new System.Drawing.Point(730, 69);
             btnPrint.Name = "btnPrint";
             btnPrint.Size = new System.Drawing.Size(120, 30);
-            btnPrint.TabIndex = 4;
+            btnPrint.TabIndex = 6;
             btnPrint.Text = "Cetak Faktur";
             btnPrint.UseVisualStyleBackColor = true;
             // 
             // btnRefresh
             // 
             btnRefresh.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnRefresh.Location = new System.Drawing.Point(910, 37);
+            btnRefresh.Location = new System.Drawing.Point(910, 69);
             btnRefresh.Name = "btnRefresh";
             btnRefresh.Size = new System.Drawing.Size(120, 30);
-            btnRefresh.TabIndex = 5;
+            btnRefresh.TabIndex = 7;
             btnRefresh.Text = "Refresh";
             btnRefresh.UseVisualStyleBackColor = true;
             // 
             // btnClose
             // 
             btnClose.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnClose.Location = new System.Drawing.Point(1040, 37);
+            btnClose.Location = new System.Drawing.Point(1040, 69);
             btnClose.Name = "btnClose";
             btnClose.Size = new System.Drawing.Size(120, 30);
-            btnClose.TabIndex = 6;
+            btnClose.TabIndex = 8;
             btnClose.Text = "Tutup";
             btnClose.UseVisualStyleBackColor = true;
             // 
             // splitContainer1
             // 
             splitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
-            splitContainer1.Location = new System.Drawing.Point(0, 70);
+            splitContainer1.Location = new System.Drawing.Point(0, 108);
             splitContainer1.Name = "splitContainer1";
             splitContainer1.Orientation = System.Windows.Forms.Orientation.Horizontal;
             // 

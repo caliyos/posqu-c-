@@ -896,26 +896,17 @@ namespace POS_qu
         {
             try
             {
-                // Ambil data dari database lewat controller
-                DataTable dt = _productService.GetAllProducts();
-
-                if (dt.Rows.Count == 0)
-                {
-                    MessageBox.Show("Tidak ada data untuk diexport.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
-
                 // Pilih lokasi simpan file
                 SaveFileDialog sfd = new SaveFileDialog
                 {
                     Filter = "Excel Files (*.xlsx)|*.xlsx",
-                    FileName = "Items_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".xlsx"
+                    FileName = "Products_MultiWarehouse_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".xlsx"
                 };
 
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
                     string filePath = sfd.FileName;
-                    ExportDataTableToExcel(dt, filePath);
+                    ExportProductsMultiWarehouseExcel(filePath);
 
                     MessageBox.Show("Data berhasil diexport ke Excel:\n" + filePath, "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
@@ -926,15 +917,112 @@ namespace POS_qu
             }
         }
 
-        private void ExportDataTableToExcel(DataTable dt, string filePath)
+        private void ExportProductsMultiWarehouseExcel(string filePath)
         {
-            using (var workbook = new ClosedXML.Excel.XLWorkbook())
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+
+            var dtItems = new DataTable();
+            var dtStocks = new DataTable();
+
+            using (var cmd = new NpgsqlCommand(@"
+SELECT
+    i.id,
+    i.name,
+    i.buy_price,
+    i.sell_price,
+    i.barcode,
+    i.unit,
+    i.category_id,
+    i.supplier_id,
+    i.note,
+    i.is_inventory_p,
+    i.is_changeprice_p
+FROM items i
+WHERE i.deleted_at IS NULL
+ORDER BY i.id ASC
+", con))
             {
-                var worksheet = workbook.Worksheets.Add("Items");
-                worksheet.Cell(1, 1).InsertTable(dt);
-                worksheet.Columns().AdjustToContents();
-                workbook.SaveAs(filePath);
+                using var da = new NpgsqlDataAdapter(cmd);
+                da.Fill(dtItems);
             }
+
+            using (var cmd = new NpgsqlCommand(@"
+SELECT
+    i.barcode,
+    i.name,
+    w.id AS warehouse_id,
+    w.name AS warehouse_name,
+    s.qty,
+    s.min_qty,
+    s.reserved_qty
+FROM items i
+JOIN stocks s ON s.item_id = i.id
+JOIN warehouses w ON w.id = s.warehouse_id
+WHERE i.deleted_at IS NULL
+ORDER BY i.id ASC, w.id ASC
+", con))
+            {
+                using var da = new NpgsqlDataAdapter(cmd);
+                da.Fill(dtStocks);
+            }
+
+            using var workbook = new ClosedXML.Excel.XLWorkbook();
+
+            var wsItems = workbook.Worksheets.Add("Items");
+            wsItems.Cell(1, 1).Value = "name";
+            wsItems.Cell(1, 2).Value = "buy_price";
+            wsItems.Cell(1, 3).Value = "sell_price";
+            wsItems.Cell(1, 4).Value = "barcode";
+            wsItems.Cell(1, 5).Value = "unit";
+            wsItems.Cell(1, 6).Value = "group";
+            wsItems.Cell(1, 7).Value = "supplier_id";
+            wsItems.Cell(1, 8).Value = "note";
+            wsItems.Cell(1, 9).Value = "is_inventory_p";
+            wsItems.Cell(1, 10).Value = "is_changeprice_p";
+            wsItems.Row(1).Style.Font.Bold = true;
+
+            int r = 2;
+            foreach (DataRow dr in dtItems.Rows)
+            {
+                wsItems.Cell(r, 1).Value = dr["name"]?.ToString() ?? "";
+                wsItems.Cell(r, 2).Value = dr["buy_price"] == DBNull.Value ? 0 : Convert.ToDecimal(dr["buy_price"]);
+                wsItems.Cell(r, 3).Value = dr["sell_price"] == DBNull.Value ? 0 : Convert.ToDecimal(dr["sell_price"]);
+                wsItems.Cell(r, 4).Value = dr["barcode"]?.ToString() ?? "";
+                wsItems.Cell(r, 5).Value = dr["unit"] == DBNull.Value ? 0 : Convert.ToInt32(dr["unit"]);
+                wsItems.Cell(r, 6).Value = dr["category_id"] == DBNull.Value ? 0 : Convert.ToInt32(dr["category_id"]);
+                wsItems.Cell(r, 7).Value = dr["supplier_id"] == DBNull.Value ? 0 : Convert.ToInt32(dr["supplier_id"]);
+                wsItems.Cell(r, 8).Value = dr["note"]?.ToString() ?? "";
+                wsItems.Cell(r, 9).Value = (dr["is_inventory_p"] != DBNull.Value && Convert.ToBoolean(dr["is_inventory_p"])) ? "Y" : "N";
+                wsItems.Cell(r, 10).Value = (dr["is_changeprice_p"] != DBNull.Value && Convert.ToBoolean(dr["is_changeprice_p"])) ? "Y" : "N";
+                r++;
+            }
+            wsItems.Columns().AdjustToContents();
+
+            var wsStocks = workbook.Worksheets.Add("Stocks");
+            wsStocks.Cell(1, 1).Value = "barcode";
+            wsStocks.Cell(1, 2).Value = "warehouse_id";
+            wsStocks.Cell(1, 3).Value = "warehouse_name";
+            wsStocks.Cell(1, 4).Value = "qty";
+            wsStocks.Cell(1, 5).Value = "min_qty";
+            wsStocks.Cell(1, 6).Value = "reserved_qty";
+            wsStocks.Row(1).Style.Font.Bold = true;
+
+            r = 2;
+            foreach (DataRow dr in dtStocks.Rows)
+            {
+                wsStocks.Cell(r, 1).Value = dr["barcode"]?.ToString() ?? "";
+                wsStocks.Cell(r, 2).Value = dr["warehouse_id"] == DBNull.Value ? 0 : Convert.ToInt32(dr["warehouse_id"]);
+                wsStocks.Cell(r, 3).Value = dr["warehouse_name"]?.ToString() ?? "";
+                wsStocks.Cell(r, 4).Value = dr["qty"] == DBNull.Value ? 0 : Convert.ToDecimal(dr["qty"]);
+                wsStocks.Cell(r, 5).Value = dr["min_qty"] == DBNull.Value ? 0 : Convert.ToDecimal(dr["min_qty"]);
+                wsStocks.Cell(r, 6).Value = dr["reserved_qty"] == DBNull.Value ? 0 : Convert.ToDecimal(dr["reserved_qty"]);
+                r++;
+            }
+            wsStocks.Columns().AdjustToContents();
+
+            CreateReferenceSheet(workbook);
+            workbook.SaveAs(filePath);
         }
 
 
@@ -944,8 +1032,8 @@ namespace POS_qu
             importForm.Text = "Import Item";
             importForm.StartPosition = FormStartPosition.CenterParent;
             importForm.FormBorderStyle = FormBorderStyle.FixedDialog;
-            importForm.Width = 450;
-            importForm.Height = 350;
+            importForm.Width = 580;
+            importForm.Height = 670;
             importForm.MaximizeBox = false;
             importForm.MinimizeBox = false;
 
@@ -964,7 +1052,7 @@ namespace POS_qu
             {
                 Text = "📥 Unduh Template Excel",
                 Location = new Point(20, 50),
-                Width = 180,
+                Width = 220,
                 Height = 30
             };
             btnDownloadTemplate.Click += (s, ev) =>
@@ -972,7 +1060,7 @@ namespace POS_qu
                 SaveFileDialog saveDialog = new SaveFileDialog
                 {
                     Filter = "Excel Files|*.xlsx",
-                    FileName = "template_import_item.xlsx"
+                    FileName = "template_import_product_multi_gudang.xlsx"
                 };
                 if (saveDialog.ShowDialog() == DialogResult.OK)
                 {
@@ -995,7 +1083,7 @@ namespace POS_qu
             TextBox txtFile = new TextBox()
             {
                 Location = new Point(20, 125),
-                Width = 280,
+                Width = 390,
                 ReadOnly = true
             };
             importForm.Controls.Add(txtFile);
@@ -1004,8 +1092,8 @@ namespace POS_qu
             Button btnBrowse = new Button()
             {
                 Text = "Browse...",
-                Location = new Point(310, 123),
-                Width = 100,
+                Location = new Point(420, 123),
+                Width = 120,
                 Height = 30
             };
             btnBrowse.Click += (s, ev) =>
@@ -1021,17 +1109,69 @@ namespace POS_qu
             };
             importForm.Controls.Add(btnBrowse);
 
+            Label lblStatus = new Label()
+            {
+                Text = "",
+                AutoSize = false,
+                Location = new Point(20, 165),
+                Width = 520,
+                Height = 22
+            };
+            importForm.Controls.Add(lblStatus);
+
+            ProgressBar progress = new ProgressBar()
+            {
+                Location = new Point(20, 190),
+                Width = 520,
+                Height = 14,
+                Minimum = 0,
+                Maximum = 100,
+                Value = 0
+            };
+            importForm.Controls.Add(progress);
+
+            TextBox txtLog = new TextBox()
+            {
+                Location = new Point(20, 215),
+                Width = 520,
+                Height = 360,
+                Multiline = true,
+                ReadOnly = true,
+                ScrollBars = ScrollBars.Vertical
+            };
+            importForm.Controls.Add(txtLog);
+
+            Button btnCopyLog = new Button()
+            {
+                Text = "Copy Log",
+                Location = new Point(20, 585),
+                Width = 110,
+                Height = 35
+            };
+            btnCopyLog.Click += (s, ev) =>
+            {
+                try
+                {
+                    Clipboard.SetText(txtLog.Text ?? "");
+                    MessageBox.Show("Log berhasil di-copy.");
+                }
+                catch
+                {
+                }
+            };
+            importForm.Controls.Add(btnCopyLog);
+
             // Tombol Import
             Button btnDoImport = new Button()
             {
                 Text = "Import Sekarang",
                 BackColor = System.Drawing.Color.FromArgb(0, 123, 255),
                 ForeColor = System.Drawing.Color.White,
-                Location = new System.Drawing.Point(230, 170),
-                Width = 120,
+                Location = new System.Drawing.Point(250, 585),
+                Width = 170,
                 Height = 35
             };
-            btnDoImport.Click += (s, ev) =>
+            btnDoImport.Click += async (s, ev) =>
             {
                 if (string.IsNullOrEmpty(txtFile.Text))
                 {
@@ -1041,13 +1181,83 @@ namespace POS_qu
 
                 try
                 {
-                    ImportItemsFromExcelImpl(txtFile.Text);
-                    MessageBox.Show("Import berhasil!");
-                    importForm.Close();
+                    btnDoImport.Enabled = false;
+                    btnBrowse.Enabled = false;
+                    btnDownloadTemplate.Enabled = false;
+                    btnCopyLog.Enabled = false;
+
+                    txtLog.Clear();
+                    lblStatus.Text = "Memulai import...";
+                    progress.Value = 0;
+
+                    Action<string> appendLog = (msg) =>
+                    {
+                        if (importForm.IsDisposed) return;
+                        if (txtLog.InvokeRequired)
+                        {
+                            txtLog.BeginInvoke((Action)(() =>
+                            {
+                                txtLog.AppendText(msg + Environment.NewLine);
+                            }));
+                        }
+                        else
+                        {
+                            txtLog.AppendText(msg + Environment.NewLine);
+                        }
+                    };
+
+                    Action<int, int> setProgress = (done, total) =>
+                    {
+                        if (importForm.IsDisposed) return;
+                        if (progress.InvokeRequired)
+                        {
+                            progress.BeginInvoke((Action)(() =>
+                            {
+                                progress.Maximum = Math.Max(1, total);
+                                progress.Value = Math.Max(0, Math.Min(done, progress.Maximum));
+                                lblStatus.Text = $"Proses import: {done:N0}/{total:N0}";
+                            }));
+                        }
+                        else
+                        {
+                            progress.Maximum = Math.Max(1, total);
+                            progress.Value = Math.Max(0, Math.Min(done, progress.Maximum));
+                            lblStatus.Text = $"Proses import: {done:N0}/{total:N0}";
+                        }
+                    };
+
+                    var result = await Task.Run(() => ImportItemsFromExcelImpl(txtFile.Text, appendLog, appendLog, setProgress));
+
+                    appendLog("");
+                    appendLog("=== RINGKASAN ===");
+                    appendLog($"Item Insert: {result.Inserted}");
+                    appendLog($"Item Update: {result.Updated}");
+                    appendLog($"Item Gagal: {result.ItemFailed}");
+                    appendLog($"Stock OK: {result.StockOk}");
+                    appendLog($"Stock Gagal: {result.StockFailed}");
+                    appendLog($"Stock di-reset untuk item: {result.StockResetItems}");
+
+                    if (result.Errors.Count > 0)
+                    {
+                        appendLog("");
+                        appendLog("=== ERROR (sample) ===");
+                        foreach (var er in result.Errors.Take(200))
+                            appendLog(er);
+                    }
+
+                    lblStatus.Text = "Selesai.";
+                    LoadItems();
                 }
                 catch (Exception ex)
                 {
                     MessageBox.Show("Gagal import: " + ex.Message);
+                }
+                finally
+                {
+                    btnDoImport.Enabled = true;
+                    btnBrowse.Enabled = true;
+                    btnDownloadTemplate.Enabled = true;
+                    btnCopyLog.Enabled = true;
                 }
             };
             importForm.Controls.Add(btnDoImport);
@@ -1056,8 +1266,8 @@ namespace POS_qu
             Button btnCancel = new Button()
             {
                 Text = "Batal",
-                Location = new Point(360, 170),
-                Width = 60,
+                Location = new Point(430, 585),
+                Width = 110,
                 Height = 35
             };
             btnCancel.Click += (s, ev) => importForm.Close();
@@ -1069,143 +1279,67 @@ namespace POS_qu
 
         private void CreateTemplateExcel(string path)
         {
-            using (var workbook = new ClosedXML.Excel.XLWorkbook())
-            {
-                // === SHEET 1: Template Utama ===
-                var ws = workbook.Worksheets.Add("Template");
-                ws.Cell(1, 1).Value = "name";
-                ws.Cell(1, 2).Value = "buy_price";
-                ws.Cell(1, 3).Value = "sell_price";
-                ws.Cell(1, 4).Value = "barcode";
-                ws.Cell(1, 5).Value = "stock";
-                ws.Cell(1, 6).Value = "unit";           // pakai ID dari tabel units
-                ws.Cell(1, 7).Value = "group";          // ID group item
-                ws.Cell(1, 8).Value = "supplier_id";    // ID supplier
-                ws.Cell(1, 9).Value = "note";
-                ws.Cell(1, 10).Value = "is_inventory_p";    // Y/N
-                ws.Cell(1, 11).Value = "is_changeprice_p";  // Y/N
+            _productService ??= new ProductService(new ProductRepository());
 
-                ws.Row(1).Style.Font.Bold = true;
-                ws.Columns().AdjustToContents();
+            using var workbook = new ClosedXML.Excel.XLWorkbook();
 
-                // Tambahkan keterangan di baris bawah
-                ws.Cell(3, 1).Value = "⚠️ Petunjuk:";
-                ws.Cell(4, 1).Value = "1. Kolom 'unit', 'group', dan 'supplier_id' harus diisi sesuai referensi di sheet 'Referensi'.";
-                ws.Cell(5, 1).Value = "2. Gunakan 'Y' atau 'N' untuk kolom boolean (is_inventory_p, is_changeprice_p).";
-                ws.Cell(6, 1).Value = "3. Harga dalam format angka tanpa titik pemisah ribuan (contoh: 15000).";
-                ws.Cell(7, 1).Value = "4. Barcode boleh dikosongkan jika tidak digunakan.";
+            var wsItems = workbook.Worksheets.Add("Items");
+            wsItems.Cell(1, 1).Value = "name";
+            wsItems.Cell(1, 2).Value = "buy_price";
+            wsItems.Cell(1, 3).Value = "sell_price";
+            wsItems.Cell(1, 4).Value = "barcode";
+            wsItems.Cell(1, 5).Value = "unit";
+            wsItems.Cell(1, 6).Value = "group";
+            wsItems.Cell(1, 7).Value = "supplier_id";
+            wsItems.Cell(1, 8).Value = "note";
+            wsItems.Cell(1, 9).Value = "is_inventory_p";
+            wsItems.Cell(1, 10).Value = "is_changeprice_p";
+            wsItems.Row(1).Style.Font.Bold = true;
 
-                // === SHEET 2: Referensi ===
-                var refSheet = workbook.Worksheets.Add("Referensi");
+            wsItems.Cell(3, 1).Value = "⚠️ Petunjuk:";
+            wsItems.Cell(4, 1).Value = "1. Isi master produk di sheet Items.";
+            wsItems.Cell(5, 1).Value = "2. Isi stok per gudang di sheet Stocks (berdasarkan barcode).";
+            wsItems.Cell(6, 1).Value = "3. Gunakan 'Y' atau 'N' untuk kolom boolean (is_inventory_p, is_changeprice_p).";
+            wsItems.Cell(7, 1).Value = "4. Kolom unit/group/supplier_id gunakan ID sesuai sheet Referensi.";
 
-                refSheet.Cell(1, 1).Value = "Referensi Unit";
-                refSheet.Cell(1, 1).Style.Font.Bold = true;
-                refSheet.Cell(2, 1).Value = "ID";
-                refSheet.Cell(2, 2).Value = "Name";
-                refSheet.Cell(2, 3).Value = "Abbr";
+            wsItems.Cell(2, 1).Value = "Aqua Gelas";
+            wsItems.Cell(2, 2).Value = 500;
+            wsItems.Cell(2, 3).Value = 1500;
+            wsItems.Cell(2, 4).Value = "AG-01";
+            wsItems.Cell(2, 5).Value = 5;
+            wsItems.Cell(2, 6).Value = 2;
+            wsItems.Cell(2, 7).Value = 3;
+            wsItems.Cell(2, 8).Value = "";
+            wsItems.Cell(2, 9).Value = "Y";
+            wsItems.Cell(2, 10).Value = "N";
+            wsItems.Columns().AdjustToContents();
 
-                // contoh data unit
-                refSheet.Cell(3, 1).Value = 1;
-                refSheet.Cell(3, 2).Value = "Buah";
-                refSheet.Cell(3, 3).Value = "buah";
+            var wsStocks = workbook.Worksheets.Add("Stocks");
+            wsStocks.Cell(1, 1).Value = "barcode";
+            wsStocks.Cell(1, 2).Value = "warehouse_id";
+            wsStocks.Cell(1, 3).Value = "warehouse_name";
+            wsStocks.Cell(1, 4).Value = "qty";
+            wsStocks.Cell(1, 5).Value = "min_qty";
+            wsStocks.Cell(1, 6).Value = "reserved_qty";
+            wsStocks.Row(1).Style.Font.Bold = true;
 
-                refSheet.Cell(4, 1).Value = 2;
-                refSheet.Cell(4, 2).Value = "Dus";
-                refSheet.Cell(4, 3).Value = "dus";
+            wsStocks.Cell(2, 1).Value = "AG-01";
+            wsStocks.Cell(2, 2).Value = 1;
+            wsStocks.Cell(2, 3).Value = "Main Store";
+            wsStocks.Cell(2, 4).Value = 5;
+            wsStocks.Cell(2, 5).Value = 1;
+            wsStocks.Cell(2, 6).Value = 0;
 
-                refSheet.Cell(5, 1).Value = 3;
-                refSheet.Cell(5, 2).Value = "Gram";
-                refSheet.Cell(5, 3).Value = "Gr";
+            wsStocks.Cell(3, 1).Value = "AG-01";
+            wsStocks.Cell(3, 2).Value = 2;
+            wsStocks.Cell(3, 3).Value = "Gudang 1";
+            wsStocks.Cell(3, 4).Value = 3;
+            wsStocks.Cell(3, 5).Value = 1;
+            wsStocks.Cell(3, 6).Value = 0;
+            wsStocks.Columns().AdjustToContents();
 
-                refSheet.Cell(6, 1).Value = 4;
-                refSheet.Cell(6, 2).Value = "Kilogram";
-                refSheet.Cell(6, 3).Value = "Kg";
-
-                refSheet.Cell(7, 1).Value = 5;
-                refSheet.Cell(7, 2).Value = "Pieces";
-                refSheet.Cell(7, 3).Value = "pcs";
-
-                // bagian referensi group
-                refSheet.Cell(9, 1).Value = "Referensi Group";
-                refSheet.Cell(9, 1).Style.Font.Bold = true;
-                refSheet.Cell(10, 1).Value = "ID";
-                refSheet.Cell(10, 2).Value = "Nama Group";
-
-                refSheet.Cell(11, 1).Value = 1;
-                refSheet.Cell(11, 2).Value = "Makanan";
-                refSheet.Cell(12, 1).Value = 2;
-                refSheet.Cell(12, 2).Value = "Minuman";
-                refSheet.Cell(13, 1).Value = 3;
-                refSheet.Cell(13, 2).Value = "Peralatan";
-                refSheet.Cell(14, 1).Value = 4;
-                refSheet.Cell(14, 2).Value = "Lainnya";
-
-                // bagian referensi supplier
-                refSheet.Cell(16, 1).Value = "Referensi Supplier";
-                refSheet.Cell(16, 1).Style.Font.Bold = true;
-                refSheet.Cell(17, 1).Value = "ID";
-                refSheet.Cell(17, 2).Value = "Nama Supplier";
-
-                refSheet.Cell(18, 1).Value = 1;
-                refSheet.Cell(18, 2).Value = "PT Indofood Sukses Makmur";
-                refSheet.Cell(19, 1).Value = 2;
-                refSheet.Cell(19, 2).Value = "PT Mayora Indah Tbk";
-                refSheet.Cell(20, 1).Value = 3;
-                refSheet.Cell(20, 2).Value = "Toko Sumber Rejeki";
-                refSheet.Cell(21, 1).Value = 4;
-                refSheet.Cell(21, 2).Value = "Supplier Lainnya";
-
-                // format tabel
-                refSheet.Columns().AdjustToContents();
-                refSheet.Rows().Style.Alignment.Vertical = ClosedXML.Excel.XLAlignmentVerticalValues.Center;
-
-                // === SHEET 3: Sample10 ===
-                var smp = workbook.Worksheets.Add("Sample10");
-                smp.Cell(1, 1).Value = "name";
-                smp.Cell(1, 2).Value = "buy_price";
-                smp.Cell(1, 3).Value = "sell_price";
-                smp.Cell(1, 4).Value = "barcode";
-                smp.Cell(1, 5).Value = "stock";
-                smp.Cell(1, 6).Value = "unit";
-                smp.Cell(1, 7).Value = "group";
-                smp.Cell(1, 8).Value = "supplier_id";
-                smp.Cell(1, 9).Value = "note";
-                smp.Cell(1, 10).Value = "is_inventory_p";
-                smp.Cell(1, 11).Value = "is_changeprice_p";
-                smp.Row(1).Style.Font.Bold = true;
-                var samples = new[]
-                {
-                    new {N="Plastik Kresek Kecil", BP=0m, SP=300m, BC="PK-KCL", ST=0, U=1, G=4, S=4, Note="Non inventory", Inv="N", Chg="N"},
-                    new {N="Plastik Kresek Besar", BP=0m, SP=500m, BC="PK-BSR", ST=0, U=1, G=4, S=4, Note="Non inventory", Inv="N", Chg="N"},
-                    new {N="Aqua Gelas", BP=500m, SP=1500m, BC="AG-01", ST=100, U=5, G=2, S=3, Note="", Inv="Y", Chg="N"},
-                    new {N="Teh Botol", BP=2500m, SP=4000m, BC="TB-01", ST=50, U=5, G=2, S=3, Note="", Inv="Y", Chg="N"},
-                    new {N="Kopi Sachet", BP=1000m, SP=2000m, BC="KS-01", ST=200, U=5, G=1, S=1, Note="", Inv="Y", Chg="N"},
-                    new {N="Tissue Saku", BP=1500m, SP=2500m, BC="TS-01", ST=80, U=5, G=4, S=4, Note="", Inv="Y", Chg="N"},
-                    new {N="Pulsa Telkomsel 10k", BP=9000m, SP=10000m, BC="PLS-TSEL-10", ST=0, U=5, G=4, S=4, Note="Non inventory (jasa)", Inv="N", Chg="N"},
-                    new {N="Sedotan Jumbo", BP=300m, SP=500m, BC="SD-JMB", ST=100, U=5, G=4, S=4, Note="", Inv="Y", Chg="N"},
-                    new {N="Gula Pasir 1kg", BP=12000m, SP=15000m, BC="GP-1KG", ST=40, U=4, G=1, S=1, Note="", Inv="Y", Chg="N"},
-                    new {N="Kantong Kertas", BP=0m, SP=1000m, BC="KK-01", ST=0, U=5, G=4, S=4, Note="Non inventory", Inv="N", Chg="N"},
-                };
-                int r = 2;
-                foreach (var x in samples)
-                {
-                    smp.Cell(r, 1).Value = x.N;
-                    smp.Cell(r, 2).Value = x.BP;
-                    smp.Cell(r, 3).Value = x.SP;
-                    smp.Cell(r, 4).Value = x.BC;
-                    smp.Cell(r, 5).Value = x.ST;
-                    smp.Cell(r, 6).Value = x.U;
-                    smp.Cell(r, 7).Value = x.G;
-                    smp.Cell(r, 8).Value = x.S;
-                    smp.Cell(r, 9).Value = x.Note;
-                    smp.Cell(r, 10).Value = x.Inv;
-                    smp.Cell(r, 11).Value = x.Chg;
-                    r++;
-                }
-                smp.Columns().AdjustToContents();
-
-                workbook.SaveAs(path);
-            }
+            CreateReferenceSheet(workbook);
+            workbook.SaveAs(path);
         }
 
 
@@ -1257,32 +1391,132 @@ namespace POS_qu
 
         private void btnStockAdjs_Click(object sender, EventArgs e)
         {
-            var selectedItems = new HashSet<int>();
+            var menu = new ContextMenuStrip();
+            menu.Items.Add("Perbaikan Stok (IN)", null, (_, __) => OpenInventoryAdjustmentEntry(InventoryAdjustmentDirection.In));
+            menu.Items.Add("Perbaikan Stok (OUT)", null, (_, __) => OpenInventoryAdjustmentEntry(InventoryAdjustmentDirection.Out));
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add("Stock Opname", null, (_, __) => OpenStockOpname());
+            menu.Items.Add("Daftar Stock Opname", null, (_, __) => OpenStockOpnameList());
+            menu.Items.Add(new ToolStripSeparator());
+            menu.Items.Add("Daftar Item Masuk", null, (_, __) => OpenInventoryAdjustmentList(InventoryAdjustmentDirection.In));
+            menu.Items.Add("Daftar Item Keluar", null, (_, __) => OpenInventoryAdjustmentList(InventoryAdjustmentDirection.Out));
 
-            foreach (DataGridViewRow row in dataGridView1.Rows)
-            {
-                if (Convert.ToBoolean(row.Cells["chkSelect"].Value))
-                    selectedItems.Add(Convert.ToInt32(row.Cells["id"].Value));
-            }
+            var btn = sender as Control;
+            var pt = btn != null ? new Point(0, btn.Height) : new Point(Cursor.Position.X, Cursor.Position.Y);
+            menu.Show(btn ?? this, pt);
+        }
 
-            if (selectedItems.Count == 0)
-            {
-                MessageBox.Show("Pilih item dulu untuk di update stock.");
+        private void OpenInventoryAdjustmentEntry(InventoryAdjustmentDirection direction)
+        {
+            if (!EnsureWarehouseSelectedForStockAction())
                 return;
-            }
 
-            if (MessageBox.Show($"Apakah Akan Melakukan update stock pada  {selectedItems.Count} item terpilih?", "Konfirmasi", MessageBoxButtons.YesNo) == DialogResult.Yes)
-            {
-                foreach (int id in selectedItems)
-                {
-                    using (StockAdjustment f = new StockAdjustment(id))
-                    {
-                        f.ShowDialog(); // owner = form utama
-                    }
-
-                }
+            var itemIds = GetSelectedItemIdsForStockAction();
+            int warehouseId = GetSelectedWarehouseIdForStockAction();
+            using var f = new InventoryAdjustmentEntryForm(direction, itemIds.Count > 0 ? itemIds : null, warehouseId > 0 ? warehouseId : null);
+            if (f.ShowDialog(this) == DialogResult.OK)
                 LoadItems();
+        }
+
+        private void OpenInventoryAdjustmentList(InventoryAdjustmentDirection direction)
+        {
+            if (!EnsureWarehouseSelectedForStockAction())
+                return;
+
+            int warehouseId = GetSelectedWarehouseIdForStockAction();
+            using var f = new InventoryAdjustmentListForm(direction, warehouseId);
+            f.ShowDialog(this);
+        }
+
+        private void OpenStockOpname()
+        {
+            if (!EnsureWarehouseSelectedForStockAction())
+                return;
+
+            int warehouseId = GetSelectedWarehouseIdForStockAction();
+            using var f = new StockOpnameForm(warehouseId);
+            f.ShowDialog(this);
+            LoadItems();
+        }
+
+        private void OpenStockOpnameList()
+        {
+            if (!EnsureWarehouseSelectedForStockAction())
+                return;
+
+            int warehouseId = GetSelectedWarehouseIdForStockAction();
+            using var f = new StockOpnameListForm(warehouseId);
+            f.ShowDialog(this);
+        }
+
+        private List<int> GetSelectedItemIdsForStockAction()
+        {
+            var ids = new List<int>();
+
+            if (dataGridView1.Columns.Contains("chkSelect"))
+            {
+                foreach (DataGridViewRow row in dataGridView1.Rows)
+                {
+                    if (row.IsNewRow) continue;
+                    try
+                    {
+                        var v = row.Cells["chkSelect"]?.Value;
+                        if (v is bool b && b)
+                        {
+                            if (row.Cells["id"]?.Value != null && int.TryParse(row.Cells["id"].Value.ToString(), out var id) && id > 0)
+                                ids.Add(id);
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
             }
+
+            if (ids.Count == 0 && dataGridView1.CurrentRow != null && !dataGridView1.CurrentRow.IsNewRow)
+            {
+                if (dataGridView1.CurrentRow.Cells["id"]?.Value != null &&
+                    int.TryParse(dataGridView1.CurrentRow.Cells["id"].Value.ToString(), out var id) &&
+                    id > 0)
+                {
+                    ids.Add(id);
+                }
+            }
+
+            return ids;
+        }
+
+        private int GetSelectedWarehouseIdForStockAction()
+        {
+            try
+            {
+                if (cmbWarehouseFilter?.SelectedValue != null && int.TryParse(cmbWarehouseFilter.SelectedValue.ToString(), out var id) && id > 0)
+                    return id;
+            }
+            catch
+            {
+            }
+            return 0;
+        }
+
+        private bool EnsureWarehouseSelectedForStockAction()
+        {
+            int whId = GetSelectedWarehouseIdForStockAction();
+            if (whId > 0) return true;
+
+            MessageBox.Show("Pilih gudang dulu (filter Gudang) sebelum menjalankan menu Stock/Opname.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            try
+            {
+                if (cmbWarehouseFilter != null)
+                {
+                    cmbWarehouseFilter.Focus();
+                    cmbWarehouseFilter.DroppedDown = true;
+                }
+            }
+            catch
+            {
+            }
+            return false;
         }
 
         private void btnRefresh_Click(object sender, EventArgs e)
@@ -1622,49 +1856,575 @@ namespace POS_qu
                 return false;
             }
         }
-        private void ImportItemsFromExcelImpl(string filePath)
+
+        private void CreateReferenceSheet(ClosedXML.Excel.XLWorkbook workbook)
         {
-            using (var workbook = new ClosedXML.Excel.XLWorkbook(filePath))
+            _productService ??= new ProductService(new ProductRepository());
+
+            ClosedXML.Excel.IXLWorksheet ws;
+            if (workbook.Worksheets.Any(x => string.Equals(x.Name, "Referensi", StringComparison.OrdinalIgnoreCase)))
+                ws = workbook.Worksheet("Referensi");
+            else
+                ws = workbook.Worksheets.Add("Referensi");
+
+            ws.Clear();
+
+            int r = 1;
+
+            ws.Cell(r, 1).Value = "Referensi Gudang";
+            ws.Cell(r, 1).Style.Font.Bold = true;
+            r++;
+            ws.Cell(r, 1).Value = "ID";
+            ws.Cell(r, 2).Value = "Name";
+            ws.Row(r).Style.Font.Bold = true;
+            r++;
+            try
             {
-                var ws = workbook.Worksheets.First();
-                var used = ws.RangeUsed();
-                if (used == null)
+                var wc = new WarehouseController();
+                var dtWh = wc.GetWarehouses();
+                if (dtWh != null)
                 {
-                    MessageBox.Show("File kosong.");
-                    return;
+                    foreach (DataRow dr in dtWh.Rows)
+                    {
+                        bool isActive = !dtWh.Columns.Contains("is_active") || (dr["is_active"] != DBNull.Value && Convert.ToBoolean(dr["is_active"]));
+                        if (!isActive) continue;
+                        ws.Cell(r, 1).Value = dr["id"] == DBNull.Value ? 0 : Convert.ToInt32(dr["id"]);
+                        ws.Cell(r, 2).Value = dr["name"]?.ToString() ?? "";
+                        r++;
+                    }
                 }
-                int ok = 0, fail = 0;
-                foreach (var row in used.RowsUsed().Skip(1))
+            }
+            catch
+            {
+            }
+
+            r += 2;
+
+            ws.Cell(r, 1).Value = "Referensi Unit";
+            ws.Cell(r, 1).Style.Font.Bold = true;
+            r++;
+            ws.Cell(r, 1).Value = "ID";
+            ws.Cell(r, 2).Value = "Name";
+            ws.Row(r).Style.Font.Bold = true;
+            r++;
+            try
+            {
+                var dtUnits = _productService.GetUnits();
+                if (dtUnits != null)
+                {
+                    foreach (DataRow dr in dtUnits.Rows)
+                    {
+                        ws.Cell(r, 1).Value = dr["id"] == DBNull.Value ? 0 : Convert.ToInt32(dr["id"]);
+                        ws.Cell(r, 2).Value = dr.Table.Columns.Contains("display") ? (dr["display"]?.ToString() ?? "") : (dr["name"]?.ToString() ?? "");
+                        r++;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            r += 2;
+
+            ws.Cell(r, 1).Value = "Referensi Group (Kategori)";
+            ws.Cell(r, 1).Style.Font.Bold = true;
+            r++;
+            ws.Cell(r, 1).Value = "ID";
+            ws.Cell(r, 2).Value = "Name";
+            ws.Row(r).Style.Font.Bold = true;
+            r++;
+            try
+            {
+                var dtCats = _productService.GetCategories();
+                if (dtCats != null)
+                {
+                    foreach (DataRow dr in dtCats.Rows)
+                    {
+                        ws.Cell(r, 1).Value = dr["id"] == DBNull.Value ? 0 : Convert.ToInt32(dr["id"]);
+                        ws.Cell(r, 2).Value = dr.Table.Columns.Contains("display") ? (dr["display"]?.ToString() ?? "") : (dr["name"]?.ToString() ?? "");
+                        r++;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            r += 2;
+
+            ws.Cell(r, 1).Value = "Referensi Supplier";
+            ws.Cell(r, 1).Style.Font.Bold = true;
+            r++;
+            ws.Cell(r, 1).Value = "ID";
+            ws.Cell(r, 2).Value = "Name";
+            ws.Row(r).Style.Font.Bold = true;
+            r++;
+            try
+            {
+                var dtSup = _productService.GetSuppliers();
+                if (dtSup != null)
+                {
+                    foreach (DataRow dr in dtSup.Rows)
+                    {
+                        ws.Cell(r, 1).Value = dr["id"] == DBNull.Value ? 0 : Convert.ToInt32(dr["id"]);
+                        ws.Cell(r, 2).Value = dr.Table.Columns.Contains("display") ? (dr["display"]?.ToString() ?? "") : (dr["name"]?.ToString() ?? "");
+                        r++;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            ws.Columns().AdjustToContents();
+            ws.Rows().Style.Alignment.Vertical = ClosedXML.Excel.XLAlignmentVerticalValues.Center;
+        }
+
+        private static Dictionary<string, int> BuildHeaderMap(ClosedXML.Excel.IXLWorksheet ws)
+        {
+            var map = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var firstRow = ws.Row(1);
+            var lastCol = firstRow.LastCellUsed()?.Address.ColumnNumber ?? 0;
+            for (int c = 1; c <= lastCol; c++)
+            {
+                var v = firstRow.Cell(c).GetString()?.Trim();
+                if (string.IsNullOrWhiteSpace(v)) continue;
+                if (!map.ContainsKey(v)) map[v] = c;
+            }
+            return map;
+        }
+
+        private static string GetCellString(ClosedXML.Excel.IXLRangeRow row, Dictionary<string, int> map, string key)
+        {
+            if (!map.TryGetValue(key, out var idx)) return "";
+            return row.Cell(idx).GetString()?.Trim() ?? "";
+        }
+
+        private static decimal GetCellDecimal(ClosedXML.Excel.IXLRangeRow row, Dictionary<string, int> map, string key)
+        {
+            if (!map.TryGetValue(key, out var idx)) return 0m;
+            var cell = row.Cell(idx);
+            if (cell.TryGetValue<double>(out var d)) return (decimal)d;
+            if (decimal.TryParse(cell.GetString(), out var x)) return x;
+            return 0m;
+        }
+
+        private static int GetCellInt(ClosedXML.Excel.IXLRangeRow row, Dictionary<string, int> map, string key)
+        {
+            if (!map.TryGetValue(key, out var idx)) return 0;
+            var cell = row.Cell(idx);
+            if (cell.TryGetValue<int>(out var i)) return i;
+            if (cell.TryGetValue<double>(out var d)) return Convert.ToInt32(d);
+            if (int.TryParse(cell.GetString(), out var x)) return x;
+            return 0;
+        }
+
+        private sealed class ImportResult
+        {
+            public int Inserted { get; set; }
+            public int Updated { get; set; }
+            public int ItemFailed { get; set; }
+            public int StockOk { get; set; }
+            public int StockFailed { get; set; }
+            public int StockResetItems { get; set; }
+            public List<string> Errors { get; } = new List<string>();
+        }
+
+        private static string FormatDbException(Exception ex)
+        {
+            try
+            {
+                if (ex is Npgsql.PostgresException pex)
+                {
+                    var detail = string.IsNullOrWhiteSpace(pex.Detail) ? "" : $" | Detail: {pex.Detail}";
+                    var where = string.IsNullOrWhiteSpace(pex.Where) ? "" : $" | Where: {pex.Where}";
+                    var constraint = string.IsNullOrWhiteSpace(pex.ConstraintName) ? "" : $" | Constraint: {pex.ConstraintName}";
+                    return $"{pex.SqlState}: {pex.MessageText}{detail}{constraint}{where}";
+                }
+            }
+            catch
+            {
+            }
+            return ex.Message;
+        }
+
+        private ImportResult ImportItemsFromExcelImpl(string filePath, Action<string> log, Action<string> error, Action<int, int> progress)
+        {
+            var result = new ImportResult();
+            _productService ??= new ProductService(new ProductRepository());
+
+            void Log(string msg)
+            {
+                try { log?.Invoke(msg); } catch { }
+            }
+
+            void Err(string msg)
+            {
+                result.Errors.Add(msg);
+                try { error?.Invoke(msg); } catch { }
+            }
+
+            ClosedXML.Excel.XLWorkbook workbook;
+            try
+            {
+                workbook = new ClosedXML.Excel.XLWorkbook(filePath);
+            }
+            catch (Exception ex)
+            {
+                Err("Gagal membuka file: " + ex.Message);
+                return result;
+            }
+
+            var wsItems = workbook.Worksheets.FirstOrDefault(w => string.Equals(w.Name, "Items", StringComparison.OrdinalIgnoreCase))
+                          ?? workbook.Worksheets.FirstOrDefault(w => string.Equals(w.Name, "Template", StringComparison.OrdinalIgnoreCase))
+                          ?? workbook.Worksheets.First();
+
+            var usedItems = wsItems.RangeUsed();
+            if (usedItems == null)
+            {
+                Err("Sheet Items kosong.");
+                return result;
+            }
+
+            var itemHeader = BuildHeaderMap(wsItems);
+            if (!itemHeader.ContainsKey("name") || !itemHeader.ContainsKey("buy_price") || !itemHeader.ContainsKey("sell_price"))
+            {
+                Err("Format sheet Items tidak valid. Gunakan template terbaru.");
+                return result;
+            }
+
+            var wsStocks = workbook.Worksheets.FirstOrDefault(w => string.Equals(w.Name, "Stocks", StringComparison.OrdinalIgnoreCase));
+            Dictionary<string, int> stockHeader = null;
+            ClosedXML.Excel.IXLRange usedStocks = null;
+            if (wsStocks != null)
+            {
+                usedStocks = wsStocks.RangeUsed();
+                if (usedStocks != null)
+                    stockHeader = BuildHeaderMap(wsStocks);
+            }
+
+            int totalItems = Math.Max(0, usedItems.RowsUsed().Count() - 1);
+            int totalStocks = usedStocks != null ? Math.Max(0, usedStocks.RowsUsed().Count() - 1) : 0;
+            int total = totalItems + totalStocks;
+            int done = 0;
+            progress?.Invoke(0, Math.Max(1, total));
+
+            Log("Mulai import (multi gudang)...");
+            Log($"Items rows: {totalItems:N0}");
+            Log($"Stocks rows: {totalStocks:N0}");
+            Log("Catatan: Import TIDAK menghapus produk lain. Import hanya insert/update yang ada di sheet Items.");
+            Log("Catatan: Jika sheet Stocks diisi, stok untuk barcode yang ada di sheet Stocks akan DI-RESET sesuai Excel.");
+
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+            using var tran = con.BeginTransaction();
+
+            var warehouseIdByName = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var warehouseIds = new HashSet<int>();
+            int defaultWarehouseId = 0;
+            try
+            {
+                using var cmdWh = new NpgsqlCommand("SELECT id, name FROM warehouses WHERE is_active = TRUE ORDER BY id ASC", con, tran);
+                using var drWh = cmdWh.ExecuteReader();
+                while (drWh.Read())
+                {
+                    int id = drWh.IsDBNull(0) ? 0 : drWh.GetInt32(0);
+                    string name = drWh.IsDBNull(1) ? "" : drWh.GetString(1);
+                    if (id > 0 && !string.IsNullOrWhiteSpace(name))
+                        warehouseIdByName[name.Trim()] = id;
+                    if (id > 0)
+                    {
+                        warehouseIds.Add(id);
+                        if (defaultWarehouseId <= 0) defaultWarehouseId = id;
+                    }
+                }
+            }
+            catch
+            {
+            }
+
+            var itemIdByBarcode = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var buyPriceByItemId = new Dictionary<int, decimal>();
+
+            foreach (var row in usedItems.RowsUsed().Skip(1))
+            {
+                string name = GetCellString(row, itemHeader, "name");
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    done++;
+                    if (done % 25 == 0) progress?.Invoke(done, Math.Max(1, total));
+                    continue;
+                }
+
+                string barcode = GetCellString(row, itemHeader, "barcode");
+                decimal buyPrice = GetCellDecimal(row, itemHeader, "buy_price");
+                decimal sellPrice = GetCellDecimal(row, itemHeader, "sell_price");
+                int unitId = GetCellInt(row, itemHeader, "unit");
+                int groupId = GetCellInt(row, itemHeader, "group");
+                int supplierId = GetCellInt(row, itemHeader, "supplier_id");
+                string note = GetCellString(row, itemHeader, "note");
+                bool inv = ParseYN(GetCellString(row, itemHeader, "is_inventory_p"), true);
+                bool chg = ParseYN(GetCellString(row, itemHeader, "is_changeprice_p"), false);
+
+                try
+                {
+                    int itemId = 0;
+                    if (!string.IsNullOrWhiteSpace(barcode))
+                    {
+                        using var find = new NpgsqlCommand("SELECT id FROM items WHERE deleted_at IS NULL AND barcode = @b LIMIT 1", con, tran);
+                        find.Parameters.AddWithValue("@b", barcode);
+                        var res = find.ExecuteScalar();
+                        itemId = res != null && res != DBNull.Value ? Convert.ToInt32(res) : 0;
+                    }
+                    if (itemId <= 0)
+                    {
+                        using var find = new NpgsqlCommand("SELECT id FROM items WHERE deleted_at IS NULL AND name ILIKE @n ORDER BY id ASC LIMIT 1", con, tran);
+                        find.Parameters.AddWithValue("@n", name);
+                        var res = find.ExecuteScalar();
+                        itemId = res != null && res != DBNull.Value ? Convert.ToInt32(res) : 0;
+                    }
+
+                    if (itemId > 0)
+                    {
+                        using var upd = new NpgsqlCommand(@"
+UPDATE items SET
+    barcode = @barcode,
+    name = @name,
+    category_id = @category_id,
+    unit = @unit_id,
+    supplier_id = @supplier_id,
+    buy_price = @buy_price,
+    sell_price = @sell_price,
+    note = @note,
+    is_inventory_p = @is_inventory_p,
+    is_changeprice_p = @is_changeprice_p,
+    is_purchasable = TRUE,
+    is_sellable = TRUE,
+    updated_at = NOW()
+WHERE id = @id
+", con, tran);
+                        upd.Parameters.AddWithValue("@id", itemId);
+                        upd.Parameters.AddWithValue("@barcode", (object)(string.IsNullOrWhiteSpace(barcode) ? null : barcode) ?? DBNull.Value);
+                        upd.Parameters.AddWithValue("@name", name);
+                        upd.Parameters.AddWithValue("@category_id", groupId > 0 ? (object)groupId : DBNull.Value);
+                        upd.Parameters.AddWithValue("@unit_id", unitId > 0 ? (object)unitId : DBNull.Value);
+                        upd.Parameters.AddWithValue("@supplier_id", supplierId > 0 ? (object)supplierId : DBNull.Value);
+                        upd.Parameters.AddWithValue("@buy_price", buyPrice);
+                        upd.Parameters.AddWithValue("@sell_price", sellPrice);
+                        upd.Parameters.AddWithValue("@note", (object)(string.IsNullOrWhiteSpace(note) ? null : note) ?? DBNull.Value);
+                        upd.Parameters.AddWithValue("@is_inventory_p", inv);
+                        upd.Parameters.AddWithValue("@is_changeprice_p", chg);
+                        upd.ExecuteNonQuery();
+                        result.Updated++;
+                    }
+                    else
+                    {
+                        using var ins = new NpgsqlCommand(@"
+INSERT INTO items (
+    barcode, name, category_id, unit, supplier_id,
+    buy_price, sell_price, valuation_method, is_active, note,
+    is_inventory_p, is_purchasable, is_sellable, is_note_payment, is_changeprice_p,
+    is_have_bahan, is_box, is_produksi, discount_formula, expired_at,
+    created_at, updated_at
+) VALUES (
+    @barcode, @name, @category_id, @unit_id, @supplier_id,
+    @buy_price, @sell_price, 'FIFO', TRUE, @note,
+    @is_inventory_p, TRUE, TRUE, FALSE, @is_changeprice_p,
+    FALSE, FALSE, FALSE, '', NULL,
+    NOW(), NOW()
+)
+RETURNING id
+", con, tran);
+                        ins.Parameters.AddWithValue("@barcode", (object)(string.IsNullOrWhiteSpace(barcode) ? null : barcode) ?? DBNull.Value);
+                        ins.Parameters.AddWithValue("@name", name);
+                        ins.Parameters.AddWithValue("@category_id", groupId > 0 ? (object)groupId : DBNull.Value);
+                        ins.Parameters.AddWithValue("@unit_id", unitId > 0 ? (object)unitId : DBNull.Value);
+                        ins.Parameters.AddWithValue("@supplier_id", supplierId > 0 ? (object)supplierId : DBNull.Value);
+                        ins.Parameters.AddWithValue("@buy_price", buyPrice);
+                        ins.Parameters.AddWithValue("@sell_price", sellPrice);
+                        ins.Parameters.AddWithValue("@note", (object)(string.IsNullOrWhiteSpace(note) ? null : note) ?? DBNull.Value);
+                        ins.Parameters.AddWithValue("@is_inventory_p", inv);
+                        ins.Parameters.AddWithValue("@is_changeprice_p", chg);
+                        itemId = Convert.ToInt32(ins.ExecuteScalar());
+                        result.Inserted++;
+                    }
+
+                    if (itemId > 0)
+                    {
+                        buyPriceByItemId[itemId] = buyPrice;
+                        if (!string.IsNullOrWhiteSpace(barcode))
+                            itemIdByBarcode[barcode] = itemId;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    result.ItemFailed++;
+                    var rowNum = row.RowNumber();
+                    Err($"Items row {rowNum}: {name} / {barcode} => {ex.Message}");
+                }
+
+                done++;
+                if (done % 25 == 0) progress?.Invoke(done, Math.Max(1, total));
+            }
+
+            if (wsStocks != null && usedStocks != null && stockHeader != null)
+            {
+                var touchedItems = new HashSet<int>();
+                var stockRows = new List<(int ItemId, int WarehouseId, decimal Qty, decimal MinQty, decimal ReservedQty)>();
+
+                foreach (var row in usedStocks.RowsUsed().Skip(1))
+                {
+                    string barcode = GetCellString(row, stockHeader, "barcode");
+                    if (string.IsNullOrWhiteSpace(barcode))
+                    {
+                        done++;
+                        if (done % 25 == 0) progress?.Invoke(done, Math.Max(1, total));
+                        continue;
+                    }
+
+                    try
+                    {
+                        int itemId = itemIdByBarcode.TryGetValue(barcode, out var knownId) ? knownId : 0;
+                        if (itemId <= 0)
+                        {
+                            using var find = new NpgsqlCommand("SELECT id, buy_price FROM items WHERE deleted_at IS NULL AND barcode = @b LIMIT 1", con, tran);
+                            find.Parameters.AddWithValue("@b", barcode);
+                            using var rdr = find.ExecuteReader();
+                            if (rdr.Read())
+                            {
+                                itemId = rdr.IsDBNull(0) ? 0 : rdr.GetInt32(0);
+                                var bp = rdr.IsDBNull(1) ? 0m : rdr.GetDecimal(1);
+                                buyPriceByItemId[itemId] = bp;
+                            }
+                        }
+                        if (itemId <= 0)
+                        {
+                            result.StockFailed++;
+                            var rowNum = row.RowNumber();
+                            Err($"Stocks row {rowNum}: barcode {barcode} tidak ditemukan di items.");
+                            continue;
+                        }
+
+                        int warehouseId = GetCellInt(row, stockHeader, "warehouse_id");
+                        if (warehouseId <= 0)
+                        {
+                            string whName = GetCellString(row, stockHeader, "warehouse_name");
+                            if (!string.IsNullOrWhiteSpace(whName) && warehouseIdByName.TryGetValue(whName, out var wid))
+                                warehouseId = wid;
+                        }
+                        if (warehouseId > 0 && warehouseIds.Count > 0 && !warehouseIds.Contains(warehouseId))
+                        {
+                            result.StockFailed++;
+                            var rowNum = row.RowNumber();
+                            Err($"Stocks row {rowNum}: gudang id {warehouseId} tidak ditemukan/aktif untuk barcode {barcode}.");
+                            continue;
+                        }
+                        if (warehouseId <= 0)
+                        {
+                            if (warehouseIds.Count == 1)
+                            {
+                                warehouseId = defaultWarehouseId;
+                                var rowNum = row.RowNumber();
+                                Err($"Stocks row {rowNum}: warehouse_id kosong, pakai gudang default id {defaultWarehouseId} (karena gudang aktif hanya 1).");
+                            }
+                            else
+                            {
+                                result.StockFailed++;
+                                var rowNum = row.RowNumber();
+                                Err($"Stocks row {rowNum}: warehouse_id/warehouse_name kosong/tidak valid untuk barcode {barcode}. Pilih gudang yang benar.");
+                                continue;
+                            }
+                        }
+
+                        decimal qty = GetCellDecimal(row, stockHeader, "qty");
+                        decimal minQty = GetCellDecimal(row, stockHeader, "min_qty");
+                        decimal reservedQty = GetCellDecimal(row, stockHeader, "reserved_qty");
+                        if (qty < 0m) qty = 0m;
+                        if (minQty < 0m) minQty = 0m;
+                        if (reservedQty < 0m) reservedQty = 0m;
+
+                        touchedItems.Add(itemId);
+                        stockRows.Add((itemId, warehouseId, qty, minQty, reservedQty));
+                    }
+                    catch (Exception ex)
+                    {
+                        result.StockFailed++;
+                        var rowNum = row.RowNumber();
+                        Err($"Stocks row {rowNum}: {barcode} => {FormatDbException(ex)}");
+                    }
+
+                    done++;
+                    if (done % 25 == 0) progress?.Invoke(done, Math.Max(1, total));
+                }
+
+                result.StockResetItems = touchedItems.Count;
+
+                foreach (var itemId in touchedItems)
                 {
                     try
                     {
-                        var item = new Item
+                        using (var delStocks = new NpgsqlCommand("DELETE FROM stocks WHERE item_id = @item_id", con, tran))
                         {
-                            name = row.Cell(1).GetString(),
-                            buy_price = (decimal)(row.Cell(2).TryGetValue<double>(out var bp) ? bp : 0),
-                            sell_price = (decimal)(row.Cell(3).TryGetValue<double>(out var sp) ? sp : 0),
-                            barcode = row.Cell(4).GetString(),
-                            stock = (int)(row.Cell(5).TryGetValue<double>(out var st) ? st : 0),
-                            unitid = row.Cell(6).TryGetValue<int>(out var u) ? u : 1,
-                            category_id = row.Cell(7).TryGetValue<int>(out var g) ? g : 0,
-                            supplier_id = row.Cell(8).TryGetValue<int>(out var s) ? s : 0,
-                            note = row.Cell(9).GetString(),
-                            is_inventory_p = ParseYN(row.Cell(10).GetString(), true),
-                            is_changeprice_p = ParseYN(row.Cell(11).GetString(), false),
-                            IsPurchasable = true,
-                            IsSellable = true
-                        };
-                        bool success = _productService.SaveProduct(item, out string msg);
-                        if (success) ok++; else fail++;
+                            delStocks.Parameters.AddWithValue("@item_id", itemId);
+                            delStocks.ExecuteNonQuery();
+                        }
+                        using (var delLayers = new NpgsqlCommand("DELETE FROM stock_layers WHERE item_id = @item_id", con, tran))
+                        {
+                            delLayers.Parameters.AddWithValue("@item_id", itemId);
+                            delLayers.ExecuteNonQuery();
+                        }
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        fail++;
+                        result.StockFailed++;
+                        Err($"Reset stok item_id {itemId} gagal: {FormatDbException(ex)}");
                     }
                 }
-                MessageBox.Show($"Import selesai. Sukses: {ok}, Gagal: {fail}");
-                LoadItems();
+
+                foreach (var srow in stockRows)
+                {
+                    try
+                    {
+                        using (var ins = new NpgsqlCommand(@"
+INSERT INTO stocks (item_id, warehouse_id, qty, min_qty, reserved_qty)
+VALUES (@item_id, @warehouse_id, @qty, @min_qty, @reserved_qty)
+", con, tran))
+                        {
+                            ins.Parameters.AddWithValue("@item_id", srow.ItemId);
+                            ins.Parameters.AddWithValue("@warehouse_id", srow.WarehouseId);
+                            ins.Parameters.AddWithValue("@qty", Convert.ToDouble(srow.Qty));
+                            ins.Parameters.AddWithValue("@min_qty", Convert.ToDouble(srow.MinQty));
+                            ins.Parameters.AddWithValue("@reserved_qty", Convert.ToDouble(srow.ReservedQty));
+                            ins.ExecuteNonQuery();
+                        }
+
+                        if (srow.Qty > 0m)
+                        {
+                            var bp = buyPriceByItemId.TryGetValue(srow.ItemId, out var bpx) ? bpx : 0m;
+                            using var insLayer = new NpgsqlCommand(@"
+INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, created_at, expired_at)
+VALUES (@item_id, @warehouse_id, @qty, @buy_price, NOW(), NULL)
+", con, tran);
+                            insLayer.Parameters.AddWithValue("@item_id", srow.ItemId);
+                            insLayer.Parameters.AddWithValue("@warehouse_id", srow.WarehouseId);
+                            insLayer.Parameters.AddWithValue("@qty", Convert.ToDouble(srow.Qty));
+                            insLayer.Parameters.AddWithValue("@buy_price", bp);
+                            insLayer.ExecuteNonQuery();
+                        }
+
+                        result.StockOk++;
+                    }
+                    catch (Exception ex)
+                    {
+                        result.StockFailed++;
+                        Err($"Insert stocks gagal: item_id {srow.ItemId}, warehouse_id {srow.WarehouseId} => {FormatDbException(ex)}");
+                    }
+                }
             }
+
+            tran.Commit();
+            progress?.Invoke(Math.Max(1, total), Math.Max(1, total));
+            return result;
         }
 
         private static bool ParseYN(string s, bool defaultVal)

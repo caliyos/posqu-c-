@@ -1,5 +1,6 @@
 using Npgsql;
 using POS_qu.Helpers;
+using POS_qu.Controllers;
 using System;
 using System.Data;
 using System.Drawing;
@@ -18,23 +19,28 @@ namespace POS_qu
     public partial class InventoryAdjustmentListForm : Form
     {
         private readonly InventoryAdjustmentDirection _direction;
+        private readonly WarehouseController _warehouseController = new WarehouseController();
+        private DataTable _dtWarehouses;
+        private int _warehouseId;
         private DataTable _dtHeader;
         private DataTable _dtDetail;
         private readonly PrintDocument _printDoc = new PrintDocument();
         private AdjustmentPrintData _printData;
         private int _printRowCursor;
 
-        public InventoryAdjustmentListForm(InventoryAdjustmentDirection direction)
+        public InventoryAdjustmentListForm(InventoryAdjustmentDirection direction, int? warehouseId = null)
         {
             InitializeComponent();
             StartPosition = FormStartPosition.CenterScreen;
             _direction = direction;
+            _warehouseId = warehouseId.HasValue && warehouseId.Value > 0 ? warehouseId.Value : 0;
             Load += InventoryAdjustmentListForm_Load;
             txtSearch.TextChanged += txtSearch_TextChanged;
             btnAdd.Click += btnAdd_Click;
             btnPrint.Click += btnPrint_Click;
             btnRefresh.Click += btnRefresh_Click;
             btnClose.Click += btnClose_Click;
+            cmbWarehouse.SelectedIndexChanged += cmbWarehouse_SelectedIndexChanged;
 
             _printDoc.BeginPrint += PrintDoc_BeginPrint;
             _printDoc.PrintPage += PrintDoc_PrintPage;
@@ -44,6 +50,7 @@ namespace POS_qu
         {
             lblTitle.Text = _direction == InventoryAdjustmentDirection.In ? "Daftar Item Masuk (Adjustment IN)" : "Daftar Item Keluar (Adjustment OUT)";
             Text = lblTitle.Text;
+            LoadWarehouses();
             LoadHeaderData();
             ApplyGridStyle(dgvHeader);
             ApplyGridStyle(dgvDetail);
@@ -62,7 +69,14 @@ namespace POS_qu
 
         private void btnAdd_Click(object sender, EventArgs e)
         {
-            using var f = new InventoryAdjustmentEntryForm(_direction);
+            int whId = GetSelectedWarehouseId();
+            if (whId <= 0)
+            {
+                MessageBox.Show("Pilih gudang dulu.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using var f = new InventoryAdjustmentEntryForm(_direction, null, whId);
             if (f.ShowDialog(this) != DialogResult.OK) return;
             LoadHeaderData();
             SelectHeaderById(f.CreatedAdjustmentId);
@@ -96,6 +110,45 @@ namespace POS_qu
             LoadHeaderData();
         }
 
+        private void cmbWarehouse_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            _warehouseId = GetSelectedWarehouseId();
+            LoadHeaderData();
+        }
+
+        private void LoadWarehouses()
+        {
+            _dtWarehouses = _warehouseController.GetWarehouses();
+            cmbWarehouse.DataSource = _dtWarehouses;
+            cmbWarehouse.DisplayMember = "name";
+            cmbWarehouse.ValueMember = "id";
+            if (_dtWarehouses != null && _dtWarehouses.Rows.Count > 0)
+            {
+                if (_warehouseId > 0)
+                {
+                    try { cmbWarehouse.SelectedValue = _warehouseId; } catch { cmbWarehouse.SelectedIndex = 0; }
+                }
+                else
+                {
+                    cmbWarehouse.SelectedIndex = 0;
+                    _warehouseId = GetSelectedWarehouseId();
+                }
+            }
+        }
+
+        private int GetSelectedWarehouseId()
+        {
+            try
+            {
+                if (cmbWarehouse.SelectedValue == null) return 0;
+                return Convert.ToInt32(cmbWarehouse.SelectedValue);
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
         private void dgvHeader_SelectionChanged(object sender, EventArgs e)
         {
             var id = GetSelectedHeaderId();
@@ -110,6 +163,7 @@ namespace POS_qu
 
             string dir = _direction == InventoryAdjustmentDirection.In ? "IN" : "OUT";
             string search = (txtSearch.Text ?? "").Trim();
+            int whId = _warehouseId > 0 ? _warehouseId : GetSelectedWarehouseId();
 
             using var cmd = new NpgsqlCommand(@"
 SELECT
@@ -127,10 +181,12 @@ FROM inventory_adjustments a
 LEFT JOIN warehouses w ON w.id = a.warehouse_id
 LEFT JOIN users u ON u.id = a.created_by
 WHERE a.direction = @dir
+  AND a.warehouse_id = @wid
   AND (@search = '' OR a.adjustment_no ILIKE @search OR a.reason ILIKE @search OR a.note ILIKE @search)
 ORDER BY a.id DESC
 ", con);
             cmd.Parameters.AddWithValue("@dir", dir);
+            cmd.Parameters.AddWithValue("@wid", whId);
             cmd.Parameters.AddWithValue("@search", string.IsNullOrWhiteSpace(search) ? "" : "%" + search + "%");
 
             using var da = new NpgsqlDataAdapter(cmd);

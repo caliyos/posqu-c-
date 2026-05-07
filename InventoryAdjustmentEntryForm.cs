@@ -16,16 +16,21 @@ namespace POS_qu
         private readonly InventoryAdjustmentDirection _direction;
         private readonly WarehouseController _warehouseController = new WarehouseController();
         private readonly ItemController _itemController = new ItemController();
+        private readonly List<int> _prefillItemIds = new List<int>();
+        private readonly int? _prefillWarehouseId;
 
         private readonly DataTable _dt = new DataTable();
 
         public int CreatedAdjustmentId { get; private set; }
 
-        public InventoryAdjustmentEntryForm(InventoryAdjustmentDirection direction)
+        public InventoryAdjustmentEntryForm(InventoryAdjustmentDirection direction, List<int>? prefillItemIds = null, int? prefillWarehouseId = null)
         {
             InitializeComponent();
             StartPosition = FormStartPosition.CenterScreen;
             _direction = direction;
+            _prefillWarehouseId = prefillWarehouseId;
+            if (prefillItemIds != null && prefillItemIds.Count > 0)
+                _prefillItemIds.AddRange(prefillItemIds.Where(x => x > 0).Distinct());
 
             Load += InventoryAdjustmentEntryForm_Load;
             btnAddItem.Click += btnAddItem_Click;
@@ -42,6 +47,23 @@ namespace POS_qu
             LoadWarehouses();
             LoadReasons();
             SetupGrid();
+
+            if (_prefillWarehouseId.HasValue && _prefillWarehouseId.Value > 0)
+            {
+                try
+                {
+                    cmbWarehouse.SelectedValue = _prefillWarehouseId.Value;
+                }
+                catch
+                {
+                }
+            }
+
+            if (_prefillItemIds.Count > 0)
+            {
+                foreach (var id in _prefillItemIds)
+                    AddOrIncrementItem(id);
+            }
         }
 
         private void LoadWarehouses()
@@ -176,7 +198,12 @@ namespace POS_qu
             if (f.ShowDialog(this) != DialogResult.OK) return;
             if (f.SelectedItem == null || f.SelectedItem.id <= 0) return;
 
-            long itemId = f.SelectedItem.id;
+            AddOrIncrementItem(f.SelectedItem.id);
+        }
+
+        private void AddOrIncrementItem(long itemId)
+        {
+            if (itemId <= 0) return;
             var detail = _itemController.GetItemById((int)itemId);
             if (detail == null) return;
 

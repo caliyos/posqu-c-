@@ -386,6 +386,7 @@ namespace POS_qu
             quickBar.Controls.Add(btnDelete);
             quickBar.Controls.Add(btnExportQuick);
             quickBar.Controls.Add(btnImportQuick);
+            quickBar.Controls.Add(btnStockAdjs);
             quickBar.Dock = DockStyle.Top;
             quickBar.Location = new Point(0, 0);
             quickBar.Name = "quickBar";
@@ -460,19 +461,25 @@ namespace POS_qu
             btnImportQuick.UseVisualStyleBackColor = false;
             btnImportQuick.Click += btnImportExcel_Click;
             // 
+            // btnStockAdjs
+            // 
+            btnStockAdjs.BackColor = Color.White;
+            btnStockAdjs.FlatStyle = FlatStyle.Flat;
+            btnStockAdjs.Font = new Font("Segoe UI", 10F);
+            btnStockAdjs.Location = new Point(590, 10);
+            btnStockAdjs.Name = "btnStockAdjs";
+            btnStockAdjs.Size = new Size(150, 35);
+            btnStockAdjs.TabIndex = 5;
+            btnStockAdjs.Text = "Stock / Opname";
+            btnStockAdjs.UseVisualStyleBackColor = false;
+            btnStockAdjs.Click += btnStockAdjs_Click;
+            // 
             // chkSelectAll
             // 
             chkSelectAll.Location = new Point(0, 0);
             chkSelectAll.Name = "chkSelectAll";
             chkSelectAll.Size = new Size(104, 24);
             chkSelectAll.TabIndex = 0;
-            // 
-            // btnStockAdjs
-            // 
-            btnStockAdjs.Location = new Point(0, 0);
-            btnStockAdjs.Name = "btnStockAdjs";
-            btnStockAdjs.Size = new Size(75, 23);
-            btnStockAdjs.TabIndex = 0;
             // 
             // btnRefresh
             // 

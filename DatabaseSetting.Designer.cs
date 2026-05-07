@@ -24,6 +24,12 @@ namespace POS_qu
         private System.Windows.Forms.Button btnSaveConfig;
         private System.Windows.Forms.Button btnCreateDb;
         private System.Windows.Forms.Button btnResetSchema;
+        private System.Windows.Forms.Label lblCurrentDb;
+        private System.Windows.Forms.Label lblDbListTitle;
+        private System.Windows.Forms.ComboBox cmbDbList;
+        private System.Windows.Forms.Button btnRefreshDbList;
+        private System.Windows.Forms.Button btnBackupDb;
+        private System.Windows.Forms.Button btnRestoreDb;
         private System.Windows.Forms.Label lblSetupTitle;
         private System.Windows.Forms.Button btnRunPhpMigrations;
         private System.Windows.Forms.Button btnRunPhpSeeders;
@@ -60,6 +66,12 @@ namespace POS_qu
             btnCreateDb = new Button();
             btnSaveConfig = new Button();
             btnTest = new Button();
+            btnRestoreDb = new Button();
+            btnBackupDb = new Button();
+            btnRefreshDbList = new Button();
+            cmbDbList = new ComboBox();
+            lblDbListTitle = new Label();
+            lblCurrentDb = new Label();
             txtDb = new TextBox();
             txtPass = new TextBox();
             txtUser = new TextBox();
@@ -224,10 +236,17 @@ namespace POS_qu
             // 
             // panelLeft
             // 
+            panelLeft.AutoScroll = true;
             panelLeft.Controls.Add(btnResetSchema);
             panelLeft.Controls.Add(btnCreateDb);
             panelLeft.Controls.Add(btnSaveConfig);
             panelLeft.Controls.Add(btnTest);
+            panelLeft.Controls.Add(btnRestoreDb);
+            panelLeft.Controls.Add(btnBackupDb);
+            panelLeft.Controls.Add(btnRefreshDbList);
+            panelLeft.Controls.Add(cmbDbList);
+            panelLeft.Controls.Add(lblDbListTitle);
+            panelLeft.Controls.Add(lblCurrentDb);
             panelLeft.Controls.Add(txtDb);
             panelLeft.Controls.Add(txtPass);
             panelLeft.Controls.Add(txtUser);
@@ -301,6 +320,79 @@ namespace POS_qu
             btnTest.TabIndex = 11;
             btnTest.Text = "Test Connection";
             btnTest.UseVisualStyleBackColor = false;
+            // 
+            // btnRestoreDb
+            // 
+            btnRestoreDb.BackColor = Color.FromArgb(255, 193, 7);
+            btnRestoreDb.FlatAppearance.BorderSize = 0;
+            btnRestoreDb.FlatStyle = FlatStyle.Flat;
+            btnRestoreDb.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            btnRestoreDb.ForeColor = Color.FromArgb(33, 37, 41);
+            btnRestoreDb.Location = new Point(0, 738);
+            btnRestoreDb.Name = "btnRestoreDb";
+            btnRestoreDb.Size = new Size(484, 44);
+            btnRestoreDb.TabIndex = 17;
+            btnRestoreDb.Text = "Import / Restore Database";
+            btnRestoreDb.UseVisualStyleBackColor = false;
+            // 
+            // btnBackupDb
+            // 
+            btnBackupDb.BackColor = Color.FromArgb(23, 162, 184);
+            btnBackupDb.FlatAppearance.BorderSize = 0;
+            btnBackupDb.FlatStyle = FlatStyle.Flat;
+            btnBackupDb.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            btnBackupDb.ForeColor = Color.White;
+            btnBackupDb.Location = new Point(248, 684);
+            btnBackupDb.Name = "btnBackupDb";
+            btnBackupDb.Size = new Size(236, 44);
+            btnBackupDb.TabIndex = 16;
+            btnBackupDb.Text = "Backup Database";
+            btnBackupDb.UseVisualStyleBackColor = false;
+            // 
+            // btnRefreshDbList
+            // 
+            btnRefreshDbList.BackColor = Color.FromArgb(108, 117, 125);
+            btnRefreshDbList.FlatAppearance.BorderSize = 0;
+            btnRefreshDbList.FlatStyle = FlatStyle.Flat;
+            btnRefreshDbList.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            btnRefreshDbList.ForeColor = Color.White;
+            btnRefreshDbList.Location = new Point(0, 684);
+            btnRefreshDbList.Name = "btnRefreshDbList";
+            btnRefreshDbList.Size = new Size(236, 44);
+            btnRefreshDbList.TabIndex = 15;
+            btnRefreshDbList.Text = "Refresh DB List";
+            btnRefreshDbList.UseVisualStyleBackColor = false;
+            // 
+            // cmbDbList
+            // 
+            cmbDbList.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbDbList.Font = new Font("Segoe UI", 11F);
+            cmbDbList.FormattingEnabled = true;
+            cmbDbList.Location = new Point(0, 638);
+            cmbDbList.Name = "cmbDbList";
+            cmbDbList.Size = new Size(484, 38);
+            cmbDbList.TabIndex = 14;
+            // 
+            // lblDbListTitle
+            // 
+            lblDbListTitle.AutoSize = true;
+            lblDbListTitle.Font = new Font("Segoe UI", 10F);
+            lblDbListTitle.ForeColor = Color.FromArgb(90, 90, 90);
+            lblDbListTitle.Location = new Point(0, 608);
+            lblDbListTitle.Name = "lblDbListTitle";
+            lblDbListTitle.Size = new Size(191, 28);
+            lblDbListTitle.TabIndex = 13;
+            lblDbListTitle.Text = "Daftar Database (PG)";
+            // 
+            // lblCurrentDb
+            // 
+            lblCurrentDb.Font = new Font("Segoe UI", 9F);
+            lblCurrentDb.ForeColor = Color.FromArgb(90, 90, 90);
+            lblCurrentDb.Location = new Point(0, 40);
+            lblCurrentDb.Name = "lblCurrentDb";
+            lblCurrentDb.Size = new Size(484, 44);
+            lblCurrentDb.TabIndex = 1;
+            lblCurrentDb.Text = "Sekarang memakai database: -";
             // 
             // txtDb
             // 

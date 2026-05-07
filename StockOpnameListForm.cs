@@ -4,6 +4,7 @@ using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Npgsql;
+using POS_qu.Controllers;
 using POS_qu.Helpers;
 
 namespace POS_qu
@@ -12,21 +13,67 @@ namespace POS_qu
     {
         private DataTable _dtOpnames;
         private DataTable _dtItems;
+        private readonly WarehouseController _warehouseController = new WarehouseController();
+        private DataTable _dtWarehouses;
+        private int _warehouseId;
 
-        public StockOpnameListForm()
+        public StockOpnameListForm(int? warehouseId = null)
         {
             InitializeComponent();
             StartPosition = FormStartPosition.CenterScreen;
+            _warehouseId = warehouseId.HasValue && warehouseId.Value > 0 ? warehouseId.Value : 0;
 
             Load += StockOpnameListForm_Load;
             dgvOpnames.SelectionChanged += dgvOpnames_SelectionChanged;
+            cmbWarehouse.SelectedIndexChanged += cmbWarehouse_SelectedIndexChanged;
         }
 
         private void StockOpnameListForm_Load(object sender, EventArgs e)
         {
             ApplyGridStyle(dgvOpnames);
             ApplyGridStyle(dgvItems);
+            LoadWarehouses();
             LoadOpnames();
+        }
+
+        private void cmbWarehouse_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            _warehouseId = GetSelectedWarehouseId();
+            LoadOpnames();
+        }
+
+        private void LoadWarehouses()
+        {
+            _dtWarehouses = _warehouseController.GetWarehouses();
+            cmbWarehouse.DataSource = _dtWarehouses;
+            cmbWarehouse.DisplayMember = "name";
+            cmbWarehouse.ValueMember = "id";
+
+            if (_dtWarehouses != null && _dtWarehouses.Rows.Count > 0)
+            {
+                if (_warehouseId > 0)
+                {
+                    try { cmbWarehouse.SelectedValue = _warehouseId; } catch { cmbWarehouse.SelectedIndex = 0; }
+                }
+                else
+                {
+                    cmbWarehouse.SelectedIndex = 0;
+                    _warehouseId = GetSelectedWarehouseId();
+                }
+            }
+        }
+
+        private int GetSelectedWarehouseId()
+        {
+            try
+            {
+                if (cmbWarehouse.SelectedValue == null) return 0;
+                return Convert.ToInt32(cmbWarehouse.SelectedValue);
+            }
+            catch
+            {
+                return 0;
+            }
         }
 
         private void LoadOpnames()
@@ -38,8 +85,10 @@ SELECT so.id, so.opname_no, so.opname_date, w.name as warehouse, so.mode, so.cre
        (SELECT COUNT(*) FROM stock_opname_items soi WHERE soi.opname_id = so.id) as total_item
 FROM stock_opnames so
 LEFT JOIN warehouses w ON w.id = so.warehouse_id
+WHERE so.warehouse_id = @wid
 ORDER BY so.created_at DESC
 ", con);
+            cmd.Parameters.AddWithValue("@wid", _warehouseId > 0 ? _warehouseId : GetSelectedWarehouseId());
             using var dr = cmd.ExecuteReader();
             _dtOpnames = new DataTable();
             _dtOpnames.Load(dr);
