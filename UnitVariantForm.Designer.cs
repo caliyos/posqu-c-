@@ -37,6 +37,8 @@ namespace POS_qu
             txtSellingPrice = new TextBox();
             minStock = new Label();
             txtMinQty = new TextBox();
+            labelBarcodeSuffix = new Label();
+            txtBarcodeSuffix = new TextBox();
             flpVariantLog = new FlowLayoutPanel();
             btnSaveVariant = new Button();
             btnDone = new Button();
@@ -128,6 +130,24 @@ namespace POS_qu
             txtMinQty.Size = new Size(121, 27);
             txtMinQty.TabIndex = 3;
             // 
+            // labelBarcodeSuffix
+            // 
+            labelBarcodeSuffix.AutoSize = true;
+            labelBarcodeSuffix.Location = new Point(19, 125);
+            labelBarcodeSuffix.Margin = new Padding(2, 0, 2, 0);
+            labelBarcodeSuffix.Name = "labelBarcodeSuffix";
+            labelBarcodeSuffix.Size = new Size(107, 20);
+            labelBarcodeSuffix.TabIndex = 10;
+            labelBarcodeSuffix.Text = "Barcode Suffix";
+            // 
+            // txtBarcodeSuffix
+            // 
+            txtBarcodeSuffix.Location = new Point(122, 122);
+            txtBarcodeSuffix.Margin = new Padding(2);
+            txtBarcodeSuffix.Name = "txtBarcodeSuffix";
+            txtBarcodeSuffix.Size = new Size(121, 27);
+            txtBarcodeSuffix.TabIndex = 4;
+            // 
             // flpVariantLog
             // 
             flpVariantLog.AutoScroll = true;
@@ -145,7 +165,7 @@ namespace POS_qu
             btnSaveVariant.Margin = new Padding(2);
             btnSaveVariant.Name = "btnSaveVariant";
             btnSaveVariant.Size = new Size(163, 39);
-            btnSaveVariant.TabIndex = 4;
+            btnSaveVariant.TabIndex = 5;
             btnSaveVariant.Text = "Save Variant";
             btnSaveVariant.Click += BtnSaveVariant_Click;
             // 
@@ -180,6 +200,8 @@ namespace POS_qu
             Controls.Add(btnDone);
             Controls.Add(flpVariantLog);
             Controls.Add(btnSaveVariant);
+            Controls.Add(txtBarcodeSuffix);
+            Controls.Add(labelBarcodeSuffix);
             Controls.Add(txtMinQty);
             Controls.Add(minStock);
             Controls.Add(txtSellingPrice);
@@ -208,6 +230,8 @@ namespace POS_qu
         private TextBox txtSellingPrice;
         private Label minStock;
         private TextBox txtMinQty;
+        private Label labelBarcodeSuffix;
+        private TextBox txtBarcodeSuffix;
         private Button btnSaveVariant;
         private Button btnDone;
         private Button btnCancel;

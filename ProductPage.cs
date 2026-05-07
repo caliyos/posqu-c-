@@ -32,6 +32,7 @@ namespace POS_qu
         private System.Data.DataTable _dtFull;
         private bool _viewAllUnits;
         private bool _lowStockSort;
+        private bool _isLoadingWarehouses;
 
         private readonly IActivityService _activityService;
         private readonly IStockAdjustmentService _stockService;
@@ -161,8 +162,84 @@ namespace POS_qu
                 OpenEditForRow(row);
             };
 
+            LoadWarehouseFilter();
             LoadItems();
             ApplyProfessionalGridStyle();
+        }
+
+        private void LoadWarehouseFilter()
+        {
+            if (cmbWarehouseFilter == null) return;
+
+            _isLoadingWarehouses = true;
+            try
+            {
+                var wc = new WarehouseController();
+                var dt = wc.GetWarehouses();
+
+                var comboDt = new DataTable();
+                comboDt.Columns.Add("id", typeof(int));
+                comboDt.Columns.Add("name", typeof(string));
+
+                comboDt.Rows.Add(0, "Semua Gudang");
+
+                if (dt != null)
+                {
+                    bool hasIsActive = dt.Columns.Contains("is_active");
+                    foreach (DataRow r in dt.Rows)
+                    {
+                        if (r == null) continue;
+                        if (hasIsActive)
+                        {
+                            bool isActive = r["is_active"] != DBNull.Value && Convert.ToBoolean(r["is_active"]);
+                            if (!isActive) continue;
+                        }
+
+                        int id = r["id"] != DBNull.Value ? Convert.ToInt32(r["id"]) : 0;
+                        if (id <= 0) continue;
+                        string name = r["name"]?.ToString() ?? $"Gudang {id}";
+                        comboDt.Rows.Add(id, name);
+                    }
+                }
+
+                cmbWarehouseFilter.DataSource = comboDt;
+                cmbWarehouseFilter.DisplayMember = "name";
+                cmbWarehouseFilter.ValueMember = "id";
+                cmbWarehouseFilter.SelectedValue = 0;
+
+                cmbWarehouseFilter.SelectedIndexChanged -= cmbWarehouseFilter_SelectedIndexChanged;
+                cmbWarehouseFilter.SelectedIndexChanged += cmbWarehouseFilter_SelectedIndexChanged;
+            }
+            catch
+            {
+                cmbWarehouseFilter.DataSource = null;
+                cmbWarehouseFilter.Items.Clear();
+                cmbWarehouseFilter.Items.Add("Semua Gudang");
+                cmbWarehouseFilter.SelectedIndex = 0;
+            }
+            finally
+            {
+                _isLoadingWarehouses = false;
+            }
+        }
+
+        private void cmbWarehouseFilter_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_isLoadingWarehouses) return;
+            LoadItems();
+        }
+
+        private int GetSelectedWarehouseId()
+        {
+            try
+            {
+                if (cmbWarehouseFilter?.SelectedValue == null) return 0;
+                return Convert.ToInt32(cmbWarehouseFilter.SelectedValue);
+            }
+            catch
+            {
+                return 0;
+            }
         }
 
         private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
@@ -437,7 +514,7 @@ namespace POS_qu
             dataGridView1.MultiSelect = false;
 
             _productService = new ProductService(new ProductRepository());
-            DataTable dt = _viewAllUnits ? GetAllProductsExpandedByUnitVariant() : _productService.GetAllProducts();
+            DataTable dt = _viewAllUnits ? GetAllProductsExpandedByUnitVariant() : GetBaseProductsForCurrentWarehouse();
             if (dt != null && _lowStockSort)
                 dt = SortLowStock(dt);
             _dtFull = dt?.Copy();
@@ -485,6 +562,108 @@ namespace POS_qu
             UpdateSummaryFromGrid();
             UpdateViewModeButtonsAppearance();
             UpdateLowStockButtonAppearance();
+        }
+
+        private DataTable GetBaseProductsForCurrentWarehouse()
+        {
+            int wid = GetSelectedWarehouseId();
+
+            if (wid <= 0)
+            {
+                var dtAll = _productService.GetAllProducts();
+                if (dtAll != null)
+                {
+                    if (!dtAll.Columns.Contains("warehouse_id")) dtAll.Columns.Add("warehouse_id", typeof(int));
+                    if (!dtAll.Columns.Contains("warehouse_name")) dtAll.Columns.Add("warehouse_name", typeof(string));
+                    foreach (DataRow r in dtAll.Rows)
+                    {
+                        r["warehouse_id"] = 0;
+                        r["warehouse_name"] = "Semua Gudang";
+                    }
+                }
+                return dtAll;
+            }
+
+            try
+            {
+                using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+                con.Open();
+
+                string sql = @"
+            SELECT 
+                items.id,
+                items.name,
+                items.barcode,
+                items.buy_price,
+                items.sell_price,
+                COALESCE(s.qty, 0) AS stock,
+                COALESCE(s.min_qty, 0) AS min_qty,
+                0 AS reserved_qty,
+                items.valuation_method,
+                items.unit AS unit_id,
+                units.name AS unit_name,
+                COALESCE(uvbase.minqty, 0) AS min_stock,
+                items.category_id,
+                categories.name AS category_name,
+                items.note,
+                items.picture,
+                items.is_inventory_p,
+                items.is_purchasable,
+                items.is_sellable,
+                items.is_note_payment,
+                items.is_changeprice_p,
+                items.is_have_bahan,
+                items.is_box,
+                items.is_produksi,
+                items.discount_formula,
+                items.supplier_id,
+                suppliers.name AS supplier_name,
+                items.flag,
+                items.created_at,
+                items.updated_at,
+                w.id AS warehouse_id,
+                w.name AS warehouse_name
+            FROM items
+            JOIN warehouses w ON w.id = @warehouse_id
+            LEFT JOIN stocks s ON s.item_id = items.id AND s.warehouse_id = w.id
+            LEFT JOIN LATERAL (
+                SELECT iv.minqty
+                FROM unit_variants iv
+                WHERE iv.item_id = items.id
+                  AND iv.is_active = TRUE
+                  AND iv.is_base_unit = TRUE
+                LIMIT 1
+            ) uvbase ON TRUE
+            LEFT JOIN units       ON items.unit = units.id
+            LEFT JOIN categories  ON items.category_id = categories.id
+            LEFT JOIN suppliers   ON items.supplier_id = suppliers.id
+            WHERE items.deleted_at IS NULL
+            ORDER BY items.id ASC
+        ";
+
+                using var cmd = new NpgsqlCommand(sql, con);
+                cmd.Parameters.AddWithValue("@warehouse_id", wid);
+
+                using var da = new NpgsqlDataAdapter(cmd);
+                var dt = new DataTable();
+                da.Fill(dt);
+                return dt;
+            }
+            catch
+            {
+                var dt = _productService.GetAllProducts();
+                if (dt != null)
+                {
+                    if (!dt.Columns.Contains("warehouse_id")) dt.Columns.Add("warehouse_id", typeof(int));
+                    if (!dt.Columns.Contains("warehouse_name")) dt.Columns.Add("warehouse_name", typeof(string));
+                    foreach (DataRow r in dt.Rows)
+                    {
+                        r["warehouse_id"] = 0;
+                        r["warehouse_name"] = "Semua Gudang";
+                    }
+                }
+                return dt;
+            }
         }
 
         private void UpdateLowStockButtonAppearance()
@@ -571,7 +750,7 @@ namespace POS_qu
 
         private DataTable GetAllProductsExpandedByUnitVariant()
         {
-            var baseDt = _productService.GetAllProducts();
+            var baseDt = GetBaseProductsForCurrentWarehouse();
             if (baseDt == null) return null;
 
             var dt = baseDt.Clone();
@@ -1190,13 +1369,17 @@ namespace POS_qu
 
                 if (_viewAllUnits)
                 {
-                    var seen = new HashSet<int>();
+                    var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                     foreach (DataGridViewRow r in dataGridView1.Rows)
                     {
                         if (r.IsNewRow) continue;
                         if (r.Cells["id"]?.Value == null) continue;
                         int id = Convert.ToInt32(r.Cells["id"].Value);
-                        if (!seen.Add(id)) continue;
+                        int wid = 0;
+                        if (r.Cells["warehouse_id"]?.Value != null)
+                            int.TryParse(r.Cells["warehouse_id"].Value.ToString(), out wid);
+                        var key = $"{id}:{wid}";
+                        if (!seen.Add(key)) continue;
 
                         decimal baseStock = 0m;
                         if (r.Cells["base_stock"]?.Value != null && decimal.TryParse(r.Cells["base_stock"].Value.ToString(), out var bs)) baseStock = bs;
@@ -1278,6 +1461,14 @@ namespace POS_qu
                 c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 c.FillWeight = 130;
             }
+            if (dataGridView1.Columns.Contains("warehouse_name"))
+            {
+                var c = dataGridView1.Columns["warehouse_name"];
+                c.HeaderText = "Gudang";
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                c.FillWeight = 140;
+                c.SortMode = DataGridViewColumnSortMode.Automatic;
+            }
             if (dataGridView1.Columns.Contains("unit_name"))
             {
                 var c = dataGridView1.Columns["unit_name"];
@@ -1348,7 +1539,7 @@ namespace POS_qu
                 "reserved_stock","unit_id","category_id","supplier_id","note","picture","is_purchasable","is_sellable",
                 "is_note_payment","is_changeprice_p","is_have_bahan","is_box","is_produksi","discount_formula","flag",
                 "created_at","updated_at","category_name","supplier_name","btnVariant",
-                "min_qty","min_stock","conversion","is_variant","base_stock","base_buy_price"
+                "min_qty","min_stock","conversion","is_variant","base_stock","base_buy_price","warehouse_id"
             };
             foreach (var key in hideCols)
             {
@@ -1360,17 +1551,75 @@ namespace POS_qu
         private void OpenEditForRow(DataGridViewRow rowSelected)
         {
             int itemId = Convert.ToInt32(rowSelected.Cells["id"].Value);
-            var selectedItem = _productService.GetProductDetail(itemId);
-            if (selectedItem == null)
+            int warehouseId = 0;
+            if (rowSelected.Cells["warehouse_id"]?.Value != null)
+                int.TryParse(rowSelected.Cells["warehouse_id"].Value.ToString(), out warehouseId);
+
+            if (warehouseId <= 0 && ItemHasMultipleWarehouses(itemId))
             {
-                MessageBox.Show("Item tidak ditemukan.");
-                return;
+                var r = MessageBox.Show(
+                    "Item ini punya stok di lebih dari 1 gudang.\n\n" +
+                    "Baris yang Anda klik sedang mode SEMUA GUDANG (stok total).\n\n" +
+                    "Klik Ok untuk pilih gudang dulu agar stok yang tampil sesuai gudang.",
+                    "Info Gudang",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information
+                );
+
+                if (r == DialogResult.OK)
+                {
+                    if (cmbWarehouseFilter != null)
+                    {
+                        cmbWarehouseFilter.Focus();
+                        cmbWarehouseFilter.DroppedDown = true;
+                    }
+                    return;
+                }
             }
-            selectedItem.UnitVariants = _productService.GetItemUnitVariants(itemId);
-            using (var detailForm = new ItemDetailForm(selectedItem))
+
+            int stock = 0;
+            if (rowSelected.Cells["stock"]?.Value != null)
+                int.TryParse(rowSelected.Cells["stock"].Value.ToString(), out stock);
+
+            int minQty = 0;
+            if (rowSelected.Cells["min_qty"]?.Value != null)
+                int.TryParse(rowSelected.Cells["min_qty"].Value.ToString(), out minQty);
+
+            var itemForEdit = new Item
+            {
+                id = itemId,
+                name = rowSelected.Cells["name"]?.Value?.ToString() ?? "",
+                barcode = rowSelected.Cells["barcode"]?.Value?.ToString(),
+                buy_price = rowSelected.Cells["buy_price"]?.Value != null && decimal.TryParse(rowSelected.Cells["buy_price"].Value.ToString(), out var bp) ? bp : 0m,
+                sell_price = rowSelected.Cells["sell_price"]?.Value != null && decimal.TryParse(rowSelected.Cells["sell_price"].Value.ToString(), out var sp) ? sp : 0m,
+                stock = stock,
+                min_qty = minQty,
+                initial_warehouse_id = warehouseId > 0 ? warehouseId : null
+            };
+
+            using (var detailForm = new ItemDetailForm(itemForEdit))
             {
                 if (detailForm.ShowDialog() == DialogResult.OK)
                     LoadItems();
+            }
+        }
+
+        private static bool ItemHasMultipleWarehouses(int itemId)
+        {
+            if (itemId <= 0) return false;
+
+            try
+            {
+                using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+                con.Open();
+                using var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM stocks WHERE item_id = @id", con);
+                cmd.Parameters.AddWithValue("@id", itemId);
+                var count = Convert.ToInt32(cmd.ExecuteScalar());
+                return count > 1;
+            }
+            catch
+            {
+                return false;
             }
         }
         private void ImportItemsFromExcelImpl(string filePath)

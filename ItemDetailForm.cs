@@ -61,7 +61,8 @@ namespace POS_qu
             InitializeForm();
             _item = LoadFullItemForEdit(item);
             LoadItem(_item); // Mode Edit
-           
+            cmbWarehouse.SelectedValue = _item.initial_warehouse_id;
+
         }
 
         private Item LoadFullItemForEdit(Item item)
@@ -71,6 +72,14 @@ namespace POS_qu
             var detail = _productService.GetProductDetail(item.id) ?? item;
             detail.UnitVariants = _productService.GetItemUnitVariants(item.id) ?? new List<UnitVariant>();
             detail.Prices = _productService.GetItemPrices(item.id) ?? new List<ItemPrice>();
+
+            if (item.initial_warehouse_id.HasValue && item.initial_warehouse_id.Value > 0)
+            {
+                detail.initial_warehouse_id = item.initial_warehouse_id;
+                detail.stock = item.stock;
+                detail.min_qty = item.min_qty;
+            }
+
             return detail;
         }
 
@@ -418,6 +427,7 @@ namespace POS_qu
             _item.stock = int.Parse(txtStock.Text);
             _item.barcode = txtBarcode.Text;
             _item.note = txtNote.Text;
+            _item.min_qty = int.Parse(txtMinQty.Text);
             _item.unitid = cmbUnit.SelectedValue != null ? Convert.ToInt32(cmbUnit.SelectedValue) : 0;
             if (_item.unitid <= 0)
             {
@@ -777,6 +787,8 @@ namespace POS_qu
                 dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Conversion", HeaderText = "Konversi", Width = 100 });
                 dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "SellPrice", HeaderText = "Harga Jual", Width = 200, DefaultCellStyle = new DataGridViewCellStyle { Format = "N0" } });
                 dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Barcode", HeaderText = "Barcode", Width = 200 });
+                dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Minqty", HeaderText = "Minqty", Width = 200 });
+                dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Profit", HeaderText = "Profit", Width = 200 });
             }
 
             dgvVariants.DataSource = null; // Reset binding

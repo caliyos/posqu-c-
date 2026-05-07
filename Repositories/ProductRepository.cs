@@ -99,6 +99,11 @@ COALESCE(uvbase.minqty, 0) AS min_stock,
                     SELECT items.*, 
                            COALESCE((SELECT SUM(qty) FROM stocks WHERE item_id = items.id), 0) AS stock_qty,
                            COALESCE((SELECT SUM(min_qty) FROM stocks WHERE item_id = items.id), 0) AS min_qty,
+                           CASE
+                               WHEN (SELECT COUNT(*) FROM stocks WHERE item_id = items.id) = 1
+                                   THEN COALESCE((SELECT warehouse_id FROM stocks WHERE item_id = items.id LIMIT 1), 0)
+                               ELSE 0
+                           END AS warehouse_id,
                            COALESCE((SELECT SUM(reserved_qty) FROM stocks WHERE item_id = items.id), 0) AS reserved_qty
                     FROM items 
                     WHERE id = @id";
@@ -119,6 +124,7 @@ COALESCE(uvbase.minqty, 0) AS min_stock,
                                 supplier_id = reader["supplier_id"] != DBNull.Value ? Convert.ToInt32(reader["supplier_id"]) : 0,
                                 brand_id = reader["brand_id"] != DBNull.Value ? Convert.ToInt32(reader["brand_id"]) : null,
                                 rack_id = reader["rack_id"] != DBNull.Value ? Convert.ToInt32(reader["rack_id"]) : null,
+                                initial_warehouse_id = reader["warehouse_id"] != DBNull.Value ? Convert.ToInt32(reader["warehouse_id"]) : null,
                                 buy_price = reader["buy_price"] != DBNull.Value ? Convert.ToDecimal(reader["buy_price"]) : 0,
                                 sell_price = reader["sell_price"] != DBNull.Value ? Convert.ToDecimal(reader["sell_price"]) : 0,
                                 stock = Convert.ToInt32(reader["stock_qty"]),
@@ -135,7 +141,8 @@ COALESCE(uvbase.minqty, 0) AS min_stock,
                                 discount_formula = reader["discount_formula"]?.ToString() ?? "",
                                 ExpiredAt = reader["expired_at"] != DBNull.Value ? Convert.ToDateTime(reader["expired_at"]) : null,
                                 note = reader["note"]?.ToString(),
-                                valuation_method = reader["valuation_method"]?.ToString() ?? "FIFO"
+                                valuation_method = reader["valuation_method"]?.ToString() ?? "FIFO",
+                                
                             };
                         }
                     }
@@ -205,12 +212,13 @@ COALESCE(uvbase.minqty, 0) AS min_stock,
                         {
                             int warehouseId = item.initial_warehouse_id ?? 1;
 
-                            string sSql = "INSERT INTO stocks (item_id, warehouse_id, qty) VALUES (@item_id, @w_id, @qty)";
+                            string sSql = "INSERT INTO stocks (item_id, warehouse_id, qty, min_qty) VALUES (@item_id, @w_id, @qty, @min_qty)";
                             using (var sCmd = new NpgsqlCommand(sSql, con, tran))
                             {
                                 sCmd.Parameters.AddWithValue("@item_id", newItemId);
                                 sCmd.Parameters.AddWithValue("@w_id", warehouseId);
                                 sCmd.Parameters.AddWithValue("@qty", item.stock);
+                                sCmd.Parameters.AddWithValue("@min_qty", item.min_qty);
                                 sCmd.ExecuteNonQuery();
                             }
 
@@ -231,15 +239,36 @@ COALESCE(uvbase.minqty, 0) AS min_stock,
                         {
                             foreach (var variant in item.UnitVariants)
                             {
-                                string vSql = @"INSERT INTO item_unit_variants (item_id, unit_id, minqty,conversion_qty, sell_price) 
-                                                VALUES (@item_id, @unit_id, @minqty,@conversion, @sell_price)";
+                                string vSql = @"INSERT INTO unit_variants (
+                                                    item_id,
+                                                    unit_id,
+                                                    conversion,
+                                                    sell_price,
+                                                    profit,
+                                                    minqty,
+                                                    is_base_unit,
+                                                    barcode_suffix
+                                                )
+                                                VALUES (
+                                                    @item_id,
+                                                    @unit_id,
+                                                    @conversion,
+                                                    @sell_price,
+                                                    @profit,
+                                                    @minqty,
+                                                    @is_base_unit,
+                                                    @barcode_suffix
+                                                )";
                                 using (var vCmd = new NpgsqlCommand(vSql, con, tran))
                                 {
                                     vCmd.Parameters.AddWithValue("@item_id", newItemId);
                                     vCmd.Parameters.AddWithValue("@unit_id", variant.UnitId);
-                                    vCmd.Parameters.AddWithValue("@minqty", variant.MinQty);
-                                    vCmd.Parameters.AddWithValue("@conversion", variant.Conversion); // backward compatibility
+                                    vCmd.Parameters.AddWithValue("@conversion", variant.Conversion);
                                     vCmd.Parameters.AddWithValue("@sell_price", variant.SellPrice);
+                                    vCmd.Parameters.AddWithValue("@profit", variant.Profit);
+                                    vCmd.Parameters.AddWithValue("@minqty", variant.MinQty > 0 ? (object)variant.MinQty : DBNull.Value);
+                                    vCmd.Parameters.AddWithValue("@is_base_unit", variant.IsBaseUnit);
+                                    vCmd.Parameters.AddWithValue("@barcode_suffix", (object)variant.BarcodeSuffix ?? DBNull.Value);
                                     vCmd.ExecuteNonQuery();
                                 }
                             }
@@ -330,6 +359,23 @@ COALESCE(uvbase.minqty, 0) AS min_stock,
                             cmd.ExecuteNonQuery();
                         }
 
+                        int warehouseId = item.initial_warehouse_id ?? 1;
+
+                        string stockSql = @"UPDATE stocks 
+                    SET 
+                        min_qty = @min_qty
+                    WHERE item_id = @item_id 
+                    AND warehouse_id = @w_id";
+
+                        using (var sCmd = new NpgsqlCommand(stockSql, con, tran))
+                        {
+                            sCmd.Parameters.AddWithValue("@item_id", item.id);
+                            sCmd.Parameters.AddWithValue("@w_id", warehouseId);
+                            sCmd.Parameters.AddWithValue("@min_qty", item.min_qty);
+
+                            sCmd.ExecuteNonQuery();
+                        }
+
                         // Re-insert Unit Variants
                         using (var delVCmd = new NpgsqlCommand("DELETE FROM unit_variants WHERE item_id = @id", con, tran))
                         {
@@ -341,16 +387,36 @@ COALESCE(uvbase.minqty, 0) AS min_stock,
                         {
                             foreach (var variant in item.UnitVariants)
                             {
-                                string vSql = @"INSERT INTO unit_variants (item_id, unit_id,minqty, conversion, sell_price,profit) 
-                                                VALUES (@item_id, @unit_id,@minqty, @conversion, @sell_price,@profit)";
+                                string vSql = @"INSERT INTO unit_variants (
+                                                    item_id,
+                                                    unit_id,
+                                                    conversion,
+                                                    sell_price,
+                                                    profit,
+                                                    minqty,
+                                                    is_base_unit,
+                                                    barcode_suffix
+                                                )
+                                                VALUES (
+                                                    @item_id,
+                                                    @unit_id,
+                                                    @conversion,
+                                                    @sell_price,
+                                                    @profit,
+                                                    @minqty,
+                                                    @is_base_unit,
+                                                    @barcode_suffix
+                                                )";
                                 using (var vCmd = new NpgsqlCommand(vSql, con, tran))
                                 {
                                     vCmd.Parameters.AddWithValue("@item_id", item.id);
                                     vCmd.Parameters.AddWithValue("@unit_id", variant.UnitId);
-                                    vCmd.Parameters.AddWithValue("@minqty", variant.MinQty);
                                     vCmd.Parameters.AddWithValue("@conversion", variant.Conversion);
                                     vCmd.Parameters.AddWithValue("@sell_price", variant.SellPrice);
                                     vCmd.Parameters.AddWithValue("@profit", variant.Profit);
+                                    vCmd.Parameters.AddWithValue("@minqty", variant.MinQty > 0 ? (object)variant.MinQty : DBNull.Value);
+                                    vCmd.Parameters.AddWithValue("@is_base_unit", variant.IsBaseUnit);
+                                    vCmd.Parameters.AddWithValue("@barcode_suffix", (object)variant.BarcodeSuffix ?? DBNull.Value);
                                     vCmd.ExecuteNonQuery();
                                 }
                             }
@@ -524,7 +590,7 @@ COALESCE(uvbase.minqty, 0) AS min_stock,
             {
                 con.Open();
                 string sql = @"
-                    SELECT iv.id, iv.unit_id, iv.conversion, iv.sell_price, u.name AS unit_name,
+                    SELECT iv.id, iv.unit_id, iv.conversion, iv.sell_price,iv.profit, u.name AS unit_name,
                            iv.minqty, iv.is_base_unit, iv.barcode_suffix
                     FROM unit_variants iv
                     LEFT JOIN units u ON iv.unit_id = u.id
@@ -546,6 +612,7 @@ COALESCE(uvbase.minqty, 0) AS min_stock,
                                 SellPrice = Convert.ToDecimal(reader["sell_price"]),
                                 UnitName = reader["unit_name"]?.ToString() ?? "",
                                 MinQty = reader["minqty"] == DBNull.Value ? 0m : Convert.ToDecimal(reader["minqty"]),
+                                Profit = reader["profit"] == DBNull.Value ? 0m : Convert.ToDecimal(reader["profit"]),
                                 IsBaseUnit = reader["is_base_unit"] != DBNull.Value && Convert.ToBoolean(reader["is_base_unit"]),
                                 BarcodeSuffix = reader["barcode_suffix"] == DBNull.Value ? null : reader["barcode_suffix"]?.ToString()
                             });

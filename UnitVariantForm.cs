@@ -90,6 +90,12 @@ namespace POS_qu
 
         private void BtnSaveVariant_Click(object sender, EventArgs e)
         {
+            if (cmbUnitVariant.SelectedValue == null)
+            {
+                MessageBox.Show("Pilih satuan terlebih dahulu.");
+                return;
+            }
+
             if (!int.TryParse(txtConvertionRate.Text, out int conversion) || conversion <= 0)
             {
                 MessageBox.Show("Konversi harus berupa angka positif.");
@@ -102,8 +108,9 @@ namespace POS_qu
                 return;
             }
 
-            decimal actualSellPrice = baseSellPrice * conversion;
-            decimal profit = sellingPrice - actualSellPrice;
+            decimal sellIfFollowBase = baseSellPrice * conversion;
+            decimal hppTotal = _item.buy_price * conversion;
+            decimal profitReal = sellingPrice - hppTotal;
 
             int unitId = Convert.ToInt32(cmbUnitVariant.SelectedValue);
             string unitName = cmbUnitVariant.Text;
@@ -122,10 +129,11 @@ namespace POS_qu
                 UnitId = unitId,
                 UnitName = unitName,
                 Conversion = conversion, 
-                actualSellPrice = actualSellPrice,
                 SellPrice = sellingPrice,
-                Profit = profit,
-                MinQty = MinQty
+                Profit = profitReal,
+                MinQty = MinQty,
+                BarcodeSuffix = string.IsNullOrWhiteSpace(txtBarcodeSuffix.Text) ? null : txtBarcodeSuffix.Text.Trim(),
+                actualSellPrice = sellIfFollowBase
             };
 
             UnitVariants.Add(variant);
@@ -134,15 +142,23 @@ namespace POS_qu
             txtConvertionRate.Text = "";
             txtSellingPrice.Text = "";
             txtMinQty.Text = "";
+            txtBarcodeSuffix.Text = "";
             cmbUnitVariant.SelectedIndex = -1;
         }
 
         private void AddVariantToPanel(UnitVariant variant)
         {
+            var sellIfFollowBase = baseSellPrice * variant.Conversion;
+            var hppTotal = _item.buy_price * variant.Conversion;
+            var priceDiff = variant.SellPrice - sellIfFollowBase;
+            var priceDiffPercent = sellIfFollowBase == 0m ? 0m : (priceDiff / sellIfFollowBase) * 100m;
+            var hppDiff = variant.SellPrice - hppTotal;
+            var hppDiffPercent = hppTotal == 0m ? 0m : (hppDiff / hppTotal) * 100m;
+
             var panel = new Panel
             {
                 Width = flpVariantLog.Width - 30,
-                Height = 80,
+                Height = 118,
                 BorderStyle = BorderStyle.FixedSingle,
                 Margin = new Padding(0, 5, 0, 5),
                 BackColor = Color.White
@@ -153,41 +169,49 @@ namespace POS_qu
                 Text = $"1 {variant.UnitName} = {variant.Conversion} {lblConvertionRate.Text}",
                 AutoSize = true,
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                Location = new Point(15, 15)
+                Location = new Point(15, 12)
             };
 
             var labelMinQty = new Label
             {
                 Text = $"Min Qty: {variant.MinQty}",
                 AutoSize = true,
-                Location = new Point(15, 45),
+                Location = new Point(15, 34),
                 ForeColor = Color.DimGray
             };
             
-            var labelSelling = new Label
+            var labelBarcodeSuffix = new Label
             {
-                Text = $"Harga Jual: Rp {variant.SellPrice:N0}",
+                Text = $"Barcode Suffix: {(string.IsNullOrWhiteSpace(variant.BarcodeSuffix) ? "-" : variant.BarcodeSuffix)}",
                 AutoSize = true,
-                Location = new Point(250, 15),
+                Location = new Point(15, 56),
+                ForeColor = Color.DimGray
+            };
+
+            var labelSellVariant = new Label
+            {
+                Text = $"Harga varian: Rp {variant.SellPrice:N0}",
+                AutoSize = true,
+                Location = new Point(250, 12),
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
                 ForeColor = Color.FromArgb(0, 122, 255)
             };
 
-            var labelActualSelling = new Label
+            var labelCompareBase = new Label
             {
-                Text = $"Total Harga Dasar: Rp {variant.actualSellPrice:N0}",
+                Text = $"Perbandingan dengan harga jual base (Rp {sellIfFollowBase:N0}): {(priceDiff >= 0 ? "+" : "-")}Rp {Math.Abs(priceDiff):N0} ({(priceDiff >= 0 ? "+" : "-")}{Math.Abs(priceDiffPercent):N1}%)",
                 AutoSize = true,
-                Location = new Point(250, 45),
+                Location = new Point(250, 34),
                 ForeColor = Color.DimGray
             };
 
-            var labelProfit = new Label
+            var labelCompareHpp = new Label
             {
-                Text = $"Profit: Rp {variant.Profit:N0}",
+                Text = $"Perbandingan dengan HPP (Rp {hppTotal:N0}): {(hppDiff >= 0 ? "+" : "-")}Rp {Math.Abs(hppDiff):N0} ({(hppDiff >= 0 ? "+" : "-")}{Math.Abs(hppDiffPercent):N1}%)",
                 AutoSize = true,
-                Location = new Point(480, 15),
+                Location = new Point(250, 56),
                 Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                ForeColor = variant.Profit >= 0 ? Color.Green : Color.Red
+                ForeColor = hppDiff >= 0 ? Color.Green : Color.Red
             };
 
             var btnDelete = new Button
@@ -215,9 +239,10 @@ namespace POS_qu
 
             panel.Controls.Add(labelEquation);
             panel.Controls.Add(labelMinQty);
-            panel.Controls.Add(labelSelling);
-            panel.Controls.Add(labelActualSelling);
-            panel.Controls.Add(labelProfit);
+            panel.Controls.Add(labelBarcodeSuffix);
+            panel.Controls.Add(labelSellVariant);
+            panel.Controls.Add(labelCompareBase);
+            panel.Controls.Add(labelCompareHpp);
             panel.Controls.Add(btnDelete);
 
             flpVariantLog.Controls.Add(panel);
