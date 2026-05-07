@@ -888,6 +888,8 @@ namespace POS_qu.Services
                 decimal qtyBase = d.TsdQuantity * conv;
                 if (qtyBase == 0) continue;
 
+                _repo.ReleaseReservedStockInWarehouse(con, tran, d.ItemId, warehouseId, qtyBase);
+
                 string method = _repo.GetItemValuationMethod(con, tran, d.ItemId);
                 var strategy = CreateStockValuationStrategy(method);
                 var deduction = strategy.CalculateCOGSAndDeductStock(d.ItemId, warehouseId, qtyBase, con, tran);

@@ -2030,6 +2030,44 @@ ORDER BY i.id ASC, w.id ASC
             public List<string> Errors { get; } = new List<string>();
         }
 
+        private static void InsertStockLogNoTran(NpgsqlConnection con, StockLog stockLog)
+        {
+            const string query = @"
+INSERT INTO stock_log
+(product_id, tipe_transaksi, qty_masuk, qty_keluar,
+ sisa_stock, keterangan, user_id, created_at, login_id,
+ warehouse_id, ref_type, ref_id, supplier_id, unit_cost, method,
+ stock_layer_id, is_allocation, parent_id)
+VALUES
+(@product_id, @tipe_transaksi, @qty_masuk, @qty_keluar,
+ @sisa_stock, @keterangan, @user_id, @created_at, @login_id,
+ @warehouse_id, @ref_type, @ref_id, @supplier_id, @unit_cost, @method,
+ @stock_layer_id, @is_allocation, @parent_id)
+";
+
+            using var cmd = new NpgsqlCommand(query, con);
+            cmd.Parameters.AddWithValue("@product_id", stockLog.ProductId);
+            cmd.Parameters.AddWithValue("@tipe_transaksi", stockLog.TipeTransaksi ?? "");
+            cmd.Parameters.AddWithValue("@qty_masuk", stockLog.QtyMasuk);
+            cmd.Parameters.AddWithValue("@qty_keluar", stockLog.QtyKeluar);
+            cmd.Parameters.AddWithValue("@sisa_stock", stockLog.SisaStock);
+            cmd.Parameters.AddWithValue("@keterangan", stockLog.Keterangan ?? "");
+            cmd.Parameters.AddWithValue("@user_id", stockLog.UserId);
+            cmd.Parameters.AddWithValue("@created_at", stockLog.CreatedAt);
+            cmd.Parameters.AddWithValue("@login_id",
+                stockLog.LoginId.HasValue ? (object)stockLog.LoginId.Value : DBNull.Value);
+            cmd.Parameters.AddWithValue("@warehouse_id", stockLog.WarehouseId > 0 ? stockLog.WarehouseId : 1);
+            cmd.Parameters.AddWithValue("@ref_type", string.IsNullOrWhiteSpace(stockLog.RefType) ? (object)DBNull.Value : stockLog.RefType.Trim());
+            cmd.Parameters.AddWithValue("@ref_id", stockLog.RefId.HasValue ? (object)stockLog.RefId.Value : DBNull.Value);
+            cmd.Parameters.AddWithValue("@supplier_id", stockLog.SupplierId.HasValue ? (object)stockLog.SupplierId.Value : DBNull.Value);
+            cmd.Parameters.AddWithValue("@unit_cost", stockLog.UnitCost.HasValue ? (object)stockLog.UnitCost.Value : DBNull.Value);
+            cmd.Parameters.AddWithValue("@method", string.IsNullOrWhiteSpace(stockLog.Method) ? (object)DBNull.Value : stockLog.Method.Trim().ToUpperInvariant());
+            cmd.Parameters.AddWithValue("@stock_layer_id", stockLog.StockLayerId.HasValue ? (object)stockLog.StockLayerId.Value : DBNull.Value);
+            cmd.Parameters.AddWithValue("@is_allocation", stockLog.IsAllocation);
+            cmd.Parameters.AddWithValue("@parent_id", stockLog.ParentId.HasValue ? (object)stockLog.ParentId.Value : DBNull.Value);
+            cmd.ExecuteNonQuery();
+        }
+
         private static string FormatDbException(Exception ex)
         {
             try
@@ -2122,6 +2160,7 @@ ORDER BY i.id ASC, w.id ASC
             var warehouseIdByName = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
             var warehouseIds = new HashSet<int>();
             int defaultWarehouseId = 0;
+            var stockLogsToInsert = new List<StockLog>();
             try
             {
                 using var cmdWh = new NpgsqlCommand("SELECT id, name FROM warehouses WHERE is_active = TRUE ORDER BY id ASC", con, tran);
@@ -2359,6 +2398,37 @@ RETURNING id
 
                 result.StockResetItems = touchedItems.Count;
 
+                var rowByKey = new Dictionary<(int ItemId, int WarehouseId), (decimal Qty, decimal MinQty, decimal ReservedQty)>();
+                foreach (var r in stockRows)
+                    rowByKey[(r.ItemId, r.WarehouseId)] = (r.Qty, r.MinQty, r.ReservedQty);
+
+                var oldQtyByKey = new Dictionary<(int ItemId, int WarehouseId), decimal>();
+                try
+                {
+                    if (touchedItems.Count > 0)
+                    {
+                        using var cmdOld = new NpgsqlCommand(@"
+SELECT item_id, warehouse_id, COALESCE(qty,0) AS qty
+FROM stocks
+WHERE item_id = ANY(@ids)
+", con, tran);
+                        cmdOld.Parameters.AddWithValue("@ids", touchedItems.ToArray());
+                        using var rOld = cmdOld.ExecuteReader();
+                        while (rOld.Read())
+                        {
+                            int iid = rOld["item_id"] != DBNull.Value ? Convert.ToInt32(rOld["item_id"]) : 0;
+                            int wid = rOld["warehouse_id"] != DBNull.Value ? Convert.ToInt32(rOld["warehouse_id"]) : 0;
+                            decimal q = rOld["qty"] != DBNull.Value ? Convert.ToDecimal(rOld["qty"]) : 0m;
+                            if (iid > 0 && wid > 0)
+                                oldQtyByKey[(iid, wid)] = q;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Err("Gagal baca stok lama untuk kartu stok import: " + FormatDbException(ex));
+                }
+
                 foreach (var itemId in touchedItems)
                 {
                     try
@@ -2381,33 +2451,34 @@ RETURNING id
                     }
                 }
 
-                foreach (var srow in stockRows)
+                foreach (var kv in rowByKey)
                 {
                     try
                     {
+                        var srow = kv;
                         using (var ins = new NpgsqlCommand(@"
 INSERT INTO stocks (item_id, warehouse_id, qty, min_qty, reserved_qty)
 VALUES (@item_id, @warehouse_id, @qty, @min_qty, @reserved_qty)
 ", con, tran))
                         {
-                            ins.Parameters.AddWithValue("@item_id", srow.ItemId);
-                            ins.Parameters.AddWithValue("@warehouse_id", srow.WarehouseId);
-                            ins.Parameters.AddWithValue("@qty", Convert.ToDouble(srow.Qty));
-                            ins.Parameters.AddWithValue("@min_qty", Convert.ToDouble(srow.MinQty));
-                            ins.Parameters.AddWithValue("@reserved_qty", Convert.ToDouble(srow.ReservedQty));
+                            ins.Parameters.AddWithValue("@item_id", srow.Key.ItemId);
+                            ins.Parameters.AddWithValue("@warehouse_id", srow.Key.WarehouseId);
+                            ins.Parameters.AddWithValue("@qty", Convert.ToDouble(srow.Value.Qty));
+                            ins.Parameters.AddWithValue("@min_qty", Convert.ToDouble(srow.Value.MinQty));
+                            ins.Parameters.AddWithValue("@reserved_qty", Convert.ToDouble(srow.Value.ReservedQty));
                             ins.ExecuteNonQuery();
                         }
 
-                        if (srow.Qty > 0m)
+                        if (srow.Value.Qty > 0m)
                         {
-                            var bp = buyPriceByItemId.TryGetValue(srow.ItemId, out var bpx) ? bpx : 0m;
+                            var bp = buyPriceByItemId.TryGetValue(srow.Key.ItemId, out var bpx) ? bpx : 0m;
                             using var insLayer = new NpgsqlCommand(@"
 INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, created_at, expired_at)
 VALUES (@item_id, @warehouse_id, @qty, @buy_price, NOW(), NULL)
 ", con, tran);
-                            insLayer.Parameters.AddWithValue("@item_id", srow.ItemId);
-                            insLayer.Parameters.AddWithValue("@warehouse_id", srow.WarehouseId);
-                            insLayer.Parameters.AddWithValue("@qty", Convert.ToDouble(srow.Qty));
+                            insLayer.Parameters.AddWithValue("@item_id", srow.Key.ItemId);
+                            insLayer.Parameters.AddWithValue("@warehouse_id", srow.Key.WarehouseId);
+                            insLayer.Parameters.AddWithValue("@qty", Convert.ToDouble(srow.Value.Qty));
                             insLayer.Parameters.AddWithValue("@buy_price", bp);
                             insLayer.ExecuteNonQuery();
                         }
@@ -2417,12 +2488,93 @@ VALUES (@item_id, @warehouse_id, @qty, @buy_price, NOW(), NULL)
                     catch (Exception ex)
                     {
                         result.StockFailed++;
-                        Err($"Insert stocks gagal: item_id {srow.ItemId}, warehouse_id {srow.WarehouseId} => {FormatDbException(ex)}");
+                        Err($"Insert stocks gagal: item_id {kv.Key.ItemId}, warehouse_id {kv.Key.WarehouseId} => {FormatDbException(ex)}");
                     }
+                }
+
+                try
+                {
+                    var session = SessionUser.GetCurrentUser();
+                    int userId = session?.UserId ?? 0;
+                    int? loginId = session?.LoginId;
+                    if (userId <= 0)
+                    {
+                        Err("Kartu stok import dilewati karena session user tidak ditemukan.");
+                    }
+                    else
+                    {
+                        string fileName = System.IO.Path.GetFileName(filePath ?? "");
+                        string ketBase = string.IsNullOrWhiteSpace(fileName) ? "Import Excel (Stock)" : $"Import Excel (Stock) {fileName}";
+                        if (ketBase.Length > 100) ketBase = ketBase.Substring(0, 100);
+
+                        var allKeys = new HashSet<(int ItemId, int WarehouseId)>(oldQtyByKey.Keys);
+                        foreach (var k in rowByKey.Keys)
+                            allKeys.Add(k);
+
+                        foreach (var k in allKeys)
+                        {
+                            decimal oldQty = oldQtyByKey.TryGetValue(k, out var oq) ? oq : 0m;
+                            decimal newQty = rowByKey.TryGetValue(k, out var nr) ? nr.Qty : 0m;
+                            decimal delta = newQty - oldQty;
+                            if (delta == 0m) continue;
+
+                            decimal? unitCost = null;
+                            if (delta > 0m)
+                                unitCost = buyPriceByItemId.TryGetValue(k.ItemId, out var bp) ? bp : 0m;
+
+                            stockLogsToInsert.Add(new StockLog
+                            {
+                                ProductId = k.ItemId,
+                                TipeTransaksi = "import",
+                                QtyMasuk = delta > 0m ? delta : 0m,
+                                QtyKeluar = delta < 0m ? Math.Abs(delta) : 0m,
+                                SisaStock = newQty,
+                                Keterangan = ketBase,
+                                UserId = userId,
+                                CreatedAt = DateTime.Now,
+                                LoginId = loginId,
+                                WarehouseId = k.WarehouseId,
+                                RefType = "IMPORT_STOCK",
+                                RefId = null,
+                                UnitCost = unitCost,
+                                Method = null,
+                                IsAllocation = false
+                            });
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Err("Gagal menyiapkan kartu stok import: " + FormatDbException(ex));
                 }
             }
 
             tran.Commit();
+
+            if (stockLogsToInsert.Count > 0)
+            {
+                try
+                {
+                    using var conLog = new NpgsqlConnection(DbConfig.ConnectionString);
+                    conLog.Open();
+                    foreach (var sl in stockLogsToInsert)
+                    {
+                        try
+                        {
+                            InsertStockLogNoTran(conLog, sl);
+                        }
+                        catch (Exception ex)
+                        {
+                            Err("Insert kartu stok import gagal: " + FormatDbException(ex));
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Err("Kartu stok import gagal (connection): " + FormatDbException(ex));
+                }
+            }
+
             progress?.Invoke(Math.Max(1, total), Math.Max(1, total));
             return result;
         }

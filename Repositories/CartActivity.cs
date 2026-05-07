@@ -735,13 +735,27 @@ WHERE i.id = @item
       NpgsqlConnection conn,
       NpgsqlTransaction tran,
       int itemId,
+      int warehouseId,
       int baseQtyDiff)
         {
+            if (warehouseId <= 0) warehouseId = 1;
+
+            using (var clamp = new NpgsqlCommand(@"
+UPDATE stocks
+SET reserved_qty = LEAST(reserved_qty, qty)
+WHERE item_id = @itemId AND warehouse_id = @w
+", conn, tran))
+            {
+                clamp.Parameters.AddWithValue("@itemId", itemId);
+                clamp.Parameters.AddWithValue("@w", warehouseId);
+                clamp.ExecuteNonQuery();
+            }
+
             string sql = @"
 UPDATE stocks
 SET reserved_qty = reserved_qty + @baseQtyDiff
 WHERE item_id = @itemId
-AND warehouse_id = 1
+AND warehouse_id = @w
 AND (reserved_qty + @baseQtyDiff) >= 0
 AND (reserved_qty + @baseQtyDiff) <= qty;
 ";
@@ -749,6 +763,7 @@ AND (reserved_qty + @baseQtyDiff) <= qty;
             using var cmd = new NpgsqlCommand(sql, conn, tran);
             cmd.Parameters.AddWithValue("@baseQtyDiff", baseQtyDiff);
             cmd.Parameters.AddWithValue("@itemId", itemId);
+            cmd.Parameters.AddWithValue("@w", warehouseId);
 
             return cmd.ExecuteNonQuery() > 0;
         }

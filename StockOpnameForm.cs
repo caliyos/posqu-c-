@@ -13,7 +13,6 @@ using POS_qu.Models;
 using POS_qu.Repositories;
 using POS_qu.Services;
 using POS_qu.Core.Interfaces;
-
 namespace POS_qu
 {
     public partial class StockOpnameForm : Form
@@ -21,6 +20,7 @@ namespace POS_qu
         private readonly IProductService _productService;
         private readonly WarehouseController _warehouseController;
         private readonly int _prefillWarehouseId;
+        private readonly TransactionRepo _txRepo = new TransactionRepo();
 
         private DataTable _warehouses;
         private readonly List<OpnameRow> _rows = new List<OpnameRow>();
@@ -845,6 +845,9 @@ ORDER BY u.name
             using var tran = con.BeginTransaction();
             try
             {
+                var session = SessionUser.GetCurrentUser();
+                int? loginId = session?.LoginId;
+
                 long opnameId;
                 using (var cmd = new NpgsqlCommand(@"
 INSERT INTO stock_opnames (opname_no, opname_date, warehouse_id, mode, created_by)
@@ -918,6 +921,32 @@ VALUES (@iid, @w, @q, @buy, @exp, NOW())
                         cmd.Parameters.AddWithValue("@buy", buyPrice);
                         cmd.Parameters.AddWithValue("@exp", (object?)expiredAt ?? DBNull.Value);
                         cmd.ExecuteNonQuery();
+                    }
+
+                    if (Math.Abs(diff) > 0.0001)
+                    {
+                        decimal qtyMasuk = diff > 0 ? (decimal)diff : 0m;
+                        decimal qtyKeluar = diff < 0 ? (decimal)Math.Abs(diff) : 0m;
+                        string method = _txRepo.GetItemValuationMethod(con, tran, it.ItemId);
+
+                        _txRepo.InsertStockLog(con, tran, new StockLog
+                        {
+                            ProductId = it.ItemId,
+                            TipeTransaksi = "opname",
+                            QtyMasuk = qtyMasuk,
+                            QtyKeluar = qtyKeluar,
+                            SisaStock = (decimal)phyBase,
+                            Keterangan = $"Stock Opname #{opnameNo}",
+                            UserId = createdBy,
+                            CreatedAt = DateTime.Now,
+                            LoginId = loginId,
+                            WarehouseId = warehouseId,
+                            RefType = "OPNAME",
+                            RefId = (int)opnameId,
+                            UnitCost = buyPrice,
+                            Method = method,
+                            IsAllocation = false
+                        });
                     }
                 }
 

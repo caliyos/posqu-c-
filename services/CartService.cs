@@ -299,6 +299,7 @@ public class CartService : ICartService
                 bool reservedUpdated = _repo.TryUpdateReservedStock(
                     conn, tran,
                     item.ItemId,
+                    1,
                     stockAdjustment
                 );
 

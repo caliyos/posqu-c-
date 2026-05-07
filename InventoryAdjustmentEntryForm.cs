@@ -2,6 +2,7 @@ using Npgsql;
 using POS_qu.Controllers;
 using POS_qu.Helpers;
 using POS_qu.Models;
+using POS_qu.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -16,6 +17,7 @@ namespace POS_qu
         private readonly InventoryAdjustmentDirection _direction;
         private readonly WarehouseController _warehouseController = new WarehouseController();
         private readonly ItemController _itemController = new ItemController();
+        private readonly TransactionRepo _txRepo = new TransactionRepo();
         private readonly List<int> _prefillItemIds = new List<int>();
         private readonly int? _prefillWarehouseId;
 
@@ -330,11 +332,35 @@ VALUES (@aid, @iid, @q, @bp, @n)
                     {
                         UpsertStockAdd(con, tran, r.ItemId, warehouseId, r.Qty);
                         InsertStockLayer(con, tran, r.ItemId, warehouseId, r.Qty, r.BuyPrice);
+                        InsertStockLogForAdjustment(
+                            con, tran,
+                            adjustmentId: adjId,
+                            adjustmentNo: adjNo,
+                            warehouseId: warehouseId,
+                            userId: userId,
+                            loginId: user.LoginId,
+                            itemId: r.ItemId,
+                            qtyMasuk: (decimal)r.Qty,
+                            qtyKeluar: 0m,
+                            allocations: null
+                        );
                     }
                     else
                     {
                         UpdateStockSubtract(con, tran, r.ItemId, warehouseId, r.Qty);
-                        ConsumeStockLayers(con, tran, r.ItemId, warehouseId, r.Qty);
+                        var allocations = ConsumeStockLayers(con, tran, r.ItemId, warehouseId, r.Qty);
+                        InsertStockLogForAdjustment(
+                            con, tran,
+                            adjustmentId: adjId,
+                            adjustmentNo: adjNo,
+                            warehouseId: warehouseId,
+                            userId: userId,
+                            loginId: user.LoginId,
+                            itemId: r.ItemId,
+                            qtyMasuk: 0m,
+                            qtyKeluar: (decimal)r.Qty,
+                            allocations: allocations
+                        );
                     }
                 }
 
@@ -441,9 +467,79 @@ VALUES (@iid, @w, @q, @bp, @exp, NOW())
             cmd.ExecuteNonQuery();
         }
 
-        private void ConsumeStockLayers(NpgsqlConnection con, NpgsqlTransaction tran, long itemId, int warehouseId, double qtyOut)
+        private void InsertStockLogForAdjustment(
+            NpgsqlConnection con,
+            NpgsqlTransaction tran,
+            int adjustmentId,
+            string adjustmentNo,
+            int warehouseId,
+            int userId,
+            int? loginId,
+            long itemId,
+            decimal qtyMasuk,
+            decimal qtyKeluar,
+            List<(long StockLayerId, double Qty, decimal UnitCost)>? allocations)
+        {
+            if (qtyMasuk == 0m && qtyKeluar == 0m) return;
+
+            int iid = (int)itemId;
+            string method = _txRepo.GetItemValuationMethod(con, tran, iid);
+            decimal newStock = _txRepo.GetCurrentStockInWarehouse(con, tran, iid, warehouseId);
+
+            string keterangan = _direction == InventoryAdjustmentDirection.In
+                ? $"Adjustment IN #{adjustmentNo}"
+                : $"Adjustment OUT #{adjustmentNo}";
+
+            int parentId = _txRepo.InsertStockLog(con, tran, new StockLog
+            {
+                ProductId = iid,
+                TipeTransaksi = "adjustment",
+                QtyMasuk = qtyMasuk,
+                QtyKeluar = qtyKeluar,
+                SisaStock = newStock,
+                Keterangan = keterangan,
+                UserId = userId,
+                CreatedAt = DateTime.Now,
+                LoginId = loginId,
+                WarehouseId = warehouseId,
+                RefType = _direction == InventoryAdjustmentDirection.In ? "ADJUST_IN" : "ADJUST_OUT",
+                RefId = adjustmentId,
+                Method = method,
+                IsAllocation = false
+            });
+
+            if (allocations == null || allocations.Count == 0) return;
+
+            foreach (var a in allocations)
+            {
+                if (a.Qty <= 0.0000001) continue;
+                _txRepo.InsertStockLog(con, tran, new StockLog
+                {
+                    ProductId = iid,
+                    TipeTransaksi = "adjustment",
+                    QtyMasuk = 0m,
+                    QtyKeluar = (decimal)a.Qty,
+                    SisaStock = newStock,
+                    Keterangan = null,
+                    UserId = userId,
+                    CreatedAt = DateTime.Now,
+                    LoginId = loginId,
+                    WarehouseId = warehouseId,
+                    RefType = "ADJUST_OUT",
+                    RefId = adjustmentId,
+                    UnitCost = a.UnitCost,
+                    Method = method,
+                    StockLayerId = a.StockLayerId,
+                    IsAllocation = true,
+                    ParentId = parentId
+                });
+            }
+        }
+
+        private List<(long StockLayerId, double Qty, decimal UnitCost)> ConsumeStockLayers(NpgsqlConnection con, NpgsqlTransaction tran, long itemId, int warehouseId, double qtyOut)
         {
             double remaining = qtyOut;
+            var allocations = new List<(long StockLayerId, double Qty, decimal UnitCost)>();
 
             string method = "FIFO";
             using (var mCmd = new NpgsqlCommand("SELECT COALESCE(NULLIF(valuation_method,''),'FIFO') FROM items WHERE id=@id", con, tran))
@@ -461,7 +557,7 @@ VALUES (@iid, @w, @q, @bp, @exp, NOW())
                     : "created_at ASC, id ASC");
 
             using var cmd = new NpgsqlCommand($@"
-SELECT id, qty_remaining
+SELECT id, qty_remaining, COALESCE(buy_price,0) AS buy_price
 FROM stock_layers
 WHERE item_id = @iid AND warehouse_id = @w AND qty_remaining > 0
 ORDER BY {orderBy}
@@ -469,14 +565,15 @@ ORDER BY {orderBy}
             cmd.Parameters.AddWithValue("@iid", itemId);
             cmd.Parameters.AddWithValue("@w", warehouseId);
 
-            var layers = new List<(long Id, double QtyRemaining)>();
+            var layers = new List<(long Id, double QtyRemaining, decimal BuyPrice)>();
             using (var r = cmd.ExecuteReader())
             {
                 while (r.Read())
                 {
                     long id = Convert.ToInt64(r["id"]);
                     double q = r["qty_remaining"] != DBNull.Value ? Convert.ToDouble(r["qty_remaining"]) : 0d;
-                    if (q > 0) layers.Add((id, q));
+                    decimal bp = r["buy_price"] != DBNull.Value ? Convert.ToDecimal(r["buy_price"]) : 0m;
+                    if (q > 0) layers.Add((id, q, bp));
                 }
             }
 
@@ -495,11 +592,16 @@ WHERE id = @id
                 upd.Parameters.AddWithValue("@q", newQty);
                 upd.ExecuteNonQuery();
 
+                if (take > 0.0000001)
+                    allocations.Add((l.Id, take, l.BuyPrice));
+
                 remaining -= take;
             }
 
             if (remaining > 0.0000001)
                 throw new InvalidOperationException("Stock layer tidak cukup (" + method + ").");
+
+            return allocations;
         }
     }
 }

@@ -210,6 +210,38 @@ VALUES (
             }
         }
 
+        public void ReleaseReservedStockInWarehouse(
+            NpgsqlConnection con,
+            NpgsqlTransaction tran,
+            int itemId,
+            int warehouseId,
+            decimal qtyToRelease)
+        {
+            if (warehouseId <= 0) warehouseId = 1;
+            if (qtyToRelease <= 0m) return;
+
+            using (var clamp = new NpgsqlCommand(@"
+UPDATE stocks
+SET reserved_qty = LEAST(reserved_qty, qty)
+WHERE item_id = @id AND warehouse_id = @wh
+", con, tran))
+            {
+                clamp.Parameters.AddWithValue("@id", itemId);
+                clamp.Parameters.AddWithValue("@wh", warehouseId);
+                clamp.ExecuteNonQuery();
+            }
+
+            using var cmd = new NpgsqlCommand(@"
+UPDATE stocks
+SET reserved_qty = GREATEST(reserved_qty - @q, 0)
+WHERE item_id = @id AND warehouse_id = @wh
+", con, tran);
+            cmd.Parameters.AddWithValue("@id", itemId);
+            cmd.Parameters.AddWithValue("@wh", warehouseId);
+            cmd.Parameters.AddWithValue("@q", (double)qtyToRelease);
+            cmd.ExecuteNonQuery();
+        }
+
         public string GetItemValuationMethod(NpgsqlConnection con, NpgsqlTransaction tran, int itemId)
         {
             string sql = "SELECT valuation_method FROM items WHERE id = @id";
