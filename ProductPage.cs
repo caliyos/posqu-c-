@@ -16,14 +16,14 @@ using POS_qu.Core.Interfaces;
 using POS_qu.Services;
 using POS_qu.Repositories;
 using System.Transactions;
-using System.Security.Cryptography.Xml;
+    using System.Security.Cryptography.Xml;
 using Npgsql;
 
 namespace POS_qu
 {
     public partial class ProductPage : Form
     {
-        private IProductService _productService;
+        private ProductService _productService;
         private int currentPage = 1;
         private int pageSize = 15;
         private string selectedImagePath = "";
@@ -152,7 +152,7 @@ namespace POS_qu
             this.WindowState = FormWindowState.Maximized; // Fullscreen
 
             dataGridView1.CellClick += dataGridView1_CellClick;
-            dataGridView1.DataBindingComplete += (s, ev) => { ConfigureGridColumns(); UpdateSummaryFromGrid(); };
+            dataGridView1.DataBindingComplete += (s, ev) => { ConfigureGridColumns(); ApplyLowStockRowStyles(); UpdateSummaryFromGrid(); };
             dataGridView1.CellFormatting += dataGridView1_CellFormatting;
             dataGridView1.CellDoubleClick += (s, ev) =>
             {
@@ -267,16 +267,83 @@ namespace POS_qu
 
             decimal stock = 0m;
             if (dr.Table.Columns.Contains("stock") && dr["stock"] != DBNull.Value) decimal.TryParse(dr["stock"].ToString(), out stock);
-            decimal min = 0m;
-            if (dr.Table.Columns.Contains("min_stock") && dr["min_stock"] != DBNull.Value) decimal.TryParse(dr["min_stock"].ToString(), out min);
+            var min = GetMinThreshold(dr);
 
             if (min > 0m && stock <= min)
             {
-                e.CellStyle.BackColor = Color.FromArgb(217, 83, 79);
+                bool isVariant = false;
+                if (dr.Table.Columns.Contains("is_variant") && dr["is_variant"] != DBNull.Value)
+                    bool.TryParse(dr["is_variant"].ToString(), out isVariant);
+
+                var back = isVariant ? Color.FromArgb(231, 97, 93) : Color.FromArgb(217, 83, 79);
+                e.CellStyle.BackColor = back;
                 e.CellStyle.ForeColor = Color.White;
-                e.CellStyle.SelectionBackColor = Color.FromArgb(217, 83, 79);
+                e.CellStyle.SelectionBackColor = back;
                 e.CellStyle.SelectionForeColor = Color.White;
             }
+        }
+
+        private void ApplyLowStockRowStyles()
+        {
+            if (dataGridView1.DataSource == null) return;
+
+            foreach (DataGridViewRow row in dataGridView1.Rows)
+            {
+                if (row.IsNewRow) continue;
+                if (row.DataBoundItem is not DataRowView drv) continue;
+                var dr = drv.Row;
+
+                decimal stock = 0m;
+                if (dr.Table.Columns.Contains("stock") && dr["stock"] != DBNull.Value)
+                    decimal.TryParse(dr["stock"].ToString(), out stock);
+
+                bool isVariant = false;
+                if (dr.Table.Columns.Contains("is_variant") && dr["is_variant"] != DBNull.Value)
+                    bool.TryParse(dr["is_variant"].ToString(), out isVariant);
+
+                var min = GetMinThreshold(dr);
+                if (min > 0m && stock <= min)
+                {
+                    var back = isVariant ? Color.FromArgb(231, 97, 93) : Color.FromArgb(217, 83, 79);
+                    var fore = Color.White;
+
+                    row.DefaultCellStyle.BackColor = back;
+                    row.DefaultCellStyle.ForeColor = fore;
+                    row.DefaultCellStyle.SelectionBackColor = back;
+                    row.DefaultCellStyle.SelectionForeColor = fore;
+                }
+                else
+                {
+                    row.DefaultCellStyle.BackColor = dataGridView1.DefaultCellStyle.BackColor;
+                    row.DefaultCellStyle.ForeColor = dataGridView1.DefaultCellStyle.ForeColor;
+                    row.DefaultCellStyle.SelectionBackColor = dataGridView1.DefaultCellStyle.SelectionBackColor;
+                    row.DefaultCellStyle.SelectionForeColor = dataGridView1.DefaultCellStyle.SelectionForeColor;
+                }
+            }
+        }
+
+        private static decimal GetMinThreshold(DataRow dr)
+        {
+            if (dr == null) return 0m;
+
+            decimal minStock = 0m;
+            if (dr.Table.Columns.Contains("min_stock") && dr["min_stock"] != DBNull.Value)
+                decimal.TryParse(dr["min_stock"].ToString(), out minStock);
+
+            decimal minQtyBase = 0m;
+            if (dr.Table.Columns.Contains("min_qty") && dr["min_qty"] != DBNull.Value)
+                decimal.TryParse(dr["min_qty"].ToString(), out minQtyBase);
+
+            bool isVariant = false;
+            if (dr.Table.Columns.Contains("is_variant") && dr["is_variant"] != DBNull.Value)
+                bool.TryParse(dr["is_variant"].ToString(), out isVariant);
+
+            if (isVariant)
+            {
+                return minStock;
+            }
+
+            return minStock > 0m ? minStock : minQtyBase;
         }
 
 
@@ -405,6 +472,7 @@ namespace POS_qu
                 EnsureSelectCheckboxColumn();
                 ApplyProfessionalGridStyle();
                 ConfigureGridColumns();
+                ApplyLowStockRowStyles();
                 UpdateSummaryFromGrid();
             };
             dgvManager.LoadPage();
@@ -475,6 +543,8 @@ namespace POS_qu
                 dt.Columns.Add("stock_value", typeof(decimal));
             if (!dt.Columns.Contains("retail_value"))
                 dt.Columns.Add("retail_value", typeof(decimal));
+            if (!dt.Columns.Contains("min_threshold"))
+                dt.Columns.Add("min_threshold", typeof(decimal));
         }
 
         private void UpdateValueColumns(DataTable dt)
@@ -488,11 +558,13 @@ namespace POS_qu
                     decimal stok = row.Table.Columns.Contains("stock") && row["stock"] != DBNull.Value ? Convert.ToDecimal(row["stock"]) : 0m;
                     row["stock_value"] = buy * stok;
                     row["retail_value"] = sell * stok;
+                    row["min_threshold"] = GetMinThreshold(row);
                 }
                 catch
                 {
                     row["stock_value"] = 0m;
                     row["retail_value"] = 0m;
+                    row["min_threshold"] = 0m;
                 }
             }
         }
@@ -1240,6 +1312,18 @@ namespace POS_qu
                 c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 c.FillWeight = 90;
             }
+            if (dataGridView1.Columns.Contains("min_threshold"))
+            {
+                var c = dataGridView1.Columns["min_threshold"];
+                c.HeaderText = "Min Qty";
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                c.DefaultCellStyle.Format = _viewAllUnits ? "N2" : "N0";
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                c.FillWeight = 80;
+                c.Visible = true;
+                if (dataGridView1.Columns.Contains("stock"))
+                    c.DisplayIndex = Math.Min(dataGridView1.Columns["stock"].DisplayIndex + 1, dataGridView1.Columns.Count - 1);
+            }
             if (dataGridView1.Columns.Contains("stock_value"))
             {
                 var c = dataGridView1.Columns["stock_value"];
@@ -1264,7 +1348,7 @@ namespace POS_qu
                 "reserved_stock","unit_id","category_id","supplier_id","note","picture","is_purchasable","is_sellable",
                 "is_note_payment","is_changeprice_p","is_have_bahan","is_box","is_produksi","discount_formula","flag",
                 "created_at","updated_at","category_name","supplier_name","btnVariant",
-                "min_stock","conversion","is_variant","base_stock","base_buy_price"
+                "min_qty","min_stock","conversion","is_variant","base_stock","base_buy_price"
             };
             foreach (var key in hideCols)
             {

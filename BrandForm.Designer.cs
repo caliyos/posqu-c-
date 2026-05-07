@@ -92,13 +92,13 @@ namespace POS_qu
             dgvBrands.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
             dgvBrands.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
             dgvBrands.ColumnHeadersHeight = 45;
-            dgvBrands.Dock = DockStyle.Fill;
-            dgvBrands.Location = new Point(12, 12);
+            dgvBrands.Dock = DockStyle.Bottom;
+            dgvBrands.Location = new Point(12, 53);
             dgvBrands.Name = "dgvBrands";
             dgvBrands.RowHeadersVisible = false;
             dgvBrands.RowHeadersWidth = 62;
             dgvBrands.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvBrands.Size = new Size(914, 428);
+            dgvBrands.Size = new Size(914, 387);
             dgvBrands.TabIndex = 0;
             dgvBrands.RowValidated += dgvBrands_RowValidated;
             dgvBrands.UserDeletingRow += dgvBrands_UserDeletingRow;

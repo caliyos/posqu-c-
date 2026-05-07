@@ -309,6 +309,7 @@ namespace POS_qu
             txtStock.Text = _item.stock.ToString();
             txtBarcode.Text = _item.barcode;
             txtNote.Text = _item.note;
+            txtMinQty.Text = _item.min_qty.ToString();
 
             cmbUnit.SelectedValue = _item.unitid != 0 ? _item.unitid : -1;
             if (cmbUnit.SelectedValue == null || (cmbUnit.SelectedValue is int v && v <= 0))

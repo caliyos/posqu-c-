@@ -26,6 +26,8 @@ namespace POS_qu.Models
         public decimal sell_price { get; set; }
         public string barcode { get; set; }
         public int stock { get; set; }
+
+        public int min_qty { get; set; }
         public int reserved_stock { get; set; }
         public string unit { get; set; }
 
