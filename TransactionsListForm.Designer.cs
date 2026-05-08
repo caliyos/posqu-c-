@@ -93,7 +93,7 @@ namespace POS_qu
             panelHeader.Dock = DockStyle.Top;
             panelHeader.Location = new Point(0, 0);
             panelHeader.Name = "panelHeader";
-            panelHeader.Size = new Size(1400, 130);
+            panelHeader.Size = new Size(1497, 175);
             panelHeader.TabIndex = 0;
             // 
             // btnClose
@@ -103,7 +103,7 @@ namespace POS_qu
             btnClose.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
             btnClose.FlatStyle = FlatStyle.Flat;
             btnClose.Font = new Font("Segoe UI", 10F);
-            btnClose.Location = new Point(1250, 16);
+            btnClose.Location = new Point(1351, 68);
             btnClose.Name = "btnClose";
             btnClose.Size = new Size(130, 42);
             btnClose.TabIndex = 9;
@@ -118,7 +118,7 @@ namespace POS_qu
             btnReturn.FlatStyle = FlatStyle.Flat;
             btnReturn.Font = new Font("Segoe UI", 10F);
             btnReturn.ForeColor = Color.White;
-            btnReturn.Location = new Point(1100, 16);
+            btnReturn.Location = new Point(1201, 68);
             btnReturn.Name = "btnReturn";
             btnReturn.Size = new Size(140, 42);
             btnReturn.TabIndex = 8;
@@ -133,7 +133,7 @@ namespace POS_qu
             btnCancel.FlatStyle = FlatStyle.Flat;
             btnCancel.Font = new Font("Segoe UI", 10F);
             btnCancel.ForeColor = Color.White;
-            btnCancel.Location = new Point(950, 16);
+            btnCancel.Location = new Point(1051, 68);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(140, 42);
             btnCancel.TabIndex = 7;
@@ -147,7 +147,7 @@ namespace POS_qu
             btnExportDetail.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
             btnExportDetail.FlatStyle = FlatStyle.Flat;
             btnExportDetail.Font = new Font("Segoe UI", 10F);
-            btnExportDetail.Location = new Point(780, 68);
+            btnExportDetail.Location = new Point(245, 68);
             btnExportDetail.Name = "btnExportDetail";
             btnExportDetail.Size = new Size(160, 42);
             btnExportDetail.TabIndex = 6;
@@ -161,7 +161,7 @@ namespace POS_qu
             btnExport.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
             btnExport.FlatStyle = FlatStyle.Flat;
             btnExport.Font = new Font("Segoe UI", 10F);
-            btnExport.Location = new Point(650, 68);
+            btnExport.Location = new Point(115, 68);
             btnExport.Name = "btnExport";
             btnExport.Size = new Size(120, 42);
             btnExport.TabIndex = 5;
@@ -175,7 +175,7 @@ namespace POS_qu
             btnExportPdf.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
             btnExportPdf.FlatStyle = FlatStyle.Flat;
             btnExportPdf.Font = new Font("Segoe UI", 10F);
-            btnExportPdf.Location = new Point(520, 68);
+            btnExportPdf.Location = new Point(-15, 68);
             btnExportPdf.Name = "btnExportPdf";
             btnExportPdf.Size = new Size(120, 42);
             btnExportPdf.TabIndex = 4;
@@ -189,7 +189,7 @@ namespace POS_qu
             btnPrintPreview.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
             btnPrintPreview.FlatStyle = FlatStyle.Flat;
             btnPrintPreview.Font = new Font("Segoe UI", 10F);
-            btnPrintPreview.Location = new Point(380, 68);
+            btnPrintPreview.Location = new Point(-155, 68);
             btnPrintPreview.Name = "btnPrintPreview";
             btnPrintPreview.Size = new Size(130, 42);
             btnPrintPreview.TabIndex = 3;
@@ -240,9 +240,9 @@ namespace POS_qu
             panelPeriod.Controls.Add(dtFrom);
             panelPeriod.Controls.Add(lblPeriod);
             panelPeriod.Dock = DockStyle.Bottom;
-            panelPeriod.Location = new Point(0, 84);
+            panelPeriod.Location = new Point(0, 129);
             panelPeriod.Name = "panelPeriod";
-            panelPeriod.Size = new Size(1400, 46);
+            panelPeriod.Size = new Size(1497, 46);
             panelPeriod.TabIndex = 10;
             // 
             // lblSummary
@@ -251,7 +251,7 @@ namespace POS_qu
             lblSummary.ForeColor = Color.FromArgb(70, 70, 70);
             lblSummary.Location = new Point(566, 8);
             lblSummary.Name = "lblSummary";
-            lblSummary.Size = new Size(814, 30);
+            lblSummary.Size = new Size(911, 30);
             lblSummary.TabIndex = 5;
             lblSummary.TextAlign = ContentAlignment.MiddleRight;
             // 
@@ -306,10 +306,10 @@ namespace POS_qu
             // 
             panelBody.Controls.Add(splitContainer);
             panelBody.Dock = DockStyle.Fill;
-            panelBody.Location = new Point(0, 130);
+            panelBody.Location = new Point(0, 175);
             panelBody.Name = "panelBody";
             panelBody.Padding = new Padding(16);
-            panelBody.Size = new Size(1400, 720);
+            panelBody.Size = new Size(1497, 739);
             panelBody.TabIndex = 1;
             // 
             // splitContainer
@@ -327,8 +327,8 @@ namespace POS_qu
             // 
             splitContainer.Panel2.Controls.Add(dgvDetails);
             splitContainer.Panel2.Controls.Add(lblDetail);
-            splitContainer.Size = new Size(1368, 688);
-            splitContainer.SplitterDistance = 487;
+            splitContainer.Size = new Size(1465, 707);
+            splitContainer.SplitterDistance = 499;
             splitContainer.TabIndex = 0;
             // 
             // dgvTransactions
@@ -364,7 +364,7 @@ namespace POS_qu
             dgvTransactions.RowsDefaultCellStyle = dataGridViewCellStyle2;
             dgvTransactions.RowTemplate.Height = 45;
             dgvTransactions.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvTransactions.Size = new Size(1368, 487);
+            dgvTransactions.Size = new Size(1465, 499);
             dgvTransactions.TabIndex = 0;
             // 
             // dgvDetails
@@ -400,7 +400,7 @@ namespace POS_qu
             dgvDetails.RowsDefaultCellStyle = dataGridViewCellStyle4;
             dgvDetails.RowTemplate.Height = 42;
             dgvDetails.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvDetails.Size = new Size(1368, 147);
+            dgvDetails.Size = new Size(1465, 154);
             dgvDetails.TabIndex = 1;
             // 
             // lblDetail
@@ -421,7 +421,7 @@ namespace POS_qu
             AutoScaleDimensions = new SizeF(11F, 28F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(245, 246, 250);
-            ClientSize = new Size(1400, 850);
+            ClientSize = new Size(1497, 914);
             Controls.Add(panelBody);
             Controls.Add(panelHeader);
             Font = new Font("Segoe UI", 10F);

@@ -218,7 +218,9 @@ namespace POS_qu
                 return;
             }
 
-            using var f = new SearchFormItem("");
+            int whId = 0;
+            try { whId = Convert.ToInt32(cmbWarehouse.SelectedValue); } catch { whId = 0; }
+            using var f = new SearchFormItem("", whId);
             if (f.ShowDialog(this) != DialogResult.OK) return;
             if (f.SelectedItem == null) return;
 

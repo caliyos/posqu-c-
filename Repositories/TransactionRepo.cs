@@ -12,10 +12,10 @@ namespace POS_qu.Repositories
     {
         private static bool TableExists(NpgsqlConnection con, NpgsqlTransaction? tran, string tableName)
         {
-            using var cmd = new NpgsqlCommand("SELECT to_regclass(@t);", con, tran);
+            using var cmd = new NpgsqlCommand("SELECT (to_regclass(@t) IS NOT NULL);", con, tran);
             cmd.Parameters.AddWithValue("@t", "public." + tableName);
             var v = cmd.ExecuteScalar();
-            return v != null && v != DBNull.Value;
+            return v != null && v != DBNull.Value && Convert.ToBoolean(v);
         }
 
         private static bool ColumnExists(NpgsqlConnection con, NpgsqlTransaction? tran, string tableName, string columnName)
@@ -24,7 +24,7 @@ namespace POS_qu.Repositories
 SELECT 1
 FROM information_schema.columns
 WHERE table_schema = 'public'
-  AND table_name = @t
+  AND table_name = @t   
   AND column_name = @c
 LIMIT 1
 ", con, tran);

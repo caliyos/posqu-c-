@@ -16,12 +16,18 @@ namespace POS_qu
 
         private DataTable itemsDataTable;
         private DataGridViewManager dgvManager;
+        private readonly int _warehouseId;
+        private readonly string _warehouseName;
 
-        public SearchFormItem(string searchTerm)
+        public SearchFormItem(string searchTerm, int? warehouseId = null)
         {
             InitializeComponent();
             itemController = new ItemController();
-            int activeWarehouseId = SessionUser.GetCurrentUser()?.WarehouseId ?? 1;
+            int activeWarehouseId = warehouseId.HasValue && warehouseId.Value > 0
+                ? warehouseId.Value
+                : (SessionUser.GetCurrentUser()?.WarehouseId ?? 1);
+            _warehouseId = activeWarehouseId;
+            _warehouseName = TryGetWarehouseName(activeWarehouseId);
 
             //// Calculate 90% of the screen width
             //int screenWidth = Screen.PrimaryScreen.WorkingArea.Width;
@@ -34,6 +40,7 @@ namespace POS_qu
             // Dapatkan data dari database
             itemsDataTable = itemController.GetItems(searchTerm, activeWarehouseId);
             EnsureComputedColumns(itemsDataTable);
+            EnsureWarehouseColumns(itemsDataTable);
 
             // DataGridView setup
             dataGridViewSearchResults.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
@@ -101,7 +108,28 @@ namespace POS_qu
                 ConfigureCashierColumns();
             };
             StartPosition = FormStartPosition.CenterScreen;
-            Text = $"Cari Barang — Gudang #{activeWarehouseId}";
+            var whDisplay = string.IsNullOrWhiteSpace(_warehouseName) ? $"Gudang #{_warehouseId}" : _warehouseName;
+            Text = $"Cari Barang — {whDisplay}";
+            if (lblHint != null)
+                lblHint.Text = $"{whDisplay} | Enter/DblClick = pilih item";
+        }
+
+        private static string TryGetWarehouseName(int warehouseId)
+        {
+            if (warehouseId <= 0) return "";
+            try
+            {
+                using var con = new Npgsql.NpgsqlConnection(DbConfig.ConnectionString);
+                con.Open();
+                using var cmd = new Npgsql.NpgsqlCommand("SELECT name FROM warehouses WHERE id = @id LIMIT 1", con);
+                cmd.Parameters.AddWithValue("@id", warehouseId);
+                var v = cmd.ExecuteScalar();
+                return v != null && v != DBNull.Value ? (v.ToString() ?? "") : "";
+            }
+            catch
+            {
+                return "";
+            }
         }
 
         private static void EnsureComputedColumns(DataTable dt)
@@ -110,6 +138,22 @@ namespace POS_qu
             if (!dt.Columns.Contains("stock") || !dt.Columns.Contains("reserved_stock")) return;
             if (dt.Columns.Contains("ready_stock")) return;
             dt.Columns.Add("ready_stock", typeof(int), "stock - reserved_stock");
+        }
+
+        private void EnsureWarehouseColumns(DataTable dt)
+        {
+            if (dt == null) return;
+            if (!dt.Columns.Contains("warehouse_id"))
+                dt.Columns.Add("warehouse_id", typeof(int));
+            if (!dt.Columns.Contains("warehouse_name"))
+                dt.Columns.Add("warehouse_name", typeof(string));
+
+            string whDisplay = string.IsNullOrWhiteSpace(_warehouseName) ? $"#{_warehouseId}" : _warehouseName;
+            foreach (DataRow r in dt.Rows)
+            {
+                r["warehouse_id"] = _warehouseId;
+                r["warehouse_name"] = whDisplay;
+            }
         }
 
         private void ConfigureCashierColumns()
@@ -125,7 +169,14 @@ namespace POS_qu
             Hide("id");
             Hide("unit_id");
             Hide("buy_price");
+            Hide("warehouse_id");
 
+            if (dataGridViewSearchResults.Columns.Contains("warehouse_name"))
+            {
+                var c = dataGridViewSearchResults.Columns["warehouse_name"];
+                c.HeaderText = "Gudang";
+                c.FillWeight = 15;
+            }
             if (dataGridViewSearchResults.Columns.Contains("barcode"))
             {
                 var c = dataGridViewSearchResults.Columns["barcode"];
@@ -175,7 +226,7 @@ namespace POS_qu
                 c.DefaultCellStyle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
             }
 
-            var order = new[] { "barcode", "name", "unit", "sell_price", "stock", "reserved_stock", "ready_stock" };
+            var order = new[] { "warehouse_name", "barcode", "name", "unit", "sell_price", "stock", "reserved_stock", "ready_stock" };
             for (int i = 0; i < order.Length; i++)
             {
                 if (!dataGridViewSearchResults.Columns.Contains(order[i])) continue;
@@ -284,9 +335,9 @@ namespace POS_qu
             string searchTerm = txtSearch.Text;
 
             // Dapatkan data baru dari database
-            int activeWarehouseId = SessionUser.GetCurrentUser()?.WarehouseId ?? 1;
-            itemsDataTable = itemController.GetItems(searchTerm, activeWarehouseId);
+            itemsDataTable = itemController.GetItems(searchTerm, _warehouseId);
             EnsureComputedColumns(itemsDataTable);
+            EnsureWarehouseColumns(itemsDataTable);
 
             // Reset data di DataGridViewManager
             dgvManager.Reset(itemsDataTable);

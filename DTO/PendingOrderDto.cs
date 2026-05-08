@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +12,8 @@ namespace POS_qu.DTO
         public string? CustomerName { get; set; }
         public string? Note { get; set; }
         public string CartSessionCode { get; set; }
+        public int WarehouseId { get; set; }
+        public string? WarehouseName { get; set; }
         public decimal Total { get; set; }
         public decimal Discount { get; set; }
         public DateTime CreatedAt { get; set; }

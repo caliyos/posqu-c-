@@ -33,6 +33,7 @@ namespace POS_qu
         private bool _viewAllUnits;
         private bool _lowStockSort;
         private bool _isLoadingWarehouses;
+        private readonly Dictionary<int, string> _warehouseNameById = new Dictionary<int, string>();
 
         private readonly IActivityService _activityService;
         private readonly IStockAdjustmentService _stockService;
@@ -182,6 +183,7 @@ namespace POS_qu
                 comboDt.Columns.Add("name", typeof(string));
 
                 comboDt.Rows.Add(0, "Semua Gudang");
+                _warehouseNameById.Clear();
 
                 if (dt != null)
                 {
@@ -199,6 +201,8 @@ namespace POS_qu
                         if (id <= 0) continue;
                         string name = r["name"]?.ToString() ?? $"Gudang {id}";
                         comboDt.Rows.Add(id, name);
+                        if (!_warehouseNameById.ContainsKey(id))
+                            _warehouseNameById[id] = name;
                     }
                 }
 
@@ -220,6 +224,53 @@ namespace POS_qu
             finally
             {
                 _isLoadingWarehouses = false;
+            }
+        }
+
+        private void EnsureWarehouseNameColumn(DataTable dt)
+        {
+            if (dt == null) return;
+            if (!dt.Columns.Contains("warehouse_id")) return;
+            if (!dt.Columns.Contains("warehouse_name"))
+                dt.Columns.Add("warehouse_name", typeof(string));
+
+            foreach (DataRow r in dt.Rows)
+            {
+                int wid = 0;
+                try
+                {
+                    if (r["warehouse_id"] != DBNull.Value)
+                        wid = Convert.ToInt32(r["warehouse_id"]);
+                }
+                catch
+                {
+                    wid = 0;
+                }
+
+                string existing = "";
+                try
+                {
+                    existing = r["warehouse_name"] == DBNull.Value ? "" : (r["warehouse_name"]?.ToString() ?? "");
+                }
+                catch
+                {
+                    existing = "";
+                }
+
+                if (wid <= 0)
+                {
+                    if (string.IsNullOrWhiteSpace(existing))
+                        r["warehouse_name"] = "-";
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(existing))
+                    continue;
+
+                if (_warehouseNameById.TryGetValue(wid, out var name) && !string.IsNullOrWhiteSpace(name))
+                    r["warehouse_name"] = name;
+                else
+                    r["warehouse_name"] = $"Gudang {wid}";
             }
         }
 
@@ -517,6 +568,9 @@ namespace POS_qu
             DataTable dt = _viewAllUnits ? GetAllProductsExpandedByUnitVariant() : GetBaseProductsForCurrentWarehouse();
             if (dt != null && _lowStockSort)
                 dt = SortLowStock(dt);
+
+            if (dt != null)
+                EnsureWarehouseNameColumn(dt);
             _dtFull = dt?.Copy();
 
             if (dt == null)
@@ -570,18 +624,7 @@ namespace POS_qu
 
             if (wid <= 0)
             {
-                var dtAll = _productService.GetAllProducts();
-                if (dtAll != null)
-                {
-                    if (!dtAll.Columns.Contains("warehouse_id")) dtAll.Columns.Add("warehouse_id", typeof(int));
-                    if (!dtAll.Columns.Contains("warehouse_name")) dtAll.Columns.Add("warehouse_name", typeof(string));
-                    foreach (DataRow r in dtAll.Rows)
-                    {
-                        r["warehouse_id"] = 0;
-                        r["warehouse_name"] = "Semua Gudang";
-                    }
-                }
-                return dtAll;
+                return GetBaseProductsForAllWarehouses();
             }
 
             try
@@ -660,6 +703,88 @@ namespace POS_qu
                     {
                         r["warehouse_id"] = 0;
                         r["warehouse_name"] = "Semua Gudang";
+                    }
+                }
+                return dt;
+            }
+        }
+
+        private DataTable GetBaseProductsForAllWarehouses()
+        {
+            try
+            {
+                using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+                con.Open();
+
+                string sql = @"
+SELECT 
+    items.id,
+    items.name,
+    items.barcode,
+    items.buy_price,
+    items.sell_price,
+    CAST(COALESCE(s.qty, 0) AS NUMERIC(18,4)) AS stock,
+    CAST(COALESCE(s.min_qty, 0) AS NUMERIC(18,4)) AS min_qty,
+    CAST(COALESCE(s.reserved_qty, 0) AS NUMERIC(18,4)) AS reserved_qty,
+    items.valuation_method,
+    items.unit AS unit_id,
+    units.name AS unit_name,
+    CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
+    items.category_id,
+    categories.name AS category_name,
+    items.note,
+    items.picture,
+    items.is_inventory_p,
+    items.is_purchasable,
+    items.is_sellable,
+    items.is_note_payment,
+    items.is_changeprice_p,
+    items.is_have_bahan,
+    items.is_box,
+    items.is_produksi,
+    items.discount_formula,
+    items.supplier_id,
+    suppliers.name AS supplier_name,
+    items.flag,
+    items.created_at,
+    items.updated_at,
+    COALESCE(w.id, 0) AS warehouse_id,
+    COALESCE(w.name, '-') AS warehouse_name
+FROM items
+LEFT JOIN stocks s ON s.item_id = items.id
+LEFT JOIN warehouses w ON w.id = s.warehouse_id
+LEFT JOIN LATERAL (
+    SELECT iv.minqty
+    FROM unit_variants iv
+    WHERE iv.item_id = items.id
+      AND iv.is_active = TRUE
+      AND iv.is_base_unit = TRUE
+    LIMIT 1
+) uvbase ON TRUE
+LEFT JOIN units       ON items.unit = units.id
+LEFT JOIN categories  ON items.category_id = categories.id
+LEFT JOIN suppliers   ON items.supplier_id = suppliers.id
+WHERE items.deleted_at IS NULL
+  AND (w.is_active = TRUE OR w.id IS NULL)
+ORDER BY items.id ASC, COALESCE(w.id, 0) ASC
+";
+
+                using var da = new NpgsqlDataAdapter(sql, con);
+                var dt = new DataTable();
+                da.Fill(dt);
+                return dt;
+            }
+            catch
+            {
+                var dt = _productService.GetAllProducts();
+                if (dt != null)
+                {
+                    if (!dt.Columns.Contains("warehouse_id")) dt.Columns.Add("warehouse_id", typeof(int));
+                    if (!dt.Columns.Contains("warehouse_name")) dt.Columns.Add("warehouse_name", typeof(string));
+                    foreach (DataRow r in dt.Rows)
+                    {
+                        r["warehouse_id"] = 0;
+                        r["warehouse_name"] = "-";
                     }
                 }
                 return dt;

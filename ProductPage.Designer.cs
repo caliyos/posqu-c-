@@ -60,8 +60,8 @@ namespace POS_qu
             btnLowStock = new Button();
             btnPrintBarcode = new Button();
             panelSummary = new Panel();
-            lblWarehouseFilter = new Label();
             cmbWarehouseFilter = new ComboBox();
+            lblWarehouseFilter = new Label();
             label9 = new Label();
             label10 = new Label();
             quickBar = new Panel();
@@ -70,8 +70,8 @@ namespace POS_qu
             btnDelete = new Button();
             btnExportQuick = new Button();
             btnImportQuick = new Button();
-            chkSelectAll = new CheckBox();
             btnStockAdjs = new Button();
+            chkSelectAll = new CheckBox();
             btnRefresh = new Button();
             btnImportExcel = new Button();
             btnExportExcel = new Button();
@@ -138,7 +138,7 @@ namespace POS_qu
             lblPagingInfo.Font = new Font("Segoe UI", 10F);
             lblPagingInfo.Location = new Point(15, 20);
             lblPagingInfo.Name = "lblPagingInfo";
-            lblPagingInfo.Size = new Size(202, 28);
+            lblPagingInfo.Size = new Size(143, 19);
             lblPagingInfo.TabIndex = 0;
             lblPagingInfo.Text = "Menampilkan 0 dari 0";
             // 
@@ -148,7 +148,7 @@ namespace POS_qu
             cmbPageSize.Font = new Font("Segoe UI", 10F);
             cmbPageSize.Location = new Point(180, 17);
             cmbPageSize.Name = "cmbPageSize";
-            cmbPageSize.Size = new Size(80, 36);
+            cmbPageSize.Size = new Size(80, 25);
             cmbPageSize.TabIndex = 1;
             cmbPageSize.SelectedIndexChanged += cmbPageSize_SelectedIndexChanged;
             // 
@@ -234,7 +234,7 @@ namespace POS_qu
             chkActionSelectAll.Font = new Font("Segoe UI", 10F);
             chkActionSelectAll.Location = new Point(15, 20);
             chkActionSelectAll.Name = "chkActionSelectAll";
-            chkActionSelectAll.Size = new Size(139, 32);
+            chkActionSelectAll.Size = new Size(98, 23);
             chkActionSelectAll.TabIndex = 0;
             chkActionSelectAll.Text = "Pilih Semua";
             chkActionSelectAll.CheckedChanged += chkActionSelectAll_CheckedChanged2;
@@ -245,7 +245,7 @@ namespace POS_qu
             lblCari.Font = new Font("Segoe UI", 10F);
             lblCari.Location = new Point(130, 20);
             lblCari.Name = "lblCari";
-            lblCari.Size = new Size(50, 28);
+            lblCari.Size = new Size(36, 19);
             lblCari.TabIndex = 1;
             lblCari.Text = "Cari:";
             // 
@@ -254,7 +254,7 @@ namespace POS_qu
             txtActionSearch.Font = new Font("Segoe UI", 11F);
             txtActionSearch.Location = new Point(175, 17);
             txtActionSearch.Name = "txtActionSearch";
-            txtActionSearch.Size = new Size(250, 37);
+            txtActionSearch.Size = new Size(250, 27);
             txtActionSearch.TabIndex = 2;
             txtActionSearch.TextChanged += txtActionSearch_TextChanged;
             // 
@@ -336,17 +336,6 @@ namespace POS_qu
             panelSummary.Size = new Size(1200, 60);
             panelSummary.TabIndex = 1;
             // 
-            // lblWarehouseFilter
-            // 
-            lblWarehouseFilter.Anchor = AnchorStyles.Top | AnchorStyles.Right;
-            lblWarehouseFilter.AutoSize = true;
-            lblWarehouseFilter.Font = new Font("Segoe UI", 10F);
-            lblWarehouseFilter.Location = new Point(840, 16);
-            lblWarehouseFilter.Name = "lblWarehouseFilter";
-            lblWarehouseFilter.Size = new Size(77, 28);
-            lblWarehouseFilter.TabIndex = 2;
-            lblWarehouseFilter.Text = "Gudang:";
-            // 
             // cmbWarehouseFilter
             // 
             cmbWarehouseFilter.Anchor = AnchorStyles.Top | AnchorStyles.Right;
@@ -355,8 +344,19 @@ namespace POS_qu
             cmbWarehouseFilter.FormattingEnabled = true;
             cmbWarehouseFilter.Location = new Point(920, 12);
             cmbWarehouseFilter.Name = "cmbWarehouseFilter";
-            cmbWarehouseFilter.Size = new Size(265, 36);
+            cmbWarehouseFilter.Size = new Size(265, 25);
             cmbWarehouseFilter.TabIndex = 3;
+            // 
+            // lblWarehouseFilter
+            // 
+            lblWarehouseFilter.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            lblWarehouseFilter.AutoSize = true;
+            lblWarehouseFilter.Font = new Font("Segoe UI", 10F);
+            lblWarehouseFilter.Location = new Point(840, 16);
+            lblWarehouseFilter.Name = "lblWarehouseFilter";
+            lblWarehouseFilter.Size = new Size(61, 19);
+            lblWarehouseFilter.TabIndex = 2;
+            lblWarehouseFilter.Text = "Gudang:";
             // 
             // label9
             // 
@@ -364,7 +364,7 @@ namespace POS_qu
             label9.Font = new Font("Segoe UI", 10F);
             label9.Location = new Point(10, 35);
             label9.Name = "label9";
-            label9.Size = new Size(282, 28);
+            label9.Size = new Size(198, 19);
             label9.TabIndex = 0;
             label9.Text = "Nilai Stok (HPP): 0 | Nilai Jual: 0";
             // 
@@ -374,7 +374,7 @@ namespace POS_qu
             label10.Font = new Font("Segoe UI", 11F, FontStyle.Bold);
             label10.Location = new Point(10, 10);
             label10.Name = "label10";
-            label10.Size = new Size(324, 30);
+            label10.Size = new Size(222, 20);
             label10.TabIndex = 1;
             label10.Text = "Total Item: 0 | Jumlah Stock: 0";
             // 
@@ -513,7 +513,7 @@ namespace POS_qu
             // 
             txtSearch.Location = new Point(0, 0);
             txtSearch.Name = "txtSearch";
-            txtSearch.Size = new Size(100, 31);
+            txtSearch.Size = new Size(100, 23);
             txtSearch.TabIndex = 0;
             // 
             // lblSumItems

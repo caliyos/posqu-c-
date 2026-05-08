@@ -36,7 +36,7 @@ namespace POS_qu
             panelHeader.Dock = DockStyle.Top;
             panelHeader.Location = new Point(0, 0);
             panelHeader.Name = "panelHeader";
-            panelHeader.Size = new Size(938, 70);
+            panelHeader.Size = new Size(939, 70);
             panelHeader.TabIndex = 100;
             // 
             // btnClose
@@ -46,7 +46,7 @@ namespace POS_qu
             btnClose.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
             btnClose.FlatStyle = FlatStyle.Flat;
             btnClose.Font = new Font("Segoe UI", 10F);
-            btnClose.Location = new Point(778, 15);
+            btnClose.Location = new Point(779, 15);
             btnClose.Name = "btnClose";
             btnClose.Size = new Size(140, 40);
             btnClose.TabIndex = 1;
@@ -71,15 +71,15 @@ namespace POS_qu
             panelContent.Dock = DockStyle.Fill;
             panelContent.Location = new Point(0, 70);
             panelContent.Name = "panelContent";
-            panelContent.Padding = new Padding(12);
-            panelContent.Size = new Size(938, 452);
+            panelContent.Padding = new Padding(11, 12, 11, 12);
+            panelContent.Size = new Size(939, 452);
             panelContent.TabIndex = 101;
             // 
             // lblInfo
             // 
             lblInfo.AutoSize = true;
             lblInfo.Dock = DockStyle.Top;
-            lblInfo.Location = new Point(12, 12);
+            lblInfo.Location = new Point(11, 12);
             lblInfo.Name = "lblInfo";
             lblInfo.Size = new Size(809, 25);
             lblInfo.TabIndex = 1;
@@ -93,12 +93,12 @@ namespace POS_qu
             dgvBrands.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
             dgvBrands.ColumnHeadersHeight = 45;
             dgvBrands.Dock = DockStyle.Bottom;
-            dgvBrands.Location = new Point(12, 53);
+            dgvBrands.Location = new Point(11, 53);
             dgvBrands.Name = "dgvBrands";
             dgvBrands.RowHeadersVisible = false;
             dgvBrands.RowHeadersWidth = 62;
             dgvBrands.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvBrands.Size = new Size(914, 387);
+            dgvBrands.Size = new Size(917, 387);
             dgvBrands.TabIndex = 0;
             dgvBrands.RowValidated += dgvBrands_RowValidated;
             dgvBrands.UserDeletingRow += dgvBrands_UserDeletingRow;
@@ -108,7 +108,7 @@ namespace POS_qu
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(245, 246, 250);
-            ClientSize = new Size(938, 522);
+            ClientSize = new Size(939, 522);
             Controls.Add(panelContent);
             Controls.Add(panelHeader);
             Name = "BrandForm";

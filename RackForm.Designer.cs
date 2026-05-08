@@ -36,7 +36,7 @@ namespace POS_qu
             panelHeader.Dock = DockStyle.Top;
             panelHeader.Location = new Point(0, 0);
             panelHeader.Name = "panelHeader";
-            panelHeader.Size = new Size(951, 79);
+            panelHeader.Size = new Size(951, 78);
             panelHeader.TabIndex = 100;
             // 
             // btnClose
@@ -69,17 +69,17 @@ namespace POS_qu
             panelContent.Controls.Add(lblInfo);
             panelContent.Controls.Add(dgvRacks);
             panelContent.Dock = DockStyle.Fill;
-            panelContent.Location = new Point(0, 79);
+            panelContent.Location = new Point(0, 78);
             panelContent.Name = "panelContent";
-            panelContent.Padding = new Padding(12);
-            panelContent.Size = new Size(951, 541);
+            panelContent.Padding = new Padding(11, 12, 11, 12);
+            panelContent.Size = new Size(951, 542);
             panelContent.TabIndex = 101;
             // 
             // lblInfo
             // 
             lblInfo.AutoSize = true;
             lblInfo.Dock = DockStyle.Top;
-            lblInfo.Location = new Point(12, 12);
+            lblInfo.Location = new Point(11, 12);
             lblInfo.Name = "lblInfo";
             lblInfo.Size = new Size(793, 25);
             lblInfo.TabIndex = 1;
@@ -93,12 +93,12 @@ namespace POS_qu
             dgvRacks.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
             dgvRacks.ColumnHeadersHeight = 45;
             dgvRacks.Dock = DockStyle.Bottom;
-            dgvRacks.Location = new Point(12, 55);
+            dgvRacks.Location = new Point(11, 57);
             dgvRacks.Name = "dgvRacks";
             dgvRacks.RowHeadersVisible = false;
             dgvRacks.RowHeadersWidth = 62;
             dgvRacks.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvRacks.Size = new Size(927, 474);
+            dgvRacks.Size = new Size(929, 473);
             dgvRacks.TabIndex = 0;
             dgvRacks.RowValidated += dgvRacks_RowValidated;
             dgvRacks.UserDeletingRow += dgvRacks_UserDeletingRow;

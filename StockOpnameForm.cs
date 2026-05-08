@@ -325,7 +325,7 @@ namespace POS_qu
                 return;
             }
 
-            using var f = new SearchFormItem("");
+            using var f = new SearchFormItem("", GetSelectedWarehouseId());
             if (f.ShowDialog(this) != DialogResult.OK) return;
             if (f.SelectedItem == null || f.SelectedItem.id <= 0) return;
 

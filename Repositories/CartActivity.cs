@@ -102,6 +102,8 @@ LIMIT 1";
 
         public Item GetSingleItemByName(string search)
         {
+            search ??= "";
+            string exact = search.Trim();
             string sql = @"
 SELECT 
     i.id, 
@@ -133,8 +135,12 @@ SELECT
 FROM items i
 LEFT JOIN units u ON u.id = i.unit
 WHERE i.deleted_at IS NULL
-AND i.name ILIKE @search
-ORDER BY COALESCE((SELECT SUM(qty) FROM stocks WHERE item_id = i.id), 0) > 0 DESC, i.name
+AND (
+    i.name ILIKE @search
+    OR i.barcode ILIKE @search
+    OR i.barcode = @exact
+)
+ORDER BY (i.barcode = @exact) DESC, COALESCE((SELECT SUM(qty) FROM stocks WHERE item_id = i.id), 0) > 0 DESC, i.name
 LIMIT 1";
 
             using var con = new NpgsqlConnection(DbConfig.ConnectionString);
@@ -142,6 +148,7 @@ LIMIT 1";
 
             using var cmd = new NpgsqlCommand(sql, con);
             cmd.Parameters.AddWithValue("@search", "%" + search + "%");
+            cmd.Parameters.AddWithValue("@exact", exact);
 
             using var dr = cmd.ExecuteReader();
 
@@ -1342,20 +1349,93 @@ WHERE cart_session_code = @cartCode AND terminal_id = @terminalId AND cashier_id
             using var con = new NpgsqlConnection(DbConfig.ConnectionString);
             con.Open();
 
-            string sql = @"
+            bool hasWarehouse = false;
+            bool hasWarehousesTable = false;
+            using (var chk = new NpgsqlCommand(@"
+SELECT 1
+FROM information_schema.columns
+WHERE table_schema='public' AND table_name='pending_transactions' AND column_name='warehouse_id'
+LIMIT 1
+", con))
+            {
+                hasWarehouse = chk.ExecuteScalar() != null;
+            }
+            if (hasWarehouse)
+            {
+                using var chkWh = new NpgsqlCommand("SELECT (to_regclass('public.warehouses') IS NOT NULL);", con);
+                var v = chkWh.ExecuteScalar();
+                hasWarehousesTable = v != null && v != DBNull.Value && Convert.ToBoolean(v);
+            }
+
+            string sql;
+            if (hasWarehouse && hasWarehousesTable)
+            {
+                sql = @"
+SELECT
+    po.po_id,
+    po.po_cart_session_code,
+    po.customer_name,
+    po.note,
+    po.total,
+    po.global_discount,
+    po.created_at,
+    CASE WHEN COUNT(DISTINCT pt.warehouse_id) = 1 THEN MAX(pt.warehouse_id) ELSE 0 END AS warehouse_id,
+    CASE WHEN COUNT(DISTINCT pt.warehouse_id) = 1 THEN COALESCE(MAX(w.name),'') ELSE 'MIXED' END AS warehouse_name
+FROM pending_orders po
+LEFT JOIN pending_transactions pt
+    ON pt.cart_session_code = po.po_cart_session_code
+   AND pt.terminal_id = po.terminal_id
+   AND pt.cashier_id = po.cashier_id
+LEFT JOIN warehouses w ON w.id = pt.warehouse_id
+WHERE po.terminal_id = @terminalId
+  AND po.cashier_id = @cashierId
+  AND po.status = 'draft'
+GROUP BY po.po_id, po.po_cart_session_code, po.customer_name, po.note, po.total, po.global_discount, po.created_at
+ORDER BY po.created_at DESC";
+            }
+            else if (hasWarehouse)
+            {
+                sql = @"
+SELECT
+    po.po_id,
+    po.po_cart_session_code,
+    po.customer_name,
+    po.note,
+    po.total,
+    po.global_discount,
+    po.created_at,
+    CASE WHEN COUNT(DISTINCT pt.warehouse_id) = 1 THEN MAX(pt.warehouse_id) ELSE 0 END AS warehouse_id,
+    CASE WHEN COUNT(DISTINCT pt.warehouse_id) = 1 THEN '' ELSE 'MIXED' END AS warehouse_name
+FROM pending_orders po
+LEFT JOIN pending_transactions pt
+    ON pt.cart_session_code = po.po_cart_session_code
+   AND pt.terminal_id = po.terminal_id
+   AND pt.cashier_id = po.cashier_id
+WHERE po.terminal_id = @terminalId
+  AND po.cashier_id = @cashierId
+  AND po.status = 'draft'
+GROUP BY po.po_id, po.po_cart_session_code, po.customer_name, po.note, po.total, po.global_discount, po.created_at
+ORDER BY po.created_at DESC";
+            }
+            else
+            {
+                sql = @"
 SELECT 
     po_id,
     po_cart_session_code,
-    customer_name,   -- tambahin
-    note,            -- tambahin
+    customer_name,
+    note,
     total,
     global_discount,
-    created_at
+    created_at,
+    0 AS warehouse_id,
+    '' AS warehouse_name
 FROM pending_orders
 WHERE terminal_id = @terminalId
   AND cashier_id = @cashierId
   AND status = 'draft'
 ORDER BY created_at DESC";
+            }
 
             using var cmd = new NpgsqlCommand(sql, con);
             cmd.Parameters.AddWithValue("@terminalId", terminalId);
@@ -1381,7 +1461,9 @@ ORDER BY created_at DESC";
 
                     Total = reader.GetDecimal(4),
                     Discount = reader.GetDecimal(5),
-                    CreatedAt = reader.GetDateTime(6)
+                    CreatedAt = reader.GetDateTime(6),
+                    WarehouseId = reader.IsDBNull(7) ? 0 : reader.GetInt32(7),
+                    WarehouseName = reader.IsDBNull(8) ? null : reader.GetString(8)
                 });
             }
 
@@ -1411,6 +1493,7 @@ LIMIT 1";
             using var con = new NpgsqlConnection(DbConfig.ConnectionString);
             con.Open();
             bool hasWarehouse = false;
+            bool hasWarehousesTable = false;
             using (var chk = new NpgsqlCommand(@"
 SELECT 1
 FROM information_schema.columns
@@ -1421,21 +1504,48 @@ LIMIT 1
                 hasWarehouse = chk.ExecuteScalar() != null;
             }
 
-            string sql = hasWarehouse
-                ? @"
+            if (hasWarehouse)
+            {
+                using var chkWh = new NpgsqlCommand("SELECT (to_regclass('public.warehouses') IS NOT NULL);", con);
+                var v = chkWh.ExecuteScalar();
+                hasWarehousesTable = v != null && v != DBNull.Value && Convert.ToBoolean(v);
+            }
+
+            string sql;
+            if (hasWarehouse && hasWarehousesTable)
+            {
+                sql = @"
+SELECT 
+    pt.cart_session_code,
+    CASE WHEN COUNT(DISTINCT pt.warehouse_id) = 1 THEN MAX(pt.warehouse_id) ELSE 0 END AS warehouse_id,
+    CASE WHEN COUNT(DISTINCT pt.warehouse_id) = 1 THEN COALESCE(MAX(w.name),'') ELSE 'MIXED' END AS warehouse_name,
+    COUNT(*) AS total_items,
+    COALESCE(SUM(pt.total),0) AS grand_total,
+    MAX(pt.updated_at) AS last_update
+FROM pending_transactions pt
+LEFT JOIN warehouses w ON w.id = pt.warehouse_id
+WHERE pt.cashier_id = @cashierId
+GROUP BY pt.cart_session_code
+ORDER BY last_update DESC";
+            }
+            else if (hasWarehouse)
+            {
+                sql = @"
 SELECT 
     cart_session_code,
-    warehouse_id,
-    COALESCE(w.name,'') AS warehouse_name,
+    CASE WHEN COUNT(DISTINCT warehouse_id) = 1 THEN MAX(warehouse_id) ELSE 0 END AS warehouse_id,
+    CASE WHEN COUNT(DISTINCT warehouse_id) = 1 THEN '' ELSE 'MIXED' END AS warehouse_name,
     COUNT(*) AS total_items,
     COALESCE(SUM(total),0) AS grand_total,
     MAX(updated_at) AS last_update
 FROM pending_transactions
-LEFT JOIN warehouses w ON w.id = pending_transactions.warehouse_id
 WHERE cashier_id = @cashierId
-GROUP BY cart_session_code, warehouse_id, w.name
-ORDER BY last_update DESC"
-                : @"
+GROUP BY cart_session_code
+ORDER BY last_update DESC";
+            }
+            else
+            {
+                sql = @"
 SELECT 
     cart_session_code,
     COUNT(*) AS total_items,
@@ -1445,6 +1555,7 @@ FROM pending_transactions
 WHERE cashier_id = @cashierId
 GROUP BY cart_session_code
 ORDER BY last_update DESC";
+            }
             using var cmd = new NpgsqlCommand(sql, con);
             cmd.Parameters.AddWithValue("@cashierId", cashierId);
             using var da = new NpgsqlDataAdapter(cmd);

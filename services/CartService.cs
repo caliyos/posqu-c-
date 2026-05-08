@@ -593,6 +593,35 @@ WHERE po_id = @poId";
 
         // 4️⃣ Build invoice dari pending_transactions
         var invoice = InvoiceBuilder.FromPending(rows);
+        invoice.CartSessionCode = cartCode;
+        invoice.IsFromDraft = 1;
+        invoice.Status = "draft";
+
+        try
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+            using var cmd = new NpgsqlCommand(@"
+SELECT COALESCE(customer_name,''), COALESCE(note,'')
+FROM pending_orders
+WHERE po_id = @id
+LIMIT 1
+", conn);
+            cmd.Parameters.AddWithValue("@id", poId);
+            using var r = cmd.ExecuteReader();
+            if (r.Read())
+            {
+                var customer = r.GetString(0);
+                var note = r.GetString(1);
+                if (!string.IsNullOrWhiteSpace(customer))
+                    invoice.CustomerName = customer;
+                if (!string.IsNullOrWhiteSpace(note))
+                    invoice.GlobalNote = note;
+            }
+        }
+        catch
+        {
+        }
 
         return invoice;
     }

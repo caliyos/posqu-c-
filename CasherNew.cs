@@ -3,11 +3,17 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Printing;
+using System.IO;
 using System.Linq;
 //using System.Reflection.Emit;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Diagnostics;
+using System.Drawing.Imaging;
+using PdfSharp.Drawing;
+using PdfSharp.Pdf;
 using Npgsql;
 using POS_qu.Controllers;
 using POS_qu.Core;
@@ -700,8 +706,18 @@ WHERE id=@id;", conn, tran);
         private void OpenSearchShortcut()
         {
             Item selectedItem = null;
+            int wid = SessionUser.GetCurrentUser()?.WarehouseId ?? 1;
+            try
+            {
+                if (cmbWarehouse?.SelectedValue != null)
+                    wid = Convert.ToInt32(cmbWarehouse.SelectedValue);
+            }
+            catch
+            {
+                wid = SessionUser.GetCurrentUser()?.WarehouseId ?? 1;
+            }
 
-            using (var search = new SearchFormItem(""))
+            using (var search = new SearchFormItem("", wid))
             {
                 if (search.ShowDialog(this) != DialogResult.OK || search.SelectedItem == null)
                     return;
@@ -1012,7 +1028,7 @@ WHERE deleted_at IS NULL
 
         private void btnPendingList_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Daftar Pending Cart sementara tidak tersedia.", "Info");
+            OpenPendingCartPicker();
         }
         private void BtnCustomTransaction_Click(object? sender, EventArgs e)
         {
@@ -1097,6 +1113,135 @@ WHERE deleted_at IS NULL
             }
             else
             {
+                OpenPendingCartPicker(dt);
+            }
+        }
+
+        private void OpenPendingCartPicker(DataTable? cached = null)
+        {
+            try
+            {
+                var session = SessionUser.GetCurrentUser();
+                var repo = new CartActivity();
+                var dt = cached ?? repo.GetPendingCartsByCashier(session.UserId);
+                if (dt == null || dt.Rows.Count == 0)
+                {
+                    MessageBox.Show("Tidak ada pending cart.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                using var modal = new Form
+                {
+                    Text = "Daftar Pending Cart",
+                    StartPosition = FormStartPosition.CenterParent,
+                    Size = new Size(820, 520),
+                    FormBorderStyle = FormBorderStyle.FixedDialog,
+                    MaximizeBox = false,
+                    MinimizeBox = false
+                };
+
+                var grid = new DataGridView
+                {
+                    Dock = DockStyle.Fill,
+                    ReadOnly = true,
+                    SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                    MultiSelect = false,
+                    AllowUserToAddRows = false,
+                    RowHeadersVisible = false,
+                    AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                    BackgroundColor = Color.White,
+                    BorderStyle = BorderStyle.None,
+                    Font = new Font("Segoe UI", 10F)
+                };
+                grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(0, 122, 255);
+                grid.DefaultCellStyle.SelectionForeColor = Color.White;
+
+                grid.DataSource = dt;
+                if (grid.Columns.Contains("cart_session_code")) grid.Columns["cart_session_code"].HeaderText = "Kode";
+                if (grid.Columns.Contains("warehouse_name")) grid.Columns["warehouse_name"].HeaderText = "Gudang";
+                if (grid.Columns.Contains("total_items")) grid.Columns["total_items"].HeaderText = "Items";
+                if (grid.Columns.Contains("grand_total"))
+                {
+                    grid.Columns["grand_total"].HeaderText = "Total";
+                    grid.Columns["grand_total"].DefaultCellStyle.Format = "N0";
+                    grid.Columns["grand_total"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                }
+                if (grid.Columns.Contains("last_update"))
+                {
+                    grid.Columns["last_update"].HeaderText = "Update";
+                    grid.Columns["last_update"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm";
+                }
+                if (grid.Columns.Contains("warehouse_id")) grid.Columns["warehouse_id"].Visible = false;
+
+                var footer = new Panel { Dock = DockStyle.Bottom, Height = 70, Padding = new Padding(12), BackColor = Color.White };
+                var btnLoad = new Button
+                {
+                    Text = "Lanjutkan",
+                    Width = 140,
+                    Height = 42,
+                    BackColor = Color.FromArgb(0, 122, 255),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Anchor = AnchorStyles.Right | AnchorStyles.Top,
+                    Left = 820 - 12 - 140 - 110 - 10,
+                    Top = 14
+                };
+                btnLoad.FlatAppearance.BorderSize = 0;
+                var btnCancel = new Button
+                {
+                    Text = "Tutup",
+                    Width = 110,
+                    Height = 42,
+                    BackColor = Color.FromArgb(108, 117, 125),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Anchor = AnchorStyles.Right | AnchorStyles.Top,
+                    Left = 820 - 12 - 110,
+                    Top = 14
+                };
+                btnCancel.FlatAppearance.BorderSize = 0;
+
+                void LoadSelected()
+                {
+                    if (grid.SelectedRows.Count == 0) return;
+                    var r = grid.SelectedRows[0];
+                    string code = r.Cells["cart_session_code"]?.Value?.ToString() ?? "";
+                    if (string.IsNullOrWhiteSpace(code)) return;
+                    int wid = 1;
+                    try
+                    {
+                        if (dt.Columns.Contains("warehouse_id") && r.Cells["warehouse_id"]?.Value != DBNull.Value)
+                            wid = Convert.ToInt32(r.Cells["warehouse_id"].Value);
+                    }
+                    catch
+                    {
+                        wid = 1;
+                    }
+                    modal.DialogResult = DialogResult.OK;
+                    modal.Tag = (code, wid);
+                    modal.Close();
+                }
+
+                btnLoad.Click += (_, __) => LoadSelected();
+                btnCancel.Click += (_, __) => { modal.DialogResult = DialogResult.Cancel; modal.Close(); };
+                grid.CellDoubleClick += (_, __) => LoadSelected();
+
+                footer.Controls.Add(btnLoad);
+                footer.Controls.Add(btnCancel);
+                modal.Controls.Add(grid);
+                modal.Controls.Add(footer);
+
+                if (grid.Rows.Count > 0) grid.Rows[0].Selected = true;
+
+                if (modal.ShowDialog(this) != DialogResult.OK) return;
+                if (modal.Tag is ValueTuple<string, int> pick)
+                {
+                    ResumeCartByCode(pick.Item1, pick.Item2);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Gagal membuka pending cart: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
@@ -1654,10 +1799,12 @@ WHERE deleted_at IS NULL
 
         private void RenderInvoice(InvoiceData invoice)
         {
+            string whLabel = GetInvoiceWarehouseLabel(invoice);
             BindingSource bs = new BindingSource();
             bs.DataSource = invoice.Items.Select(i => new
             {
                 PtId = i.pt_id,
+                Gudang = whLabel,
                 i.Name,
                 i.Qty,
                 Satuan =  i.Unit ,
@@ -1671,9 +1818,32 @@ WHERE deleted_at IS NULL
             dataGridViewCart4.DataSource = bs;
             if (dataGridViewCart4.Columns.Contains("PtId"))
                 dataGridViewCart4.Columns["PtId"].Visible = false;
+            if (dataGridViewCart4.Columns.Contains("Gudang"))
+            {
+                dataGridViewCart4.Columns["Gudang"].HeaderText = "Gudang";
+                dataGridViewCart4.Columns["Gudang"].Width = 140;
+            }
             dataGridViewCart4.Columns["Harga"].DefaultCellStyle.Format = "N0";
             dataGridViewCart4.Columns["Total"].DefaultCellStyle.Format = "N0";
             labelNumOfItems.Text = invoice.Items.Sum(x => x.Qty).ToString();
+        }
+
+        private string GetInvoiceWarehouseLabel(InvoiceData invoice)
+        {
+            string name = "";
+            try { name = cmbWarehouse?.Text ?? ""; } catch { name = ""; }
+            int wid = 0;
+            try
+            {
+                if (invoice != null && invoice.WarehouseId > 0) wid = invoice.WarehouseId;
+                else wid = SessionUser.GetCurrentUser()?.WarehouseId ?? 1;
+            }
+            catch
+            {
+                wid = 1;
+            }
+            if (!string.IsNullOrWhiteSpace(name)) return name;
+            return $"#{wid}";
         }
 
         private void dataGridViewCart4_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
@@ -1974,6 +2144,7 @@ WHERE deleted_at IS NULL
             if (showTelepon && !string.IsNullOrEmpty(telepon)) Add(telepon);
             Add(new string('-', 32));
             Add($"Terminal : {terminal}");
+            Add($"Gudang   : {GetWarehouseLabelFromInvoice(invoice)}");
             Add($"Kasir    : {user}");
             Add($"Shift    : {shift}");
             Add($"Tanggal  : {DateTime.Now:yyyy-MM-dd}");
@@ -2022,6 +2193,27 @@ WHERE deleted_at IS NULL
             if (showFooter && !string.IsNullOrEmpty(footer)) Add(footer);
 
             return string.Join(Environment.NewLine, lines);
+        }
+
+        private static string GetWarehouseLabelFromInvoice(InvoiceData invoice)
+        {
+            int wid = 0;
+            try { wid = invoice != null && invoice.WarehouseId > 0 ? invoice.WarehouseId : 0; } catch { wid = 0; }
+            if (wid <= 0) return "-";
+            try
+            {
+                using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+                con.Open();
+                using var cmd = new NpgsqlCommand("SELECT name FROM warehouses WHERE id = @id LIMIT 1", con);
+                cmd.Parameters.AddWithValue("@id", wid);
+                var v = cmd.ExecuteScalar();
+                var name = v != null && v != DBNull.Value ? (v.ToString() ?? "") : "";
+                if (!string.IsNullOrWhiteSpace(name)) return name;
+            }
+            catch
+            {
+            }
+            return "#" + wid;
         }
 
 
@@ -2253,22 +2445,36 @@ WHERE deleted_at IS NULL
             using (Form modal = new Form())
             {
                 modal.Text = "Pilih Draft Transaksi";
-                modal.Size = new Size(900, 600);
                 modal.StartPosition = FormStartPosition.CenterParent;
-                modal.FormBorderStyle = FormBorderStyle.FixedDialog;
-                modal.MaximizeBox = false;
-                modal.MinimizeBox = false;
+                modal.FormBorderStyle = FormBorderStyle.Sizable;
+                modal.MaximizeBox = true;
+                modal.MinimizeBox = true;
+                modal.WindowState = FormWindowState.Maximized;
 
                 // Header Panel
-                Panel pnlHeader = new Panel { Dock = DockStyle.Top, Height = 80, Padding = new Padding(15) };
+                Panel pnlHeader = new Panel { Dock = DockStyle.Top, Height = 110, Padding = new Padding(18), BackColor = Color.White };
 
                 Label lblTitle = new Label
                 {
                     Text = "Daftar Draft Transaksi",
-                    Font = new Font("Segoe UI", 14, FontStyle.Bold),
+                    Font = new Font("Segoe UI Semibold", 20, FontStyle.Bold),
                     Dock = DockStyle.Left,
                     Width = 300,
                     TextAlign = ContentAlignment.MiddleLeft
+                };
+
+                TextBox txtInfo = new TextBox
+                {
+                    Text = "",
+                    Font = new Font("Segoe UI", 12, FontStyle.Regular),
+                    ForeColor = Color.FromArgb(70, 70, 70),
+                    Dock = DockStyle.Bottom,
+                    Height = 72,
+                    Multiline = true,
+                    ReadOnly = true,
+                    BorderStyle = BorderStyle.None,
+                    BackColor = Color.White,
+                    ScrollBars = ScrollBars.Vertical
                 };
 
                 TextBox txtSearch = new TextBox
@@ -2276,14 +2482,15 @@ WHERE deleted_at IS NULL
                     PlaceholderText = "🔍 Cari nama customer, catatan, atau tanggal...",
                     Dock = DockStyle.Right,
                     Width = 400,
-                    Font = new Font("Segoe UI", 11),
+                    Font = new Font("Segoe UI", 13),
                     TabIndex = 0
                 };
                 pnlHeader.Controls.Add(lblTitle);
                 pnlHeader.Controls.Add(txtSearch);
+                pnlHeader.Controls.Add(txtInfo);
 
                 // Footer Panel
-                Panel pnlFooter = new Panel { Dock = DockStyle.Bottom, Height = 70, Padding = new Padding(15) };
+                Panel pnlFooter = new Panel { Dock = DockStyle.Bottom, Height = 86, Padding = new Padding(18), BackColor = Color.White };
 
                 Label lblTotal = new Label
                 {
@@ -2294,29 +2501,54 @@ WHERE deleted_at IS NULL
                     Font = new Font("Segoe UI", 10, FontStyle.Italic)
                 };
 
+                Button btnAksi = new Button
+                {
+                    Text = "Cetak / Share Draft",
+                    Size = new Size(220, 44),
+                    BackColor = Color.FromArgb(37, 211, 102),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = new Font("Segoe UI Semibold", 11, FontStyle.Bold),
+                    TabIndex = 2
+                };
+                btnAksi.FlatAppearance.BorderSize = 0;
+
                 Button btnLoad = new Button
                 {
                     Text = "Muat Draft (Enter)",
-                    Size = new Size(180, 40),
-                    Location = new Point(680, 15),
+                    Size = new Size(190, 44),
                     BackColor = Color.DodgerBlue,
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
-                    Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                    TabIndex = 2
+                    Font = new Font("Segoe UI Semibold", 11, FontStyle.Bold),
+                    TabIndex = 3
                 };
+                btnLoad.FlatAppearance.BorderSize = 0;
 
                 Button btnCancel = new Button
                 {
                     Text = "Batal (Esc)",
-                    Size = new Size(120, 40),
-                    Location = new Point(550, 15),
+                    Size = new Size(140, 44),
                     FlatStyle = FlatStyle.Flat,
-                    TabIndex = 3
+                    Font = new Font("Segoe UI", 11, FontStyle.Regular),
+                    TabIndex = 4
                 };
                 pnlFooter.Controls.Add(lblTotal);
-                pnlFooter.Controls.Add(btnLoad);
                 pnlFooter.Controls.Add(btnCancel);
+                pnlFooter.Controls.Add(btnAksi);
+                pnlFooter.Controls.Add(btnLoad);
+                pnlFooter.Resize += (_, __) =>
+                {
+                    int right = pnlFooter.ClientSize.Width - 18;
+                    btnLoad.Left = right - btnLoad.Width;
+                    btnLoad.Top = 20;
+                    right -= btnLoad.Width + 12;
+                    btnAksi.Left = right - btnAksi.Width;
+                    btnAksi.Top = 20;
+                    right -= btnAksi.Width + 12;
+                    btnCancel.Left = right - btnCancel.Width;
+                    btnCancel.Top = 20;
+                };
 
                 DataGridView grid = new DataGridView
                 {
@@ -2331,8 +2563,8 @@ WHERE deleted_at IS NULL
                     GridColor = Color.FromArgb(235, 235, 235),
                     RowHeadersVisible = false,
                     AllowUserToAddRows = false,
-                    Font = new Font("Segoe UI", 11),
-                    RowTemplate = { Height = 45 },
+                    Font = new Font("Segoe UI", 12),
+                    RowTemplate = { Height = 52 },
                     TabIndex = 1
                 };
                 grid.DefaultCellStyle.SelectionBackColor = Color.FromArgb(240, 248, 255);
@@ -2340,8 +2572,8 @@ WHERE deleted_at IS NULL
                 grid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
                 grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(245, 245, 245);
                 grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(80, 80, 80);
-                grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
-                grid.ColumnHeadersHeight = 45;
+                grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 12, FontStyle.Bold);
+                grid.ColumnHeadersHeight = 52;
                 grid.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
                 DataGridView gridDetails = new DataGridView
@@ -2363,12 +2595,13 @@ WHERE deleted_at IS NULL
                     TabIndex = 2
                 };
                 gridDetails.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
-                gridDetails.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(230, 230, 230);
+                gridDetails.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(235, 235, 235);
                 gridDetails.ColumnHeadersHeight = 40;
                 gridDetails.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
 
                 grid.Columns.Add("PoId", "ID");
                 grid.Columns.Add("Customer", "Customer");
+                grid.Columns.Add("Warehouse", "Gudang");
                 grid.Columns.Add("Note", "Catatan");
                 grid.Columns.Add("Total", "Total");
                 grid.Columns.Add("CreatedAt", "Tanggal");
@@ -2376,6 +2609,7 @@ WHERE deleted_at IS NULL
                 grid.Columns.Add("CartCode", "Cart");
 
                 grid.Columns["PoId"].Width = 50;
+                grid.Columns["Warehouse"].Width = 140;
                 grid.Columns["Total"].DefaultCellStyle.Format = "N0";
                 grid.Columns["Total"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
 
@@ -2384,9 +2618,13 @@ WHERE deleted_at IS NULL
                     grid.Rows.Clear();
                     foreach (var d in source)
                     {
+                        string wh = "-";
+                        if (!string.IsNullOrWhiteSpace(d.WarehouseName)) wh = d.WarehouseName;
+                        else if (d.WarehouseId > 0) wh = "#" + d.WarehouseId;
                         grid.Rows.Add(
                             d.PoId,
                             string.IsNullOrWhiteSpace(d.CustomerName) ? "-" : d.CustomerName,
+                            wh,
                             string.IsNullOrWhiteSpace(d.Note) ? "-" : d.Note,
                             d.Total,
                             d.CreatedAt.ToString("dd MMM yyyy HH:mm"),
@@ -2408,12 +2646,14 @@ WHERE deleted_at IS NULL
                     if (grid.SelectedRows.Count == 0)
                     {
                         gridDetails.DataSource = null;
+                        txtInfo.Text = "";
                         return;
                     }
                     var cartCode = grid.SelectedRows[0].Cells["CartCode"]?.Value?.ToString() ?? "";
                     if (string.IsNullOrEmpty(cartCode))
                     {
                         gridDetails.DataSource = null;
+                        txtInfo.Text = "";
                         return;
                     }
                     DataTable dt = repoDraft.GetPendingItems(cartCode);
@@ -2446,6 +2686,13 @@ WHERE deleted_at IS NULL
                         col.DefaultCellStyle.Format = "N0";
                         col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                     }
+                    if ((col = gridDetails.Columns["warehouse_id"]) != null)
+                        col.Visible = false;
+
+                    var wh = grid.SelectedRows[0].Cells["Warehouse"]?.Value?.ToString() ?? "-";
+                    var note = grid.SelectedRows[0].Cells["Note"]?.Value?.ToString() ?? "-";
+                    var cust = grid.SelectedRows[0].Cells["Customer"]?.Value?.ToString() ?? "-";
+                    txtInfo.Text = $"Gudang: {wh}\r\nCustomer: {cust}\r\nKeterangan: {note}";
                 }
                 grid.SelectionChanged += (s, e) => LoadDetails();
                 LoadDetails();
@@ -2456,6 +2703,7 @@ WHERE deleted_at IS NULL
                     var filtered = drafts.Where(d =>
                         (!string.IsNullOrWhiteSpace(d.CustomerName) && d.CustomerName.ToLower().Contains(key)) ||
                         (!string.IsNullOrWhiteSpace(d.Note) && d.Note.ToLower().Contains(key)) ||
+                        (!string.IsNullOrWhiteSpace(d.WarehouseName) && d.WarehouseName.ToLower().Contains(key)) ||
                         d.Total.ToString().Contains(key) ||
                         d.CreatedAt.ToString("dd-MM-yyyy HH:mm").ToLower().Contains(key)
                     );
@@ -2468,11 +2716,47 @@ WHERE deleted_at IS NULL
                     switch (e.ColumnIndex)
                     {
                         case 1: ordered = drafts.OrderBy(d => d.CustomerName); break;
-                        case 3: ordered = drafts.OrderByDescending(d => d.Total); break;
-                        case 4: ordered = drafts.OrderByDescending(d => d.CreatedAt); break;
+                        case 2: ordered = drafts.OrderBy(d => d.WarehouseName); break;
+                        case 4: ordered = drafts.OrderByDescending(d => d.Total); break;
+                        case 5: ordered = drafts.OrderByDescending(d => d.CreatedAt); break;
                         default: ordered = drafts; break;
                     }
                     LoadGrid(ordered);
+                };
+
+                btnAksi.Click += (_, __) =>
+                {
+                    if (grid.SelectedRows.Count == 0)
+                    {
+                        MessageBox.Show("Pilih draft dulu.");
+                        return;
+                    }
+                    int poId = Convert.ToInt32(grid.SelectedRows[0].Cells["PoId"].Value);
+                    var dto = drafts.FirstOrDefault(x => x.PoId == poId);
+                    if (dto == null)
+                    {
+                        MessageBox.Show("Draft tidak ditemukan.");
+                        return;
+                    }
+                    try
+                    {
+                        var invoice = BuildDraftInvoicePreview(repoDraft, dto);
+                        var receiptText = BuildReceiptText(
+                            invoice,
+                            session.TerminalName,
+                            session.Username,
+                            session.ShiftId.ToString(),
+                            "DRAFT",
+                            "DRAFT",
+                            0m,
+                            0m
+                        );
+                        ShowReceiptActionsModal(modal, "Faktur Draft", receiptText, "draft_" + poId);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Gagal membuat faktur draft: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
                 };
 
                 btnLoad.Click += (s, ev) =>
@@ -2502,6 +2786,453 @@ WHERE deleted_at IS NULL
             }
 
             return selectedPoId;
+        }
+
+        private static InvoiceData BuildDraftInvoicePreview(CartActivity repoDraft, POS_qu.DTO.PendingOrderDto dto)
+        {
+            var cartCode = dto.CartSessionCode ?? "";
+            if (string.IsNullOrWhiteSpace(cartCode))
+                throw new Exception("Cart draft kosong.");
+
+            var rows = repoDraft.GetPendingItems(cartCode);
+            if (rows == null || rows.Rows.Count == 0)
+                throw new Exception("Draft kosong atau sudah tidak valid.");
+
+            var invoice = InvoiceBuilder.FromPending(rows);
+            invoice.CartSessionCode = cartCode;
+            invoice.IsFromDraft = 1;
+            invoice.Status = "draft";
+            if (!string.IsNullOrWhiteSpace(dto.CustomerName))
+                invoice.CustomerName = dto.CustomerName;
+            if (!string.IsNullOrWhiteSpace(dto.Note))
+                invoice.GlobalNote = dto.Note;
+            return invoice;
+        }
+
+        private void ShowReceiptActionsModal(IWin32Window owner, string title, string receiptText, string fileBaseName)
+        {
+            receiptText ??= "";
+            if (string.IsNullOrWhiteSpace(receiptText))
+            {
+                MessageBox.Show("Faktur kosong.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using var modal = new Form
+            {
+                Text = title,
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(900, 640),
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                BackColor = Color.FromArgb(245, 246, 250)
+            };
+
+            var card = new Panel
+            {
+                Dock = DockStyle.Fill,
+                BackColor = Color.White,
+                Padding = new Padding(18)
+            };
+
+            var lblTitle = new Label
+            {
+                Text = title,
+                Font = new Font("Segoe UI Semibold", 18F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(0, 122, 255),
+                AutoSize = false,
+                Height = 44,
+                Dock = DockStyle.Top
+            };
+
+            var desc = new Label
+            {
+                Text = "Cetak / simpan / kirim faktur draft.",
+                Font = new Font("Segoe UI", 10F),
+                ForeColor = Color.FromArgb(90, 90, 90),
+                AutoSize = false,
+                Height = 28,
+                Dock = DockStyle.Top
+            };
+
+            var btnGrid = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 240,
+                ColumnCount = 2,
+                RowCount = 3,
+                Padding = new Padding(0),
+                Margin = new Padding(0)
+            };
+            btnGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+            btnGrid.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+            btnGrid.RowStyles.Add(new RowStyle(SizeType.Percent, 33.33f));
+            btnGrid.RowStyles.Add(new RowStyle(SizeType.Percent, 33.33f));
+            btnGrid.RowStyles.Add(new RowStyle(SizeType.Percent, 33.33f));
+
+            var btnPrintPos = MakeActionButton("Print POS58", Color.FromArgb(0, 122, 255), () => PrintPos58(receiptText));
+            var btnSavePng = MakeActionButton("Save PNG", Color.FromArgb(108, 117, 125), () => SaveReceiptPng(receiptText, fileBaseName));
+            var btnSavePdf = MakeActionButton("Save PDF", Color.FromArgb(108, 117, 125), () => SaveReceiptPdf(receiptText, fileBaseName));
+            var btnWaText = MakeActionButton("WA (Text)", Color.FromArgb(37, 211, 102), () => SendToWhatsApp(receiptText));
+            var btnWaPng = MakeActionButton("WA (PNG)", Color.FromArgb(37, 211, 102), () => SendToWhatsAppPng(receiptText));
+            var btnDone = MakeActionButton("Tutup", Color.FromArgb(40, 167, 69), () => modal.Close());
+
+            btnGrid.Controls.Add(btnPrintPos, 0, 0);
+            btnGrid.Controls.Add(btnSavePng, 1, 0);
+            btnGrid.Controls.Add(btnSavePdf, 0, 1);
+            btnGrid.Controls.Add(btnWaText, 1, 1);
+            btnGrid.Controls.Add(btnWaPng, 0, 2);
+            btnGrid.Controls.Add(btnDone, 1, 2);
+
+            var emailRow = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 52
+            };
+            var txtEmail = new TextBox
+            {
+                PlaceholderText = "Email tujuan",
+                Font = new Font("Segoe UI", 11F),
+                Dock = DockStyle.Fill
+            };
+            var btnEmailText = new Button
+            {
+                Text = "Email Text",
+                Dock = DockStyle.Right,
+                Width = 140,
+                BackColor = Color.FromArgb(0, 122, 255),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold)
+            };
+            btnEmailText.FlatAppearance.BorderSize = 0;
+            btnEmailText.Click += (_, __) => SendToEmail(receiptText, txtEmail.Text, title);
+
+            var btnEmailPng = new Button
+            {
+                Text = "Email PNG",
+                Dock = DockStyle.Right,
+                Width = 140,
+                BackColor = Color.FromArgb(0, 122, 255),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold)
+            };
+            btnEmailPng.FlatAppearance.BorderSize = 0;
+            btnEmailPng.Click += (_, __) => SendToEmailPng(receiptText, txtEmail.Text, title);
+
+            emailRow.Controls.Add(btnEmailPng);
+            emailRow.Controls.Add(btnEmailText);
+            emailRow.Controls.Add(txtEmail);
+
+            var preview = new TextBox
+            {
+                Multiline = true,
+                ReadOnly = true,
+                ScrollBars = ScrollBars.Both,
+                WordWrap = false,
+                Dock = DockStyle.Fill,
+                Font = new Font("Consolas", 10F),
+                Text = receiptText
+            };
+
+            card.Controls.Add(preview);
+            card.Controls.Add(emailRow);
+            card.Controls.Add(btnGrid);
+            card.Controls.Add(desc);
+            card.Controls.Add(lblTitle);
+            modal.Controls.Add(card);
+            modal.ShowDialog(owner);
+        }
+
+        private static Button MakeActionButton(string text, Color color, Action onClick)
+        {
+            var b = new Button
+            {
+                Text = text,
+                Dock = DockStyle.Fill,
+                BackColor = color,
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold),
+                Margin = new Padding(8)
+            };
+            b.FlatAppearance.BorderSize = 0;
+            b.Click += (_, __) => onClick();
+            return b;
+        }
+
+        private static void PrintPos58(string text)
+        {
+            text ??= "";
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                MessageBox.Show("Faktur kosong.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using var doc = new PrintDocument();
+            doc.PrintPage += (_, e) =>
+            {
+                using var font = new Font("Consolas", 9);
+                float y = 10;
+                foreach (var line in text.Replace("\r\n", "\n").Split('\n'))
+                {
+                    e.Graphics.DrawString(line, font, Brushes.Black, new PointF(10, y));
+                    y += font.GetHeight(e.Graphics) + 2;
+                }
+            };
+            try
+            {
+                using var tmpBmp = new Bitmap(1, 1);
+                using var g = Graphics.FromImage(tmpBmp);
+                using var font = new Font("Consolas", 9);
+                int lines = text.Replace("\r\n", "\n").Split('\n').Length;
+                float lineH = font.GetHeight(g) + 2;
+                float heightPx = 20 + (lines * lineH);
+                int heightInch100 = (int)Math.Ceiling((heightPx / g.DpiY) * 100f);
+                int widthInch100 = (int)Math.Ceiling((58f / 25.4f) * 100f);
+                if (heightInch100 < 200) heightInch100 = 200;
+                doc.DefaultPageSettings.PaperSize = new PaperSize("POS58", widthInch100, heightInch100);
+                doc.DefaultPageSettings.Margins = new Margins(0, 0, 0, 0);
+            }
+            catch
+            {
+            }
+
+            using var dlg = new PrintDialog { Document = doc, UseEXDialog = true };
+            if (dlg.ShowDialog() == DialogResult.OK)
+            {
+                doc.PrinterSettings = dlg.PrinterSettings;
+                doc.Print();
+            }
+        }
+
+        private static void SaveReceiptPng(string text, string fileBaseName)
+        {
+            text ??= "";
+            using var sfd = new SaveFileDialog
+            {
+                Filter = "PNG Image (*.png)|*.png",
+                FileName = $"{fileBaseName}_{DateTime.Now:yyyyMMdd_HHmmss}.png"
+            };
+            if (sfd.ShowDialog() != DialogResult.OK) return;
+            using var bmp = RenderReceiptTextToBitmap(text);
+            bmp.Save(sfd.FileName, ImageFormat.Png);
+        }
+
+        private static void SaveReceiptPdf(string text, string fileBaseName)
+        {
+            text ??= "";
+            using var sfd = new SaveFileDialog
+            {
+                Filter = "PDF Files (*.pdf)|*.pdf",
+                FileName = $"{fileBaseName}_{DateTime.Now:yyyyMMdd_HHmmss}.pdf"
+            };
+            if (sfd.ShowDialog() != DialogResult.OK) return;
+
+            var lines = text.Replace("\r\n", "\n").Split('\n');
+            var doc = new PdfDocument();
+            doc.Info.Title = fileBaseName;
+
+            double mmToPt(double mm) => mm * 72.0 / 25.4;
+            double pageWidth = mmToPt(58);
+            double pageHeight = mmToPt(200);
+            double margin = mmToPt(4);
+
+            var font = new XFont("Consolas", 9);
+            double lineHeight = 11.5;
+            int linesPerPage = (int)Math.Floor((pageHeight - (margin * 2)) / lineHeight);
+            if (linesPerPage <= 0) linesPerPage = 40;
+
+            int i = 0;
+            while (i < lines.Length)
+            {
+                var page = doc.AddPage();
+                page.Width = pageWidth;
+                page.Height = pageHeight;
+                using var gfx = XGraphics.FromPdfPage(page);
+                double y = margin;
+                for (int n = 0; n < linesPerPage && i < lines.Length; n++, i++)
+                {
+                    gfx.DrawString(lines[i], font, XBrushes.Black, new XPoint(margin, y));
+                    y += lineHeight;
+                }
+            }
+
+            doc.Save(sfd.FileName);
+            try { Process.Start(new ProcessStartInfo("explorer.exe", "/select,\"" + sfd.FileName + "\"") { UseShellExecute = true }); } catch { }
+        }
+
+        private static void SendToWhatsApp(string text)
+        {
+            text ??= "";
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                MessageBox.Show("Faktur kosong.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            var url = "https://wa.me/?text=" + Uri.EscapeDataString(text);
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+
+        private static void SendToWhatsAppPng(string text)
+        {
+            text ??= "";
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                MessageBox.Show("Faktur kosong.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            string path;
+            try
+            {
+                path = SaveReceiptPngToTemp(text, "faktur");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Gagal", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                using var bmp = RenderReceiptTextToBitmap(text);
+                using var clone = (Bitmap)bmp.Clone();
+                Clipboard.SetImage(clone);
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                var url = "https://wa.me/?text=" + Uri.EscapeDataString("Faktur draft siap. Jika pakai WhatsApp Desktop/Web: paste (Ctrl+V) untuk kirim PNG.");
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo("explorer.exe", "/select,\"" + path + "\"") { UseShellExecute = true });
+            }
+            catch
+            {
+            }
+        }
+
+        private static void SendToEmail(string text, string email, string subject)
+        {
+            text ??= "";
+            email = (email ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                MessageBox.Show("Isi email tujuan.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            var url = $"mailto:{Uri.EscapeDataString(email)}?subject={Uri.EscapeDataString(subject)}&body={Uri.EscapeDataString(text)}";
+            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+        }
+
+        private static void SendToEmailPng(string text, string email, string subject)
+        {
+            text ??= "";
+            email = (email ?? "").Trim();
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                MessageBox.Show("Isi email tujuan.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            string path;
+            try
+            {
+                path = SaveReceiptPngToTemp(text, "faktur");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Gagal", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                var outlookType = Type.GetTypeFromProgID("Outlook.Application");
+                if (outlookType != null)
+                {
+                    dynamic outlook = Activator.CreateInstance(outlookType);
+                    dynamic mail = outlook.CreateItem(0);
+                    mail.To = email;
+                    mail.Subject = subject;
+                    mail.Body = text;
+                    mail.Attachments.Add(path);
+                    mail.Display();
+                    return;
+                }
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                var url = $"mailto:{Uri.EscapeDataString(email)}?subject={Uri.EscapeDataString(subject)}&body={Uri.EscapeDataString("Terlampir faktur draft (PNG). Silakan attach file dari folder yang terbuka.\\n\\n" + text)}";
+                Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            }
+            catch
+            {
+            }
+
+            try
+            {
+                Process.Start(new ProcessStartInfo("explorer.exe", "/select,\"" + path + "\"") { UseShellExecute = true });
+            }
+            catch
+            {
+            }
+        }
+
+        private static string SaveReceiptPngToTemp(string text, string prefix)
+        {
+            var dir = Path.Combine(Path.GetTempPath(), "POS-qu");
+            Directory.CreateDirectory(dir);
+            var path = Path.Combine(dir, $"{prefix}_{DateTime.Now:yyyyMMdd_HHmmss}.png");
+            using var bmp = RenderReceiptTextToBitmap(text);
+            bmp.Save(path, ImageFormat.Png);
+            return path;
+        }
+
+        private static Bitmap RenderReceiptTextToBitmap(string text)
+        {
+            var lines = (text ?? "").Replace("\r\n", "\n").Split('\n');
+            using var tmp = new Bitmap(1, 1);
+            using var g = Graphics.FromImage(tmp);
+            using var font = new Font("Consolas", 10);
+
+            float width = 520;
+            float height = 20;
+            foreach (var line in lines)
+            {
+                var size = g.MeasureString(line, font);
+                if (size.Width + 40 > width) width = size.Width + 40;
+                height += size.Height + 4;
+            }
+
+            var bmp = new Bitmap((int)Math.Ceiling(width), (int)Math.Ceiling(height));
+            using var g2 = Graphics.FromImage(bmp);
+            g2.Clear(Color.White);
+            g2.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            float y = 12;
+            foreach (var line in lines)
+            {
+                g2.DrawString(line, font, Brushes.Black, new PointF(12, y));
+                y += font.GetHeight(g2) + 4;
+            }
+            return bmp;
         }
 
         private void button3_Click(object sender, EventArgs e)
