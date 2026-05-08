@@ -12,6 +12,7 @@ namespace POS_qu.Helpers
         private static readonly string configJsonPath = Path.Combine(programDataDir, "config.json");
         private static readonly string defaultTimeZone = "Asia/Makassar"; 
         public static string ConnectionString { get; private set; }
+        public static string AppTimeZone { get; private set; } = defaultTimeZone;
 
         static DbConfig()
         {
@@ -40,6 +41,9 @@ namespace POS_qu.Helpers
                         Password = cfg.Password ?? "",
                         Database = cfg.Database ?? "postgres"
                     };
+
+                    AppTimeZone = string.IsNullOrWhiteSpace(cfg.TimeZone) ? defaultTimeZone : cfg.TimeZone.Trim();
+                    builder["Timezone"] = AppTimeZone;
                     ConnectionString = builder.ConnectionString;
                     return;
                 }
@@ -71,5 +75,6 @@ namespace POS_qu.Helpers
         public string Username { get; set; }
         public string Password { get; set; }
         public string Database { get; set; }
+        public string TimeZone { get; set; }
     }
 }

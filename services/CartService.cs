@@ -296,10 +296,11 @@ public class CartService : ICartService
             // ===============================
             if (qtyDiff != 0)
             {
+                int activeWarehouseId = SessionUser.GetCurrentUser()?.WarehouseId ?? 1;
                 bool reservedUpdated = _repo.TryUpdateReservedStock(
                     conn, tran,
                     item.ItemId,
-                    1,
+                    activeWarehouseId,
                     stockAdjustment
                 );
 
@@ -655,32 +656,35 @@ WHERE po_id = @poId";
         try
         {
             var session = SessionUser.GetCurrentUser();
+            int activeWarehouseId = session?.WarehouseId ?? 1;
 
             int stockNeeded = request.Quantity * request.ConversionRate;
 
-            // Delete pending
-            bool deleteSuccess = _repo.DeletePendingTransaction(
-                session.TerminalId,
-                session.UserId,
-                request.ItemId,
-                request.UnitId,
-                request.CartSessionCode
-            );
-
-            if (!deleteSuccess)
-                throw new InvalidOperationException("Failed to delete item from pending transactions.");
-
-            // Update reserved stock
-            int reservedStock = _repo.GetItemReservedStock(request.Barcode);
-            int newReservedStock = Math.Max(0, reservedStock - stockNeeded);
-            _repo.UpdateReservedStock(request.Barcode, newReservedStock);
-
-            if (request.IsPaymentMode)
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
             {
-                // Mode payment: kurangi stock permanen
-                int currentStock = _repo.GetItemStock(request.Barcode);
-                int newStock = Math.Max(0, currentStock - stockNeeded);
-                _repo.UpdateItemStock(request.Barcode, newStock);
+                conn.Open();
+                using var tran = conn.BeginTransaction();
+
+                bool deleteSuccess = _repo.DeletePendingTransaction(
+                    conn, tran,
+                    session.TerminalId,
+                    session.UserId,
+                    request.ItemId,
+                    request.UnitId,
+                    request.CartSessionCode
+                );
+
+                if (!deleteSuccess)
+                    throw new InvalidOperationException("Failed to delete item from pending transactions.");
+
+                if (stockNeeded != 0)
+                {
+                    bool ok = _repo.TryUpdateReservedStock(conn, tran, request.ItemId, activeWarehouseId, -stockNeeded);
+                    if (!ok)
+                        throw new InvalidOperationException("Gagal melepas reserved stock.");
+                }
+
+                tran.Commit();
             }
 
             // Log aktivitas

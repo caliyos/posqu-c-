@@ -740,6 +740,46 @@ WHERE i.id = @item
         {
             if (warehouseId <= 0) warehouseId = 1;
 
+            double layerQty = 0d;
+            using (var q = new NpgsqlCommand(@"
+SELECT COALESCE(SUM(qty_remaining),0) 
+FROM stock_layers 
+WHERE item_id = @itemId AND warehouse_id = @w
+", conn, tran))
+            {
+                q.Parameters.AddWithValue("@itemId", itemId);
+                q.Parameters.AddWithValue("@w", warehouseId);
+                object obj = q.ExecuteScalar();
+                layerQty = obj != null && obj != DBNull.Value ? Convert.ToDouble(obj) : 0d;
+            }
+
+            using (var ensure = new NpgsqlCommand(@"
+INSERT INTO stocks (item_id, warehouse_id, qty, min_qty, reserved_qty)
+SELECT @itemId, @w, @qty, 0, 0
+WHERE NOT EXISTS (
+    SELECT 1 FROM stocks WHERE item_id = @itemId AND warehouse_id = @w
+)
+", conn, tran))
+            {
+                ensure.Parameters.AddWithValue("@itemId", itemId);
+                ensure.Parameters.AddWithValue("@w", warehouseId);
+                ensure.Parameters.AddWithValue("@qty", layerQty);
+                ensure.ExecuteNonQuery();
+            }
+
+            if (layerQty > 0.0000001)
+            {
+                using var sync = new NpgsqlCommand(@"
+UPDATE stocks
+SET qty = @qty
+WHERE item_id = @itemId AND warehouse_id = @w
+", conn, tran);
+                sync.Parameters.AddWithValue("@itemId", itemId);
+                sync.Parameters.AddWithValue("@w", warehouseId);
+                sync.Parameters.AddWithValue("@qty", layerQty);
+                sync.ExecuteNonQuery();
+            }
+
             using (var clamp = new NpgsqlCommand(@"
 UPDATE stocks
 SET reserved_qty = LEAST(reserved_qty, qty)
@@ -896,6 +936,34 @@ WHERE terminal_id = @terminalId
 
                     return cmd.ExecuteNonQuery() > 0;
                 }
+            }
+        }
+
+        public bool DeletePendingTransaction(
+            NpgsqlConnection conn,
+            NpgsqlTransaction tran,
+            int terminalId,
+            int userId,
+            int itemId,
+            int unitId,
+            string cart_session_code)
+        {
+            string query = @"
+DELETE FROM pending_transactions 
+WHERE terminal_id = @terminalId 
+  AND item_id = @itemId
+  AND unitid = @unitId
+  AND cashier_id = @userId
+  AND cart_session_code = @cart_session_code";
+
+            using (NpgsqlCommand cmd = new NpgsqlCommand(query, conn, tran))
+            {
+                cmd.Parameters.AddWithValue("@terminalId", terminalId);
+                cmd.Parameters.AddWithValue("@userId", userId);
+                cmd.Parameters.AddWithValue("@itemId", itemId);
+                cmd.Parameters.AddWithValue("@unitId", unitId);
+                cmd.Parameters.AddWithValue("@cart_session_code", cart_session_code);
+                return cmd.ExecuteNonQuery() > 0;
             }
         }
 
@@ -1264,12 +1332,132 @@ ORDER BY last_update DESC";
             return dt;
         }
 
+        public DataTable GetPendingCartsAdmin()
+        {
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+            try
+            {
+                string sql = @"
+SELECT
+    pt.cart_session_code,
+    pt.terminal_id,
+    COALESCE(t.terminal_name,'') AS terminal_name,
+    pt.cashier_id,
+    COALESCE(u.name,'') AS cashier_name,
+    COUNT(*) AS total_items,
+    COALESCE(SUM(pt.total),0) AS grand_total,
+    MAX(pt.updated_at) AS last_update
+FROM pending_transactions pt
+LEFT JOIN terminals t ON t.id = pt.terminal_id
+LEFT JOIN users u ON u.id = pt.cashier_id
+GROUP BY pt.cart_session_code, pt.terminal_id, t.terminal_name, pt.cashier_id, u.name
+ORDER BY last_update DESC";
+                using var cmd = new NpgsqlCommand(sql, con);
+                using var da = new NpgsqlDataAdapter(cmd);
+                var dt = new DataTable();
+                da.Fill(dt);
+                return dt;
+            }
+            catch (PostgresException ex) when (ex.SqlState == "42P01" || ex.SqlState == "42703")
+            {
+                string sql = @"
+SELECT
+    cart_session_code,
+    MAX(terminal_id) AS terminal_id,
+    MAX(cashier_id) AS cashier_id,
+    COUNT(*) AS total_items,
+    COALESCE(SUM(total),0) AS grand_total,
+    MAX(updated_at) AS last_update
+FROM pending_transactions
+GROUP BY cart_session_code
+ORDER BY last_update DESC";
+                using var cmd = new NpgsqlCommand(sql, con);
+                using var da = new NpgsqlDataAdapter(cmd);
+                var dt = new DataTable();
+                da.Fill(dt);
+                return dt;
+            }
+        }
+
+        public DataTable GetPendingCartItems(string cartSessionCode, int terminalId, int cashierId)
+        {
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+            try
+            {
+                string sql = @"
+SELECT
+    pt.pt_id,
+    pt.cart_session_code,
+    pt.terminal_id,
+    pt.cashier_id,
+    pt.po_id,
+    pt.item_id,
+    COALESCE(i.name, pt.note, pt.barcode) AS name,
+    pt.barcode,
+    pt.quantity,
+    pt.unit,
+    pt.sell_price,
+    pt.discount_total,
+    pt.tax,
+    pt.total,
+    pt.created_at,
+    pt.updated_at,
+    pt.expired_at
+FROM pending_transactions pt
+LEFT JOIN items i ON i.id = pt.item_id AND pt.item_id > 0
+WHERE pt.cart_session_code = @code
+  AND pt.terminal_id = @terminalId
+  AND pt.cashier_id = @cashierId
+ORDER BY pt.updated_at DESC, pt.pt_id DESC";
+                using var cmd = new NpgsqlCommand(sql, con);
+                cmd.Parameters.AddWithValue("@code", cartSessionCode ?? "");
+                cmd.Parameters.AddWithValue("@terminalId", terminalId);
+                cmd.Parameters.AddWithValue("@cashierId", cashierId);
+                using var da = new NpgsqlDataAdapter(cmd);
+                var dt = new DataTable();
+                da.Fill(dt);
+                return dt;
+            }
+            catch (PostgresException ex) when (ex.SqlState == "42P01" || ex.SqlState == "42703")
+            {
+                string sql = @"
+SELECT
+    pt_id,
+    cart_session_code,
+    terminal_id,
+    cashier_id,
+    po_id,
+    item_id,
+    barcode,
+    quantity,
+    unit,
+    sell_price,
+    discount_total,
+    tax,
+    total,
+    created_at,
+    updated_at,
+    expired_at,
+    note
+FROM pending_transactions
+WHERE cart_session_code = @code
+ORDER BY updated_at DESC, pt_id DESC";
+                using var cmd = new NpgsqlCommand(sql, con);
+                cmd.Parameters.AddWithValue("@code", cartSessionCode ?? "");
+                using var da = new NpgsqlDataAdapter(cmd);
+                var dt = new DataTable();
+                da.Fill(dt);
+                return dt;
+            }
+        }
 
 
 
 
 
-        ///////////////////////////////////////////////END ORDER //////////////////////////////////
+
 
 
 

@@ -21,6 +21,7 @@ namespace POS_qu
         private decimal totalAmount;
         private TextBox? _activeMoneyBox;
         private FlowLayoutPanel? _quickAmountPanel;
+        private FlowLayoutPanel? _quickAmountBottomPanel;
         private TableLayoutPanel? _keypadTable;
         private Panel? _afterPayPanel;
         private string _receiptText = "";
@@ -50,7 +51,9 @@ namespace POS_qu
             {
                 SafeWireNumericFormatters();
                 InitializeKeypadUi();
-                LoadQuickAmountButtonsFromDatabase();
+                InitializeQuickAmountBottomUi();
+                if (_quickAmountBottomPanel != null)
+                    LoadQuickAmountButtonsFromDatabase(_quickAmountBottomPanel);
                 ConfigureKeyboardFirstUx();
             };
         }
@@ -186,6 +189,9 @@ namespace POS_qu
 
             try
             {
+                if (!ConfirmBeforePay())
+                    return;
+
                 _isProcessing = true;
                 btnPay.Enabled = false;
                 var result = ProcessPaymentHandler.Invoke();
@@ -224,10 +230,23 @@ namespace POS_qu
                 txtPaymentAmount.Focus();
                 _activeMoneyBox = txtPaymentAmount;
             }
+            int nextTab = 1;
+            if (_quickAmountBottomPanel != null)
+            {
+                foreach (Control c in _quickAmountBottomPanel.Controls)
+                {
+                    if (c is Button b)
+                    {
+                        b.TabStop = true;
+                        b.TabIndex = nextTab++;
+                    }
+                }
+            }
+
             if (cmbPaymentMethod != null)
-                cmbPaymentMethod.TabIndex = 1;
+                cmbPaymentMethod.TabIndex = Math.Max(nextTab, 20);
             if (btnPay != null)
-                btnPay.TabIndex = 50;
+                btnPay.TabIndex = 30;
 
             WireFocusHighlight(panelCard);
         }
@@ -450,6 +469,7 @@ namespace POS_qu
         }
 
         private readonly Dictionary<Control, Color> _focusOriginalBackColor = new();
+        private readonly Dictionary<Button, (Color Back, Color Fore)> _focusOriginalButtonColors = new();
 
         private void WireFocusHighlight(Control? root)
         {
@@ -478,13 +498,24 @@ namespace POS_qu
                     b.FlatAppearance.BorderSize = Math.Max(1, b.FlatAppearance.BorderSize);
                     b.Enter += (_, __) =>
                     {
+                        if (!_focusOriginalButtonColors.ContainsKey(b))
+                            _focusOriginalButtonColors[b] = (b.BackColor, b.ForeColor);
+
                         b.FlatAppearance.BorderSize = 3;
                         b.FlatAppearance.BorderColor = Color.FromArgb(255, 193, 7);
+                        var origBack = _focusOriginalButtonColors[b].Back;
+                        b.BackColor = ControlPaint.Light(origBack, 0.35f);
+                        b.ForeColor = Color.Black;
                     };
                     b.Leave += (_, __) =>
                     {
                         b.FlatAppearance.BorderSize = 1;
                         b.FlatAppearance.BorderColor = Color.FromArgb(220, 220, 220);
+                        if (_focusOriginalButtonColors.TryGetValue(b, out var col))
+                        {
+                            b.BackColor = col.Back;
+                            b.ForeColor = col.Fore;
+                        }
                     };
                 }
 
@@ -529,17 +560,7 @@ namespace POS_qu
                 Height = 28,
                 Dock = DockStyle.Top
             };
-
-            _quickAmountPanel = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Top,
-                Height = 90,
-                AutoScroll = true,
-                WrapContents = true,
-                FlowDirection = FlowDirection.LeftToRight,
-                Padding = new Padding(0),
-                Margin = new Padding(0)
-            };
+            _quickAmountPanel = null;
 
             _keypadTable = new TableLayoutPanel
             {
@@ -556,7 +577,6 @@ namespace POS_qu
                 _keypadTable.RowStyles.Add(new RowStyle(SizeType.Percent, 20f));
 
             panelKeypad.Controls.Add(_keypadTable);
-            panelKeypad.Controls.Add(_quickAmountPanel);
             panelKeypad.Controls.Add(lbl);
 
             _activeMoneyBox ??= txtPaymentAmount;
@@ -590,6 +610,7 @@ namespace POS_qu
                 Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold),
                 Margin = new Padding(6),
             };
+            btn.TabStop = false;
             btn.FlatAppearance.BorderColor = Color.FromArgb(220, 220, 220);
             btn.FlatAppearance.BorderSize = 1;
             btn.Click += (_, __) => onClick();
@@ -626,6 +647,39 @@ namespace POS_qu
             tb.Text = value.ToString("N0");
         }
 
+        private void InitializeQuickAmountBottomUi()
+        {
+            if (panelCard == null) return;
+            if (btnPay == null) return;
+            if (cmbPaymentMethod == null) return;
+
+            if (_quickAmountBottomPanel != null && panelCard.Controls.Contains(_quickAmountBottomPanel))
+                return;
+
+            var gap = 10;
+            var h = 52;
+
+            var panel = new FlowLayoutPanel
+            {
+                Height = h,
+                Width = btnPay.Width,
+                Location = new Point(btnPay.Left, btnPay.Top),
+                Anchor = AnchorStyles.Top | AnchorStyles.Left,
+                AutoScroll = true,
+                WrapContents = false,
+                FlowDirection = FlowDirection.LeftToRight,
+                Padding = new Padding(0),
+                Margin = new Padding(0),
+                TabStop = false
+            };
+
+            panelCard.Controls.Add(panel);
+            panel.BringToFront();
+            _quickAmountBottomPanel = panel;
+
+            btnPay.Top = panel.Bottom + gap;
+        }
+
         private void ClearActiveMoney()
         {
             var tb = _activeMoneyBox ?? txtPaymentAmount;
@@ -636,7 +690,14 @@ namespace POS_qu
         private void LoadQuickAmountButtonsFromDatabase()
         {
             if (_quickAmountPanel == null) return;
-            _quickAmountPanel.Controls.Clear();
+            LoadQuickAmountButtonsFromDatabase(_quickAmountPanel);
+        }
+
+        private void LoadQuickAmountButtonsFromDatabase(FlowLayoutPanel targetPanel)
+        {
+            if (targetPanel == null) return;
+            targetPanel.Controls.Clear();
+            bool isBottom = ReferenceEquals(targetPanel, _quickAmountBottomPanel);
 
             var btnExact = new Button
             {
@@ -649,9 +710,10 @@ namespace POS_qu
                 Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
                 Margin = new Padding(6)
             };
+            btnExact.TabStop = isBottom;
             btnExact.FlatAppearance.BorderSize = 0;
             btnExact.Click += (_, __) => ApplyExactPayment();
-            _quickAmountPanel.Controls.Add(btnExact);
+            targetPanel.Controls.Add(btnExact);
 
             var amounts = new List<decimal>();
             try
@@ -719,6 +781,7 @@ LIMIT 12;", conn))
                     Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
                     Margin = new Padding(6)
                 };
+                btn.TabStop = isBottom;
                 btn.FlatAppearance.BorderSize = 0;
                 btn.Click += (_, __) =>
                 {
@@ -726,7 +789,50 @@ LIMIT 12;", conn))
                     if (tb == null) return;
                     tb.Text = a.ToString("N0");
                 };
-                _quickAmountPanel.Controls.Add(btn);
+                targetPanel.Controls.Add(btn);
+            }
+        }
+
+        private bool ConfirmBeforePay()
+        {
+            try
+            {
+                string method = PaymentMethod ?? "";
+                if (string.IsNullOrWhiteSpace(method))
+                    method = cmbPaymentMethod?.SelectedItem?.ToString() ?? "";
+
+                decimal paid = PaymentAmount;
+                string detail = "";
+                if (IsSplitPayment)
+                {
+                    decimal cash = txtCashPart != null ? ParseMoney(txtCashPart.Text) : 0m;
+                    decimal card = txtCardPart != null ? ParseMoney(txtCardPart.Text) : 0m;
+                    paid = cash + card;
+                    detail = $"\nCash: Rp {cash:N0}\nCard: Rp {card:N0}";
+                }
+                var change = paid - totalAmount;
+                if (change < 0m) change = 0m;
+
+                string msg =
+                    "Konfirmasi pembayaran:\n\n" +
+                    $"Total: Rp {totalAmount:N0}\n" +
+                    $"Metode: {method}\n" +
+                    $"Dibayar: Rp {paid:N0}\n" +
+                    $"Kembalian: Rp {change:N0}" +
+                    detail +
+                    "\n\nLanjutkan?";
+
+                return MessageBox.Show(
+                    msg,
+                    "Konfirmasi",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question,
+                    MessageBoxDefaultButton.Button1
+                ) == DialogResult.Yes;
+            }
+            catch
+            {
+                return true;
             }
         }
 

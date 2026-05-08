@@ -27,6 +27,8 @@ namespace POS_qu
             btnPendingList = new Button();
             btnCustomer = new Button();
             btnPaymentShortcuts = new Button();
+            cmbWarehouse = new ComboBox();
+            lblWarehouse = new Label();
             lblShiftInfo = new Label();
             lblDateTime = new Label();
             lblSessionCode = new Label();
@@ -73,6 +75,8 @@ namespace POS_qu
             pnlHeader.Controls.Add(btnPendingList);
             pnlHeader.Controls.Add(btnCustomer);
             pnlHeader.Controls.Add(btnPaymentShortcuts);
+            pnlHeader.Controls.Add(cmbWarehouse);
+            pnlHeader.Controls.Add(lblWarehouse);
             pnlHeader.Controls.Add(lblShiftInfo);
             pnlHeader.Controls.Add(lblDateTime);
             pnlHeader.Controls.Add(lblSessionCode);
@@ -155,14 +159,34 @@ namespace POS_qu
             btnPaymentShortcuts.Text = "Shortcut Bayar";
             btnPaymentShortcuts.UseVisualStyleBackColor = false;
             // 
+            // cmbWarehouse
+            // 
+            cmbWarehouse.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbWarehouse.Font = new Font("Segoe UI", 10F);
+            cmbWarehouse.FormattingEnabled = true;
+            cmbWarehouse.Location = new Point(710, 28);
+            cmbWarehouse.Name = "cmbWarehouse";
+            cmbWarehouse.Size = new Size(240, 36);
+            cmbWarehouse.TabIndex = 7;
+            // 
+            // lblWarehouse
+            // 
+            lblWarehouse.AutoSize = true;
+            lblWarehouse.Font = new Font("Segoe UI", 10F);
+            lblWarehouse.Location = new Point(710, 7);
+            lblWarehouse.Name = "lblWarehouse";
+            lblWarehouse.Size = new Size(86, 28);
+            lblWarehouse.TabIndex = 6;
+            lblWarehouse.Text = "Gudang:";
+            // 
             // lblShiftInfo
             // 
             lblShiftInfo.AutoSize = true;
             lblShiftInfo.Font = new Font("Segoe UI", 11F);
-            lblShiftInfo.Location = new Point(710, 20);
+            lblShiftInfo.Location = new Point(955, 20);
             lblShiftInfo.Name = "lblShiftInfo";
             lblShiftInfo.Size = new Size(76, 30);
-            lblShiftInfo.TabIndex = 6;
+            lblShiftInfo.TabIndex = 8;
             lblShiftInfo.Text = "Shift: -";
             // 
             // lblDateTime
@@ -174,7 +198,7 @@ namespace POS_qu
             lblDateTime.Name = "lblDateTime";
             lblDateTime.Padding = new Padding(0, 10, 20, 0);
             lblDateTime.Size = new Size(251, 40);
-            lblDateTime.TabIndex = 7;
+            lblDateTime.TabIndex = 9;
             lblDateTime.Text = "2026-03-27 12:00:00";
             // 
             // lblSessionCode
@@ -187,7 +211,7 @@ namespace POS_qu
             lblSessionCode.Name = "lblSessionCode";
             lblSessionCode.Padding = new Padding(0, 10, 20, 0);
             lblSessionCode.Size = new Size(125, 40);
-            lblSessionCode.TabIndex = 8;
+            lblSessionCode.TabIndex = 10;
             lblSessionCode.Text = "Session: -";
             // 
             // tlpMain
@@ -568,6 +592,8 @@ namespace POS_qu
         private System.Windows.Forms.Button btnPendingList;
         private System.Windows.Forms.Button btnCustomer;
         private System.Windows.Forms.Button btnPaymentShortcuts;
+        private System.Windows.Forms.Label lblWarehouse;
+        private System.Windows.Forms.ComboBox cmbWarehouse;
 
         private System.Windows.Forms.TableLayoutPanel tlpMain;
         

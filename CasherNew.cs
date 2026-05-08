@@ -31,8 +31,9 @@ namespace POS_qu
         private ILogger flogger = new FileLogger();
         private ILogger dlogger = new DbLogger();
         private InvoiceData _currentInvoice;
-        private ICartService _cartService;
+        private CartService _cartService;
         private ITransactionService _transactionService;
+        private bool _isLoadingCashierWarehouses;
         public CasherNew()
         {
             InitializeComponent();
@@ -67,6 +68,7 @@ namespace POS_qu
             // 🔹 SESSION
             // ===============================
             StartNewTransaction();
+            LoadWarehousesForCashier();
 
             // ===============================
             // 🔹 TIMER (Live Date Time)
@@ -88,6 +90,7 @@ namespace POS_qu
             // ===============================
             txtCariBarang.KeyDown += TxtCariBarang_KeyDown;
             dataGridViewCart4.CellDoubleClick += dataGridViewCart4_CellDoubleClick;
+            cmbWarehouse.SelectedIndexChanged += cmbWarehouse_SelectedIndexChanged;
             dataGridViewCart4.KeyDown += DataGridViewCart4_KeyDown;
             btnOpenCashier.Click += btnOpenCashier_Click;
             btnCloseCashier.Click += btnCloseCashier_Click;
@@ -121,6 +124,110 @@ namespace POS_qu
             UpdateShiftInfoUI();
 
             ConfigureKeyboardFirstUx();
+        }
+
+        private void LoadWarehousesForCashier()
+        {
+            _isLoadingCashierWarehouses = true;
+            try
+            {
+                var dt = new DataTable();
+                dt.Columns.Add("id", typeof(int));
+                dt.Columns.Add("name", typeof(string));
+
+                using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
+                {
+                    con.Open();
+                    using var cmd = new NpgsqlCommand("SELECT id, name FROM warehouses WHERE is_active = TRUE ORDER BY id ASC", con);
+                    using var r = cmd.ExecuteReader();
+                    while (r.Read())
+                    {
+                        int id = r["id"] != DBNull.Value ? Convert.ToInt32(r["id"]) : 0;
+                        string name = r["name"]?.ToString() ?? "";
+                        if (id > 0)
+                            dt.Rows.Add(id, name);
+                    }
+                }
+
+                cmbWarehouse.DisplayMember = "name";
+                cmbWarehouse.ValueMember = "id";
+                cmbWarehouse.DataSource = dt;
+
+                int desired = SessionUser.GetCurrentUser()?.WarehouseId ?? 1;
+                if (dt.Rows.Count == 1)
+                {
+                    desired = Convert.ToInt32(dt.Rows[0]["id"]);
+                    cmbWarehouse.Enabled = false;
+                }
+
+                bool found = false;
+                foreach (DataRow row in dt.Rows)
+                {
+                    if (Convert.ToInt32(row["id"]) == desired)
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found && dt.Rows.Count > 0)
+                    desired = Convert.ToInt32(dt.Rows[0]["id"]);
+
+                cmbWarehouse.SelectedValue = desired;
+                SessionUser.UpdateWarehouseId(desired);
+            }
+            catch
+            {
+                cmbWarehouse.Enabled = false;
+                SessionUser.UpdateWarehouseId(1);
+            }
+            finally
+            {
+                _isLoadingCashierWarehouses = false;
+            }
+        }
+
+        private void cmbWarehouse_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_isLoadingCashierWarehouses) return;
+            int wid = 0;
+            try
+            {
+                if (cmbWarehouse.SelectedValue != null)
+                    wid = Convert.ToInt32(cmbWarehouse.SelectedValue);
+            }
+            catch
+            {
+                wid = 0;
+            }
+
+            if (wid <= 0) return;
+
+            if (_currentInvoice != null && _currentInvoice.Items != null && _currentInvoice.Items.Count > 0)
+            {
+                var res = MessageBox.Show(
+                    "Ganti gudang akan reset cart yang sedang berjalan. Lanjutkan?",
+                    "Ganti Gudang",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning
+                );
+                if (res != DialogResult.Yes)
+                {
+                    _isLoadingCashierWarehouses = true;
+                    try
+                    {
+                        cmbWarehouse.SelectedValue = SessionUser.GetCurrentUser()?.WarehouseId ?? 1;
+                    }
+                    finally
+                    {
+                        _isLoadingCashierWarehouses = false;
+                    }
+                    return;
+                }
+
+                StartNewTransaction();
+            }
+
+            SessionUser.UpdateWarehouseId(wid);
         }
 
         private void ConfigureKeyboardFirstUx()

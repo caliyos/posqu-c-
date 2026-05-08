@@ -31,26 +31,26 @@ namespace POS_qu
 
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
-            panelHeader = new System.Windows.Forms.Panel();
-            btnClose = new System.Windows.Forms.Button();
-            btnReturn = new System.Windows.Forms.Button();
-            btnCancel = new System.Windows.Forms.Button();
-            btnExportDetail = new System.Windows.Forms.Button();
-            btnExport = new System.Windows.Forms.Button();
-            btnExportPdf = new System.Windows.Forms.Button();
-            btnPrintPreview = new System.Windows.Forms.Button();
-            btnRefresh = new System.Windows.Forms.Button();
-            cbStatus = new System.Windows.Forms.ComboBox();
-            lblTitle = new System.Windows.Forms.Label();
-            panelBody = new System.Windows.Forms.Panel();
-            splitContainer = new System.Windows.Forms.SplitContainer();
-            dgvTransactions = new System.Windows.Forms.DataGridView();
-            lblDetail = new System.Windows.Forms.Label();
-            dgvDetails = new System.Windows.Forms.DataGridView();
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle4 = new DataGridViewCellStyle();
+            panelHeader = new Panel();
+            btnClose = new Button();
+            btnReturn = new Button();
+            btnCancel = new Button();
+            btnExportDetail = new Button();
+            btnExport = new Button();
+            btnExportPdf = new Button();
+            btnPrintPreview = new Button();
+            btnRefresh = new Button();
+            cbStatus = new ComboBox();
+            lblTitle = new Label();
+            panelBody = new Panel();
+            splitContainer = new SplitContainer();
+            dgvTransactions = new DataGridView();
+            dgvDetails = new DataGridView();
+            lblDetail = new Label();
             panelHeader.SuspendLayout();
             panelBody.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
@@ -60,7 +60,10 @@ namespace POS_qu
             ((System.ComponentModel.ISupportInitialize)dgvTransactions).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvDetails).BeginInit();
             SuspendLayout();
-            panelHeader.BackColor = System.Drawing.Color.White;
+            // 
+            // panelHeader
+            // 
+            panelHeader.BackColor = Color.White;
             panelHeader.Controls.Add(btnClose);
             panelHeader.Controls.Add(btnReturn);
             panelHeader.Controls.Add(btnCancel);
@@ -71,213 +74,269 @@ namespace POS_qu
             panelHeader.Controls.Add(btnRefresh);
             panelHeader.Controls.Add(cbStatus);
             panelHeader.Controls.Add(lblTitle);
-            panelHeader.Dock = System.Windows.Forms.DockStyle.Top;
-            panelHeader.Location = new System.Drawing.Point(0, 0);
+            panelHeader.Dock = DockStyle.Top;
+            panelHeader.Location = new Point(0, 0);
             panelHeader.Name = "panelHeader";
-            panelHeader.Size = new System.Drawing.Size(1400, 82);
+            panelHeader.Size = new Size(1400, 82);
             panelHeader.TabIndex = 0;
-            btnClose.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnClose.BackColor = System.Drawing.Color.White;
-            btnClose.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200);
-            btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnClose.Font = new System.Drawing.Font("Segoe UI", 10F);
-            btnClose.Location = new System.Drawing.Point(1250, 20);
+            // 
+            // btnClose
+            // 
+            btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnClose.BackColor = Color.White;
+            btnClose.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnClose.FlatStyle = FlatStyle.Flat;
+            btnClose.Font = new Font("Segoe UI", 10F);
+            btnClose.Location = new Point(1250, 20);
             btnClose.Name = "btnClose";
-            btnClose.Size = new System.Drawing.Size(130, 42);
+            btnClose.Size = new Size(130, 42);
             btnClose.TabIndex = 9;
             btnClose.Text = "Tutup";
             btnClose.UseVisualStyleBackColor = false;
-            btnReturn.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnReturn.BackColor = System.Drawing.Color.DarkOrange;
+            // 
+            // btnReturn
+            // 
+            btnReturn.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnReturn.BackColor = Color.DarkOrange;
             btnReturn.FlatAppearance.BorderSize = 0;
-            btnReturn.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnReturn.Font = new System.Drawing.Font("Segoe UI", 10F);
-            btnReturn.ForeColor = System.Drawing.Color.White;
-            btnReturn.Location = new System.Drawing.Point(1100, 20);
+            btnReturn.FlatStyle = FlatStyle.Flat;
+            btnReturn.Font = new Font("Segoe UI", 10F);
+            btnReturn.ForeColor = Color.White;
+            btnReturn.Location = new Point(1100, 20);
             btnReturn.Name = "btnReturn";
-            btnReturn.Size = new System.Drawing.Size(140, 42);
+            btnReturn.Size = new Size(140, 42);
             btnReturn.TabIndex = 8;
             btnReturn.Text = "Retur Barang";
             btnReturn.UseVisualStyleBackColor = false;
-            btnCancel.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnCancel.BackColor = System.Drawing.Color.IndianRed;
+            // 
+            // btnCancel
+            // 
+            btnCancel.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnCancel.BackColor = Color.IndianRed;
             btnCancel.FlatAppearance.BorderSize = 0;
-            btnCancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnCancel.Font = new System.Drawing.Font("Segoe UI", 10F);
-            btnCancel.ForeColor = System.Drawing.Color.White;
-            btnCancel.Location = new System.Drawing.Point(950, 20);
+            btnCancel.FlatStyle = FlatStyle.Flat;
+            btnCancel.Font = new Font("Segoe UI", 10F);
+            btnCancel.ForeColor = Color.White;
+            btnCancel.Location = new Point(950, 20);
             btnCancel.Name = "btnCancel";
-            btnCancel.Size = new System.Drawing.Size(140, 42);
+            btnCancel.Size = new Size(140, 42);
             btnCancel.TabIndex = 7;
             btnCancel.Text = "Batal";
             btnCancel.UseVisualStyleBackColor = false;
-            btnExportDetail.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnExportDetail.BackColor = System.Drawing.Color.White;
-            btnExportDetail.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200);
-            btnExportDetail.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnExportDetail.Font = new System.Drawing.Font("Segoe UI", 10F);
-            btnExportDetail.Location = new System.Drawing.Point(780, 20);
+            // 
+            // btnExportDetail
+            // 
+            btnExportDetail.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnExportDetail.BackColor = Color.White;
+            btnExportDetail.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnExportDetail.FlatStyle = FlatStyle.Flat;
+            btnExportDetail.Font = new Font("Segoe UI", 10F);
+            btnExportDetail.Location = new Point(780, 20);
             btnExportDetail.Name = "btnExportDetail";
-            btnExportDetail.Size = new System.Drawing.Size(160, 42);
+            btnExportDetail.Size = new Size(160, 42);
             btnExportDetail.TabIndex = 6;
             btnExportDetail.Text = "Export + Detail";
             btnExportDetail.UseVisualStyleBackColor = false;
-            btnExport.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnExport.BackColor = System.Drawing.Color.White;
-            btnExport.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200);
-            btnExport.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnExport.Font = new System.Drawing.Font("Segoe UI", 10F);
-            btnExport.Location = new System.Drawing.Point(650, 20);
+            // 
+            // btnExport
+            // 
+            btnExport.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnExport.BackColor = Color.White;
+            btnExport.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnExport.FlatStyle = FlatStyle.Flat;
+            btnExport.Font = new Font("Segoe UI", 10F);
+            btnExport.Location = new Point(650, 20);
             btnExport.Name = "btnExport";
-            btnExport.Size = new System.Drawing.Size(120, 42);
+            btnExport.Size = new Size(120, 42);
             btnExport.TabIndex = 5;
             btnExport.Text = "Export CSV";
             btnExport.UseVisualStyleBackColor = false;
-            btnExportPdf.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnExportPdf.BackColor = System.Drawing.Color.White;
-            btnExportPdf.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200);
-            btnExportPdf.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnExportPdf.Font = new System.Drawing.Font("Segoe UI", 10F);
-            btnExportPdf.Location = new System.Drawing.Point(520, 20);
+            // 
+            // btnExportPdf
+            // 
+            btnExportPdf.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnExportPdf.BackColor = Color.White;
+            btnExportPdf.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnExportPdf.FlatStyle = FlatStyle.Flat;
+            btnExportPdf.Font = new Font("Segoe UI", 10F);
+            btnExportPdf.Location = new Point(520, 20);
             btnExportPdf.Name = "btnExportPdf";
-            btnExportPdf.Size = new System.Drawing.Size(120, 42);
+            btnExportPdf.Size = new Size(120, 42);
             btnExportPdf.TabIndex = 4;
             btnExportPdf.Text = "Download PDF";
             btnExportPdf.UseVisualStyleBackColor = false;
-            btnPrintPreview.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnPrintPreview.BackColor = System.Drawing.Color.White;
-            btnPrintPreview.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200);
-            btnPrintPreview.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnPrintPreview.Font = new System.Drawing.Font("Segoe UI", 10F);
-            btnPrintPreview.Location = new System.Drawing.Point(380, 20);
+            // 
+            // btnPrintPreview
+            // 
+            btnPrintPreview.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnPrintPreview.BackColor = Color.White;
+            btnPrintPreview.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnPrintPreview.FlatStyle = FlatStyle.Flat;
+            btnPrintPreview.Font = new Font("Segoe UI", 10F);
+            btnPrintPreview.Location = new Point(380, 20);
             btnPrintPreview.Name = "btnPrintPreview";
-            btnPrintPreview.Size = new System.Drawing.Size(130, 42);
+            btnPrintPreview.Size = new Size(130, 42);
             btnPrintPreview.TabIndex = 3;
             btnPrintPreview.Text = "Preview / Print";
             btnPrintPreview.UseVisualStyleBackColor = false;
-            btnRefresh.BackColor = System.Drawing.Color.White;
-            btnRefresh.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200);
-            btnRefresh.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            btnRefresh.Font = new System.Drawing.Font("Segoe UI", 10F);
-            btnRefresh.Location = new System.Drawing.Point(240, 20);
+            // 
+            // btnRefresh
+            // 
+            btnRefresh.BackColor = Color.White;
+            btnRefresh.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnRefresh.FlatStyle = FlatStyle.Flat;
+            btnRefresh.Font = new Font("Segoe UI", 10F);
+            btnRefresh.Location = new Point(240, 20);
             btnRefresh.Name = "btnRefresh";
-            btnRefresh.Size = new System.Drawing.Size(120, 42);
+            btnRefresh.Size = new Size(120, 42);
             btnRefresh.TabIndex = 2;
             btnRefresh.Text = "Refresh";
             btnRefresh.UseVisualStyleBackColor = false;
-            cbStatus.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            cbStatus.Font = new System.Drawing.Font("Segoe UI", 10F);
+            // 
+            // cbStatus
+            // 
+            cbStatus.DropDownStyle = ComboBoxStyle.DropDownList;
+            cbStatus.Font = new Font("Segoe UI", 10F);
             cbStatus.FormattingEnabled = true;
-            cbStatus.Location = new System.Drawing.Point(20, 28);
+            cbStatus.Location = new Point(20, 28);
             cbStatus.Name = "cbStatus";
-            cbStatus.Size = new System.Drawing.Size(210, 31);
+            cbStatus.Size = new Size(210, 36);
             cbStatus.TabIndex = 1;
+            // 
+            // lblTitle
+            // 
             lblTitle.AutoSize = true;
-            lblTitle.Font = new System.Drawing.Font("Segoe UI Semibold", 16F, System.Drawing.FontStyle.Bold);
-            lblTitle.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-            lblTitle.Location = new System.Drawing.Point(20, -6);
+            lblTitle.Font = new Font("Segoe UI Semibold", 16F, FontStyle.Bold);
+            lblTitle.ForeColor = Color.FromArgb(51, 51, 51);
+            lblTitle.Location = new Point(20, -6);
             lblTitle.Name = "lblTitle";
-            lblTitle.Size = new System.Drawing.Size(205, 37);
+            lblTitle.Size = new Size(255, 45);
             lblTitle.TabIndex = 0;
             lblTitle.Text = "Daftar Transaksi";
+            // 
+            // panelBody
+            // 
             panelBody.Controls.Add(splitContainer);
-            panelBody.Dock = System.Windows.Forms.DockStyle.Fill;
-            panelBody.Location = new System.Drawing.Point(0, 82);
+            panelBody.Dock = DockStyle.Fill;
+            panelBody.Location = new Point(0, 82);
             panelBody.Name = "panelBody";
-            panelBody.Padding = new System.Windows.Forms.Padding(16);
-            panelBody.Size = new System.Drawing.Size(1400, 768);
+            panelBody.Padding = new Padding(16);
+            panelBody.Size = new Size(1400, 768);
             panelBody.TabIndex = 1;
-            splitContainer.Dock = System.Windows.Forms.DockStyle.Fill;
-            splitContainer.Location = new System.Drawing.Point(16, 16);
+            // 
+            // splitContainer
+            // 
+            splitContainer.Dock = DockStyle.Fill;
+            splitContainer.Location = new Point(16, 16);
             splitContainer.Name = "splitContainer";
-            splitContainer.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            splitContainer.Orientation = Orientation.Horizontal;
+            // 
+            // splitContainer.Panel1
+            // 
             splitContainer.Panel1.Controls.Add(dgvTransactions);
+            // 
+            // splitContainer.Panel2
+            // 
             splitContainer.Panel2.Controls.Add(dgvDetails);
             splitContainer.Panel2.Controls.Add(lblDetail);
-            splitContainer.SplitterDistance = 430;
-            splitContainer.Size = new System.Drawing.Size(1368, 736);
+            splitContainer.Size = new Size(1368, 736);
+            splitContainer.SplitterDistance = 522;
             splitContainer.TabIndex = 0;
-            dgvTransactions.BackgroundColor = System.Drawing.Color.White;
-            dgvTransactions.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            dgvTransactions.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.SingleHorizontal;
-            dgvTransactions.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.None;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(245, 246, 250);
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Segoe UI Semibold", 10F, System.Drawing.FontStyle.Bold);
-            dataGridViewCellStyle1.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            // 
+            // dgvTransactions
+            // 
+            dgvTransactions.BackgroundColor = Color.White;
+            dgvTransactions.BorderStyle = BorderStyle.None;
+            dgvTransactions.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dgvTransactions.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle1.BackColor = Color.FromArgb(245, 246, 250);
+            dataGridViewCellStyle1.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            dataGridViewCellStyle1.ForeColor = Color.FromArgb(51, 51, 51);
+            dataGridViewCellStyle1.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
             dgvTransactions.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             dgvTransactions.ColumnHeadersHeight = 45;
-            dgvTransactions.Dock = System.Windows.Forms.DockStyle.Fill;
+            dgvTransactions.Dock = DockStyle.Fill;
             dgvTransactions.EnableHeadersVisualStyles = false;
-            dgvTransactions.Location = new System.Drawing.Point(0, 0);
+            dgvTransactions.Location = new Point(0, 0);
             dgvTransactions.MultiSelect = false;
             dgvTransactions.Name = "dgvTransactions";
             dgvTransactions.ReadOnly = true;
             dgvTransactions.RowHeadersVisible = false;
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle2.BackColor = System.Drawing.Color.White;
-            dataGridViewCellStyle2.Font = new System.Drawing.Font("Segoe UI", 10F);
-            dataGridViewCellStyle2.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-            dataGridViewCellStyle2.Padding = new System.Windows.Forms.Padding(5);
-            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.Color.FromArgb(232, 240, 254);
-            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+            dgvTransactions.RowHeadersWidth = 62;
+            dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle2.BackColor = Color.White;
+            dataGridViewCellStyle2.Font = new Font("Segoe UI", 10F);
+            dataGridViewCellStyle2.ForeColor = Color.FromArgb(51, 51, 51);
+            dataGridViewCellStyle2.Padding = new Padding(5);
+            dataGridViewCellStyle2.SelectionBackColor = Color.FromArgb(232, 240, 254);
+            dataGridViewCellStyle2.SelectionForeColor = Color.FromArgb(51, 51, 51);
             dgvTransactions.RowsDefaultCellStyle = dataGridViewCellStyle2;
             dgvTransactions.RowTemplate.Height = 45;
-            dgvTransactions.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            dgvTransactions.Size = new System.Drawing.Size(1368, 430);
+            dgvTransactions.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvTransactions.Size = new Size(1368, 522);
             dgvTransactions.TabIndex = 0;
-            lblDetail.AutoSize = true;
-            lblDetail.Dock = System.Windows.Forms.DockStyle.Top;
-            lblDetail.Font = new System.Drawing.Font("Segoe UI Semibold", 11F, System.Drawing.FontStyle.Bold);
-            lblDetail.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-            lblDetail.Location = new System.Drawing.Point(0, 0);
-            lblDetail.Name = "lblDetail";
-            lblDetail.Padding = new System.Windows.Forms.Padding(0, 10, 0, 10);
-            lblDetail.Size = new System.Drawing.Size(152, 45);
-            lblDetail.TabIndex = 0;
-            lblDetail.Text = "Detail Transaksi";
-            dgvDetails.BackgroundColor = System.Drawing.Color.White;
-            dgvDetails.BorderStyle = System.Windows.Forms.BorderStyle.None;
-            dgvDetails.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.SingleHorizontal;
-            dgvDetails.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.None;
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle3.BackColor = System.Drawing.Color.FromArgb(245, 246, 250);
-            dataGridViewCellStyle3.Font = new System.Drawing.Font("Segoe UI Semibold", 10F, System.Drawing.FontStyle.Bold);
-            dataGridViewCellStyle3.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            // 
+            // dgvDetails
+            // 
+            dgvDetails.BackgroundColor = Color.White;
+            dgvDetails.BorderStyle = BorderStyle.None;
+            dgvDetails.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dgvDetails.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+            dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle3.BackColor = Color.FromArgb(245, 246, 250);
+            dataGridViewCellStyle3.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            dataGridViewCellStyle3.ForeColor = Color.FromArgb(51, 51, 51);
+            dataGridViewCellStyle3.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = DataGridViewTriState.True;
             dgvDetails.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle3;
             dgvDetails.ColumnHeadersHeight = 40;
-            dgvDetails.Dock = System.Windows.Forms.DockStyle.Fill;
+            dgvDetails.Dock = DockStyle.Fill;
             dgvDetails.EnableHeadersVisualStyles = false;
-            dgvDetails.Location = new System.Drawing.Point(0, 45);
+            dgvDetails.Location = new Point(0, 50);
             dgvDetails.MultiSelect = false;
             dgvDetails.Name = "dgvDetails";
             dgvDetails.ReadOnly = true;
             dgvDetails.RowHeadersVisible = false;
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            dataGridViewCellStyle4.BackColor = System.Drawing.Color.White;
-            dataGridViewCellStyle4.Font = new System.Drawing.Font("Segoe UI", 10F);
-            dataGridViewCellStyle4.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
-            dataGridViewCellStyle4.Padding = new System.Windows.Forms.Padding(5);
-            dataGridViewCellStyle4.SelectionBackColor = System.Drawing.Color.FromArgb(232, 240, 254);
-            dataGridViewCellStyle4.SelectionForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+            dgvDetails.RowHeadersWidth = 62;
+            dataGridViewCellStyle4.Alignment = DataGridViewContentAlignment.MiddleLeft;
+            dataGridViewCellStyle4.BackColor = Color.White;
+            dataGridViewCellStyle4.Font = new Font("Segoe UI", 10F);
+            dataGridViewCellStyle4.ForeColor = Color.FromArgb(51, 51, 51);
+            dataGridViewCellStyle4.Padding = new Padding(5);
+            dataGridViewCellStyle4.SelectionBackColor = Color.FromArgb(232, 240, 254);
+            dataGridViewCellStyle4.SelectionForeColor = Color.FromArgb(51, 51, 51);
             dgvDetails.RowsDefaultCellStyle = dataGridViewCellStyle4;
             dgvDetails.RowTemplate.Height = 42;
-            dgvDetails.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            dgvDetails.Size = new System.Drawing.Size(1368, 257);
+            dgvDetails.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvDetails.Size = new Size(1368, 160);
             dgvDetails.TabIndex = 1;
-            AutoScaleDimensions = new System.Drawing.SizeF(10F, 25F);
-            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            BackColor = System.Drawing.Color.FromArgb(245, 246, 250);
-            ClientSize = new System.Drawing.Size(1400, 850);
+            // 
+            // lblDetail
+            // 
+            lblDetail.AutoSize = true;
+            lblDetail.Dock = DockStyle.Top;
+            lblDetail.Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold);
+            lblDetail.ForeColor = Color.FromArgb(51, 51, 51);
+            lblDetail.Location = new Point(0, 0);
+            lblDetail.Name = "lblDetail";
+            lblDetail.Padding = new Padding(0, 10, 0, 10);
+            lblDetail.Size = new Size(167, 50);
+            lblDetail.TabIndex = 0;
+            lblDetail.Text = "Detail Transaksi";
+            // 
+            // TransactionsListForm
+            // 
+            AutoScaleDimensions = new SizeF(11F, 28F);
+            AutoScaleMode = AutoScaleMode.Font;
+            BackColor = Color.FromArgb(245, 246, 250);
+            ClientSize = new Size(1400, 850);
             Controls.Add(panelBody);
             Controls.Add(panelHeader);
-            Font = new System.Drawing.Font("Segoe UI", 10F);
+            Font = new Font("Segoe UI", 10F);
             Name = "TransactionsListForm";
             Text = "Daftar Transaksi";
             panelHeader.ResumeLayout(false);

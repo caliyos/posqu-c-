@@ -1,4 +1,4 @@
-﻿using Npgsql;
+using Npgsql;
 using System;
 using POS_qu.Models;
 using BCrypt.Net;
@@ -116,6 +116,18 @@ namespace POS_qu.Controllers
                         }
 
                         // ✅ Tambahkan loginId ke Session
+                        int defaultWarehouseId = 1;
+                        try
+                        {
+                            using var whCmd = new NpgsqlCommand("SELECT id FROM warehouses WHERE is_active = TRUE ORDER BY id ASC LIMIT 1", conn);
+                            object whObj = whCmd.ExecuteScalar();
+                            if (whObj != null && whObj != DBNull.Value) defaultWarehouseId = Convert.ToInt32(whObj);
+                        }
+                        catch
+                        {
+                            defaultWarehouseId = 1;
+                        }
+
                         SessionUser.CreateSession(
                             user.Id,
                             loginId,  // tambahan baru
@@ -124,7 +136,8 @@ namespace POS_qu.Controllers
                             user.RoleName,
                             user.ShiftId,
                             user.TerminalId,
-                            user.TerminalName
+                            user.TerminalName,
+                            defaultWarehouseId
                         );
 
                         // ✅ Log ke activityService

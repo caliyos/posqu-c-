@@ -135,6 +135,76 @@ ORDER BY created_at DESC
             return dt;
         }
 
+        public DataTable GetOrdersByDate(DateTime fromInclusive, DateTime toExclusive)
+        {
+            var dt = new DataTable();
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+            using var cmd = new NpgsqlCommand(@"
+SELECT 
+    order_id,
+    order_number,
+    order_code,
+    customer_name,
+    customer_phone,
+    order_total,
+    order_status,
+    payment_method,
+    delivery_method,
+    delivery_time,
+    order_note,
+    terminal_id,
+    shift_id,
+    user_id,
+    created_by,
+    created_at,
+    updated_at,
+    deleted_at
+FROM orders
+WHERE deleted_at IS NULL
+  AND created_at >= @from
+  AND created_at < @to
+ORDER BY created_at DESC
+", con);
+            cmd.Parameters.AddWithValue("@from", fromInclusive);
+            cmd.Parameters.AddWithValue("@to", toExclusive);
+            using var da = new NpgsqlDataAdapter(cmd);
+            da.Fill(dt);
+            return dt;
+        }
+
+        public DataTable GetOrderDetailsTable(int orderId)
+        {
+            var dt = new DataTable();
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+            using var cmd = new NpgsqlCommand(@"
+SELECT
+    od.order_detail_id,
+    od.order_id,
+    od.item_id,
+    COALESCE(i.name, od.od_note, od.od_barcode) AS name,
+    COALESCE(i.barcode, od.od_barcode) AS barcode,
+    od.od_quantity,
+    od.od_unit,
+    od.od_price_per_unit,
+    COALESCE(od.od_conversion_rate, 1) AS od_conversion_rate,
+    COALESCE(i.buy_price, 0) AS buy_price,
+    COALESCE(od.od_total, 0) AS od_total,
+    COALESCE(od.od_discount_total, 0) AS od_discount_total,
+    COALESCE(od.od_tax, 0) AS od_tax,
+    COALESCE(od.od_note, '') AS od_note
+FROM order_details od
+LEFT JOIN items i ON i.id = od.item_id AND od.item_id > 0
+WHERE od.order_id = @id
+ORDER BY od.order_detail_id
+", con);
+            cmd.Parameters.AddWithValue("@id", orderId);
+            using var da = new NpgsqlDataAdapter(cmd);
+            da.Fill(dt);
+            return dt;
+        }
+
 
         public int GetPendingOrdersCount()
         {

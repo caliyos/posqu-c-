@@ -85,6 +85,9 @@
     <Compile Update="PaymentModalForm.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="PendingCartsAdminForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="PriceUpdateForm.cs">
       <SubType>Form</SubType>
     </Compile>

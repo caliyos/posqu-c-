@@ -21,6 +21,7 @@ namespace POS_qu
         {
             InitializeComponent();
             itemController = new ItemController();
+            int activeWarehouseId = SessionUser.GetCurrentUser()?.WarehouseId ?? 1;
 
             //// Calculate 90% of the screen width
             //int screenWidth = Screen.PrimaryScreen.WorkingArea.Width;
@@ -31,7 +32,7 @@ namespace POS_qu
             //this.Height = (int)(screenHeight * 0.8); // Adjust the height as needed
 
             // Dapatkan data dari database
-            itemsDataTable = itemController.GetItems(searchTerm);
+            itemsDataTable = itemController.GetItems(searchTerm, activeWarehouseId);
             EnsureComputedColumns(itemsDataTable);
 
             // DataGridView setup
@@ -100,6 +101,7 @@ namespace POS_qu
                 ConfigureCashierColumns();
             };
             StartPosition = FormStartPosition.CenterScreen;
+            Text = $"Cari Barang — Gudang #{activeWarehouseId}";
         }
 
         private static void EnsureComputedColumns(DataTable dt)
@@ -282,7 +284,8 @@ namespace POS_qu
             string searchTerm = txtSearch.Text;
 
             // Dapatkan data baru dari database
-            itemsDataTable = itemController.GetItems(searchTerm);
+            int activeWarehouseId = SessionUser.GetCurrentUser()?.WarehouseId ?? 1;
+            itemsDataTable = itemController.GetItems(searchTerm, activeWarehouseId);
             EnsureComputedColumns(itemsDataTable);
 
             // Reset data di DataGridViewManager

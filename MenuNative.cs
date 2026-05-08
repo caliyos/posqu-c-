@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
 using POS_qu;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -179,7 +179,7 @@ namespace POSqu_menu
                 if (btnAdminPendingField != null)
                     btnAdminPendingField.Click += (s, ev) =>
                     {
-                        MessageBox.Show("Manajemen Pending/Draft sementara tidak tersedia.", "Info");
+                        ShowPendingAdmin();
                     };
                 // Menu item: Pending (Admin)
                 var miPendingAdmin = FindMenuItemByName(menuStrip1.Items, "pendingTransaksiAdminToolStripMenuItem");
@@ -187,7 +187,7 @@ namespace POSqu_menu
                 {
                     miPendingAdmin.Click += (s, ev) =>
                     {
-                        MessageBox.Show("Manajemen Pending/Draft sementara tidak tersedia.", "Info");
+                        ShowPendingAdmin();
                     };
                 }
                 var miRetur = FindMenuItemByName(menuStrip1.Items, "returBarangToolStripMenuItem");
@@ -222,6 +222,19 @@ namespace POSqu_menu
             catch (Exception ex)
             {
                 label2.Text = "❌ Error memuat sesi: " + ex.Message;
+            }
+        }
+
+        private void ShowPendingAdmin()
+        {
+            try
+            {
+                using var f = new PendingCartsAdminForm();
+                f.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Gagal membuka Pending Admin:\n" + ex.ToString());
             }
         }
 

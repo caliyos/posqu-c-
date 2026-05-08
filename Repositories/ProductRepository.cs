@@ -24,21 +24,23 @@ namespace POS_qu.Repositories
                 items.barcode,
                 items.buy_price,
                 items.sell_price,
-COALESCE((SELECT SUM(s.qty) 
-          FROM stocks s 
-          WHERE s.item_id = items.id), 0) AS stock,
+CAST(COALESCE((SELECT SUM(s.qty)
+               FROM stocks s
+               WHERE s.item_id = items.id), 0) AS NUMERIC(18,4)) AS stock,
 
-COALESCE((SELECT SUM(s.min_qty) 
-          FROM stocks s 
-          WHERE s.item_id = items.id), 0) AS min_qty,
+CAST(COALESCE((SELECT SUM(s.min_qty)
+               FROM stocks s
+               WHERE s.item_id = items.id), 0) AS NUMERIC(18,4)) AS min_qty,
 
-0 AS reserved_qty,
+CAST(COALESCE((SELECT SUM(s.reserved_qty)
+               FROM stocks s
+               WHERE s.item_id = items.id), 0) AS NUMERIC(18,4)) AS reserved_qty,
                 items.valuation_method,
 
                 items.unit AS unit_id,
                 units.name AS unit_name,
 
-COALESCE(uvbase.minqty, 0) AS min_stock,
+CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
 
                 items.category_id,
                 categories.name AS category_name,

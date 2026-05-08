@@ -19,6 +19,7 @@ namespace POS_qu.Models
         public int ShiftId { get; private set; }
         public int TerminalId { get; private set; }
         public string TerminalName { get; private set; }
+        public int WarehouseId { get; private set; }
 
         private SessionUser(
             int userId,
@@ -28,7 +29,8 @@ namespace POS_qu.Models
             string roleName,
             int shiftId,
             int terminalId,
-            string terminalName
+            string terminalName,
+            int warehouseId
         )
         {
             UserId = userId;
@@ -39,6 +41,7 @@ namespace POS_qu.Models
             ShiftId = shiftId;
             TerminalId = terminalId;
             TerminalName = terminalName;
+            WarehouseId = warehouseId <= 0 ? 1 : warehouseId;
         }
 
         public static void CreateSession(
@@ -49,10 +52,11 @@ namespace POS_qu.Models
             string roleName,
             int shiftId,
             int terminalId,
-            string terminalName
+            string terminalName,
+            int warehouseId = 1
         )
         {
-            instance = new SessionUser(userId, loginId,username, roleId, roleName, shiftId, terminalId, terminalName);
+            instance = new SessionUser(userId, loginId, username, roleId, roleName, shiftId, terminalId, terminalName, warehouseId);
         }
 
         public static SessionUser GetCurrentUser()
@@ -71,7 +75,25 @@ namespace POS_qu.Models
                 instance.RoleName,
                 shiftId,
                 instance.TerminalId,
-                instance.TerminalName
+                instance.TerminalName,
+                instance.WarehouseId
+            );
+        }
+
+        public static void UpdateWarehouseId(int warehouseId)
+        {
+            if (instance == null) return;
+            int wid = warehouseId <= 0 ? 1 : warehouseId;
+            instance = new SessionUser(
+                instance.UserId,
+                instance.LoginId,
+                instance.Username,
+                instance.RoleId,
+                instance.RoleName,
+                instance.ShiftId,
+                instance.TerminalId,
+                instance.TerminalName,
+                wid
             );
         }
 

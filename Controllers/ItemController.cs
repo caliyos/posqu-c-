@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿    ﻿﻿﻿﻿﻿﻿﻿  using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿    ﻿﻿﻿﻿﻿﻿﻿  using Npgsql;
     using System;
     using System.Collections.Generic;
     using System.Data;
@@ -621,12 +621,38 @@ LIMIT 1";
             }
             return dt;
         }
-        public DataTable GetItems(string searchTerm = null)
+        public DataTable GetItems(string searchTerm = null, int? warehouseId = null)
         {
             DataTable dt = new DataTable();
 
             // Build the base SQL query
-            string sql = @"SELECT
+            string sql;
+            if (warehouseId.HasValue && warehouseId.Value > 0)
+            {
+                sql = @"SELECT
+            items.id, 
+            items.name, 
+            items.barcode, 
+            items.buy_price, 
+            items.sell_price, 
+            COALESCE(
+                (SELECT s.qty FROM stocks s WHERE s.item_id = items.id AND s.warehouse_id = @wh),
+                (SELECT COALESCE(SUM(sl.qty_remaining),0) FROM stock_layers sl WHERE sl.item_id = items.id AND sl.warehouse_id = @wh),
+                0
+            ) AS stock,
+            units.name AS unit, 
+            items.unit AS unit_id,
+            COALESCE((SELECT s.reserved_qty FROM stocks s WHERE s.item_id = items.id AND s.warehouse_id = @wh), 0) AS reserved_stock
+            FROM 
+            items
+        LEFT JOIN 
+            units ON items.unit = units.id
+        WHERE 
+            items.deleted_at IS NULL ";
+            }
+            else
+            {
+                sql = @"SELECT
             items.id, 
             items.name, 
             items.barcode, 
@@ -642,6 +668,7 @@ LIMIT 1";
             units ON items.unit = units.id
         WHERE 
             items.deleted_at IS NULL ";
+            }
             //    string sql = @"
             //    SELECT 
             //        items.name, 
@@ -677,6 +704,10 @@ LIMIT 1";
                     if (!string.IsNullOrEmpty(searchTerm))
                     {
                         vCmd.Parameters.AddWithValue("@searchTerm", "%" + searchTerm + "%");
+                    }
+                    if (warehouseId.HasValue && warehouseId.Value > 0)
+                    {
+                        vCmd.Parameters.AddWithValue("@wh", warehouseId.Value);
                     }
 
                     using (NpgsqlDataReader dr = vCmd.ExecuteReader())

@@ -1,5 +1,6 @@
 using POS_qu.Services;
 using POS_qu.Repositories;
+using POS_qu.Controllers;
 using POS_qu.Core;
 using POS_qu.Helpers;
 using System;
@@ -17,10 +18,16 @@ namespace POS_qu
     {
         private readonly TransactionRepo _repo;
         private readonly TransactionService _service;
+        private readonly OrderController _orderController = new OrderController();
 
         private readonly PrintDocument _printDoc = new PrintDocument();
         private SaleInvoicePrintData _printData;
         private int _printRowCursor;
+        private DateTimePicker? _dtFrom;
+        private DateTimePicker? _dtTo;
+        private Label? _lblSummary;
+        private bool _uiInit;
+        private bool _isOrderView;
 
         public TransactionsListForm()
         {
@@ -35,7 +42,7 @@ namespace POS_qu
             MinimizeBox = true;
 
             cbStatus.Items.Clear();
-            cbStatus.Items.AddRange(new object[] { "Semua", "Sukses", "Retur", "Dibatalkan" });
+            cbStatus.Items.AddRange(new object[] { "Semua", "Sukses", "Retur", "Dibatalkan", "Order/Pesanan" });
             cbStatus.SelectedIndex = 1;
 
             dgvTransactions.SelectionChanged += dgvTransactions_SelectionChanged;
@@ -52,7 +59,114 @@ namespace POS_qu
             _printDoc.BeginPrint += PrintDoc_BeginPrint;
             _printDoc.PrintPage += PrintDoc_PrintPage;
 
+            BuildDateFilterUi();
+
             Load += (_, __) => LoadData();
+        }
+
+        private void BuildDateFilterUi()
+        {
+            if (panelHeader == null) return;
+            if (_dtFrom != null || _dtTo != null) return;
+
+            _uiInit = true;
+            try
+            {
+                panelHeader.Height = Math.Max(panelHeader.Height, 130);
+
+                var p = new Panel
+                {
+                    Dock = DockStyle.Bottom,
+                    Height = 46,
+                    BackColor = Color.White
+                };
+
+                var lblRange = new Label
+                {
+                    Text = "Periode:",
+                    AutoSize = true,
+                    Location = new Point(20, 13)
+                };
+
+                var dtFrom = new DateTimePicker
+                {
+                    Format = DateTimePickerFormat.Short,
+                    Width = 130,
+                    Location = new Point(90, 9)
+                };
+
+                var lblTo = new Label
+                {
+                    Text = "s/d",
+                    AutoSize = true,
+                    Location = new Point(dtFrom.Right + 10, 13)
+                };
+
+                var dtTo = new DateTimePicker
+                {
+                    Format = DateTimePickerFormat.Short,
+                    Width = 130,
+                    Location = new Point(lblTo.Right + 10, 9)
+                };
+
+                var btnToday = new Button
+                {
+                    Text = "Hari ini",
+                    Width = 100,
+                    Height = 30,
+                    Location = new Point(dtTo.Right + 10, 8),
+                    BackColor = Color.White,
+                    FlatStyle = FlatStyle.Flat
+                };
+                btnToday.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+
+                var lblSummary = new Label
+                {
+                    AutoSize = false,
+                    TextAlign = ContentAlignment.MiddleRight,
+                    Location = new Point(btnToday.Right + 10, 9),
+                    Height = 30,
+                    Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
+                    ForeColor = Color.FromArgb(70, 70, 70)
+                };
+
+                void LayoutSummary()
+                {
+                    lblSummary.Width = Math.Max(200, p.Width - lblSummary.Left - 16);
+                }
+                p.SizeChanged += (_, __) => LayoutSummary();
+                LayoutSummary();
+
+                dtFrom.Value = DateTime.Today;
+                dtTo.Value = DateTime.Today;
+
+                btnToday.Click += (_, __) =>
+                {
+                    dtFrom.Value = DateTime.Today;
+                    dtTo.Value = DateTime.Today;
+                };
+
+                dtFrom.ValueChanged += (_, __) => { if (!_uiInit) LoadData(); };
+                dtTo.ValueChanged += (_, __) => { if (!_uiInit) LoadData(); };
+
+                p.Controls.Add(lblRange);
+                p.Controls.Add(dtFrom);
+                p.Controls.Add(lblTo);
+                p.Controls.Add(dtTo);
+                p.Controls.Add(btnToday);
+                p.Controls.Add(lblSummary);
+
+                panelHeader.Controls.Add(p);
+                p.BringToFront();
+
+                _dtFrom = dtFrom;
+                _dtTo = dtTo;
+                _lblSummary = lblSummary;
+            }
+            finally
+            {
+                _uiInit = false;
+            }
         }
 
         private void LoadData()
@@ -60,17 +174,30 @@ namespace POS_qu
             string filter = "Sukses";
             if (cbStatus != null && cbStatus.SelectedItem != null)
                 filter = cbStatus.SelectedItem.ToString();
-            DataTable dt = _repo.GetTransactionsByFilter(filter);
+            var from = _dtFrom?.Value.Date ?? DateTime.Today;
+            var toEx = (_dtTo?.Value.Date ?? DateTime.Today).AddDays(1);
+
+            DataTable dt;
+            _isOrderView = string.Equals(filter, "Order/Pesanan", StringComparison.OrdinalIgnoreCase);
+            if (_isOrderView)
+            {
+                dt = _orderController.GetOrdersByDate(from, toEx);
+            }
+            else
+            {
+                dt = _repo.GetTransactionsByFilter(filter, from, toEx);
+            }
             dgvTransactions.DataSource = dt;
             if (dgvTransactions.Columns["ts_id"] != null) dgvTransactions.Columns["ts_id"].Visible = false;
+            if (dgvTransactions.Columns["order_id"] != null) dgvTransactions.Columns["order_id"].Visible = false;
 
-            if (dgvTransactions.Columns["ts_numbering"] != null)
+            if (!_isOrderView && dgvTransactions.Columns["ts_numbering"] != null)
             {
                 dgvTransactions.Columns["ts_numbering"].HeaderText = "No Transaksi";
                 dgvTransactions.Columns["ts_numbering"].Width = 180;
             }
 
-            if (dgvTransactions.Columns["ts_grand_total"] != null)
+            if (!_isOrderView && dgvTransactions.Columns["ts_grand_total"] != null)
             {
                 dgvTransactions.Columns["ts_grand_total"].HeaderText = "Grand Total";
                 dgvTransactions.Columns["ts_grand_total"].DefaultCellStyle.Format = "N0";
@@ -78,13 +205,29 @@ namespace POS_qu
                 dgvTransactions.Columns["ts_grand_total"].Width = 140;
             }
 
-            if (dgvTransactions.Columns["ts_method"] != null)
+            if (!_isOrderView && dgvTransactions.Columns["ts_hpp_total"] != null)
+            {
+                dgvTransactions.Columns["ts_hpp_total"].HeaderText = "HPP";
+                dgvTransactions.Columns["ts_hpp_total"].DefaultCellStyle.Format = "N0";
+                dgvTransactions.Columns["ts_hpp_total"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                dgvTransactions.Columns["ts_hpp_total"].Width = 120;
+            }
+
+            if (!_isOrderView && dgvTransactions.Columns["ts_profit"] != null)
+            {
+                dgvTransactions.Columns["ts_profit"].HeaderText = "Laba";
+                dgvTransactions.Columns["ts_profit"].DefaultCellStyle.Format = "N0";
+                dgvTransactions.Columns["ts_profit"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                dgvTransactions.Columns["ts_profit"].Width = 120;
+            }
+
+            if (!_isOrderView && dgvTransactions.Columns["ts_method"] != null)
             {
                 dgvTransactions.Columns["ts_method"].HeaderText = "Metode";
                 dgvTransactions.Columns["ts_method"].Width = 120;
             }
 
-            if (dgvTransactions.Columns["ts_status"] != null)
+            if (!_isOrderView && dgvTransactions.Columns["ts_status"] != null)
             {
                 dgvTransactions.Columns["ts_status"].HeaderText = "Status";
                 dgvTransactions.Columns["ts_status"].Width = 90;
@@ -97,17 +240,62 @@ namespace POS_qu
                 dgvTransactions.Columns["created_at"].Width = 160;
             }
 
-            if (dgvTransactions.Columns["user_id"] != null)
+            if (!_isOrderView && dgvTransactions.Columns["user_id"] != null)
             {
                 dgvTransactions.Columns["user_id"].HeaderText = "User";
                 dgvTransactions.Columns["user_id"].Width = 90;
             }
 
-            if (dgvTransactions.Columns.Contains("deleted_at"))
+            if (!_isOrderView && dgvTransactions.Columns.Contains("deleted_at"))
             {
                 dgvTransactions.Columns["deleted_at"].HeaderText = "Dibatalkan";
                 dgvTransactions.Columns["deleted_at"].Width = 160;
             }
+
+            if (_isOrderView)
+            {
+                if (dgvTransactions.Columns.Contains("order_number"))
+                {
+                    dgvTransactions.Columns["order_number"].HeaderText = "No Pesanan";
+                    dgvTransactions.Columns["order_number"].Width = 180;
+                }
+                if (dgvTransactions.Columns.Contains("customer_name"))
+                {
+                    dgvTransactions.Columns["customer_name"].HeaderText = "Customer";
+                    dgvTransactions.Columns["customer_name"].Width = 180;
+                }
+                if (dgvTransactions.Columns.Contains("order_total"))
+                {
+                    dgvTransactions.Columns["order_total"].HeaderText = "Total";
+                    dgvTransactions.Columns["order_total"].DefaultCellStyle.Format = "N0";
+                    dgvTransactions.Columns["order_total"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    dgvTransactions.Columns["order_total"].Width = 140;
+                }
+                if (dgvTransactions.Columns.Contains("order_status"))
+                {
+                    dgvTransactions.Columns["order_status"].HeaderText = "Status";
+                    dgvTransactions.Columns["order_status"].Width = 90;
+                }
+                if (dgvTransactions.Columns.Contains("payment_method"))
+                {
+                    dgvTransactions.Columns["payment_method"].HeaderText = "Metode";
+                    dgvTransactions.Columns["payment_method"].Width = 120;
+                }
+                if (dgvTransactions.Columns.Contains("delivery_method"))
+                {
+                    dgvTransactions.Columns["delivery_method"].HeaderText = "Delivery";
+                    dgvTransactions.Columns["delivery_method"].Width = 120;
+                }
+                if (dgvTransactions.Columns.Contains("deleted_at"))
+                    dgvTransactions.Columns["deleted_at"].Visible = false;
+            }
+
+            btnCancel.Enabled = !_isOrderView;
+            btnReturn.Enabled = !_isOrderView;
+            btnPrintPreview.Enabled = !_isOrderView;
+            btnExportPdf.Enabled = !_isOrderView;
+
+            UpdateSummary(dt);
 
             if (dgvTransactions.Rows.Count > 0)
             {
@@ -120,8 +308,50 @@ namespace POS_qu
             }
         }
 
+        private void UpdateSummary(DataTable dt)
+        {
+            if (_lblSummary == null) return;
+            if (dt == null || dt.Rows.Count == 0)
+            {
+                _lblSummary.Text = _isOrderView
+                    ? "Total: 0 order | Nilai Rp 0"
+                    : "Total: 0 trx | Omset Rp 0 | HPP Rp 0 | Laba Rp 0";
+                return;
+            }
+
+            if (_isOrderView)
+            {
+                decimal total = 0m;
+                foreach (DataRow r in dt.Rows)
+                {
+                    if (dt.Columns.Contains("order_total") && r["order_total"] != DBNull.Value)
+                        total += Convert.ToDecimal(r["order_total"]);
+                }
+                _lblSummary.Text = $"Total: {dt.Rows.Count:N0} order | Nilai Rp {total:N0}";
+                return;
+            }
+
+            decimal omset = 0m, hpp = 0m, profit = 0m;
+            foreach (DataRow r in dt.Rows)
+            {
+                if (dt.Columns.Contains("ts_grand_total") && r["ts_grand_total"] != DBNull.Value)
+                    omset += Convert.ToDecimal(r["ts_grand_total"]);
+                if (dt.Columns.Contains("ts_hpp_total") && r["ts_hpp_total"] != DBNull.Value)
+                    hpp += Convert.ToDecimal(r["ts_hpp_total"]);
+                if (dt.Columns.Contains("ts_profit") && r["ts_profit"] != DBNull.Value)
+                    profit += Convert.ToDecimal(r["ts_profit"]);
+            }
+
+            _lblSummary.Text = $"Total: {dt.Rows.Count:N0} trx | Omset Rp {omset:N0} | HPP Rp {hpp:N0} | Laba Rp {profit:N0}";
+        }
+
         private void BtnCancel_Click(object? sender, EventArgs e)
         {
+            if (_isOrderView)
+            {
+                MessageBox.Show("Menu ini sedang menampilkan Pesanan/Order. Pembatalan transaksi hanya untuk transaksi penjualan.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
             if (dgvTransactions.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Pilih transaksi dulu.");
@@ -163,6 +393,11 @@ namespace POS_qu
             if (!(dgvTransactions.DataSource is DataTable dt) || dt.Rows.Count == 0)
             {
                 MessageBox.Show("Tidak ada data untuk diexport.");
+                return;
+            }
+            if (_isOrderView || !dt.Columns.Contains("ts_id"))
+            {
+                MessageBox.Show("Export + Detail saat ini hanya untuk Transaksi (bukan Pesanan/Order).", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
             using var sfd = new SaveFileDialog();
@@ -249,6 +484,11 @@ namespace POS_qu
 
         private void BtnReturn_Click(object? sender, EventArgs e)
         {
+            if (_isOrderView)
+            {
+                MessageBox.Show("Menu ini sedang menampilkan Pesanan/Order. Retur hanya untuk transaksi penjualan.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
             if (dgvTransactions.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Pilih transaksi dulu.");
@@ -278,19 +518,32 @@ namespace POS_qu
                 return;
             }
 
+            DataTable dt;
+            if (_isOrderView)
+            {
+                int orderId = Convert.ToInt32(dgvTransactions.SelectedRows[0].Cells["order_id"].Value);
+                dt = _orderController.GetOrderDetailsTable(orderId);
+                LoadOrderDetailsToGrid(dt);
+                return;
+            }
+
             int tsId = Convert.ToInt32(dgvTransactions.SelectedRows[0].Cells["ts_id"].Value);
-            var dt = _repo.GetTransactionDetailsById(tsId);
+            dt = _repo.GetTransactionDetailsById(tsId);
             var friendly = new DataTable();
             friendly.Columns.Add("Nama Barang");
             friendly.Columns.Add("Barcode");
             friendly.Columns.Add("Jumlah");
             friendly.Columns.Add("Satuan");
             friendly.Columns.Add("Harga Satuan");
+            friendly.Columns.Add("HPP");
+            friendly.Columns.Add("Laba");
             friendly.Columns.Add("Subtotal");
             friendly.Columns.Add("Diskon");
             friendly.Columns.Add("Pajak");
             friendly.Columns.Add("Catatan");
 
+            decimal sumSubtotal = 0m;
+            decimal sumHpp = 0m;
             foreach (DataRow r in dt.Rows)
             {
                 var name = r["name"]?.ToString() ?? "";
@@ -298,15 +551,38 @@ namespace POS_qu
                 var qty = Convert.ToDecimal(r["tsd_quantity"]);
                 var unit = r["tsd_unit"]?.ToString() ?? "";
                 var price = Convert.ToDecimal(r["tsd_sell_price"]);
+                var buy = r.Table.Columns.Contains("tsd_buy_price") && r["tsd_buy_price"] != DBNull.Value ? Convert.ToDecimal(r["tsd_buy_price"]) : 0m;
                 var total = Convert.ToDecimal(r["tsd_total"]);
                 var disc = Convert.ToDecimal(r["tsd_discount_total"]);
                 var tax = Convert.ToDecimal(r["tsd_tax"]);
                 var note = r["tsd_note"]?.ToString() ?? "";
 
-                friendly.Rows.Add(name, barcode, qty.ToString("N0"), unit, price.ToString("N0"), total.ToString("N0"), disc.ToString("N0"), tax.ToString("N0"), note);
+                decimal lineHpp = buy * qty;
+                decimal lineProfit = total - lineHpp;
+                sumSubtotal += total;
+                sumHpp += lineHpp;
+                friendly.Rows.Add(
+                    name,
+                    barcode,
+                    qty.ToString("N0"),
+                    unit,
+                    price.ToString("N0"),
+                    lineHpp.ToString("N0"),
+                    lineProfit.ToString("N0"),
+                    total.ToString("N0"),
+                    disc.ToString("N0"),
+                    tax.ToString("N0"),
+                    note
+                );
             }
 
             dgvDetails.DataSource = friendly;
+
+            if (lblDetail != null)
+            {
+                decimal profit = sumSubtotal - sumHpp;
+                lblDetail.Text = $"Detail Transaksi — Subtotal Rp {sumSubtotal:N0} | HPP Rp {sumHpp:N0} | Laba Rp {profit:N0}";
+            }
 
             if (dgvDetails.Columns.Contains("Nama Barang"))
                 dgvDetails.Columns["Nama Barang"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
@@ -319,10 +595,85 @@ namespace POS_qu
 
             if (dgvDetails.Columns.Contains("Jumlah"))
                 dgvDetails.Columns["Jumlah"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+
+            if (dgvDetails.Columns.Contains("HPP"))
+                dgvDetails.Columns["HPP"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            if (dgvDetails.Columns.Contains("Laba"))
+                dgvDetails.Columns["Laba"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+        }
+
+        private void LoadOrderDetailsToGrid(DataTable dt)
+        {
+            var friendly = new DataTable();
+            friendly.Columns.Add("Nama Barang");
+            friendly.Columns.Add("Barcode");
+            friendly.Columns.Add("Jumlah");
+            friendly.Columns.Add("Satuan");
+            friendly.Columns.Add("Harga Satuan");
+            friendly.Columns.Add("HPP (estimasi)");
+            friendly.Columns.Add("Laba (estimasi)");
+            friendly.Columns.Add("Subtotal");
+            friendly.Columns.Add("Diskon");
+            friendly.Columns.Add("Pajak");
+            friendly.Columns.Add("Catatan");
+
+            decimal sumSubtotal = 0m;
+            decimal sumHpp = 0m;
+            foreach (DataRow r in dt.Rows)
+            {
+                var name = r["name"]?.ToString() ?? "";
+                var barcode = r["barcode"]?.ToString() ?? "";
+                var qty = r["od_quantity"] != DBNull.Value ? Convert.ToDecimal(r["od_quantity"]) : 0m;
+                var unit = r["od_unit"]?.ToString() ?? "";
+                var price = r["od_price_per_unit"] != DBNull.Value ? Convert.ToDecimal(r["od_price_per_unit"]) : 0m;
+                var conv = r.Table.Columns.Contains("od_conversion_rate") && r["od_conversion_rate"] != DBNull.Value ? Convert.ToDecimal(r["od_conversion_rate"]) : 1m;
+                var buy = r.Table.Columns.Contains("buy_price") && r["buy_price"] != DBNull.Value ? Convert.ToDecimal(r["buy_price"]) : 0m;
+                var total = r["od_total"] != DBNull.Value ? Convert.ToDecimal(r["od_total"]) : 0m;
+                var disc = r.Table.Columns.Contains("od_discount_total") && r["od_discount_total"] != DBNull.Value ? Convert.ToDecimal(r["od_discount_total"]) : 0m;
+                var tax = r.Table.Columns.Contains("od_tax") && r["od_tax"] != DBNull.Value ? Convert.ToDecimal(r["od_tax"]) : 0m;
+                var note = r.Table.Columns.Contains("od_note") ? (r["od_note"]?.ToString() ?? "") : "";
+
+                var baseQty = qty * (conv <= 0m ? 1m : conv);
+                var lineHpp = buy * baseQty;
+                var lineProfit = total - lineHpp;
+
+                sumSubtotal += total;
+                sumHpp += lineHpp;
+
+                friendly.Rows.Add(
+                    name,
+                    barcode,
+                    qty.ToString("N0"),
+                    unit,
+                    price.ToString("N0"),
+                    lineHpp.ToString("N0"),
+                    lineProfit.ToString("N0"),
+                    total.ToString("N0"),
+                    disc.ToString("N0"),
+                    tax.ToString("N0"),
+                    note
+                );
+            }
+
+            dgvDetails.DataSource = friendly;
+            if (lblDetail != null)
+            {
+                decimal profit = sumSubtotal - sumHpp;
+                lblDetail.Text = $"Detail Pesanan — Subtotal Rp {sumSubtotal:N0} | HPP (estimasi) Rp {sumHpp:N0} | Laba (estimasi) Rp {profit:N0}";
+            }
+
+            if (dgvDetails.Columns.Contains("Nama Barang"))
+                dgvDetails.Columns["Nama Barang"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            foreach (var col in new[] { "Jumlah", "Harga Satuan", "HPP (estimasi)", "Laba (estimasi)", "Subtotal", "Diskon", "Pajak" })
+            {
+                if (dgvDetails.Columns.Contains(col))
+                    dgvDetails.Columns[col].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
         }
 
         private int GetSelectedTransactionId()
         {
+            if (_isOrderView) return 0;
             if (dgvTransactions.SelectedRows.Count == 0) return 0;
             return Convert.ToInt32(dgvTransactions.SelectedRows[0].Cells["ts_id"].Value);
         }

@@ -220,6 +220,33 @@ VALUES (
             if (warehouseId <= 0) warehouseId = 1;
             if (qtyToRelease <= 0m) return;
 
+            double layerQty = 0d;
+            using (var q = new NpgsqlCommand(@"
+SELECT COALESCE(SUM(qty_remaining),0)
+FROM stock_layers
+WHERE item_id = @id AND warehouse_id = @wh
+", con, tran))
+            {
+                q.Parameters.AddWithValue("@id", itemId);
+                q.Parameters.AddWithValue("@wh", warehouseId);
+                object obj = q.ExecuteScalar();
+                layerQty = obj != null && obj != DBNull.Value ? Convert.ToDouble(obj) : 0d;
+            }
+
+            using (var ensure = new NpgsqlCommand(@"
+INSERT INTO stocks (item_id, warehouse_id, qty, min_qty, reserved_qty)
+SELECT @id, @wh, @qty, 0, 0
+WHERE NOT EXISTS (
+    SELECT 1 FROM stocks WHERE item_id = @id AND warehouse_id = @wh
+)
+", con, tran))
+            {
+                ensure.Parameters.AddWithValue("@id", itemId);
+                ensure.Parameters.AddWithValue("@wh", warehouseId);
+                ensure.Parameters.AddWithValue("@qty", layerQty);
+                ensure.ExecuteNonQuery();
+            }
+
             using (var clamp = new NpgsqlCommand(@"
 UPDATE stocks
 SET reserved_qty = LEAST(reserved_qty, qty)
@@ -240,6 +267,17 @@ WHERE item_id = @id AND warehouse_id = @wh
             cmd.Parameters.AddWithValue("@wh", warehouseId);
             cmd.Parameters.AddWithValue("@q", (double)qtyToRelease);
             cmd.ExecuteNonQuery();
+
+            using (var clampAfter = new NpgsqlCommand(@"
+UPDATE stocks
+SET reserved_qty = LEAST(reserved_qty, qty)
+WHERE item_id = @id AND warehouse_id = @wh
+", con, tran))
+            {
+                clampAfter.Parameters.AddWithValue("@id", itemId);
+                clampAfter.Parameters.AddWithValue("@wh", warehouseId);
+                clampAfter.ExecuteNonQuery();
+            }
         }
 
         public string GetItemValuationMethod(NpgsqlConnection con, NpgsqlTransaction tran, int itemId)
@@ -446,6 +484,7 @@ SELECT
     td.tsd_unit,
     td.tsd_quantity,
     td.tsd_sell_price,
+    COALESCE(td.tsd_buy_price, 0) AS tsd_buy_price,
     td.tsd_total,
     td.tsd_discount_total,
     td.tsd_tax,
@@ -492,41 +531,55 @@ WHERE ts_id = @id AND deleted_at IS NULL
 
         public DataTable GetTransactionsByFilter(string filter)
         {
+            return GetTransactionsByFilter(filter, null, null);
+        }
+
+        public DataTable GetTransactionsByFilter(string filter, DateTime? fromInclusive, DateTime? toExclusive)
+        {
             using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
             conn.Open();
-            string sql = "";
+            string where = "WHERE 1=1";
             if (string.Equals(filter, "Sukses", StringComparison.OrdinalIgnoreCase))
             {
-                sql = @"
-SELECT ts_id, ts_numbering, ts_grand_total, ts_method, ts_status, created_at, user_id
-FROM transactions
-WHERE ts_status = 1 AND deleted_at IS NULL
-ORDER BY created_at DESC";
+                where += " AND t.ts_status = 1 AND t.deleted_at IS NULL";
             }
             else if (string.Equals(filter, "Retur", StringComparison.OrdinalIgnoreCase))
             {
-                sql = @"
-SELECT ts_id, ts_numbering, ts_grand_total, ts_method, ts_status, created_at, user_id
-FROM transactions
-WHERE ts_method = 'RETURN' AND deleted_at IS NULL
-ORDER BY created_at DESC";
+                where += " AND t.ts_method = 'RETURN' AND t.deleted_at IS NULL";
             }
             else if (string.Equals(filter, "Dibatalkan", StringComparison.OrdinalIgnoreCase))
             {
-                sql = @"
-SELECT ts_id, ts_numbering, ts_grand_total, ts_method, ts_status, created_at, user_id
-FROM transactions
-WHERE deleted_at IS NOT NULL
-ORDER BY created_at DESC";
+                where += " AND t.deleted_at IS NOT NULL";
             }
-            else
-            {
-                sql = @"
-SELECT ts_id, ts_numbering, ts_grand_total, ts_method, ts_status, created_at, user_id, deleted_at
-FROM transactions
-ORDER BY created_at DESC";
-            }
+
+            if (fromInclusive.HasValue)
+                where += " AND t.created_at >= @from";
+            if (toExclusive.HasValue)
+                where += " AND t.created_at < @to";
+
+            string sql = $@"
+SELECT
+    t.ts_id,
+    t.ts_numbering,
+    t.ts_grand_total,
+    COALESCE(SUM(COALESCE(td.tsd_buy_price, 0) * COALESCE(td.tsd_quantity, 0)), 0) AS ts_hpp_total,
+    (t.ts_grand_total - COALESCE(SUM(COALESCE(td.tsd_buy_price, 0) * COALESCE(td.tsd_quantity, 0)), 0)) AS ts_profit,
+    t.ts_method,
+    t.ts_status,
+    t.created_at,
+    t.user_id,
+    t.deleted_at
+FROM transactions t
+LEFT JOIN transaction_details td ON td.ts_id = t.ts_id
+{where}
+GROUP BY t.ts_id
+ORDER BY t.created_at DESC";
+
             using var cmd = new NpgsqlCommand(sql, conn);
+            if (fromInclusive.HasValue)
+                cmd.Parameters.AddWithValue("@from", fromInclusive.Value);
+            if (toExclusive.HasValue)
+                cmd.Parameters.AddWithValue("@to", toExclusive.Value);
             using var da = new NpgsqlDataAdapter(cmd);
             var dt = new DataTable();
             da.Fill(dt);

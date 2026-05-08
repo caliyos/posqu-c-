@@ -37,6 +37,10 @@ namespace POS_qu
         private System.Windows.Forms.ProgressBar progress;
         private System.Windows.Forms.Label lblLogTitle;
         private System.Windows.Forms.TextBox txtLog;
+        private System.Windows.Forms.Label lblTimeZone;
+        private System.Windows.Forms.ComboBox cmbTimeZone;
+        private System.Windows.Forms.Button btnApplyTimeZone;
+        private System.Windows.Forms.Label lblCurrentTimeZone;
 
         protected override void Dispose(bool disposing)
         {
@@ -71,6 +75,10 @@ namespace POS_qu
             btnRefreshDbList = new Button();
             cmbDbList = new ComboBox();
             lblDbListTitle = new Label();
+            lblCurrentTimeZone = new Label();
+            btnApplyTimeZone = new Button();
+            cmbTimeZone = new ComboBox();
+            lblTimeZone = new Label();
             lblCurrentDb = new Label();
             txtDb = new TextBox();
             txtPass = new TextBox();
@@ -114,6 +122,7 @@ namespace POS_qu
             // 
             // panelRight
             // 
+            panelRight.BackColor = SystemColors.ControlLight;
             panelRight.Controls.Add(txtLog);
             panelRight.Controls.Add(lblLogTitle);
             panelRight.Controls.Add(progress);
@@ -133,6 +142,7 @@ namespace POS_qu
             // txtLog
             // 
             txtLog.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            txtLog.BackColor = SystemColors.ButtonHighlight;
             txtLog.Font = new Font("Consolas", 9.5F);
             txtLog.Location = new Point(18, 408);
             txtLog.Multiline = true;
@@ -157,16 +167,16 @@ namespace POS_qu
             // 
             progress.Location = new Point(18, 332);
             progress.Name = "progress";
-            progress.Size = new Size(492, 18);
+            progress.Size = new Size(668, 19);
             progress.TabIndex = 6;
             // 
             // btnSetupAll
             // 
-            btnSetupAll.BackColor = Color.FromArgb(40, 167, 69);
+            btnSetupAll.BackColor = SystemColors.ButtonHighlight;
             btnSetupAll.FlatAppearance.BorderSize = 0;
             btnSetupAll.FlatStyle = FlatStyle.Flat;
             btnSetupAll.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            btnSetupAll.ForeColor = Color.White;
+            btnSetupAll.ForeColor = Color.Black;
             btnSetupAll.Location = new Point(18, 278);
             btnSetupAll.Name = "btnSetupAll";
             btnSetupAll.Size = new Size(492, 44);
@@ -176,11 +186,11 @@ namespace POS_qu
             // 
             // btnRunPhpSeeders
             // 
-            btnRunPhpSeeders.BackColor = Color.FromArgb(0, 120, 215);
+            btnRunPhpSeeders.BackColor = SystemColors.ButtonHighlight;
             btnRunPhpSeeders.FlatAppearance.BorderSize = 0;
             btnRunPhpSeeders.FlatStyle = FlatStyle.Flat;
             btnRunPhpSeeders.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            btnRunPhpSeeders.ForeColor = Color.White;
+            btnRunPhpSeeders.ForeColor = Color.Black;
             btnRunPhpSeeders.Location = new Point(18, 228);
             btnRunPhpSeeders.Name = "btnRunPhpSeeders";
             btnRunPhpSeeders.Size = new Size(492, 44);
@@ -190,11 +200,11 @@ namespace POS_qu
             // 
             // btnRunPhpMigrations
             // 
-            btnRunPhpMigrations.BackColor = Color.FromArgb(0, 120, 215);
+            btnRunPhpMigrations.BackColor = SystemColors.ButtonHighlight;
             btnRunPhpMigrations.FlatAppearance.BorderSize = 0;
             btnRunPhpMigrations.FlatStyle = FlatStyle.Flat;
             btnRunPhpMigrations.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            btnRunPhpMigrations.ForeColor = Color.White;
+            btnRunPhpMigrations.ForeColor = Color.Black;
             btnRunPhpMigrations.Location = new Point(18, 178);
             btnRunPhpMigrations.Name = "btnRunPhpMigrations";
             btnRunPhpMigrations.Size = new Size(492, 44);
@@ -237,6 +247,7 @@ namespace POS_qu
             // panelLeft
             // 
             panelLeft.AutoScroll = true;
+            panelLeft.BackColor = SystemColors.ButtonFace;
             panelLeft.Controls.Add(btnResetSchema);
             panelLeft.Controls.Add(btnCreateDb);
             panelLeft.Controls.Add(btnSaveConfig);
@@ -246,6 +257,10 @@ namespace POS_qu
             panelLeft.Controls.Add(btnRefreshDbList);
             panelLeft.Controls.Add(cmbDbList);
             panelLeft.Controls.Add(lblDbListTitle);
+            panelLeft.Controls.Add(lblCurrentTimeZone);
+            panelLeft.Controls.Add(btnApplyTimeZone);
+            panelLeft.Controls.Add(cmbTimeZone);
+            panelLeft.Controls.Add(lblTimeZone);
             panelLeft.Controls.Add(lblCurrentDb);
             panelLeft.Controls.Add(txtDb);
             panelLeft.Controls.Add(txtPass);
@@ -267,11 +282,11 @@ namespace POS_qu
             // 
             // btnResetSchema
             // 
-            btnResetSchema.BackColor = Color.FromArgb(220, 53, 69);
+            btnResetSchema.BackColor = Color.White;
             btnResetSchema.FlatAppearance.BorderSize = 0;
             btnResetSchema.FlatStyle = FlatStyle.Flat;
             btnResetSchema.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            btnResetSchema.ForeColor = Color.White;
+            btnResetSchema.ForeColor = Color.Black;
             btnResetSchema.Location = new Point(248, 514);
             btnResetSchema.Name = "btnResetSchema";
             btnResetSchema.Size = new Size(236, 44);
@@ -281,11 +296,11 @@ namespace POS_qu
             // 
             // btnCreateDb
             // 
-            btnCreateDb.BackColor = Color.FromArgb(108, 117, 125);
+            btnCreateDb.BackColor = Color.White;
             btnCreateDb.FlatAppearance.BorderSize = 0;
             btnCreateDb.FlatStyle = FlatStyle.Flat;
             btnCreateDb.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            btnCreateDb.ForeColor = Color.White;
+            btnCreateDb.ForeColor = Color.Black;
             btnCreateDb.Location = new Point(0, 514);
             btnCreateDb.Name = "btnCreateDb";
             btnCreateDb.Size = new Size(236, 44);
@@ -295,11 +310,11 @@ namespace POS_qu
             // 
             // btnSaveConfig
             // 
-            btnSaveConfig.BackColor = Color.FromArgb(40, 167, 69);
+            btnSaveConfig.BackColor = Color.White;
             btnSaveConfig.FlatAppearance.BorderSize = 0;
             btnSaveConfig.FlatStyle = FlatStyle.Flat;
             btnSaveConfig.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            btnSaveConfig.ForeColor = Color.White;
+            btnSaveConfig.ForeColor = Color.Black;
             btnSaveConfig.Location = new Point(248, 460);
             btnSaveConfig.Name = "btnSaveConfig";
             btnSaveConfig.Size = new Size(236, 44);
@@ -309,11 +324,11 @@ namespace POS_qu
             // 
             // btnTest
             // 
-            btnTest.BackColor = Color.FromArgb(0, 120, 215);
+            btnTest.BackColor = Color.White;
             btnTest.FlatAppearance.BorderSize = 0;
             btnTest.FlatStyle = FlatStyle.Flat;
             btnTest.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            btnTest.ForeColor = Color.White;
+            btnTest.ForeColor = Color.Black;
             btnTest.Location = new Point(0, 460);
             btnTest.Name = "btnTest";
             btnTest.Size = new Size(236, 44);
@@ -323,11 +338,11 @@ namespace POS_qu
             // 
             // btnRestoreDb
             // 
-            btnRestoreDb.BackColor = Color.FromArgb(255, 193, 7);
+            btnRestoreDb.BackColor = Color.White;
             btnRestoreDb.FlatAppearance.BorderSize = 0;
             btnRestoreDb.FlatStyle = FlatStyle.Flat;
             btnRestoreDb.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            btnRestoreDb.ForeColor = Color.FromArgb(33, 37, 41);
+            btnRestoreDb.ForeColor = Color.Black;
             btnRestoreDb.Location = new Point(0, 738);
             btnRestoreDb.Name = "btnRestoreDb";
             btnRestoreDb.Size = new Size(484, 44);
@@ -337,11 +352,11 @@ namespace POS_qu
             // 
             // btnBackupDb
             // 
-            btnBackupDb.BackColor = Color.FromArgb(23, 162, 184);
+            btnBackupDb.BackColor = Color.White;
             btnBackupDb.FlatAppearance.BorderSize = 0;
             btnBackupDb.FlatStyle = FlatStyle.Flat;
             btnBackupDb.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            btnBackupDb.ForeColor = Color.White;
+            btnBackupDb.ForeColor = Color.Black;
             btnBackupDb.Location = new Point(248, 684);
             btnBackupDb.Name = "btnBackupDb";
             btnBackupDb.Size = new Size(236, 44);
@@ -351,11 +366,11 @@ namespace POS_qu
             // 
             // btnRefreshDbList
             // 
-            btnRefreshDbList.BackColor = Color.FromArgb(108, 117, 125);
+            btnRefreshDbList.BackColor = Color.White;
             btnRefreshDbList.FlatAppearance.BorderSize = 0;
             btnRefreshDbList.FlatStyle = FlatStyle.Flat;
             btnRefreshDbList.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
-            btnRefreshDbList.ForeColor = Color.White;
+            btnRefreshDbList.ForeColor = Color.Black;
             btnRefreshDbList.Location = new Point(0, 684);
             btnRefreshDbList.Name = "btnRefreshDbList";
             btnRefreshDbList.Size = new Size(236, 44);
@@ -365,8 +380,10 @@ namespace POS_qu
             // 
             // cmbDbList
             // 
+            cmbDbList.BackColor = SystemColors.ButtonHighlight;
             cmbDbList.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbDbList.Font = new Font("Segoe UI", 11F);
+            cmbDbList.ForeColor = SystemColors.InfoText;
             cmbDbList.FormattingEnabled = true;
             cmbDbList.Location = new Point(0, 638);
             cmbDbList.Name = "cmbDbList";
@@ -380,9 +397,56 @@ namespace POS_qu
             lblDbListTitle.ForeColor = Color.FromArgb(90, 90, 90);
             lblDbListTitle.Location = new Point(0, 608);
             lblDbListTitle.Name = "lblDbListTitle";
-            lblDbListTitle.Size = new Size(191, 28);
+            lblDbListTitle.Size = new Size(194, 28);
             lblDbListTitle.TabIndex = 13;
             lblDbListTitle.Text = "Daftar Database (PG)";
+            // 
+            // lblCurrentTimeZone
+            // 
+            lblCurrentTimeZone.Font = new Font("Segoe UI", 9F);
+            lblCurrentTimeZone.ForeColor = Color.FromArgb(90, 90, 90);
+            lblCurrentTimeZone.Location = new Point(0, 936);
+            lblCurrentTimeZone.Name = "lblCurrentTimeZone";
+            lblCurrentTimeZone.Size = new Size(484, 44);
+            lblCurrentTimeZone.TabIndex = 21;
+            lblCurrentTimeZone.Text = "Timezone database: -";
+            // 
+            // btnApplyTimeZone
+            // 
+            btnApplyTimeZone.BackColor = Color.White;
+            btnApplyTimeZone.FlatAppearance.BorderSize = 0;
+            btnApplyTimeZone.FlatStyle = FlatStyle.Flat;
+            btnApplyTimeZone.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            btnApplyTimeZone.ForeColor = Color.Black;
+            btnApplyTimeZone.Location = new Point(0, 884);
+            btnApplyTimeZone.Name = "btnApplyTimeZone";
+            btnApplyTimeZone.Size = new Size(484, 44);
+            btnApplyTimeZone.TabIndex = 20;
+            btnApplyTimeZone.Text = "Apply Zona Waktu";
+            btnApplyTimeZone.UseVisualStyleBackColor = false;
+            // 
+            // cmbTimeZone
+            // 
+            cmbTimeZone.BackColor = SystemColors.ButtonHighlight;
+            cmbTimeZone.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbTimeZone.Font = new Font("Segoe UI", 11F);
+            cmbTimeZone.ForeColor = SystemColors.InfoText;
+            cmbTimeZone.FormattingEnabled = true;
+            cmbTimeZone.Location = new Point(0, 840);
+            cmbTimeZone.Name = "cmbTimeZone";
+            cmbTimeZone.Size = new Size(484, 38);
+            cmbTimeZone.TabIndex = 19;
+            // 
+            // lblTimeZone
+            // 
+            lblTimeZone.AutoSize = true;
+            lblTimeZone.Font = new Font("Segoe UI", 10F);
+            lblTimeZone.ForeColor = Color.FromArgb(90, 90, 90);
+            lblTimeZone.Location = new Point(0, 810);
+            lblTimeZone.Name = "lblTimeZone";
+            lblTimeZone.Size = new Size(117, 28);
+            lblTimeZone.TabIndex = 18;
+            lblTimeZone.Text = "Zona Waktu";
             // 
             // lblCurrentDb
             // 
@@ -510,7 +574,7 @@ namespace POS_qu
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(1296, 735);
             Controls.Add(panelRoot);
-            FormBorderStyle = FormBorderStyle.None;
+            FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             Name = "DatabaseSetting";
             StartPosition = FormStartPosition.CenterScreen;

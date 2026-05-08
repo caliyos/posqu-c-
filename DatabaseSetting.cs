@@ -24,6 +24,16 @@ namespace POS_qu
             cmbDbList.SelectedIndexChanged += CmbDbList_SelectedIndexChanged;
             btnBackupDb.Click += BtnBackupDb_Click;
             btnRestoreDb.Click += BtnRestoreDb_Click;
+            btnApplyTimeZone.Click += BtnApplyTimeZone_Click;
+
+            cmbTimeZone.Items.Clear();
+            cmbTimeZone.DisplayMember = "Text";
+            cmbTimeZone.ValueMember = "Value";
+            cmbTimeZone.Items.Add(new { Text = "WIB (GMT+7)", Value = "Asia/Jakarta" });
+            cmbTimeZone.Items.Add(new { Text = "WITA (GMT+8)", Value = "Asia/Makassar" });
+            cmbTimeZone.Items.Add(new { Text = "WIT (GMT+9)", Value = "Asia/Jayapura" });
+            cmbTimeZone.Items.Add(new { Text = "UTC (GMT+0)", Value = "UTC" });
+            if (cmbTimeZone.Items.Count > 0) cmbTimeZone.SelectedIndex = 1;
 
             TryLoadConfig();
         }
@@ -100,12 +110,14 @@ namespace POS_qu
                     Port = int.TryParse(txtPort.Text.Trim(), out var p) ? p : 5432,
                     Username = txtUser.Text.Trim(),
                     Password = txtPass.Text.Trim(),
-                    Database = txtDb.Text.Trim()
+                    Database = txtDb.Text.Trim(),
+                    TimeZone = GetSelectedTimeZoneValue()
                 };
                 var json = JsonSerializer.Serialize(cfg, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(configPath, json);
                 DbConfig.LoadConfig();
                 UpdateCurrentDbLabel();
+                UpdateCurrentTimeZoneLabel();
                 MessageBox.Show("✅ Config tersimpan.", "Config", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
@@ -129,6 +141,8 @@ namespace POS_qu
                         txtUser.Text = cfg.Username ?? txtUser.Text;
                         txtPass.Text = cfg.Password ?? txtPass.Text;
                         txtDb.Text = cfg.Database ?? txtDb.Text;
+                        if (!string.IsNullOrWhiteSpace(cfg.TimeZone))
+                            SelectTimeZoneValue(cfg.TimeZone.Trim());
                         return;
                     }
                 }
@@ -147,6 +161,76 @@ namespace POS_qu
             }
             catch
             {
+            }
+        }
+
+        private string GetSelectedTimeZoneValue()
+        {
+            if (cmbTimeZone.SelectedItem == null) return "Asia/Makassar";
+            var prop = cmbTimeZone.SelectedItem.GetType().GetProperty("Value");
+            var val = prop?.GetValue(cmbTimeZone.SelectedItem)?.ToString();
+            return string.IsNullOrWhiteSpace(val) ? "Asia/Makassar" : val;
+        }
+
+        private void SelectTimeZoneValue(string timeZone)
+        {
+            for (int i = 0; i < cmbTimeZone.Items.Count; i++)
+            {
+                var it = cmbTimeZone.Items[i];
+                var prop = it.GetType().GetProperty("Value");
+                var val = prop?.GetValue(it)?.ToString();
+                if (string.Equals(val, timeZone, StringComparison.OrdinalIgnoreCase))
+                {
+                    cmbTimeZone.SelectedIndex = i;
+                    return;
+                }
+            }
+        }
+
+        private void UpdateCurrentTimeZoneLabel()
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(txtDb.Text))
+                {
+                    lblCurrentTimeZone.Text = "Timezone database: -";
+                    return;
+                }
+                string db = txtDb.Text.Trim();
+                using var conn = new NpgsqlConnection($"Host={txtHost.Text.Trim()};Port={txtPort.Text.Trim()};Username={txtUser.Text.Trim()};Password={txtPass.Text.Trim()};Database={db}");
+                conn.Open();
+                using var cmd = new NpgsqlCommand("SHOW TIME ZONE;", conn);
+                var tz = cmd.ExecuteScalar()?.ToString();
+                lblCurrentTimeZone.Text = "Timezone database: " + (string.IsNullOrWhiteSpace(tz) ? "-" : tz);
+            }
+            catch
+            {
+                lblCurrentTimeZone.Text = "Timezone database: -";
+            }
+        }
+
+        private void BtnApplyTimeZone_Click(object? sender, EventArgs e)
+        {
+            try
+            {
+                string db = txtDb.Text.Trim();
+                if (string.IsNullOrWhiteSpace(db)) { MessageBox.Show("Isi nama database dulu.", "Warning"); return; }
+                string tz = GetSelectedTimeZoneValue();
+
+                using var conn = new NpgsqlConnection($"Host={txtHost.Text.Trim()};Port={txtPort.Text.Trim()};Username={txtUser.Text.Trim()};Password={txtPass.Text.Trim()};Database=postgres");
+                conn.Open();
+                using (var cmd = new NpgsqlCommand($"ALTER DATABASE \"{db}\" SET TIME ZONE '{tz}';", conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+
+                BtnSaveConfig_Click(sender, e);
+                UpdateCurrentTimeZoneLabel();
+                MessageBox.Show($"✅ Zona waktu diset ke {tz}.", "Zona Waktu", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"❌ Gagal apply zona waktu: {ex.Message}", "Zona Waktu", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -280,6 +364,7 @@ namespace POS_qu
         {
             UpdateCurrentDbLabel();
             LoadDatabaseListSafe();
+            UpdateCurrentTimeZoneLabel();
         }
 
         private void UpdateCurrentDbLabel()
