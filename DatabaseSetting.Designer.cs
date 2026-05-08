@@ -105,7 +105,7 @@ namespace POS_qu
             panelRoot.Location = new Point(0, 0);
             panelRoot.Name = "panelRoot";
             panelRoot.Padding = new Padding(18);
-            panelRoot.Size = new Size(1296, 735);
+            panelRoot.Size = new Size(1537, 822);
             panelRoot.TabIndex = 0;
             // 
             // panelCard
@@ -117,7 +117,7 @@ namespace POS_qu
             panelCard.Location = new Point(18, 18);
             panelCard.Name = "panelCard";
             panelCard.Padding = new Padding(18);
-            panelCard.Size = new Size(1260, 699);
+            panelCard.Size = new Size(1501, 786);
             panelCard.TabIndex = 0;
             // 
             // panelRight
@@ -133,10 +133,10 @@ namespace POS_qu
             panelRight.Controls.Add(lblSubHeader);
             panelRight.Controls.Add(lblHeader);
             panelRight.Dock = DockStyle.Fill;
-            panelRight.Location = new Point(538, 18);
+            panelRight.Location = new Point(581, 18);
             panelRight.Name = "panelRight";
             panelRight.Padding = new Padding(18, 0, 0, 0);
-            panelRight.Size = new Size(704, 663);
+            panelRight.Size = new Size(902, 750);
             panelRight.TabIndex = 1;
             // 
             // txtLog
@@ -149,7 +149,7 @@ namespace POS_qu
             txtLog.Name = "txtLog";
             txtLog.ReadOnly = true;
             txtLog.ScrollBars = ScrollBars.Vertical;
-            txtLog.Size = new Size(668, 237);
+            txtLog.Size = new Size(866, 324);
             txtLog.TabIndex = 8;
             // 
             // lblLogTitle
@@ -179,7 +179,7 @@ namespace POS_qu
             btnSetupAll.ForeColor = Color.Black;
             btnSetupAll.Location = new Point(18, 278);
             btnSetupAll.Name = "btnSetupAll";
-            btnSetupAll.Size = new Size(492, 44);
+            btnSetupAll.Size = new Size(269, 44);
             btnSetupAll.TabIndex = 5;
             btnSetupAll.Text = "Setup Otomatis";
             btnSetupAll.UseVisualStyleBackColor = false;
@@ -193,7 +193,7 @@ namespace POS_qu
             btnRunPhpSeeders.ForeColor = Color.Black;
             btnRunPhpSeeders.Location = new Point(18, 228);
             btnRunPhpSeeders.Name = "btnRunPhpSeeders";
-            btnRunPhpSeeders.Size = new Size(492, 44);
+            btnRunPhpSeeders.Size = new Size(269, 44);
             btnRunPhpSeeders.TabIndex = 4;
             btnRunPhpSeeders.Text = "Run Seeders (PHP)";
             btnRunPhpSeeders.UseVisualStyleBackColor = false;
@@ -207,7 +207,7 @@ namespace POS_qu
             btnRunPhpMigrations.ForeColor = Color.Black;
             btnRunPhpMigrations.Location = new Point(18, 178);
             btnRunPhpMigrations.Name = "btnRunPhpMigrations";
-            btnRunPhpMigrations.Size = new Size(492, 44);
+            btnRunPhpMigrations.Size = new Size(269, 44);
             btnRunPhpMigrations.TabIndex = 3;
             btnRunPhpMigrations.Text = "Run Migrations (PHP)";
             btnRunPhpMigrations.UseVisualStyleBackColor = false;
@@ -277,7 +277,7 @@ namespace POS_qu
             panelLeft.Location = new Point(18, 18);
             panelLeft.Name = "panelLeft";
             panelLeft.Padding = new Padding(0, 54, 18, 0);
-            panelLeft.Size = new Size(520, 663);
+            panelLeft.Size = new Size(563, 750);
             panelLeft.TabIndex = 0;
             // 
             // btnResetSchema
@@ -289,7 +289,7 @@ namespace POS_qu
             btnResetSchema.ForeColor = Color.Black;
             btnResetSchema.Location = new Point(248, 514);
             btnResetSchema.Name = "btnResetSchema";
-            btnResetSchema.Size = new Size(236, 44);
+            btnResetSchema.Size = new Size(194, 44);
             btnResetSchema.TabIndex = 14;
             btnResetSchema.Text = "Reset Schema";
             btnResetSchema.UseVisualStyleBackColor = false;
@@ -301,9 +301,9 @@ namespace POS_qu
             btnCreateDb.FlatStyle = FlatStyle.Flat;
             btnCreateDb.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
             btnCreateDb.ForeColor = Color.Black;
-            btnCreateDb.Location = new Point(0, 514);
+            btnCreateDb.Location = new Point(18, 514);
             btnCreateDb.Name = "btnCreateDb";
-            btnCreateDb.Size = new Size(236, 44);
+            btnCreateDb.Size = new Size(185, 44);
             btnCreateDb.TabIndex = 13;
             btnCreateDb.Text = "Create DB";
             btnCreateDb.UseVisualStyleBackColor = false;
@@ -315,9 +315,9 @@ namespace POS_qu
             btnSaveConfig.FlatStyle = FlatStyle.Flat;
             btnSaveConfig.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
             btnSaveConfig.ForeColor = Color.Black;
-            btnSaveConfig.Location = new Point(248, 460);
+            btnSaveConfig.Location = new Point(248, 464);
             btnSaveConfig.Name = "btnSaveConfig";
-            btnSaveConfig.Size = new Size(236, 44);
+            btnSaveConfig.Size = new Size(194, 44);
             btnSaveConfig.TabIndex = 12;
             btnSaveConfig.Text = "Save Config";
             btnSaveConfig.UseVisualStyleBackColor = false;
@@ -329,9 +329,9 @@ namespace POS_qu
             btnTest.FlatStyle = FlatStyle.Flat;
             btnTest.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
             btnTest.ForeColor = Color.Black;
-            btnTest.Location = new Point(0, 460);
+            btnTest.Location = new Point(18, 464);
             btnTest.Name = "btnTest";
-            btnTest.Size = new Size(236, 44);
+            btnTest.Size = new Size(185, 44);
             btnTest.TabIndex = 11;
             btnTest.Text = "Test Connection";
             btnTest.UseVisualStyleBackColor = false;
@@ -343,9 +343,9 @@ namespace POS_qu
             btnRestoreDb.FlatStyle = FlatStyle.Flat;
             btnRestoreDb.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
             btnRestoreDb.ForeColor = Color.Black;
-            btnRestoreDb.Location = new Point(0, 738);
+            btnRestoreDb.Location = new Point(18, 738);
             btnRestoreDb.Name = "btnRestoreDb";
-            btnRestoreDb.Size = new Size(484, 44);
+            btnRestoreDb.Size = new Size(466, 44);
             btnRestoreDb.TabIndex = 17;
             btnRestoreDb.Text = "Import / Restore Database";
             btnRestoreDb.UseVisualStyleBackColor = false;
@@ -371,9 +371,9 @@ namespace POS_qu
             btnRefreshDbList.FlatStyle = FlatStyle.Flat;
             btnRefreshDbList.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
             btnRefreshDbList.ForeColor = Color.Black;
-            btnRefreshDbList.Location = new Point(0, 684);
+            btnRefreshDbList.Location = new Point(18, 684);
             btnRefreshDbList.Name = "btnRefreshDbList";
-            btnRefreshDbList.Size = new Size(236, 44);
+            btnRefreshDbList.Size = new Size(218, 44);
             btnRefreshDbList.TabIndex = 15;
             btnRefreshDbList.Text = "Refresh DB List";
             btnRefreshDbList.UseVisualStyleBackColor = false;
@@ -418,9 +418,9 @@ namespace POS_qu
             btnApplyTimeZone.FlatStyle = FlatStyle.Flat;
             btnApplyTimeZone.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
             btnApplyTimeZone.ForeColor = Color.Black;
-            btnApplyTimeZone.Location = new Point(0, 884);
+            btnApplyTimeZone.Location = new Point(18, 884);
             btnApplyTimeZone.Name = "btnApplyTimeZone";
-            btnApplyTimeZone.Size = new Size(484, 44);
+            btnApplyTimeZone.Size = new Size(466, 44);
             btnApplyTimeZone.TabIndex = 20;
             btnApplyTimeZone.Text = "Apply Zona Waktu";
             btnApplyTimeZone.UseVisualStyleBackColor = false;
@@ -432,9 +432,9 @@ namespace POS_qu
             cmbTimeZone.Font = new Font("Segoe UI", 11F);
             cmbTimeZone.ForeColor = SystemColors.InfoText;
             cmbTimeZone.FormattingEnabled = true;
-            cmbTimeZone.Location = new Point(0, 840);
+            cmbTimeZone.Location = new Point(18, 840);
             cmbTimeZone.Name = "cmbTimeZone";
-            cmbTimeZone.Size = new Size(484, 38);
+            cmbTimeZone.Size = new Size(466, 38);
             cmbTimeZone.TabIndex = 19;
             // 
             // lblTimeZone
@@ -572,7 +572,7 @@ namespace POS_qu
             // 
             AutoScaleDimensions = new SizeF(10F, 25F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1296, 735);
+            ClientSize = new Size(1537, 822);
             Controls.Add(panelRoot);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
