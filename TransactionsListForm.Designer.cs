@@ -77,7 +77,7 @@ namespace POS_qu
             panelHeader.Dock = DockStyle.Top;
             panelHeader.Location = new Point(0, 0);
             panelHeader.Name = "panelHeader";
-            panelHeader.Size = new Size(1400, 82);
+            panelHeader.Size = new Size(1400, 130);
             panelHeader.TabIndex = 0;
             // 
             // btnClose
@@ -87,7 +87,7 @@ namespace POS_qu
             btnClose.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
             btnClose.FlatStyle = FlatStyle.Flat;
             btnClose.Font = new Font("Segoe UI", 10F);
-            btnClose.Location = new Point(1250, 20);
+            btnClose.Location = new Point(1250, 16);
             btnClose.Name = "btnClose";
             btnClose.Size = new Size(130, 42);
             btnClose.TabIndex = 9;
@@ -102,7 +102,7 @@ namespace POS_qu
             btnReturn.FlatStyle = FlatStyle.Flat;
             btnReturn.Font = new Font("Segoe UI", 10F);
             btnReturn.ForeColor = Color.White;
-            btnReturn.Location = new Point(1100, 20);
+            btnReturn.Location = new Point(1100, 16);
             btnReturn.Name = "btnReturn";
             btnReturn.Size = new Size(140, 42);
             btnReturn.TabIndex = 8;
@@ -117,7 +117,7 @@ namespace POS_qu
             btnCancel.FlatStyle = FlatStyle.Flat;
             btnCancel.Font = new Font("Segoe UI", 10F);
             btnCancel.ForeColor = Color.White;
-            btnCancel.Location = new Point(950, 20);
+            btnCancel.Location = new Point(950, 16);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(140, 42);
             btnCancel.TabIndex = 7;
@@ -131,7 +131,7 @@ namespace POS_qu
             btnExportDetail.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
             btnExportDetail.FlatStyle = FlatStyle.Flat;
             btnExportDetail.Font = new Font("Segoe UI", 10F);
-            btnExportDetail.Location = new Point(780, 20);
+            btnExportDetail.Location = new Point(780, 68);
             btnExportDetail.Name = "btnExportDetail";
             btnExportDetail.Size = new Size(160, 42);
             btnExportDetail.TabIndex = 6;
@@ -145,7 +145,7 @@ namespace POS_qu
             btnExport.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
             btnExport.FlatStyle = FlatStyle.Flat;
             btnExport.Font = new Font("Segoe UI", 10F);
-            btnExport.Location = new Point(650, 20);
+            btnExport.Location = new Point(650, 68);
             btnExport.Name = "btnExport";
             btnExport.Size = new Size(120, 42);
             btnExport.TabIndex = 5;
@@ -159,7 +159,7 @@ namespace POS_qu
             btnExportPdf.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
             btnExportPdf.FlatStyle = FlatStyle.Flat;
             btnExportPdf.Font = new Font("Segoe UI", 10F);
-            btnExportPdf.Location = new Point(520, 20);
+            btnExportPdf.Location = new Point(520, 68);
             btnExportPdf.Name = "btnExportPdf";
             btnExportPdf.Size = new Size(120, 42);
             btnExportPdf.TabIndex = 4;
@@ -173,7 +173,7 @@ namespace POS_qu
             btnPrintPreview.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
             btnPrintPreview.FlatStyle = FlatStyle.Flat;
             btnPrintPreview.Font = new Font("Segoe UI", 10F);
-            btnPrintPreview.Location = new Point(380, 20);
+            btnPrintPreview.Location = new Point(380, 68);
             btnPrintPreview.Name = "btnPrintPreview";
             btnPrintPreview.Size = new Size(130, 42);
             btnPrintPreview.TabIndex = 3;
@@ -186,7 +186,7 @@ namespace POS_qu
             btnRefresh.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
             btnRefresh.FlatStyle = FlatStyle.Flat;
             btnRefresh.Font = new Font("Segoe UI", 10F);
-            btnRefresh.Location = new Point(240, 20);
+            btnRefresh.Location = new Point(240, 68);
             btnRefresh.Name = "btnRefresh";
             btnRefresh.Size = new Size(120, 42);
             btnRefresh.TabIndex = 2;
@@ -198,7 +198,7 @@ namespace POS_qu
             cbStatus.DropDownStyle = ComboBoxStyle.DropDownList;
             cbStatus.Font = new Font("Segoe UI", 10F);
             cbStatus.FormattingEnabled = true;
-            cbStatus.Location = new Point(20, 28);
+            cbStatus.Location = new Point(20, 74);
             cbStatus.Name = "cbStatus";
             cbStatus.Size = new Size(210, 36);
             cbStatus.TabIndex = 1;
@@ -208,7 +208,7 @@ namespace POS_qu
             lblTitle.AutoSize = true;
             lblTitle.Font = new Font("Segoe UI Semibold", 16F, FontStyle.Bold);
             lblTitle.ForeColor = Color.FromArgb(51, 51, 51);
-            lblTitle.Location = new Point(20, -6);
+            lblTitle.Location = new Point(20, 14);
             lblTitle.Name = "lblTitle";
             lblTitle.Size = new Size(255, 45);
             lblTitle.TabIndex = 0;
@@ -218,10 +218,10 @@ namespace POS_qu
             // 
             panelBody.Controls.Add(splitContainer);
             panelBody.Dock = DockStyle.Fill;
-            panelBody.Location = new Point(0, 82);
+            panelBody.Location = new Point(0, 130);
             panelBody.Name = "panelBody";
             panelBody.Padding = new Padding(16);
-            panelBody.Size = new Size(1400, 768);
+            panelBody.Size = new Size(1400, 720);
             panelBody.TabIndex = 1;
             // 
             // splitContainer
@@ -353,4 +353,3 @@ namespace POS_qu
         }
     }
 }
-

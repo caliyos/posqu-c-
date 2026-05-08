@@ -27,6 +27,9 @@ namespace POS_qu
         private Button btnSave;
         private Label lblTotal;
         private Panel pnlTop;
+        private FlowLayoutPanel pnlManual;
+        private Panel pnlBottom;
+        private Label lblHint;
         private bool _isTransactionMode = false;
 
         private TransactionService _txService;
@@ -35,29 +38,64 @@ namespace POS_qu
         public ReturnForm()
         {
             Text = "Retur Barang";
-            Size = new Size(900, 600);
+            WindowState = FormWindowState.Maximized;
             StartPosition = FormStartPosition.CenterParent;
-            FormBorderStyle = FormBorderStyle.FixedDialog;
-            MaximizeBox = false;
-            MinimizeBox = false;
-            Padding = new Padding(10);
+            FormBorderStyle = FormBorderStyle.Sizable;
+            BackColor = Color.FromArgb(245, 246, 250);
 
             _txRepo = new TransactionRepo();
             _txService = new TransactionService(_txRepo, new ActivityService());
 
-            pnlTop = new Panel { Dock = DockStyle.Top, Height = 100 };
-            var lblTxn = new Label { Text = "No. Transaksi:", Left = 0, Top = 12, AutoSize = true };
-            txtTxnNumber = new TextBox { PlaceholderText = "Contoh: TRX-20260311120000", Width = 260, Left = 110, Top = 8 };
-            btnLoadTxn = new Button { Text = "Load", Left = 380, Top = 6, Width = 60 };
+            var panelHeader = new Panel { Dock = DockStyle.Top, Height = 78, BackColor = Color.White };
+            var lblTitle = new Label
+            {
+                Text = "Retur Barang",
+                AutoSize = true,
+                Font = new Font("Segoe UI Semibold", 16F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(51, 51, 51),
+                Left = 20,
+                Top = 18
+            };
+            panelHeader.Controls.Add(lblTitle);
+
+            pnlTop = new Panel { Dock = DockStyle.Top, Height = 124, BackColor = Color.White, Padding = new Padding(20, 14, 20, 14) };
+            var lblTxn = new Label { Text = "No. Transaksi:", AutoSize = true, Location = new Point(0, 6) };
+            txtTxnNumber = new TextBox { PlaceholderText = "Contoh: TRX-20260311120000", Width = 320, Location = new Point(120, 2) };
+            btnLoadTxn = BuildHeaderButton("Load", 90);
+            btnLoadTxn.Location = new Point(txtTxnNumber.Right + 10, 0);
             btnLoadTxn.Click += BtnLoadTxn_Click;
-            txtName = new TextBox { PlaceholderText = "Nama Item / Custom", Width = 220, Left = 0, Top = 16 };
-            txtQty = new TextBox { PlaceholderText = "Qty", Width = 60, Left = 230, Top = 16, Text = "1" };
-            txtUnit = new TextBox { PlaceholderText = "Unit", Width = 80, Left = 300, Top = 16, Text = "pcs" };
-            txtPrice = new TextBox { PlaceholderText = "Harga", Width = 100, Left = 390, Top = 16, Text = "0" };
-            txtBarcode = new TextBox { PlaceholderText = "Barcode (opsional)", Width = 160, Left = 500, Top = 16 };
-            btnAdd = new Button { Text = "Tambah", Left = 670, Top = 14, Width = 90 };
+
+            lblHint = new Label
+            {
+                AutoSize = true,
+                ForeColor = Color.FromArgb(90, 90, 90),
+                Location = new Point(0, 44),
+                Text = "Masukkan No. Transaksi untuk retur dari transaksi, atau isi manual di bawah."
+            };
+
+            pnlManual = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Bottom,
+                Height = 44,
+                AutoSize = false,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = true
+            };
+
+            txtName = new TextBox { PlaceholderText = "Nama Item / Custom", Width = 280, Margin = new Padding(0, 0, 10, 0) };
+            txtQty = new TextBox { PlaceholderText = "Qty", Width = 90, Text = "1", Margin = new Padding(0, 0, 10, 0) };
+            txtUnit = new TextBox { PlaceholderText = "Unit", Width = 110, Text = "pcs", Margin = new Padding(0, 0, 10, 0) };
+            txtPrice = new TextBox { PlaceholderText = "Harga", Width = 130, Text = "0", Margin = new Padding(0, 0, 10, 0) };
+            txtBarcode = new TextBox { PlaceholderText = "Barcode (opsional)", Width = 200, Margin = new Padding(0, 0, 10, 0) };
+            btnAdd = BuildPrimaryButton("Tambah", 120);
             btnAdd.Click += BtnAdd_Click;
-            pnlTop.Controls.AddRange(new Control[] { lblTxn, txtTxnNumber, btnLoadTxn, txtName, txtQty, txtUnit, txtPrice, txtBarcode, btnAdd });
+            pnlManual.Controls.AddRange(new Control[] { txtName, txtQty, txtUnit, txtPrice, txtBarcode, btnAdd });
+
+            pnlTop.Controls.Add(lblTxn);
+            pnlTop.Controls.Add(txtTxnNumber);
+            pnlTop.Controls.Add(btnLoadTxn);
+            pnlTop.Controls.Add(lblHint);
+            pnlTop.Controls.Add(pnlManual);
 
             grid = new DataGridView
             {
@@ -66,7 +104,13 @@ namespace POS_qu
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 MultiSelect = false,
-                RowHeadersVisible = false
+                RowHeadersVisible = false,
+                AllowUserToAddRows = false,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
+                ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None,
+                EnableHeadersVisualStyles = false
             };
             grid.Columns.Add("ItemId", "ItemId");
             grid.Columns.Add("Barcode", "Barcode");
@@ -85,22 +129,81 @@ namespace POS_qu
             grid.Columns["Price"].DefaultCellStyle.Format = "N0";
             grid.Columns["Total"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             grid.Columns["Total"].DefaultCellStyle.Format = "N0";
+            grid.Columns["Total"].ReadOnly = true;
+            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(245, 246, 250);
+            grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(51, 51, 51);
+            grid.ColumnHeadersHeight = 45;
+            grid.RowsDefaultCellStyle.BackColor = Color.White;
+            grid.RowsDefaultCellStyle.Font = new Font("Segoe UI", 10F);
+            grid.RowsDefaultCellStyle.ForeColor = Color.FromArgb(51, 51, 51);
+            grid.RowsDefaultCellStyle.Padding = new Padding(5);
+            grid.RowsDefaultCellStyle.SelectionBackColor = Color.FromArgb(232, 240, 254);
+            grid.RowsDefaultCellStyle.SelectionForeColor = Color.FromArgb(51, 51, 51);
+            grid.RowTemplate.Height = 45;
 
-            var pnlBottom = new Panel { Dock = DockStyle.Bottom, Height = 60 };
-            btnRemove = new Button { Text = "Hapus", Left = 10, Top = 12, Width = 80 };
+            grid.Columns["QtyAsal"].Visible = false;
+            grid.Columns["QtyReturn"].HeaderText = "Qty";
+
+            pnlBottom = new Panel { Dock = DockStyle.Bottom, Height = 70, BackColor = Color.White, Padding = new Padding(20, 14, 20, 14) };
+            btnRemove = BuildHeaderButton("Hapus", 110);
+            btnRemove.Location = new Point(0, 8);
             btnRemove.Click += (s, e) =>
             {
                 if (grid.SelectedRows.Count > 0) grid.Rows.RemoveAt(grid.SelectedRows[0].Index);
                 RecalcTotal();
             };
-            btnSave = new Button { Text = "Simpan Retur", Left = 680, Top = 12, Width = 120, BackColor = Color.IndianRed, ForeColor = Color.White };
+            btnSave = new Button { Text = "Simpan Retur", Width = 160, Height = 42, BackColor = Color.IndianRed, ForeColor = Color.White, FlatStyle = FlatStyle.Flat, Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold) };
+            btnSave.FlatAppearance.BorderSize = 0;
+            btnSave.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnSave.Location = new Point(pnlBottom.Width - btnSave.Width, 8);
             btnSave.Click += BtnSave_Click;
-            lblTotal = new Label { Text = "Total: 0", AutoSize = true, Left = 110, Top = 18, Font = new Font("Segoe UI", 10, FontStyle.Bold) };
-            pnlBottom.Controls.AddRange(new Control[] { btnRemove, lblTotal, btnSave });
+            lblTotal = new Label { Text = "Total: 0", AutoSize = true, Location = new Point(btnRemove.Right + 16, 14), Font = new Font("Segoe UI Semibold", 11F, FontStyle.Bold), ForeColor = Color.FromArgb(51, 51, 51) };
 
-            Controls.Add(grid);
-            Controls.Add(pnlTop);
+            pnlBottom.Controls.AddRange(new Control[] { btnRemove, lblTotal, btnSave });
+            pnlBottom.SizeChanged += (_, __) =>
+            {
+                btnSave.Location = new Point(pnlBottom.Width - btnSave.Width, 8);
+            };
+
+            var panelBody = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16) };
+            panelBody.Controls.Add(grid);
+
+            Controls.Add(panelBody);
             Controls.Add(pnlBottom);
+            Controls.Add(pnlTop);
+            Controls.Add(panelHeader);
+        }
+
+        private static Button BuildHeaderButton(string text, int width)
+        {
+            var b = new Button
+            {
+                Text = text,
+                Width = width,
+                Height = 42,
+                BackColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10F)
+            };
+            b.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            return b;
+        }
+
+        private static Button BuildPrimaryButton(string text, int width)
+        {
+            var b = new Button
+            {
+                Text = text,
+                Width = width,
+                Height = 42,
+                BackColor = Color.FromArgb(0, 120, 215),
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold),
+                ForeColor = Color.White
+            };
+            b.FlatAppearance.BorderSize = 0;
+            return b;
         }
 
         private void BtnAdd_Click(object? sender, EventArgs e)
@@ -131,7 +234,8 @@ namespace POS_qu
                 0,                           // ItemId = 0 untuk custom
                 txtBarcode.Text?.Trim() ?? "",
                 txtName.Text.Trim(),
-                qty.ToString(),
+                qty,
+                qty,
                 unit,
                 price,
                 total
@@ -247,14 +351,8 @@ namespace POS_qu
                 if (grid.Columns.Contains("Price")) grid.Columns["Price"].ReadOnly = true;
                 if (grid.Columns.Contains("Total")) grid.Columns["Total"].ReadOnly = true;
                 RecalcTotal();
-                grid.CellEndEdit += (s, ev) =>
-                {
-                    if (ev.ColumnIndex == grid.Columns["QtyReturn"].Index ||
-                        ev.ColumnIndex == grid.Columns["Price"].Index)
-                    {
-                        RecalcTotal();
-                    }
-                };
+                grid.CellEndEdit -= Grid_CellEndEdit;
+                grid.CellEndEdit += Grid_CellEndEdit;
             }
             catch (Exception ex)
             {
@@ -262,20 +360,24 @@ namespace POS_qu
             }
         }
 
+        private void Grid_CellEndEdit(object? sender, DataGridViewCellEventArgs ev)
+        {
+            if (grid.Columns.Contains("QtyReturn") && ev.ColumnIndex == grid.Columns["QtyReturn"].Index)
+                RecalcTotal();
+        }
+
         private void EnterTransactionMode()
         {
             _isTransactionMode = true;
             // Sembunyikan input manual yang tidak dipakai
-            txtName.Visible = false;
-            txtQty.Visible = false;
-            txtUnit.Visible = false;
-            txtPrice.Visible = false;
-            txtBarcode.Visible = false;
-            btnAdd.Visible = false;
+            pnlManual.Visible = false;
             // Tombol hapus baris manual juga disembunyikan
             if (btnRemove != null) btnRemove.Visible = false;
             // Perkecil header
-            pnlTop.Height = 60;
+            pnlTop.Height = 78;
+            if (lblHint != null) lblHint.Text = "Mode: Retur dari transaksi (isi Qty Retur pada tabel).";
+            if (grid.Columns.Contains("QtyAsal")) grid.Columns["QtyAsal"].Visible = true;
+            if (grid.Columns.Contains("QtyReturn")) grid.Columns["QtyReturn"].HeaderText = "Qty Retur";
         }
 
         private void RecalcTotal()

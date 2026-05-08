@@ -22,12 +22,10 @@ namespace POS_qu
         public ReturnListForm()
         {
             Text = "Daftar Retur Barang";
-            Size = new Size(920, 560);
+            WindowState = FormWindowState.Maximized;
             StartPosition = FormStartPosition.CenterParent;
-            FormBorderStyle = FormBorderStyle.FixedDialog;
-            MaximizeBox = false;
-            MinimizeBox = false;
-            Padding = new Padding(10);
+            FormBorderStyle = FormBorderStyle.Sizable;
+            BackColor = Color.FromArgb(245, 246, 250);
 
             _repo = new TransactionRepo();
             _service = new TransactionService(_repo, new ActivityService());
@@ -39,26 +37,86 @@ namespace POS_qu
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 MultiSelect = false,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                RowHeadersVisible = false
+                RowHeadersVisible = false,
+                AllowUserToAddRows = false,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
+                ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None,
+                EnableHeadersVisualStyles = false
             };
-            var panelTop = new Panel { Dock = DockStyle.Top, Height = 46 };
-            btnRefresh = new Button { Text = "Refresh", Width = 100, Left = 0, Top = 6 };
-            btnDetail = new Button { Text = "Lihat Detail", Width = 120, Left = 110, Top = 6 };
-            btnExport = new Button { Text = "Export Excel", Width = 120, Left = 240, Top = 6 };
-            btnExportDetail = new Button { Text = "Export + Detail", Width = 140, Left = 370, Top = 6 };
+            grid.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(245, 246, 250);
+            grid.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            grid.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(51, 51, 51);
+            grid.ColumnHeadersHeight = 45;
+            grid.RowsDefaultCellStyle.BackColor = Color.White;
+            grid.RowsDefaultCellStyle.Font = new Font("Segoe UI", 10F);
+            grid.RowsDefaultCellStyle.ForeColor = Color.FromArgb(51, 51, 51);
+            grid.RowsDefaultCellStyle.Padding = new Padding(5);
+            grid.RowsDefaultCellStyle.SelectionBackColor = Color.FromArgb(232, 240, 254);
+            grid.RowsDefaultCellStyle.SelectionForeColor = Color.FromArgb(51, 51, 51);
+            grid.RowTemplate.Height = 45;
+
+            var panelHeader = new Panel { Dock = DockStyle.Top, Height = 78, BackColor = Color.White };
+            var lblTitle = new Label
+            {
+                Text = "Daftar Retur Barang",
+                AutoSize = true,
+                Font = new Font("Segoe UI Semibold", 16F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(51, 51, 51),
+                Left = 20,
+                Top = 18
+            };
+
+            var flow = new FlowLayoutPanel
+            {
+                Dock = DockStyle.Right,
+                Width = 560,
+                FlowDirection = FlowDirection.LeftToRight,
+                WrapContents = false,
+                Padding = new Padding(0, 18, 16, 0),
+                BackColor = Color.White
+            };
+
+            btnRefresh = BuildHeaderButton("Refresh", 110);
+            btnDetail = BuildHeaderButton("Lihat Detail", 130);
+            btnExport = BuildHeaderButton("Export CSV", 120);
+            btnExportDetail = BuildHeaderButton("Export + Detail", 150);
             btnRefresh.Click += (s, e) => LoadData();
             btnDetail.Click += BtnDetail_Click;
             btnExport.Click += BtnExport_Click;
             btnExportDetail.Click += BtnExportDetail_Click;
-            panelTop.Controls.Add(btnRefresh);
-            panelTop.Controls.Add(btnDetail);
-            panelTop.Controls.Add(btnExport);
-            panelTop.Controls.Add(btnExportDetail);
+            flow.Controls.Add(btnRefresh);
+            flow.Controls.Add(btnDetail);
+            flow.Controls.Add(btnExport);
+            flow.Controls.Add(btnExportDetail);
 
-            Controls.Add(grid);
-            Controls.Add(panelTop);
+            panelHeader.Controls.Add(flow);
+            panelHeader.Controls.Add(lblTitle);
+
+            var panelBody = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16) };
+            panelBody.Controls.Add(grid);
+
+            Controls.Add(panelBody);
+            Controls.Add(panelHeader);
 
             Load += (_, __) => LoadData();
+        }
+
+        private static Button BuildHeaderButton(string text, int width)
+        {
+            var b = new Button
+            {
+                Text = text,
+                Width = width,
+                Height = 42,
+                BackColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 10F),
+                Margin = new Padding(8, 0, 0, 0)
+            };
+            b.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            return b;
         }
 
         private void LoadData()
@@ -74,7 +132,11 @@ namespace POS_qu
                 grid.Columns["ts_grand_total"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
             if (grid.Columns["ts_method"] != null) grid.Columns["ts_method"].HeaderText = "Metode";
-            if (grid.Columns["created_at"] != null) grid.Columns["created_at"].HeaderText = "Tanggal";
+            if (grid.Columns["created_at"] != null)
+            {
+                grid.Columns["created_at"].HeaderText = "Tanggal";
+                grid.Columns["created_at"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm";
+            }
             if (grid.Columns["user_id"] != null) grid.Columns["user_id"].HeaderText = "User";
         }
 
@@ -116,21 +178,57 @@ namespace POS_qu
 
             using var modal = new Form();
             modal.Text = "Detail Retur";
-            modal.Size = new Size(900, 500);
+            modal.Size = new Size(1100, 650);
             modal.StartPosition = FormStartPosition.CenterParent;
+            modal.BackColor = Color.FromArgb(245, 246, 250);
             var dg = new DataGridView
             {
                 Dock = DockStyle.Fill,
                 ReadOnly = true,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                DataSource = friendly
+                DataSource = friendly,
+                AllowUserToAddRows = false,
+                BackgroundColor = Color.White,
+                BorderStyle = BorderStyle.None,
+                CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal,
+                ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None,
+                EnableHeadersVisualStyles = false,
+                RowHeadersVisible = false
             };
-            var top = new Panel { Dock = DockStyle.Top, Height = 46 };
-            var btnExportDetail = new Button { Text = "Export Excel", Width = 120, Left = 10, Top = 6 };
+            dg.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(245, 246, 250);
+            dg.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
+            dg.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(51, 51, 51);
+            dg.ColumnHeadersHeight = 45;
+            dg.RowsDefaultCellStyle.BackColor = Color.White;
+            dg.RowsDefaultCellStyle.Font = new Font("Segoe UI", 10F);
+            dg.RowsDefaultCellStyle.ForeColor = Color.FromArgb(51, 51, 51);
+            dg.RowsDefaultCellStyle.Padding = new Padding(5);
+            dg.RowsDefaultCellStyle.SelectionBackColor = Color.FromArgb(232, 240, 254);
+            dg.RowsDefaultCellStyle.SelectionForeColor = Color.FromArgb(51, 51, 51);
+            dg.RowTemplate.Height = 45;
+
+            var top = new Panel { Dock = DockStyle.Top, Height = 70, BackColor = Color.White };
+            var lbl = new Label
+            {
+                Text = "Detail Retur",
+                AutoSize = true,
+                Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(51, 51, 51),
+                Left = 16,
+                Top = 18
+            };
+            var btnExportDetail = BuildHeaderButton("Export CSV", 130);
+            btnExportDetail.Left = top.Width - btnExportDetail.Width - 16;
+            btnExportDetail.Top = 14;
+            btnExportDetail.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             btnExportDetail.Click += (s, ev) => ExportDataTableToCsv(friendly);
             top.Controls.Add(btnExportDetail);
-            modal.Controls.Add(dg);
+            top.Controls.Add(lbl);
+
+            var body = new Panel { Dock = DockStyle.Fill, Padding = new Padding(16) };
+            body.Controls.Add(dg);
+            modal.Controls.Add(body);
             modal.Controls.Add(top);
             modal.ShowDialog(this);
         }
