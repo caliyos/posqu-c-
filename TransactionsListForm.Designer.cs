@@ -14,6 +14,13 @@ namespace POS_qu
         private System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.Button btnReturn;
         private System.Windows.Forms.Button btnClose;
+        private System.Windows.Forms.Panel panelPeriod;
+        private System.Windows.Forms.Label lblPeriod;
+        private System.Windows.Forms.DateTimePicker dtFrom;
+        private System.Windows.Forms.Label lblTo;
+        private System.Windows.Forms.DateTimePicker dtTo;
+        private System.Windows.Forms.Button btnToday;
+        private System.Windows.Forms.Label lblSummary;
         private System.Windows.Forms.Panel panelBody;
         private System.Windows.Forms.SplitContainer splitContainer;
         private System.Windows.Forms.DataGridView dgvTransactions;
@@ -46,12 +53,20 @@ namespace POS_qu
             btnRefresh = new Button();
             cbStatus = new ComboBox();
             lblTitle = new Label();
+            panelPeriod = new Panel();
+            lblSummary = new Label();
+            btnToday = new Button();
+            dtTo = new DateTimePicker();
+            lblTo = new Label();
+            dtFrom = new DateTimePicker();
+            lblPeriod = new Label();
             panelBody = new Panel();
             splitContainer = new SplitContainer();
             dgvTransactions = new DataGridView();
             dgvDetails = new DataGridView();
             lblDetail = new Label();
             panelHeader.SuspendLayout();
+            panelPeriod.SuspendLayout();
             panelBody.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer).BeginInit();
             splitContainer.Panel1.SuspendLayout();
@@ -74,6 +89,7 @@ namespace POS_qu
             panelHeader.Controls.Add(btnRefresh);
             panelHeader.Controls.Add(cbStatus);
             panelHeader.Controls.Add(lblTitle);
+            panelHeader.Controls.Add(panelPeriod);
             panelHeader.Dock = DockStyle.Top;
             panelHeader.Location = new Point(0, 0);
             panelHeader.Name = "panelHeader";
@@ -214,6 +230,78 @@ namespace POS_qu
             lblTitle.TabIndex = 0;
             lblTitle.Text = "Daftar Transaksi";
             // 
+            // panelPeriod
+            // 
+            panelPeriod.BackColor = Color.White;
+            panelPeriod.Controls.Add(lblSummary);
+            panelPeriod.Controls.Add(btnToday);
+            panelPeriod.Controls.Add(dtTo);
+            panelPeriod.Controls.Add(lblTo);
+            panelPeriod.Controls.Add(dtFrom);
+            panelPeriod.Controls.Add(lblPeriod);
+            panelPeriod.Dock = DockStyle.Bottom;
+            panelPeriod.Location = new Point(0, 84);
+            panelPeriod.Name = "panelPeriod";
+            panelPeriod.Size = new Size(1400, 46);
+            panelPeriod.TabIndex = 10;
+            // 
+            // lblSummary
+            // 
+            lblSummary.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            lblSummary.ForeColor = Color.FromArgb(70, 70, 70);
+            lblSummary.Location = new Point(566, 8);
+            lblSummary.Name = "lblSummary";
+            lblSummary.Size = new Size(814, 30);
+            lblSummary.TabIndex = 5;
+            lblSummary.TextAlign = ContentAlignment.MiddleRight;
+            // 
+            // btnToday
+            // 
+            btnToday.BackColor = Color.White;
+            btnToday.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+            btnToday.FlatStyle = FlatStyle.Flat;
+            btnToday.Font = new Font("Segoe UI", 10F);
+            btnToday.Location = new Point(446, 7);
+            btnToday.Name = "btnToday";
+            btnToday.Size = new Size(110, 32);
+            btnToday.TabIndex = 4;
+            btnToday.Text = "Hari ini";
+            btnToday.UseVisualStyleBackColor = false;
+            // 
+            // dtTo
+            // 
+            dtTo.Format = DateTimePickerFormat.Short;
+            dtTo.Location = new Point(296, 8);
+            dtTo.Name = "dtTo";
+            dtTo.Size = new Size(140, 34);
+            dtTo.TabIndex = 3;
+            // 
+            // lblTo
+            // 
+            lblTo.AutoSize = true;
+            lblTo.Location = new Point(250, 12);
+            lblTo.Name = "lblTo";
+            lblTo.Size = new Size(40, 28);
+            lblTo.TabIndex = 2;
+            lblTo.Text = "s/d";
+            // 
+            // dtFrom
+            // 
+            dtFrom.Format = DateTimePickerFormat.Short;
+            dtFrom.Location = new Point(100, 8);
+            dtFrom.Name = "dtFrom";
+            dtFrom.Size = new Size(140, 34);
+            dtFrom.TabIndex = 1;
+            // 
+            // lblPeriod
+            // 
+            lblPeriod.AutoSize = true;
+            lblPeriod.Location = new Point(20, 12);
+            lblPeriod.Name = "lblPeriod";
+            lblPeriod.Size = new Size(82, 28);
+            lblPeriod.TabIndex = 0;
+            lblPeriod.Text = "Periode:";
+            // 
             // panelBody
             // 
             panelBody.Controls.Add(splitContainer);
@@ -239,8 +327,8 @@ namespace POS_qu
             // 
             splitContainer.Panel2.Controls.Add(dgvDetails);
             splitContainer.Panel2.Controls.Add(lblDetail);
-            splitContainer.Size = new Size(1368, 736);
-            splitContainer.SplitterDistance = 522;
+            splitContainer.Size = new Size(1368, 688);
+            splitContainer.SplitterDistance = 487;
             splitContainer.TabIndex = 0;
             // 
             // dgvTransactions
@@ -276,7 +364,7 @@ namespace POS_qu
             dgvTransactions.RowsDefaultCellStyle = dataGridViewCellStyle2;
             dgvTransactions.RowTemplate.Height = 45;
             dgvTransactions.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvTransactions.Size = new Size(1368, 522);
+            dgvTransactions.Size = new Size(1368, 487);
             dgvTransactions.TabIndex = 0;
             // 
             // dgvDetails
@@ -312,7 +400,7 @@ namespace POS_qu
             dgvDetails.RowsDefaultCellStyle = dataGridViewCellStyle4;
             dgvDetails.RowTemplate.Height = 42;
             dgvDetails.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvDetails.Size = new Size(1368, 160);
+            dgvDetails.Size = new Size(1368, 147);
             dgvDetails.TabIndex = 1;
             // 
             // lblDetail
@@ -341,6 +429,8 @@ namespace POS_qu
             Text = "Daftar Transaksi";
             panelHeader.ResumeLayout(false);
             panelHeader.PerformLayout();
+            panelPeriod.ResumeLayout(false);
+            panelPeriod.PerformLayout();
             panelBody.ResumeLayout(false);
             splitContainer.Panel1.ResumeLayout(false);
             splitContainer.Panel2.ResumeLayout(false);

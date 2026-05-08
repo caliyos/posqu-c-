@@ -39,7 +39,7 @@ namespace POS_qu
 
         public ProductPage()
         {
-            InitializeComponent();
+            InitializeComponent();  
 
             ILogger fileLogger = new FileLogger(); // kalau mau ke file
             ILogger dbLogger = new DbLogger();

@@ -66,6 +66,8 @@ namespace POS_qu
                     dgvCarts.Columns["terminal_name"].HeaderText = "Terminal";
                 if (dgvCarts.Columns.Contains("cashier_name"))
                     dgvCarts.Columns["cashier_name"].HeaderText = "Kasir";
+                if (dgvCarts.Columns.Contains("warehouse_name"))
+                    dgvCarts.Columns["warehouse_name"].HeaderText = "Gudang";
                 if (dgvCarts.Columns.Contains("total_items"))
                     dgvCarts.Columns["total_items"].HeaderText = "Items";
                 if (dgvCarts.Columns.Contains("grand_total"))
@@ -81,6 +83,7 @@ namespace POS_qu
                 }
                 if (dgvCarts.Columns.Contains("terminal_id")) dgvCarts.Columns["terminal_id"].Visible = false;
                 if (dgvCarts.Columns.Contains("cashier_id")) dgvCarts.Columns["cashier_id"].Visible = false;
+                if (dgvCarts.Columns.Contains("warehouse_id")) dgvCarts.Columns["warehouse_id"].Visible = false;
 
                 if (dgvCarts.Rows.Count > 0)
                     dgvCarts.Rows[0].Selected = true;
@@ -136,7 +139,10 @@ namespace POS_qu
                 if (dgvItems.Columns.Contains("cart_session_code")) dgvItems.Columns["cart_session_code"].Visible = false;
                 if (dgvItems.Columns.Contains("terminal_id")) dgvItems.Columns["terminal_id"].Visible = false;
                 if (dgvItems.Columns.Contains("cashier_id")) dgvItems.Columns["cashier_id"].Visible = false;
+                if (dgvItems.Columns.Contains("warehouse_id")) dgvItems.Columns["warehouse_id"].Visible = false;
 
+                if (dgvItems.Columns.Contains("warehouse_name"))
+                    dgvItems.Columns["warehouse_name"].HeaderText = "Gudang";
                 if (dgvItems.Columns.Contains("name"))
                     dgvItems.Columns["name"].HeaderText = "Nama";
                 if (dgvItems.Columns.Contains("barcode"))
@@ -176,4 +182,3 @@ namespace POS_qu
         }
     }
 }
-

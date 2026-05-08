@@ -321,6 +321,7 @@ LIMIT 1";
             // Tambahkan kolom sesuai InvoiceBuilder
             dt.Columns.Add("pt_id", typeof(int));
             dt.Columns.Add("item_id", typeof(int));
+            dt.Columns.Add("warehouse_id", typeof(int));
             dt.Columns.Add("barcode", typeof(string));
             dt.Columns.Add("name", typeof(string));
             dt.Columns.Add("unit", typeof(string));
@@ -339,10 +340,46 @@ LIMIT 1";
             using var con = new NpgsqlConnection(DbConfig.ConnectionString);
             con.Open();
 
-            string sql = @"
+            bool hasWarehouse = false;
+            using (var chk = new NpgsqlCommand(@"
+SELECT 1
+FROM information_schema.columns
+WHERE table_schema='public' AND table_name='pending_transactions' AND column_name='warehouse_id'
+LIMIT 1
+", con))
+            {
+                hasWarehouse = chk.ExecuteScalar() != null;
+            }
+
+            string sql = hasWarehouse ? @"
 SELECT 
     pt.pt_id,
     pt.item_id,
+    pt.warehouse_id,
+    pt.barcode,
+    COALESCE(i.name, pt.note, pt.barcode) AS name,
+    pt.quantity AS qty,
+    pt.unit,
+    pt.unitid,
+    u.name AS unit_variant,
+    COALESCE(pt.tsd_conversion_rate, 1) AS conversion_rate,
+    pt.sell_price,
+    pt.buy_price,
+    pt.discount_percentage AS disc_percent,
+    pt.discount_total AS disc_amount,
+    pt.tax,
+    pt.note,
+    pt.total
+FROM pending_transactions pt
+LEFT JOIN items i ON i.id = pt.item_id AND pt.item_id > 0
+LEFT JOIN units u ON u.id = i.unit
+WHERE pt.cart_session_code = @session
+ORDER BY pt.created_at;"
+            : @"
+SELECT 
+    pt.pt_id,
+    pt.item_id,
+    1 AS warehouse_id,
     pt.barcode,
     COALESCE(i.name, pt.note, pt.barcode) AS name,
     pt.quantity AS qty,
@@ -372,6 +409,7 @@ ORDER BY pt.created_at;";
                 dt.Rows.Add(
                     reader.GetInt32(reader.GetOrdinal("pt_id")),
                     reader.GetInt32(reader.GetOrdinal("item_id")),
+                    reader.GetInt32(reader.GetOrdinal("warehouse_id")),
                     reader.GetString(reader.GetOrdinal("barcode")),
                     reader["name"]?.ToString() ?? "",
                     reader.GetString(reader.GetOrdinal("unit")),
@@ -404,7 +442,25 @@ ORDER BY pt.created_at;";
       decimal conversionRate
   )
         {
-            string sql = @"
+            bool hasWarehouse = false;
+            using (var chk = new NpgsqlCommand(@"
+SELECT 1
+FROM information_schema.columns
+WHERE table_schema='public' AND table_name='pending_transactions' AND column_name='warehouse_id'
+LIMIT 1
+", conn, tran))
+            {
+                hasWarehouse = chk.ExecuteScalar() != null;
+            }
+
+            string sql = hasWarehouse ? @"
+INSERT INTO pending_transactions
+(cart_session_code, terminal_id, cashier_id, warehouse_id, item_id, barcode,
+ quantity, unitid, unit, sell_price, buy_price, total, tsd_conversion_rate, note)
+VALUES
+(@session, @terminal, @cashier, @warehouse_id, 0, @barcode,
+ @qty, @unitid, @unit, @sell_price, 0, @total, @conversionRate, @note)"
+            : @"
 INSERT INTO pending_transactions
 (cart_session_code, terminal_id, cashier_id, item_id, barcode,
  quantity, unitid, unit, sell_price, buy_price, total, tsd_conversion_rate, note)
@@ -426,6 +482,8 @@ VALUES
             var session = SessionUser.GetCurrentUser();
             cmd.Parameters.AddWithValue("@terminal", session.TerminalId);
             cmd.Parameters.AddWithValue("@cashier", session.UserId);
+            if (hasWarehouse)
+                cmd.Parameters.AddWithValue("@warehouse_id", session.WarehouseId <= 0 ? 1 : session.WarehouseId);
 
             int affected = cmd.ExecuteNonQuery();
             return affected > 0;
@@ -684,7 +742,43 @@ LIMIT 1
       string? note
   )
         {
-            string sql = @"
+            bool hasWarehouse = false;
+            using (var chk = new NpgsqlCommand(@"
+SELECT 1
+FROM information_schema.columns
+WHERE table_schema='public' AND table_name='pending_transactions' AND column_name='warehouse_id'
+LIMIT 1
+", conn, tran))
+            {
+                hasWarehouse = chk.ExecuteScalar() != null;
+            }
+
+            string sql = hasWarehouse ? @"
+INSERT INTO pending_transactions
+(cart_session_code, terminal_id, cashier_id, warehouse_id, item_id, barcode,
+ quantity, unitid, unit, sell_price, buy_price, discount_percentage, discount_total, tax, total, note, tsd_conversion_rate)
+SELECT
+    @session,
+    @terminal,
+    @cashier,
+    @warehouse_id,
+    i.id,
+    i.barcode,
+    @qty,
+    @unitid,
+    @unit,                         
+    @sell_price,
+    i.buy_price,
+    @discountPercentage,
+    @discountTotal,
+    0,
+    @total,
+    @note,
+    @conversionRate
+FROM items i
+WHERE i.id = @item
+"
+            : @"
 INSERT INTO pending_transactions
 (cart_session_code, terminal_id, cashier_id, item_id, barcode,
  quantity, unitid, unit, sell_price, buy_price, discount_percentage, discount_total, tax, total, note, tsd_conversion_rate)
@@ -725,6 +819,8 @@ WHERE i.id = @item
             var session = SessionUser.GetCurrentUser();
             cmd.Parameters.AddWithValue("@terminal", session.TerminalId);
             cmd.Parameters.AddWithValue("@cashier", session.UserId);
+            if (hasWarehouse)
+                cmd.Parameters.AddWithValue("@warehouse_id", session.WarehouseId <= 0 ? 1 : session.WarehouseId);
 
             int affected = cmd.ExecuteNonQuery();
             return affected > 0;
@@ -1314,7 +1410,32 @@ LIMIT 1";
         {
             using var con = new NpgsqlConnection(DbConfig.ConnectionString);
             con.Open();
-            string sql = @"
+            bool hasWarehouse = false;
+            using (var chk = new NpgsqlCommand(@"
+SELECT 1
+FROM information_schema.columns
+WHERE table_schema='public' AND table_name='pending_transactions' AND column_name='warehouse_id'
+LIMIT 1
+", con))
+            {
+                hasWarehouse = chk.ExecuteScalar() != null;
+            }
+
+            string sql = hasWarehouse
+                ? @"
+SELECT 
+    cart_session_code,
+    warehouse_id,
+    COALESCE(w.name,'') AS warehouse_name,
+    COUNT(*) AS total_items,
+    COALESCE(SUM(total),0) AS grand_total,
+    MAX(updated_at) AS last_update
+FROM pending_transactions
+LEFT JOIN warehouses w ON w.id = pending_transactions.warehouse_id
+WHERE cashier_id = @cashierId
+GROUP BY cart_session_code, warehouse_id, w.name
+ORDER BY last_update DESC"
+                : @"
 SELECT 
     cart_session_code,
     COUNT(*) AS total_items,
@@ -1345,13 +1466,16 @@ SELECT
     COALESCE(t.terminal_name,'') AS terminal_name,
     pt.cashier_id,
     COALESCE(u.name,'') AS cashier_name,
+    pt.warehouse_id,
+    COALESCE(w.name,'') AS warehouse_name,
     COUNT(*) AS total_items,
     COALESCE(SUM(pt.total),0) AS grand_total,
     MAX(pt.updated_at) AS last_update
 FROM pending_transactions pt
 LEFT JOIN terminals t ON t.id = pt.terminal_id
 LEFT JOIN users u ON u.id = pt.cashier_id
-GROUP BY pt.cart_session_code, pt.terminal_id, t.terminal_name, pt.cashier_id, u.name
+LEFT JOIN warehouses w ON w.id = pt.warehouse_id
+GROUP BY pt.cart_session_code, pt.terminal_id, t.terminal_name, pt.cashier_id, u.name, pt.warehouse_id, w.name
 ORDER BY last_update DESC";
                 using var cmd = new NpgsqlCommand(sql, con);
                 using var da = new NpgsqlDataAdapter(cmd);
@@ -1366,6 +1490,7 @@ SELECT
     cart_session_code,
     MAX(terminal_id) AS terminal_id,
     MAX(cashier_id) AS cashier_id,
+    MAX(warehouse_id) AS warehouse_id,
     COUNT(*) AS total_items,
     COALESCE(SUM(total),0) AS grand_total,
     MAX(updated_at) AS last_update
@@ -1392,6 +1517,8 @@ SELECT
     pt.cart_session_code,
     pt.terminal_id,
     pt.cashier_id,
+    pt.warehouse_id,
+    COALESCE(w.name,'') AS warehouse_name,
     pt.po_id,
     pt.item_id,
     COALESCE(i.name, pt.note, pt.barcode) AS name,
@@ -1407,6 +1534,7 @@ SELECT
     pt.expired_at
 FROM pending_transactions pt
 LEFT JOIN items i ON i.id = pt.item_id AND pt.item_id > 0
+LEFT JOIN warehouses w ON w.id = pt.warehouse_id
 WHERE pt.cart_session_code = @code
   AND pt.terminal_id = @terminalId
   AND pt.cashier_id = @cashierId
@@ -1428,6 +1556,7 @@ SELECT
     cart_session_code,
     terminal_id,
     cashier_id,
+    warehouse_id,
     po_id,
     item_id,
     barcode,

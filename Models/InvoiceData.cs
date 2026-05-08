@@ -39,6 +39,7 @@ namespace POS_qu.Models
     public class InvoiceData
     {
         public List<InvoiceItem> Items { get; set; } = new();
+        public int WarehouseId { get; set; } = 1;
 
         // Nilai dasar perhitungan
         public decimal Subtotal { get; set; }               // Total sebelum diskon global
@@ -87,6 +88,12 @@ namespace POS_qu.Models
         {
             //var invoice = new InvoiceData();
             var newinvoice = new InvoiceData();   // 🔥 selalu buat baru
+            if (rows != null && rows.Rows.Count > 0 && rows.Columns.Contains("warehouse_id"))
+            {
+                var v = rows.Rows[0]["warehouse_id"];
+                if (v != DBNull.Value)
+                    newinvoice.WarehouseId = Convert.ToInt32(v);
+            }
             foreach (DataRow r in rows.Rows)
             {
                 var item = new InvoiceItem

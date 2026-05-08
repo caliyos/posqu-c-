@@ -23,9 +23,6 @@ namespace POS_qu
         private readonly PrintDocument _printDoc = new PrintDocument();
         private SaleInvoicePrintData _printData;
         private int _printRowCursor;
-        private DateTimePicker? _dtFrom;
-        private DateTimePicker? _dtTo;
-        private Label? _lblSummary;
         private bool _uiInit;
         private bool _isOrderView;
 
@@ -59,114 +56,36 @@ namespace POS_qu
             _printDoc.BeginPrint += PrintDoc_BeginPrint;
             _printDoc.PrintPage += PrintDoc_PrintPage;
 
-            BuildDateFilterUi();
-
-            Load += (_, __) => LoadData();
-        }
-
-        private void BuildDateFilterUi()
-        {
-            if (panelHeader == null) return;
-            if (_dtFrom != null || _dtTo != null) return;
-
             _uiInit = true;
             try
             {
-                panelHeader.Height = Math.Max(panelHeader.Height, 130);
-
-                var p = new Panel
-                {
-                    Dock = DockStyle.Bottom,
-                    Height = 46,
-                    BackColor = Color.White
-                };
-
-                var lblRange = new Label
-                {
-                    Text = "Periode:",
-                    AutoSize = true,
-                    Location = new Point(20, 13)
-                };
-
-                var dtFrom = new DateTimePicker
-                {
-                    Format = DateTimePickerFormat.Short,
-                    Width = 130,
-                    Location = new Point(90, 9)
-                };
-
-                var lblTo = new Label
-                {
-                    Text = "s/d",
-                    AutoSize = true,
-                    Location = new Point(dtFrom.Right + 10, 13)
-                };
-
-                var dtTo = new DateTimePicker
-                {
-                    Format = DateTimePickerFormat.Short,
-                    Width = 130,
-                    Location = new Point(lblTo.Right + 10, 9)
-                };
-
-                var btnToday = new Button
-                {
-                    Text = "Hari ini",
-                    Width = 100,
-                    Height = 30,
-                    Location = new Point(dtTo.Right + 10, 8),
-                    BackColor = Color.White,
-                    FlatStyle = FlatStyle.Flat
-                };
-                btnToday.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
-
-                var lblSummary = new Label
-                {
-                    AutoSize = false,
-                    TextAlign = ContentAlignment.MiddleRight,
-                    Location = new Point(btnToday.Right + 10, 9),
-                    Height = 30,
-                    Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right,
-                    ForeColor = Color.FromArgb(70, 70, 70)
-                };
-
-                void LayoutSummary()
-                {
-                    lblSummary.Width = Math.Max(200, p.Width - lblSummary.Left - 16);
-                }
-                p.SizeChanged += (_, __) => LayoutSummary();
-                LayoutSummary();
-
                 dtFrom.Value = DateTime.Today;
                 dtTo.Value = DateTime.Today;
-
-                btnToday.Click += (_, __) =>
-                {
-                    dtFrom.Value = DateTime.Today;
-                    dtTo.Value = DateTime.Today;
-                };
-
-                dtFrom.ValueChanged += (_, __) => { if (!_uiInit) LoadData(); };
-                dtTo.ValueChanged += (_, __) => { if (!_uiInit) LoadData(); };
-
-                p.Controls.Add(lblRange);
-                p.Controls.Add(dtFrom);
-                p.Controls.Add(lblTo);
-                p.Controls.Add(dtTo);
-                p.Controls.Add(btnToday);
-                p.Controls.Add(lblSummary);
-
-                panelHeader.Controls.Add(p);
-                p.BringToFront();
-
-                _dtFrom = dtFrom;
-                _dtTo = dtTo;
-                _lblSummary = lblSummary;
             }
             finally
             {
                 _uiInit = false;
             }
+
+            btnToday.Click += (_, __) =>
+            {
+                _uiInit = true;
+                try
+                {
+                    dtFrom.Value = DateTime.Today;
+                    dtTo.Value = DateTime.Today;
+                }
+                finally
+                {
+                    _uiInit = false;
+                }
+                LoadData();
+            };
+
+            dtFrom.ValueChanged += (_, __) => { if (!_uiInit) LoadData(); };
+            dtTo.ValueChanged += (_, __) => { if (!_uiInit) LoadData(); };
+
+            Load += (_, __) => LoadData();
         }
 
         private void LoadData()
@@ -174,8 +93,10 @@ namespace POS_qu
             string filter = "Sukses";
             if (cbStatus != null && cbStatus.SelectedItem != null)
                 filter = cbStatus.SelectedItem.ToString();
-            var from = _dtFrom?.Value.Date ?? DateTime.Today;
-            var toEx = (_dtTo?.Value.Date ?? DateTime.Today).AddDays(1);
+            var from = dtFrom.Value.Date;
+            var toDate = dtTo.Value.Date;
+            if (toDate < from) toDate = from;
+            var toEx = toDate.AddDays(1);
 
             DataTable dt;
             _isOrderView = string.Equals(filter, "Order/Pesanan", StringComparison.OrdinalIgnoreCase);
@@ -190,11 +111,18 @@ namespace POS_qu
             dgvTransactions.DataSource = dt;
             if (dgvTransactions.Columns["ts_id"] != null) dgvTransactions.Columns["ts_id"].Visible = false;
             if (dgvTransactions.Columns["order_id"] != null) dgvTransactions.Columns["order_id"].Visible = false;
+            if (dgvTransactions.Columns["warehouse_id"] != null) dgvTransactions.Columns["warehouse_id"].Visible = false;
 
             if (!_isOrderView && dgvTransactions.Columns["ts_numbering"] != null)
             {
                 dgvTransactions.Columns["ts_numbering"].HeaderText = "No Transaksi";
                 dgvTransactions.Columns["ts_numbering"].Width = 180;
+            }
+
+            if (!_isOrderView && dgvTransactions.Columns["warehouse_name"] != null)
+            {
+                dgvTransactions.Columns["warehouse_name"].HeaderText = "Gudang";
+                dgvTransactions.Columns["warehouse_name"].Width = 170;
             }
 
             if (!_isOrderView && dgvTransactions.Columns["ts_grand_total"] != null)
@@ -310,10 +238,9 @@ namespace POS_qu
 
         private void UpdateSummary(DataTable dt)
         {
-            if (_lblSummary == null) return;
             if (dt == null || dt.Rows.Count == 0)
             {
-                _lblSummary.Text = _isOrderView
+                lblSummary.Text = _isOrderView
                     ? "Total: 0 order | Nilai Rp 0"
                     : "Total: 0 trx | Omset Rp 0 | HPP Rp 0 | Laba Rp 0";
                 return;
@@ -327,7 +254,7 @@ namespace POS_qu
                     if (dt.Columns.Contains("order_total") && r["order_total"] != DBNull.Value)
                         total += Convert.ToDecimal(r["order_total"]);
                 }
-                _lblSummary.Text = $"Total: {dt.Rows.Count:N0} order | Nilai Rp {total:N0}";
+                lblSummary.Text = $"Total: {dt.Rows.Count:N0} order | Nilai Rp {total:N0}";
                 return;
             }
 
@@ -342,7 +269,7 @@ namespace POS_qu
                     profit += Convert.ToDecimal(r["ts_profit"]);
             }
 
-            _lblSummary.Text = $"Total: {dt.Rows.Count:N0} trx | Omset Rp {omset:N0} | HPP Rp {hpp:N0} | Laba Rp {profit:N0}";
+            lblSummary.Text = $"Total: {dt.Rows.Count:N0} trx | Omset Rp {omset:N0} | HPP Rp {hpp:N0} | Laba Rp {profit:N0}";
         }
 
         private void BtnCancel_Click(object? sender, EventArgs e)
@@ -530,6 +457,7 @@ namespace POS_qu
             int tsId = Convert.ToInt32(dgvTransactions.SelectedRows[0].Cells["ts_id"].Value);
             dt = _repo.GetTransactionDetailsById(tsId);
             var friendly = new DataTable();
+            friendly.Columns.Add("Gudang");
             friendly.Columns.Add("Nama Barang");
             friendly.Columns.Add("Barcode");
             friendly.Columns.Add("Jumlah");
@@ -546,6 +474,7 @@ namespace POS_qu
             decimal sumHpp = 0m;
             foreach (DataRow r in dt.Rows)
             {
+                var wh = r.Table.Columns.Contains("warehouse_name") ? (r["warehouse_name"]?.ToString() ?? "") : "";
                 var name = r["name"]?.ToString() ?? "";
                 var barcode = r["barcode"]?.ToString() ?? "";
                 var qty = Convert.ToDecimal(r["tsd_quantity"]);
@@ -562,6 +491,7 @@ namespace POS_qu
                 sumSubtotal += total;
                 sumHpp += lineHpp;
                 friendly.Rows.Add(
+                    wh,
                     name,
                     barcode,
                     qty.ToString("N0"),

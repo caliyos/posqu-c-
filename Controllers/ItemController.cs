@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿    ﻿﻿﻿﻿﻿﻿﻿  using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿    ﻿﻿﻿﻿﻿﻿﻿  using Npgsql;
     using System;
     using System.Collections.Generic;
     using System.Data;
@@ -1330,7 +1330,27 @@ VALUES (
                     var obj = findUnit.ExecuteScalar();
                     if (obj != null && obj != DBNull.Value) unitId = Convert.ToInt32(obj);
                 }
-                string query = @"
+                bool hasWarehouse = false;
+                using (var chk = new NpgsqlCommand(@"
+SELECT 1
+FROM information_schema.columns
+WHERE table_schema='public' AND table_name='pending_transactions' AND column_name='warehouse_id'
+LIMIT 1
+", vCon))
+                {
+                    hasWarehouse = chk.ExecuteScalar() != null;
+                }
+
+                string query = hasWarehouse ? @"
+INSERT INTO pending_transactions 
+    (terminal_id, cashier_id, warehouse_id, item_id, barcode, unit, unitid, quantity, buy_price, sell_price, discount_percentage, 
+     discount_total, tax, total, note, cart_session_code, tsd_conversion_rate)
+VALUES 
+    (@terminalId, @cashierId, @warehouseId, @itemId, @barcode, @unit, @unitid, @quantity, @buy_price, @sellPrice, @discountPercentage,
+     @discountTotal, @tax, @total, @note, @cartSessionCode, @conversionRate)
+RETURNING pt_id;
+"
+                : @"
 INSERT INTO pending_transactions 
     (terminal_id, cashier_id, item_id, barcode, unit, unitid, quantity, buy_price, sell_price, discount_percentage, 
      discount_total, tax, total, note, cart_session_code, tsd_conversion_rate)
@@ -1344,6 +1364,11 @@ RETURNING pt_id;
                 {
                     cmd.Parameters.AddWithValue("@terminalId", terminalId);
                     cmd.Parameters.AddWithValue("@cashierId", cashierId);
+                    if (hasWarehouse)
+                    {
+                        var wh = SessionUser.GetCurrentUser()?.WarehouseId ?? 1;
+                        cmd.Parameters.AddWithValue("@warehouseId", wh <= 0 ? 1 : wh);
+                    }
                     cmd.Parameters.AddWithValue("@itemId", itemId);
                     cmd.Parameters.AddWithValue("@barcode", barcode);
                     cmd.Parameters.AddWithValue("@unit", unit);

@@ -10,12 +10,37 @@ namespace POS_qu.Repositories
 {
     public class TransactionRepo
     {
+        private static bool TableExists(NpgsqlConnection con, NpgsqlTransaction? tran, string tableName)
+        {
+            using var cmd = new NpgsqlCommand("SELECT to_regclass(@t);", con, tran);
+            cmd.Parameters.AddWithValue("@t", "public." + tableName);
+            var v = cmd.ExecuteScalar();
+            return v != null && v != DBNull.Value;
+        }
+
+        private static bool ColumnExists(NpgsqlConnection con, NpgsqlTransaction? tran, string tableName, string columnName)
+        {
+            using var cmd = new NpgsqlCommand(@"
+SELECT 1
+FROM information_schema.columns
+WHERE table_schema = 'public'
+  AND table_name = @t
+  AND column_name = @c
+LIMIT 1
+", con, tran);
+            cmd.Parameters.AddWithValue("@t", tableName);
+            cmd.Parameters.AddWithValue("@c", columnName);
+            return cmd.ExecuteScalar() != null;
+        }
+
         public int InsertTransaction(
      NpgsqlConnection con,
      NpgsqlTransaction tran,
      Transactions transaction)
         {
-            string sql = @"
+            bool hasWarehouse = ColumnExists(con, tran, "transactions", "warehouse_id");
+            string sql = hasWarehouse
+                ? @"
 INSERT INTO transactions (
     ts_numbering, ts_code, ts_total, ts_payment_amount, ts_cashback, 
     ts_method, ts_status, ts_change, ts_internal_note, ts_note, 
@@ -23,7 +48,8 @@ INSERT INTO transactions (
     ts_customer, ts_freename, terminal_id, shift_id, user_id, 
     created_by, created_at, order_id, ts_delivery_amount, cart_session_code,
     ts_due_amount,
-    ts_total_before_tax, ts_tax_mode, ts_tax_rate, ts_tax_amount
+    ts_total_before_tax, ts_tax_mode, ts_tax_rate, ts_tax_amount,
+    warehouse_id
 ) 
 VALUES (
     @ts_numbering, @ts_code, @ts_total, @ts_payment_amount, @ts_cashback, 
@@ -32,8 +58,29 @@ VALUES (
     @ts_customer, @ts_freename, @terminal_id, @shift_id, 
     @user_id, @created_by, @created_at, @order_id, @ts_delivery_amount, @cart_session_code,
     @ts_due_amount,
-    @ts_total_before_tax, @ts_tax_mode, @ts_tax_rate, @ts_tax_amount
+    @ts_total_before_tax, @ts_tax_mode, @ts_tax_rate, @ts_tax_amount,
+    @warehouse_id
 ) 
+RETURNING ts_id"
+                : @"
+INSERT INTO transactions (
+    ts_numbering, ts_code, ts_total, ts_payment_amount, ts_cashback,
+    ts_method, ts_status, ts_change, ts_internal_note, ts_note,
+    ts_global_discount_amount, ts_grand_total,
+    ts_customer, ts_freename, terminal_id, shift_id, user_id,
+    created_by, created_at, order_id, ts_delivery_amount, cart_session_code,
+    ts_due_amount,
+    ts_total_before_tax, ts_tax_mode, ts_tax_rate, ts_tax_amount
+)
+VALUES (
+    @ts_numbering, @ts_code, @ts_total, @ts_payment_amount, @ts_cashback,
+    @ts_method, @ts_status, @ts_change, @ts_internal_note, @ts_note,
+    @ts_global_discount_amount, @ts_grand_total,
+    @ts_customer, @ts_freename, @terminal_id, @shift_id,
+    @user_id, @created_by, @created_at, @order_id, @ts_delivery_amount, @cart_session_code,
+    @ts_due_amount,
+    @ts_total_before_tax, @ts_tax_mode, @ts_tax_rate, @ts_tax_amount
+)
 RETURNING ts_id";
 
             using (var cmd = new NpgsqlCommand(sql, con, tran))
@@ -72,6 +119,8 @@ RETURNING ts_id";
                 cmd.Parameters.AddWithValue("@ts_tax_mode", transaction.TsTaxMode ?? "NON");
                 cmd.Parameters.AddWithValue("@ts_tax_rate", transaction.TsTaxRate);
                 cmd.Parameters.AddWithValue("@ts_tax_amount", transaction.TsTaxAmount);
+                if (hasWarehouse)
+                    cmd.Parameters.AddWithValue("@warehouse_id", transaction.WarehouseId <= 0 ? 1 : transaction.WarehouseId);
                 
 
                 return Convert.ToInt32(cmd.ExecuteScalar());
@@ -84,19 +133,38 @@ RETURNING ts_id";
     NpgsqlTransaction tran,
     List<TransactionDetail> details)
         {
-            string sql = @"
+            bool hasWarehouse = ColumnExists(con, tran, "transaction_details", "warehouse_id");
+            string sql = hasWarehouse
+                ? @"
 INSERT INTO transaction_details (
-    ts_id, item_id, tsd_name, tsd_barcode, tsd_buy_price, tsd_sell_price, 
+    ts_id, item_id, tsd_name, tsd_barcode, tsd_buy_price, tsd_sell_price,
     tsd_quantity, tsd_unit, tsd_note, 
     tsd_discount_per_item, tsd_discount_percentage, tsd_discount_total, 
     tsd_tax, tsd_total, tsd_conversion_rate, tsd_price_per_unit, 
-    tsd_unit_variant, created_by, created_at, cart_session_code
+    tsd_unit_variant, created_by, created_at, cart_session_code,
+    warehouse_id
 ) 
 VALUES (
     @ts_id, @item_id, @tsd_name, @tsd_barcode, @tsd_buy_price, @tsd_sell_price, 
     @tsd_quantity, @tsd_unit, @tsd_note, 
     @tsd_discount_per_item, @tsd_discount_percentage, @tsd_discount_total, 
     @tsd_tax, @tsd_total, @tsd_conversion_rate, @tsd_price_per_unit, 
+    @tsd_unit_variant, @created_by, @created_at, @cart_session_code,
+    @warehouse_id
+)"
+                : @"
+INSERT INTO transaction_details (
+    ts_id, item_id, tsd_name, tsd_barcode, tsd_buy_price, tsd_sell_price,
+    tsd_quantity, tsd_unit, tsd_note,
+    tsd_discount_per_item, tsd_discount_percentage, tsd_discount_total,
+    tsd_tax, tsd_total, tsd_conversion_rate, tsd_price_per_unit,
+    tsd_unit_variant, created_by, created_at, cart_session_code
+)
+VALUES (
+    @ts_id, @item_id, @tsd_name, @tsd_barcode, @tsd_buy_price, @tsd_sell_price,
+    @tsd_quantity, @tsd_unit, @tsd_note,
+    @tsd_discount_per_item, @tsd_discount_percentage, @tsd_discount_total,
+    @tsd_tax, @tsd_total, @tsd_conversion_rate, @tsd_price_per_unit,
     @tsd_unit_variant, @created_by, @created_at, @cart_session_code
 )";
 
@@ -126,6 +194,8 @@ VALUES (
                     cmd.Parameters.AddWithValue("@created_by", detail.CreatedBy);
                     cmd.Parameters.AddWithValue("@created_at", detail.CreatedAt);
                     cmd.Parameters.AddWithValue("@cart_session_code", detail.CartSessionCode ?? "");
+                    if (hasWarehouse)
+                        cmd.Parameters.AddWithValue("@warehouse_id", detail.WarehouseId <= 0 ? 1 : detail.WarehouseId);
 
                     cmd.ExecuteNonQuery();
                 }
@@ -475,7 +545,31 @@ ORDER BY created_at DESC
         {
             using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
             conn.Open();
-            using var cmd = new NpgsqlCommand(@"
+            bool hasWarehouse = ColumnExists(conn, null, "transaction_details", "warehouse_id") && TableExists(conn, null, "warehouses");
+            string sql = hasWarehouse ? @"
+SELECT 
+    td.tsd_id,
+    td.item_id,
+    td.warehouse_id,
+    COALESCE(w.name,'') AS warehouse_name,
+    COALESCE(i.name, td.tsd_name) AS name,
+    COALESCE(i.barcode, td.tsd_barcode) AS barcode,
+    td.tsd_unit,
+    td.tsd_quantity,
+    td.tsd_sell_price,
+    COALESCE(td.tsd_buy_price, 0) AS tsd_buy_price,
+    td.tsd_total,
+    td.tsd_discount_total,
+    td.tsd_tax,
+    COALESCE(td.tsd_conversion_rate, 1) AS tsd_conversion_rate,
+    td.tsd_note
+FROM transaction_details td
+LEFT JOIN items i ON i.id = td.item_id AND td.item_id > 0
+LEFT JOIN warehouses w ON w.id = td.warehouse_id
+WHERE td.ts_id = @id
+ORDER BY td.tsd_id
+"
+            : @"
 SELECT 
     td.tsd_id,
     td.item_id,
@@ -494,7 +588,8 @@ FROM transaction_details td
 LEFT JOIN items i ON i.id = td.item_id AND td.item_id > 0
 WHERE td.ts_id = @id
 ORDER BY td.tsd_id
-", conn);
+";
+            using var cmd = new NpgsqlCommand(sql, conn);
             cmd.Parameters.AddWithValue("@id", tsId);
             using var da = new NpgsqlDataAdapter(cmd);
             var dt = new DataTable();
@@ -557,12 +652,24 @@ WHERE ts_id = @id AND deleted_at IS NULL
             if (toExclusive.HasValue)
                 where += " AND t.created_at < @to";
 
+            bool hasWarehouseId = ColumnExists(conn, null, "transactions", "warehouse_id");
+            bool hasWarehousesTable = TableExists(conn, null, "warehouses");
+            bool joinWarehouses = hasWarehouseId && hasWarehousesTable;
+
+            string warehouseSelect = hasWarehouseId
+                ? "    t.warehouse_id,\r\n" + (joinWarehouses ? "    COALESCE(w.name,'') AS warehouse_name,\r\n" : "    '' AS warehouse_name,\r\n")
+                : "";
+            string warehouseJoin = joinWarehouses ? "LEFT JOIN warehouses w ON w.id = t.warehouse_id\r\n" : "";
+            string groupBy = hasWarehouseId
+                ? (joinWarehouses ? "GROUP BY t.ts_id, t.warehouse_id, w.name" : "GROUP BY t.ts_id, t.warehouse_id")
+                : "GROUP BY t.ts_id";
+
             string sql = $@"
 SELECT
     t.ts_id,
     t.ts_numbering,
     t.ts_grand_total,
-    COALESCE(SUM(COALESCE(td.tsd_buy_price, 0) * COALESCE(td.tsd_quantity, 0)), 0) AS ts_hpp_total,
+{warehouseSelect}    COALESCE(SUM(COALESCE(td.tsd_buy_price, 0) * COALESCE(td.tsd_quantity, 0)), 0) AS ts_hpp_total,
     (t.ts_grand_total - COALESCE(SUM(COALESCE(td.tsd_buy_price, 0) * COALESCE(td.tsd_quantity, 0)), 0)) AS ts_profit,
     t.ts_method,
     t.ts_status,
@@ -571,9 +678,11 @@ SELECT
     t.deleted_at
 FROM transactions t
 LEFT JOIN transaction_details td ON td.ts_id = t.ts_id
+{warehouseJoin}
 {where}
-GROUP BY t.ts_id
-ORDER BY t.created_at DESC";
+{groupBy}
+ORDER BY t.created_at DESC, t.ts_id DESC
+";
 
             using var cmd = new NpgsqlCommand(sql, conn);
             if (fromInclusive.HasValue)

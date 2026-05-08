@@ -138,6 +138,7 @@ namespace POS_qu.Services
                     {
                         var numberingService = new POS_qu.Services.DocumentNumberingService();
                         var saleNo = numberingService.Generate("SALE", DateTime.Now.Date, con, tran);
+                        int warehouseId = invoice != null && invoice.WarehouseId > 0 ? invoice.WarehouseId : (sessionUser.WarehouseId <= 0 ? 1 : sessionUser.WarehouseId);
 
                         // ===============================
                         // BUILD TRANSACTION OBJECT
@@ -148,6 +149,7 @@ namespace POS_qu.Services
                             TsNumbering = saleNo,
                             TsCode = Utility.getTrxNumbering(),
                             TsTotal = invoice.Items.Sum(x => x.Total),
+                            WarehouseId = warehouseId,
                             TsPaymentAmount = invoice.PaymentAmount,
                             TsCashback = invoice.ChangeAmount,
                             TsMethod = invoice.PaymentMethod,
@@ -190,6 +192,7 @@ namespace POS_qu.Services
                         {
                             TsId = transactionId,
                             ItemId = i.ItemId,
+                            WarehouseId = warehouseId,
                             Barcode = i.Barcode,
                             Name = i.Name,
                             TsdSellPrice = i.Price,
@@ -214,7 +217,7 @@ namespace POS_qu.Services
                             con,
                             tran,
                             details,
-                            warehouseId: sessionUser.WarehouseId,
+                            warehouseId: warehouseId,
                             transactionId: transactionId,
                             transactionNumbering: transaction.TsNumbering,
                             userId: sessionUser.UserId,
@@ -298,6 +301,7 @@ namespace POS_qu.Services
 
                         var numberingService = new POS_qu.Services.DocumentNumberingService();
                         var saleNo = numberingService.Generate("SALE", DateTime.Now.Date, con, tran);
+                        int warehouseId = invoice != null && invoice.WarehouseId > 0 ? invoice.WarehouseId : (sessionUser.WarehouseId <= 0 ? 1 : sessionUser.WarehouseId);
 
                         // ===============================
                         // BUILD TRANSACTION HEADER
@@ -308,6 +312,7 @@ namespace POS_qu.Services
                             TsNumbering = saleNo,
                             TsCode = Utility.getTrxNumbering(),
                             TsTotal = invoice.Items.Sum(x => x.Total),
+                            WarehouseId = warehouseId,
                             TsPaymentAmount = paymentAmount,
                             TsCashback = 0,
                             TsMethod = "INSTALLMENT",
@@ -346,6 +351,7 @@ namespace POS_qu.Services
                         {
                             TsId = transactionId,
                             ItemId = i.ItemId,
+                            WarehouseId = warehouseId,
                             Barcode = i.Barcode,
                             Name = i.Name,
                             TsdSellPrice = i.Price,
@@ -370,7 +376,7 @@ namespace POS_qu.Services
                             con,
                             tran,
                             details,
-                            warehouseId: sessionUser.WarehouseId,
+                            warehouseId: warehouseId,
                             transactionId: transactionId,
                             transactionNumbering: transaction.TsNumbering,
                             userId: sessionUser.UserId,
@@ -455,12 +461,14 @@ namespace POS_qu.Services
             {
                 var numberingService = new POS_qu.Services.DocumentNumberingService();
                 var saleNo = numberingService.Generate("SALE", DateTime.Now.Date, con, tran);
+                int warehouseId = invoice != null && invoice.WarehouseId > 0 ? invoice.WarehouseId : (sessionUser.WarehouseId <= 0 ? 1 : sessionUser.WarehouseId);
 
                 Transactions transaction = new Transactions
                 {
                     TsNumbering = saleNo,
                     TsCode = Utility.getTrxNumbering(),
                     TsTotal = invoice.Items.Sum(x => x.Total),
+                    WarehouseId = warehouseId,
                     TsPaymentAmount = invoice.PaymentAmount,
                     TsCashback = invoice.ChangeAmount,
                     TsMethod = "SPLIT",
@@ -494,6 +502,7 @@ namespace POS_qu.Services
                 {
                     TsId = transactionId,
                     ItemId = i.ItemId,
+                    WarehouseId = warehouseId,
                     Barcode = i.Barcode,
                     Name = i.Name,
                     TsdSellPrice = i.Price,
@@ -518,7 +527,7 @@ namespace POS_qu.Services
                     con,
                     tran,
                     details,
-                    warehouseId: sessionUser.WarehouseId,
+                    warehouseId: warehouseId,
                     transactionId: transactionId,
                     transactionNumbering: transaction.TsNumbering,
                     userId: sessionUser.UserId,
@@ -562,12 +571,14 @@ namespace POS_qu.Services
             {
                 var numberingService = new POS_qu.Services.DocumentNumberingService();
                 var saleNo = numberingService.Generate("SALE", DateTime.Now.Date, con, tran);
+                int warehouseId = invoice != null && invoice.WarehouseId > 0 ? invoice.WarehouseId : (sessionUser.WarehouseId <= 0 ? 1 : sessionUser.WarehouseId);
 
                 Transactions transaction = new Transactions
                 {
                     TsNumbering = saleNo,
                     TsCode = Utility.getTrxNumbering(),
                     TsTotal = -grandTotal,
+                    WarehouseId = warehouseId,
                     TsPaymentAmount = 0,
                     TsCashback = 0,
                     TsMethod = "RETURN",
@@ -601,6 +612,7 @@ namespace POS_qu.Services
                 {
                     TsId = transactionId,
                     ItemId = i.ItemId, // 0 untuk custom
+                    WarehouseId = warehouseId,
                     Barcode = i.Barcode,
                     Name = i.Name,
                     TsdSellPrice = i.Price,
@@ -635,9 +647,9 @@ namespace POS_qu.Services
                         IStockValuationStrategy strategy = CreateStockValuationStrategy(valMethod);
 
                         decimal unitCostPerBase = stockIn != 0 ? (d.TsdBuyPrice / conv) : 0m;
-                        strategy.AddStockIn(d.ItemId, 1, stockIn, unitCostPerBase, con, tran);
+                        strategy.AddStockIn(d.ItemId, warehouseId, stockIn, unitCostPerBase, con, tran);
 
-                        decimal newStock = _repo.GetCurrentStockInWarehouse(con, tran, d.ItemId, 1);
+                        decimal newStock = _repo.GetCurrentStockInWarehouse(con, tran, d.ItemId, warehouseId);
                         _repo.InsertStockLog(con, tran, new StockLog
                         {
                             ProductId = d.ItemId,
@@ -649,7 +661,7 @@ namespace POS_qu.Services
                             UserId = sessionUser.UserId,
                             CreatedAt = DateTime.Now,
                             LoginId = sessionUser.LoginId,
-                            WarehouseId = 1,
+                            WarehouseId = warehouseId,
                             RefType = "RETURN",
                             RefId = transactionId,
                             UnitCost = unitCostPerBase,
@@ -743,21 +755,36 @@ namespace POS_qu.Services
                         decimal qty = Convert.ToDecimal(r["tsd_quantity"]);
                         decimal conv = r["tsd_conversion_rate"] == DBNull.Value ? 1 : Convert.ToDecimal(r["tsd_conversion_rate"]);
                         decimal stockIn = qty * conv;
-                        int affected = _repo.IncreaseStock(con, tran, itemId, stockIn);
-                        if (affected == 0)
-                            throw new Exception($"Gagal menambah stok item {itemId}");
-                        decimal newStock = _repo.GetCurrentStock(con, tran, itemId);
+                        int warehouseId = details.Columns.Contains("warehouse_id") && r["warehouse_id"] != DBNull.Value
+                            ? Convert.ToInt32(r["warehouse_id"])
+                            : 1;
+
+                        decimal buyPerSoldUnit = details.Columns.Contains("tsd_buy_price") && r["tsd_buy_price"] != DBNull.Value
+                            ? Convert.ToDecimal(r["tsd_buy_price"])
+                            : 0m;
+                        decimal unitCostPerBase = conv != 0 ? (buyPerSoldUnit / conv) : buyPerSoldUnit;
+
+                        string valMethod = _repo.GetItemValuationMethod(con, tran, itemId);
+                        IStockValuationStrategy strategy = CreateStockValuationStrategy(valMethod);
+                        strategy.AddStockIn(itemId, warehouseId, stockIn, unitCostPerBase, con, tran);
+
+                        decimal newStock = _repo.GetCurrentStockInWarehouse(con, tran, itemId, warehouseId);
                         _repo.InsertStockLog(con, tran, new StockLog
                         {
                             ProductId = itemId,
                             TipeTransaksi = "cancel",
-                            QtyMasuk = qty,
+                            QtyMasuk = stockIn,
                             QtyKeluar = 0,
                             SisaStock = newStock,
                             Keterangan = $"Cancel Transaction #{txInfo.TransactionNumber}",
                             UserId = sessionUser.UserId,
                             CreatedAt = DateTime.Now,
-                            LoginId = sessionUser.LoginId
+                            LoginId = sessionUser.LoginId,
+                            WarehouseId = warehouseId,
+                            RefType = "CANCEL",
+                            RefId = tsId,
+                            UnitCost = unitCostPerBase,
+                            Method = valMethod
                         });
                     }
                 }

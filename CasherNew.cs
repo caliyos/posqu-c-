@@ -1082,15 +1082,17 @@ WHERE deleted_at IS NULL
                 if (!string.IsNullOrEmpty(Session.CartSessionCode) && Session.CartSessionCode == code) return;
                 int items = Convert.ToInt32(dt.Rows[0]["total_items"]);
                 decimal total = Convert.ToDecimal(dt.Rows[0]["grand_total"]);
+                int wid = dt.Columns.Contains("warehouse_id") && dt.Rows[0]["warehouse_id"] != DBNull.Value ? Convert.ToInt32(dt.Rows[0]["warehouse_id"]) : (SessionUser.GetCurrentUser()?.WarehouseId ?? 1);
+                string whName = dt.Columns.Contains("warehouse_name") ? (dt.Rows[0]["warehouse_name"]?.ToString() ?? "") : "";
                 var result = MessageBox.Show(
-                    $"Ada sesi pending: {code}\nItem: {items}\nTotal: {total:N0}\nLanjutkan?",
+                    $"Ada sesi pending: {code}\nGudang: {(string.IsNullOrWhiteSpace(whName) ? ("#" + wid) : whName)}\nItem: {items}\nTotal: {total:N0}\nLanjutkan?",
                     "Resume Cart",
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question
                 );
                 if (result == DialogResult.Yes)
                 {
-                    ResumeCartByCode(code);
+                    ResumeCartByCode(code, wid);
                 }
             }
             else
@@ -1098,8 +1100,23 @@ WHERE deleted_at IS NULL
             }
         }
 
-        private void ResumeCartByCode(string cartCode)
+        private void ResumeCartByCode(string cartCode, int warehouseId)
         {
+            if (warehouseId <= 0) warehouseId = 1;
+            if (cmbWarehouse != null && cmbWarehouse.Enabled)
+            {
+                _isLoadingCashierWarehouses = true;
+                try
+                {
+                    cmbWarehouse.SelectedValue = warehouseId;
+                }
+                finally
+                {
+                    _isLoadingCashierWarehouses = false;
+                }
+            }
+            SessionUser.UpdateWarehouseId(warehouseId);
+
             _currentInvoice = _cartService.LoadInvoiceFromCartSession(cartCode);
             RenderInvoice(_currentInvoice);
             if (_currentInvoice.Items.Any())

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +12,7 @@ namespace POS_qu.Models
         public int TsdId { get; set; } // Primary Key
         public int TsId { get; set; } // Foreign Key to Transactions
         public int ItemId { get; set; } // Foreign Key to Items
+        public int WarehouseId { get; set; } = 1;
        
         public string Name { get; set; }
         public string Barcode { get; set; } 

@@ -20,6 +20,7 @@ namespace POS_qu.Models
         public string TsNumbering { get; set; } // ts_numbering
         public string TsCode { get; set; } // ts_code
         public decimal TsTotal { get; set; } // ts_total
+        public int WarehouseId { get; set; } = 1;
 
         public decimal TsDiscountTotal { get; set; } // 
 
