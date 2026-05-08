@@ -867,16 +867,11 @@ LIMIT 12;", conn))
 
         private void ShowAfterPayPanel()
         {
-            if (_afterPayPanel == null)
-            {
-                _afterPayPanel = BuildAfterPayPanel();
-                panelCard.Controls.Add(_afterPayPanel);
-            }
-
-            _afterPayPanel.Visible = true;
-            _afterPayPanel.BringToFront();
-
-            DisablePaymentInputs();
+            using var success = new PaymentSuccessForm();
+            success.SetReceiptText(_receiptText ?? "");
+            success.ShowDialog(this);
+            this.DialogResult = DialogResult.OK;
+            this.Close();
         }
 
         private void DisablePaymentInputs()
