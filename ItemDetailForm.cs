@@ -96,6 +96,8 @@ namespace POS_qu
             txtSellPrice.TextChanged += (s, e) => UpdateMargin();
             txtDiscountFormula.TextChanged += (s, e) => UpdateMargin();
             txtSellPrice.TextChanged += (s, e) => SyncSellPriceToAssembly();
+            txtBuyPrice.Leave += (s, e) => txtBuyPrice.Text = UiNumberFormat.FormatMoneyText(txtBuyPrice.Text);
+            txtSellPrice.Leave += (s, e) => txtSellPrice.Text = UiNumberFormat.FormatMoneyText(txtSellPrice.Text);
 
             // DataGridView harga bertingkat
             dgvMultiPrice.DataSource = new BindingList<ItemPrice>();
@@ -313,8 +315,8 @@ namespace POS_qu
         {
             _item = item;
             txtName.Text = _item.name;
-            txtBuyPrice.Text = _item.buy_price.ToString();
-            txtSellPrice.Text = _item.sell_price.ToString();
+            txtBuyPrice.Text = _item.buy_price.ToString("N0");
+            txtSellPrice.Text = _item.sell_price.ToString("N0");
             txtStock.Text = _item.stock.ToString();
             txtBarcode.Text = _item.barcode;
             txtNote.Text = _item.note;
@@ -382,8 +384,8 @@ namespace POS_qu
         // ------------------------
         private void UpdateMargin()
         {
-            if (!decimal.TryParse(txtBuyPrice.Text, out decimal buyPrice)) return;
-            if (!decimal.TryParse(txtSellPrice.Text, out decimal sellPrice)) return;
+            decimal buyPrice = UiNumberFormat.ParseMoney(txtBuyPrice.Text);
+            decimal sellPrice = UiNumberFormat.ParseMoney(txtSellPrice.Text);
 
             string formula = txtDiscountFormula.Text.Trim();
             decimal discountAmount = 0;
@@ -422,12 +424,12 @@ namespace POS_qu
 
             // Update properti dari form
             _item.name = txtName.Text;
-            _item.buy_price = decimal.Parse(txtBuyPrice.Text);
-            _item.sell_price = decimal.Parse(txtSellPrice.Text);
-            _item.stock = int.Parse(txtStock.Text);
+            _item.buy_price = UiNumberFormat.ParseMoney(txtBuyPrice.Text);
+            _item.sell_price = UiNumberFormat.ParseMoney(txtSellPrice.Text);
+            _item.stock = (int)UiNumberFormat.ParseMoney(txtStock.Text);
             _item.barcode = txtBarcode.Text;
             _item.note = txtNote.Text;
-            _item.min_qty = int.Parse(txtMinQty.Text);
+            _item.min_qty = (int)UiNumberFormat.ParseMoney(txtMinQty.Text);
             _item.unitid = cmbUnit.SelectedValue != null ? Convert.ToInt32(cmbUnit.SelectedValue) : 0;
             if (_item.unitid <= 0)
             {
@@ -508,9 +510,8 @@ namespace POS_qu
             string unitName = cmbUnit.SelectedIndex >= 0 ? cmbUnit.Text : "pcs";
             lblStockOut.Text = $"{val:N0} {unitName}";
             // nilai stok (HPP) dan nilai jual
-            decimal bp = 0m, sp = 0m;
-            decimal.TryParse(txtBuyPrice.Text, out bp);
-            decimal.TryParse(txtSellPrice.Text, out sp);
+            decimal bp = UiNumberFormat.ParseMoney(txtBuyPrice.Text);
+            decimal sp = UiNumberFormat.ParseMoney(txtSellPrice.Text);
             var hpp = bp * val;
             var jual = sp * val;
             if (lblStockValueHpp != null) lblStockValueHpp.Text = $"Nilai Stok (HPP): {hpp:N0}";
@@ -549,7 +550,7 @@ namespace POS_qu
 
             var newPrice = new ItemPrice { Id = 0, ItemId = editingItemId ?? 0, MinQty = 1, Price = 0 };
             string itemName = txtName.Text;
-            decimal buyPrice = decimal.TryParse(txtBuyPrice.Text, out decimal bp) ? bp : 0;
+            decimal buyPrice = UiNumberFormat.ParseMoney(txtBuyPrice.Text);
 
             if (ShowPriceEditor(newPrice, itemName, buyPrice))
             {
@@ -563,7 +564,7 @@ namespace POS_qu
             if (dgvMultiPrice.CurrentRow?.DataBoundItem is not ItemPrice price) return;
 
             string itemName = txtName.Text;
-            decimal buyPrice = decimal.TryParse(txtBuyPrice.Text, out decimal bp) ? bp : 0;
+            decimal buyPrice = UiNumberFormat.ParseMoney(txtBuyPrice.Text);
 
             if (ShowPriceEditor(price, itemName, buyPrice))
             {
@@ -648,7 +649,7 @@ namespace POS_qu
             TextBox txtMaxQty = new TextBox() { Left = 330, Top = 138, Width = 70, Text = price.MaxQty?.ToString() };
 
             Label lblPrice = new Label() { Left = 20, Top = 180, Text = "Harga Jual", AutoSize = true };
-            TextBox txtPrice = new TextBox() { Left = 150, Top = 178, Width = 250, Text = price.Price.ToString() };
+            TextBox txtPrice = new TextBox() { Left = 150, Top = 178, Width = 250, Text = price.Price.ToString("N0") };
 
             Label lblFinalPrice = new Label() { Left = 20, Top = 230, Width = 350, Text = "Harga Akhir: -" };
             Label lblMargin = new Label() { Left = 20, Top = 260, Width = 350, Text = "Margin: -" };
@@ -680,12 +681,7 @@ namespace POS_qu
 
             void Recalculate()
             {
-                if (!decimal.TryParse(txtPrice.Text, out decimal sellPrice))
-                {
-                    lblFinalPrice.Text = "Harga Akhir: -";
-                    lblMargin.Text = "Margin: -";
-                    return;
-                }
+                decimal sellPrice = UiNumberFormat.ParseMoney(txtPrice.Text);
 
                 decimal currentBuyPrice = price.buy_price_temp > 0 ? price.buy_price_temp : buyPrice;
                 decimal margin = sellPrice - currentBuyPrice;
@@ -696,6 +692,7 @@ namespace POS_qu
             }
 
             txtPrice.TextChanged += (s, e) => Recalculate();
+            txtPrice.Leave += (s, e) => txtPrice.Text = UiNumberFormat.FormatMoneyText(txtPrice.Text);
             Recalculate();
 
             Button btnOK = new Button() { Left = 200, Top = 320, Width = 90, Height = 45, Text = "OK", DialogResult = DialogResult.OK };
@@ -717,9 +714,10 @@ namespace POS_qu
                     price.PriceLevelId = Convert.ToInt32(cmbLevel.SelectedValue);
                     price.PriceLevelName = cmbLevel.Text;
                 }
-                if (int.TryParse(txtMinQty.Text, out int minQty)) price.MinQty = minQty;
-                if (int.TryParse(txtMaxQty.Text, out int maxQty)) price.MaxQty = maxQty; else price.MaxQty = null;
-                if (decimal.TryParse(txtPrice.Text, out decimal harga)) price.Price = harga;
+                price.MinQty = (int)UiNumberFormat.ParseMoney(txtMinQty.Text);
+                var maxQty = (int)UiNumberFormat.ParseMoney(txtMaxQty.Text);
+                price.MaxQty = maxQty > 0 ? maxQty : null;
+                price.Price = UiNumberFormat.ParseMoney(txtPrice.Text);
                 return true;
             }
 
@@ -747,7 +745,7 @@ namespace POS_qu
         private void btnUnitVariant_Click(object sender, EventArgs e)
         {
             if (_item == null) _item = new Item();
-            if (!decimal.TryParse(txtSellPrice.Text, out decimal sellPrice)) sellPrice = 0;
+            decimal sellPrice = UiNumberFormat.ParseMoney(txtSellPrice.Text);
             
             // _item.UnitVariants = ... diisi saat save
 

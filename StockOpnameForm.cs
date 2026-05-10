@@ -911,8 +911,8 @@ DO UPDATE SET qty = EXCLUDED.qty
                     decimal buyPrice = GetBuyPrice(it.ItemId, con, tran);
                     DateTime? expiredAt = GetExpiredAt(it.ItemId, con, tran);
                     using (var cmd = new NpgsqlCommand(@"
-INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, expired_at, created_at)
-VALUES (@iid, @w, @q, @buy, @exp, NOW())
+INSERT INTO stock_layers (item_id, warehouse_id, qty_initial, qty_remaining, buy_price, expired_at, created_at)
+VALUES (@iid, @w, @q, @q, @buy, @exp, NOW())
 ", con, tran))
                     {
                         cmd.Parameters.AddWithValue("@iid", it.ItemId);

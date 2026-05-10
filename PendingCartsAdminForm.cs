@@ -99,6 +99,7 @@ namespace POS_qu
             finally
             {
                 _loading = false;
+                LoadItemsForSelected();
             }
         }
 
@@ -153,11 +154,25 @@ namespace POS_qu
                     dgvItems.Columns["quantity"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                     dgvItems.Columns["quantity"].DefaultCellStyle.Format = "N2";
                 }
+                if (dgvItems.Columns.Contains("unit"))
+                    dgvItems.Columns["unit"].HeaderText = "Satuan";
                 if (dgvItems.Columns.Contains("sell_price"))
                 {
                     dgvItems.Columns["sell_price"].HeaderText = "Harga";
                     dgvItems.Columns["sell_price"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                     dgvItems.Columns["sell_price"].DefaultCellStyle.Format = "N0";
+                }
+                if (dgvItems.Columns.Contains("discount_total"))
+                {
+                    dgvItems.Columns["discount_total"].HeaderText = "Diskon";
+                    dgvItems.Columns["discount_total"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    dgvItems.Columns["discount_total"].DefaultCellStyle.Format = "N0";
+                }
+                if (dgvItems.Columns.Contains("tax"))
+                {
+                    dgvItems.Columns["tax"].HeaderText = "Pajak";
+                    dgvItems.Columns["tax"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    dgvItems.Columns["tax"].DefaultCellStyle.Format = "N0";
                 }
                 if (dgvItems.Columns.Contains("total"))
                 {
@@ -165,6 +180,8 @@ namespace POS_qu
                     dgvItems.Columns["total"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                     dgvItems.Columns["total"].DefaultCellStyle.Format = "N0";
                 }
+                if (dgvItems.Columns.Contains("note"))
+                    dgvItems.Columns["note"].HeaderText = "Catatan";
                 if (dgvItems.Columns.Contains("updated_at"))
                 {
                     dgvItems.Columns["updated_at"].HeaderText = "Update";

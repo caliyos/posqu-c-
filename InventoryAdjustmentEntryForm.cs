@@ -456,8 +456,8 @@ WHERE item_id = @iid AND warehouse_id = @w
             }
 
             using var cmd = new NpgsqlCommand(@"
-INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, expired_at, created_at)
-VALUES (@iid, @w, @q, @bp, @exp, NOW())
+INSERT INTO stock_layers (item_id, warehouse_id, qty_initial, qty_remaining, buy_price, expired_at, created_at)
+VALUES (@iid, @w, @q, @q, @bp, @exp, NOW())
 ", con, tran);
             cmd.Parameters.AddWithValue("@iid", itemId);
             cmd.Parameters.AddWithValue("@w", warehouseId);

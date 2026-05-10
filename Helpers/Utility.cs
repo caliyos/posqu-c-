@@ -2,14 +2,57 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing.Printing;
+using System.Globalization;
 using System.Linq;
 using System.Net.NetworkInformation;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Npgsql;
 
 namespace POS_qu.Helpers
 {
+    public static class UiNumberFormat
+    {
+        public static readonly CultureInfo DotCulture = BuildDotCulture();
+
+        private static CultureInfo BuildDotCulture()
+        {
+            var c = (CultureInfo)CultureInfo.GetCultureInfo("en-US").Clone();
+            c.NumberFormat.NumberGroupSeparator = ".";
+            c.NumberFormat.CurrencyGroupSeparator = ".";
+            c.NumberFormat.NumberDecimalSeparator = ".";
+            c.NumberFormat.CurrencyDecimalSeparator = ".";
+            return c;
+        }
+
+        public static void ApplyDotCulture()
+        {
+            CultureInfo.DefaultThreadCurrentCulture = DotCulture;
+            CultureInfo.DefaultThreadCurrentUICulture = DotCulture;
+            Thread.CurrentThread.CurrentCulture = DotCulture;
+            Thread.CurrentThread.CurrentUICulture = DotCulture;
+        }
+
+        public static decimal ParseMoney(string? text)
+        {
+            text ??= "";
+            string clean = text.Replace("Rp", "", StringComparison.OrdinalIgnoreCase)
+                               .Replace(".", "")
+                               .Replace(",", "")
+                               .Trim();
+            if (decimal.TryParse(clean, NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
+                return value;
+            return 0m;
+        }
+
+        public static string FormatMoneyText(string? text)
+        {
+            var v = ParseMoney(text);
+            return v.ToString("N0");
+        }
+    }
+
     class Utility
     {
         //private static string vStrConnection = "Host=localhost;Port=5433;Username=postgres;Password=postgres11;Database=posqu";

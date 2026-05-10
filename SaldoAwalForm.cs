@@ -401,8 +401,8 @@ DO UPDATE SET qty = EXCLUDED.qty
                     }
 
                     using (var cmd = new NpgsqlCommand(@"
-INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price)
-VALUES (@item_id, @w_id, @qty, @buy_price)
+INSERT INTO stock_layers (item_id, warehouse_id, qty_initial, qty_remaining, buy_price)
+VALUES (@item_id, @w_id, @qty, @qty, @buy_price)
 ", con, tran))
                     {
                         cmd.Parameters.AddWithValue("@item_id", itemId);
@@ -442,4 +442,3 @@ VALUES (@item_id, @w_id, @qty, @buy_price)
         }
     }
 }
-

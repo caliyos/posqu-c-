@@ -224,7 +224,7 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
                                 sCmd.ExecuteNonQuery();
                             }
 
-                            string slSql = "INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, expired_at) VALUES (@item_id, @w_id, @qty, @buy_price, @exp)";
+                            string slSql = "INSERT INTO stock_layers (item_id, warehouse_id, qty_initial, qty_remaining, buy_price, expired_at) VALUES (@item_id, @w_id, @qty, @qty, @buy_price, @exp)";
                             using (var slCmd = new NpgsqlCommand(slSql, con, tran))
                             {
                                 slCmd.Parameters.AddWithValue("@item_id", newItemId);

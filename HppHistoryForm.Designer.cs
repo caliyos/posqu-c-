@@ -10,6 +10,7 @@ namespace POS_qu
         private System.Windows.Forms.ComboBox cmbWarehouse;
         private System.Windows.Forms.Label lblWarehouse;
         private System.Windows.Forms.Button btnRefresh;
+        private System.Windows.Forms.Button btnRevalue;
         private System.Windows.Forms.Button btnClose;
         private System.Windows.Forms.TabControl tabMain;
         private System.Windows.Forms.TabPage tabLayers;
@@ -37,6 +38,7 @@ namespace POS_qu
             lblWarehouse = new System.Windows.Forms.Label();
             cmbWarehouse = new System.Windows.Forms.ComboBox();
             btnRefresh = new System.Windows.Forms.Button();
+            btnRevalue = new System.Windows.Forms.Button();
             btnClose = new System.Windows.Forms.Button();
             tabMain = new System.Windows.Forms.TabControl();
             tabLayers = new System.Windows.Forms.TabPage();
@@ -58,6 +60,7 @@ namespace POS_qu
             // 
             panelHeader.BackColor = System.Drawing.Color.White;
             panelHeader.Controls.Add(btnClose);
+            panelHeader.Controls.Add(btnRevalue);
             panelHeader.Controls.Add(btnRefresh);
             panelHeader.Controls.Add(cmbWarehouse);
             panelHeader.Controls.Add(lblWarehouse);
@@ -136,6 +139,20 @@ namespace POS_qu
             btnRefresh.Text = "Refresh";
             btnRefresh.UseVisualStyleBackColor = false;
             // 
+            // btnRevalue
+            // 
+            btnRevalue.BackColor = System.Drawing.Color.FromArgb(255, 193, 7);
+            btnRevalue.FlatAppearance.BorderSize = 0;
+            btnRevalue.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnRevalue.Font = new System.Drawing.Font("Segoe UI Semibold", 10F, System.Drawing.FontStyle.Bold);
+            btnRevalue.ForeColor = System.Drawing.Color.Black;
+            btnRevalue.Location = new System.Drawing.Point(612, 60);
+            btnRevalue.Name = "btnRevalue";
+            btnRevalue.Size = new System.Drawing.Size(220, 34);
+            btnRevalue.TabIndex = 6;
+            btnRevalue.Text = "Koreksi HPP (Layer)";
+            btnRevalue.UseVisualStyleBackColor = false;
+            // 
             // btnClose
             // 
             btnClose.BackColor = System.Drawing.Color.FromArgb(108, 117, 125);
@@ -146,7 +163,7 @@ namespace POS_qu
             btnClose.Location = new System.Drawing.Point(844, 60);
             btnClose.Name = "btnClose";
             btnClose.Size = new System.Drawing.Size(120, 34);
-            btnClose.TabIndex = 6;
+            btnClose.TabIndex = 7;
             btnClose.Text = "Tutup";
             btnClose.UseVisualStyleBackColor = false;
             // 

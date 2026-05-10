@@ -737,7 +737,7 @@ ORDER BY id ASC
 
                     // B. Insert into Stock Layers (Untuk FIFO/AVG)
                     var expiredAt = GetItemExpiredAt(itemId, conn, tran);
-                    string insertLayerSql = "INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, expired_at, created_at) VALUES (@item_id, @warehouse_id, @qty, @buy_price, @exp, NOW())";
+                    string insertLayerSql = "INSERT INTO stock_layers (item_id, warehouse_id, qty_initial, qty_remaining, buy_price, expired_at, created_at) VALUES (@item_id, @warehouse_id, @qty, @qty, @buy_price, @exp, NOW())";
                     using var layerCmd = new NpgsqlCommand(insertLayerSql, conn, tran);
                     layerCmd.Parameters.AddWithValue("@item_id", itemId);
                     layerCmd.Parameters.AddWithValue("@warehouse_id", warehouseId);

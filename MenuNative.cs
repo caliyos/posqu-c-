@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
 using POS_qu;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -154,7 +154,6 @@ namespace POSqu_menu
         {
             try
             {
-                MessageBox.Show("Load masuk");
                 var user = SessionUser.GetCurrentUser();
                 string pcId = Utility.GetPcId();
 
@@ -164,13 +163,24 @@ namespace POSqu_menu
                     return;
                 }
 
+                GlobalContext.RefreshConnectionInfo();
+                string dbSummary = !string.IsNullOrWhiteSpace(GlobalContext.ConnectionSummary) ? GlobalContext.ConnectionSummary : "-";
+
+                string appTz = DbConfig.AppTimeZone ?? "";
+                string dbTz = GetDatabaseTimeZone() ?? "";
+                string tzLine = "";
+                if (!string.IsNullOrWhiteSpace(appTz) || !string.IsNullOrWhiteSpace(dbTz))
+                    tzLine = $"\n🕒 TimeZone App: {(!string.IsNullOrWhiteSpace(appTz) ? appTz : "-")} | DB: {(!string.IsNullOrWhiteSpace(dbTz) ? dbTz : "-")}";
+
                 // tampilkan semua data session user
                 label2.Text =
                     $"👤 User: {user.Username} (ID: {user.UserId})\n" +
                     $"🎭 Role: {user.RoleName} (ID: {user.RoleId})\n" +
                     $"🖥️ Terminal: {user.TerminalName} (ID: {user.TerminalId})\n" +
                     $"⏰ Shift: {user.ShiftId}\n" +
-                    $"💻 PC ID: {pcId}";
+                    $"💻 PC ID: {pcId}\n" +
+                    $"🗄️ Database: {dbSummary}" +
+                    tzLine;
 
                 LoadDashboardSummary();
                 RenderSalesBarsLast30Days();
@@ -654,15 +664,20 @@ namespace POSqu_menu
 
         }
 
+
+
+        private ProductPage productPage;
         private void manajemenProdukToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
-            ProductPage p = new ProductPage();
-            this.Hide();  // Sembunyikan MenuNative sementara
-
-            p.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative
-            p.Show();
-
+            if (productPage == null || productPage.IsDisposed)
+            {
+                productPage = new ProductPage();
+                productPage.Show();
+            }
+            else
+            {
+                productPage.BringToFront();
+            }
         }
 
         private void pelangganCustomerToolStripMenuItem_Click(object sender, EventArgs e)

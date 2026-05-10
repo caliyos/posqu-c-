@@ -20,8 +20,8 @@ namespace POS_qu.Services.StockValuation
             }
 
             string sql = @"
-                INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, expired_at, created_at)
-                VALUES (@item_id, @warehouse_id, @qty, @cost, @exp, NOW())";
+                INSERT INTO stock_layers (item_id, warehouse_id, qty_initial, qty_remaining, buy_price, expired_at, created_at)
+                VALUES (@item_id, @warehouse_id, @qty, @qty, @cost, @exp, NOW())";
                 
             using (var cmd = new NpgsqlCommand(sql, con, tran))
             {
@@ -118,8 +118,8 @@ namespace POS_qu.Services.StockValuation
                 });
                 
                 string insertMinusSql = @"
-                    INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, created_at)
-                    VALUES (@item_id, @warehouse_id, @qty, @cost, NOW())";
+                INSERT INTO stock_layers (item_id, warehouse_id, qty_initial, qty_remaining, buy_price, created_at)
+                    VALUES (@item_id, @warehouse_id, @qty, @qty, @cost, NOW())";
                 using (var cmd = new NpgsqlCommand(insertMinusSql, con, tran))
                 {
                     cmd.Parameters.AddWithValue("@item_id", itemId);

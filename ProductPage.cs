@@ -16,7 +16,7 @@ using POS_qu.Core.Interfaces;
 using POS_qu.Services;
 using POS_qu.Repositories;
 using System.Transactions;
-    using System.Security.Cryptography.Xml;
+using System.Security.Cryptography.Xml;
 using Npgsql;
 
 namespace POS_qu
@@ -2598,8 +2598,8 @@ VALUES (@item_id, @warehouse_id, @qty, @min_qty, @reserved_qty)
                         {
                             var bp = buyPriceByItemId.TryGetValue(srow.Key.ItemId, out var bpx) ? bpx : 0m;
                             using var insLayer = new NpgsqlCommand(@"
-INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, created_at, expired_at)
-VALUES (@item_id, @warehouse_id, @qty, @buy_price, NOW(), NULL)
+INSERT INTO stock_layers (item_id, warehouse_id, qty_initial, qty_remaining, buy_price, created_at, expired_at)
+VALUES (@item_id, @warehouse_id, @qty, @qty, @buy_price, NOW(), NULL)
 ", con, tran);
                             insLayer.Parameters.AddWithValue("@item_id", srow.Key.ItemId);
                             insLayer.Parameters.AddWithValue("@warehouse_id", srow.Key.WarehouseId);

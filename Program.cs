@@ -36,6 +36,7 @@ namespace POS_qu
 
 
 
+            UiNumberFormat.ApplyDotCulture();
             ApplicationConfiguration.Initialize();
             //Application.Run(new Form3_crud());
 

@@ -1640,6 +1640,7 @@ SELECT
     pt.discount_total,
     pt.tax,
     pt.total,
+    pt.note,
     pt.created_at,
     pt.updated_at,
     pt.expired_at

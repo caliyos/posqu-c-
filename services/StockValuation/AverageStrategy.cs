@@ -21,8 +21,8 @@ namespace POS_qu.Services.StockValuation
             }
 
             using (var cmd = new NpgsqlCommand(@"
-INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, expired_at, created_at)
-VALUES (@item_id, @warehouse_id, @qty, @cost, @exp, NOW())
+INSERT INTO stock_layers (item_id, warehouse_id, qty_initial, qty_remaining, buy_price, expired_at, created_at)
+VALUES (@item_id, @warehouse_id, @qty, @qty, @cost, @exp, NOW())
 ", con, tran))
             {
                 cmd.Parameters.AddWithValue("@item_id", itemId);
@@ -93,8 +93,8 @@ FOR UPDATE
                     UnitCost = fallbackCost
                 });
                 using var ins = new NpgsqlCommand(@"
-INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price, created_at)
-VALUES (@item_id, @warehouse_id, @qty, @cost, NOW())
+INSERT INTO stock_layers (item_id, warehouse_id, qty_initial, qty_remaining, buy_price, created_at)
+VALUES (@item_id, @warehouse_id, @qty, @qty, @cost, NOW())
 ", con, tran);
                 ins.Parameters.AddWithValue("@item_id", itemId);
                 ins.Parameters.AddWithValue("@warehouse_id", warehouseId);
