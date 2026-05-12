@@ -533,13 +533,35 @@ namespace POS_qu
                 return;
             }
 
-            if (MessageBox.Show($"Hapus {selectedItems.Count} item terpilih?", "Konfirmasi", MessageBoxButtons.YesNo) == DialogResult.Yes)
+            string confirmText =
+                $"Hapus {selectedItems.Count} item terpilih?\n\n" +
+                "Aturan sistem:\n" +
+                "- Tidak pernah hapus permanen\n" +
+                "- Item akan dinonaktifkan (arsip)\n\n" +
+                "Histori transaksi tetap aman.";
+
+            if (MessageBox.Show(confirmText, "Konfirmasi", MessageBoxButtons.YesNo) == DialogResult.Yes)
             {
+                int archivedCount = 0;
+                int failedCount = 0;
+
                 foreach (int id in selectedItems)
                 {
-                    _productService.DeleteProduct(id, out string msg);
+                    bool ok = _productService.DeleteProduct(id, out bool archived, out string msg);
+                    if (!ok)
+                    {
+                        failedCount++;
+                        continue;
+                    }
+
+                    if (archived) archivedCount++;
                 }
                 LoadItems(); // reload grid
+
+                if (failedCount == 0)
+                    MessageBox.Show($"Selesai.\nDinonaktifkan (arsip): {archivedCount}");
+                else
+                    MessageBox.Show($"Selesai.\nDinonaktifkan (arsip): {archivedCount}\nGagal: {failedCount}");
             }
         }
 

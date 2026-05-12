@@ -9,7 +9,7 @@ namespace POS_qu.Core.Interfaces
         DataTable GetAllProducts();
         Item GetProductDetail(int id);
         bool SaveProduct(Item item, out string message);
-        bool DeleteProduct(int id, out string message);
+        bool DeleteProduct(int id, out bool archived, out string message);
         
         DataTable GetCategories();
         DataTable GetUnits();

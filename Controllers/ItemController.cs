@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿    ﻿﻿﻿﻿﻿﻿﻿  using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿    ﻿﻿﻿﻿﻿﻿﻿  using Npgsql;
     using System;
     using System.Collections.Generic;
     using System.Data;
@@ -1112,17 +1112,25 @@ WHERE items.id = @id";
                 using (NpgsqlConnection vCon = new NpgsqlConnection(DbConfig.ConnectionString))
                 {
                     vCon.Open();
-                    string sql = @"UPDATE items SET deleted_at = @deleted_at WHERE id = @id";
-
-                    using (NpgsqlCommand vCmd = new NpgsqlCommand(sql, vCon))
+                    using (var existsCmd = new NpgsqlCommand("SELECT deleted_at FROM items WHERE id = @id", vCon))
                     {
-                        vCmd.Parameters.AddWithValue("@deleted_at", DateTime.Now);
-                        vCmd.Parameters.AddWithValue("@id", id);
-                        vCmd.ExecuteNonQuery();
-                    }
-                }
+                        existsCmd.Parameters.AddWithValue("@id", id);
+                        using var reader = existsCmd.ExecuteReader();
+                        if (!reader.Read())
+                            return false;
 
-                return true;
+                        if (!reader.IsDBNull(0))
+                            return true;
+                    }
+
+                    using (var cmd = new NpgsqlCommand("UPDATE items SET deleted_at = NOW() WHERE id = @id AND deleted_at IS NULL", vCon))
+                    {
+                        cmd.Parameters.AddWithValue("@id", id);
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    return true;
+                }
             }
             catch (Exception ex)
             {

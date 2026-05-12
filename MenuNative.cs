@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
 using POS_qu;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -228,6 +229,7 @@ namespace POSqu_menu
                 }
 
                 WireLocalFirstMenus();
+                SetupReportsMenu();
             }
             catch (Exception ex)
             {
@@ -458,6 +460,762 @@ namespace POSqu_menu
                 }
             }
             return null;
+        }
+
+        private void SetupReportsMenu()
+        {
+            var miReports = FindMenuItemByName(menuStrip1.Items, "reportsToolStripMenuItem");
+            if (miReports == null) return;
+
+            ToolStripMenuItem EnsureMenu(string name, string text)
+            {
+                var existing = FindMenuItemByName(miReports.DropDownItems, name);
+                if (existing != null) return existing;
+                var mi = new ToolStripMenuItem { Name = name, Text = text };
+                miReports.DropDownItems.Add(mi);
+                return mi;
+            }
+
+            void EnsureSeparator(string name)
+            {
+                foreach (ToolStripItem it in miReports.DropDownItems)
+                {
+                    if (it.Name == name) return;
+                }
+                miReports.DropDownItems.Add(new ToolStripSeparator { Name = name });
+            }
+
+            EnsureSeparator("sepReports1");
+
+            EnsureMenu("miSalesToday", "Penjualan • Hari Ini").Click += (s, e) =>
+            {
+                var start = DateTime.Today;
+                var end = DateTime.Today.AddDays(1);
+                var dt = QuerySalesByDay(start, end);
+                ShowReportGrid("Penjualan • Hari Ini", dt);
+            };
+
+            EnsureMenu("miSalesPeriod", "Penjualan • Per Periode").Click += (s, e) =>
+            {
+                if (!TryAskDateRange("Penjualan • Per Periode", out var start, out var end)) return;
+                var dt = QuerySalesByDay(start, end);
+                ShowReportGrid("Penjualan • Per Periode", dt);
+            };
+
+            EnsureMenu("miSalesCashier", "Penjualan • Per Kasir").Click += (s, e) =>
+            {
+                if (!TryAskDateRange("Penjualan • Per Kasir", out var start, out var end)) return;
+                var dt = QuerySalesByCashier(start, end);
+                ShowReportGrid("Penjualan • Per Kasir", dt);
+            };
+
+            EnsureMenu("miSalesProduct", "Penjualan • Per Produk").Click += (s, e) =>
+            {
+                if (!TryAskDateRange("Penjualan • Per Produk", out var start, out var end)) return;
+                var dt = QuerySalesByProduct(start, end, null);
+                ShowReportGrid("Penjualan • Per Produk", dt);
+            };
+
+            EnsureMenu("miSalesTop", "Produk Terlaris • Per Periode").Click += (s, e) =>
+            {
+                if (!TryAskDateRange("Produk Terlaris • Per Periode", out var start, out var end)) return;
+                var dt = QuerySalesByProduct(start, end, 50);
+                ShowReportGrid("Produk Terlaris • Per Periode", dt);
+            };
+
+            EnsureMenu("miSalesCategory", "Penjualan • Per Kategori").Click += (s, e) =>
+            {
+                if (!TryAskDateRange("Penjualan • Per Kategori", out var start, out var end)) return;
+                var dt = QuerySalesByCategory(start, end);
+                ShowReportGrid("Penjualan • Per Kategori", dt);
+            };
+
+            EnsureSeparator("sepReportsCash");
+
+            EnsureMenu("miCashRecap", "Kas • Rekap Cash/Transfer/QRIS").Click += (s, e) =>
+            {
+                if (!TryAskDateRange("Kas • Rekap Metode Pembayaran", out var start, out var end)) return;
+                var dt = QueryPaymentRecap(start, end);
+                ShowReportGrid("Kas • Rekap Metode Pembayaran", dt);
+            };
+
+            EnsureMenu("miShiftClosing", "Kas • Tutup Kasir (Closing Shift)").Click += (s, e) =>
+            {
+                if (!TryAskDateRange("Kas • Tutup Kasir (Closing Shift)", out var start, out var end)) return;
+                var dt = QueryShiftClosings(start, end);
+                ShowReportGrid("Kas • Tutup Kasir (Closing Shift)", dt);
+            };
+
+            EnsureMenu("miCashIn", "Kas • Kas Masuk").Click += (s, e) =>
+            {
+                MessageBox.Show("Kas Masuk belum tersedia (belum ada modul kas masuk/keluar).");
+            };
+
+            EnsureMenu("miCashOut", "Kas • Kas Keluar").Click += (s, e) =>
+            {
+                MessageBox.Show("Kas Keluar belum tersedia (belum ada modul kas masuk/keluar).");
+            };
+
+            EnsureSeparator("sepReports2");
+
+            EnsureMenu("miStockNow", "Stok • Saat Ini").Click += (s, e) =>
+            {
+                var dt = QueryStockNow();
+                ShowReportGrid("Stok • Saat Ini", dt);
+            };
+
+            EnsureMenu("miStockLow", "Stok • Barang Hampir Habis").Click += (s, e) =>
+            {
+                var dt = QueryStockLow();
+                ShowReportGrid("Stok • Barang Hampir Habis", dt);
+            };
+
+            EnsureMenu("miStockMutation", "Stok • Mutasi / Riwayat").Click += (s, e) =>
+            {
+                if (!TryAskDateRange("Stok • Mutasi / Riwayat", out var start, out var end)) return;
+                var dt = QueryStockLog(start, end);
+                ShowReportGrid("Stok • Mutasi / Riwayat", dt);
+            };
+
+            EnsureSeparator("sepReports3");
+
+            EnsureMenu("miPurchaseSupplier", "Pembelian • Riwayat per Supplier").Click += (s, e) =>
+            {
+                if (!TryAskDateRange("Pembelian • Riwayat per Supplier", out var start, out var end)) return;
+                var dt = QueryPurchaseBySupplier(start, end);
+                ShowReportGrid("Pembelian • Riwayat per Supplier", dt);
+            };
+
+            EnsureMenu("miGoodsIn", "Pembelian • Barang Masuk (Adjustment IN)").Click += (s, e) =>
+            {
+                if (!TryAskDateRange("Pembelian • Barang Masuk", out var start, out var end)) return;
+                var dt = QueryGoodsIn(start, end);
+                ShowReportGrid("Pembelian • Barang Masuk", dt);
+            };
+
+            EnsureSeparator("sepReports4");
+
+            EnsureMenu("miCustomerHistory", "Customer • Riwayat Transaksi").Click += (s, e) =>
+            {
+                if (!TryAskDateRange("Customer • Riwayat Transaksi", out var start, out var end)) return;
+                var dt = QueryCustomerTransactions(start, end);
+                ShowReportGrid("Customer • Riwayat Transaksi", dt);
+            };
+
+            EnsureMenu("miCustomerTop", "Customer • Paling Aktif").Click += (s, e) =>
+            {
+                if (!TryAskDateRange("Customer • Paling Aktif", out var start, out var end)) return;
+                var dt = QueryTopCustomers(start, end);
+                ShowReportGrid("Customer • Paling Aktif", dt);
+            };
+        }
+
+        private bool TryAskDateRange(string title, out DateTime start, out DateTime endExclusive)
+        {
+            start = DateTime.Today;
+            endExclusive = DateTime.Today.AddDays(1);
+
+            DateTime selectedStart = start;
+            DateTime selectedEndExclusive = endExclusive;
+
+            using var modal = new Form
+            {
+                Text = title,
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(520, 320),
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                Padding = new Padding(16)
+            };
+
+            var lblHint = new Label
+            {
+                Text = "Pilih rentang tanggal laporan.",
+                Dock = DockStyle.Top,
+                Height = 26,
+                Font = new Font("Segoe UI", 10F, FontStyle.Regular),
+                ForeColor = Color.DimGray
+            };
+
+            var panelFields = new TableLayoutPanel
+            {
+                Dock = DockStyle.Top,
+                Height = 140,
+                ColumnCount = 2,
+                RowCount = 2,
+                Padding = new Padding(0, 10, 0, 0)
+            };
+            panelFields.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140));
+            panelFields.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            panelFields.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
+            panelFields.RowStyles.Add(new RowStyle(SizeType.Absolute, 52));
+
+            var lbl1 = new Label
+            {
+                Text = "Tanggal Mulai",
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold)
+            };
+            var dtp1 = new DateTimePicker
+            {
+                Dock = DockStyle.Fill,
+                Format = DateTimePickerFormat.Short,
+                Value = DateTime.Today,
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold)
+            };
+
+            var lbl2 = new Label
+            {
+                Text = "Tanggal Akhir",
+                Dock = DockStyle.Fill,
+                TextAlign = ContentAlignment.MiddleLeft,
+                Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold)
+            };
+            var dtp2 = new DateTimePicker
+            {
+                Dock = DockStyle.Fill,
+                Format = DateTimePickerFormat.Short,
+                Value = DateTime.Today,
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold)
+            };
+
+            panelFields.Controls.Add(lbl1, 0, 0);
+            panelFields.Controls.Add(dtp1, 1, 0);
+            panelFields.Controls.Add(lbl2, 0, 1);
+            panelFields.Controls.Add(dtp2, 1, 1);
+
+            var lblNote = new Label
+            {
+                Text = "Catatan: tanggal akhir dihitung termasuk hari itu (sampai 23:59).",
+                Dock = DockStyle.Top,
+                Height = 34,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                ForeColor = Color.DimGray
+            };
+
+            var pnlBtn = new Panel { Dock = DockStyle.Bottom, Height = 46 };
+            var btnOk = new Button { Text = "Tampilkan", Dock = DockStyle.Right, Width = 120 };
+            var btnCancel = new Button { Text = "Batal", Dock = DockStyle.Right, Width = 100 };
+            btnOk.Click += (s, e) =>
+            {
+                if (dtp1.Value.Date > dtp2.Value.Date)
+                {
+                    MessageBox.Show("Tanggal mulai tidak boleh lebih besar dari tanggal akhir.");
+                    return;
+                }
+                selectedStart = dtp1.Value.Date;
+                selectedEndExclusive = dtp2.Value.Date.AddDays(1);
+                modal.DialogResult = DialogResult.OK;
+                modal.Close();
+            };
+            btnCancel.Click += (s, e) => { modal.DialogResult = DialogResult.Cancel; modal.Close(); };
+            pnlBtn.Controls.Add(btnCancel);
+            pnlBtn.Controls.Add(btnOk);
+
+            modal.Controls.Add(pnlBtn);
+            modal.Controls.Add(lblNote);
+            modal.Controls.Add(panelFields);
+            modal.Controls.Add(lblHint);
+
+            modal.AcceptButton = btnOk;
+            modal.CancelButton = btnCancel;
+            if (modal.ShowDialog(this) != DialogResult.OK) return false;
+            start = selectedStart;
+            endExclusive = selectedEndExclusive;
+            return true;
+        }
+
+        private void ShowReportGrid(string title, DataTable dt)
+        {
+            using var f = new Form
+            {
+                Text = title,
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(980, 640)
+            };
+
+            var grid = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells,
+                BackgroundColor = Color.White
+            };
+
+            grid.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
+            grid.DataSource = dt;
+
+            static bool IsMoneyColumn(string name)
+            {
+                if (string.IsNullOrWhiteSpace(name)) return false;
+                return name.Contains("omzet", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("total", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("hpp", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("laba", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("profit", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("amount", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("harga", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("price", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("cash", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("nilai", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("grand", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("opening", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("expected", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("closing", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("difference", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("unit_cost", StringComparison.OrdinalIgnoreCase);
+            }
+
+            grid.CellFormatting += (_, e) =>
+            {
+                try
+                {
+                    if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+                    var col = grid.Columns[e.ColumnIndex];
+                    var key = col?.DataPropertyName;
+                    if (string.IsNullOrWhiteSpace(key)) key = col?.Name;
+                    if (string.IsNullOrWhiteSpace(key)) key = col?.HeaderText;
+                    if (!IsMoneyColumn(key ?? "")) return;
+
+                    if (e.Value == null || e.Value == DBNull.Value) return;
+
+                    decimal v;
+                    if (e.Value is decimal dec) v = dec;
+                    else if (e.Value is double dbl) v = Convert.ToDecimal(dbl);
+                    else if (e.Value is float fl) v = Convert.ToDecimal(fl);
+                    else if (e.Value is int i) v = i;
+                    else if (e.Value is long l) v = l;
+                    else
+                    {
+                        string s = Convert.ToString(e.Value) ?? "";
+                        if (string.IsNullOrWhiteSpace(s)) return;
+
+                        string digitsOnly = s.Replace(".", "").Replace(",", "").Replace("Rp", "", StringComparison.OrdinalIgnoreCase).Trim();
+                        if (!decimal.TryParse(digitsOnly, NumberStyles.Number, CultureInfo.InvariantCulture, out v))
+                            return;
+                    }
+
+                    e.Value = v.ToString("N0", UiNumberFormat.DotCulture);
+                    e.FormattingApplied = true;
+                }
+                catch
+                {
+                }
+            };
+
+            foreach (DataGridViewColumn col in grid.Columns)
+            {
+                if (col.ValueType == typeof(decimal) || col.ValueType == typeof(double) || col.ValueType == typeof(float))
+                {
+                    col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    col.DefaultCellStyle.Format = "N0";
+                }
+                if (col.ValueType == typeof(int) || col.ValueType == typeof(long))
+                {
+                    col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                }
+
+                var colKey = !string.IsNullOrWhiteSpace(col.DataPropertyName) ? col.DataPropertyName : col.Name;
+                if (IsMoneyColumn(colKey))
+                {
+                    col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    col.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
+                    col.DefaultCellStyle.Format = "N0";
+                }
+            }
+
+            f.Controls.Add(grid);
+            f.ShowDialog(this);
+        }
+
+        private DataTable QuerySalesByDay(DateTime startInclusive, DateTime endExclusive)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            using var cmd = new NpgsqlCommand(@"
+SELECT
+    DATE(t.created_at) AS tanggal,
+    COUNT(*) AS transaksi,
+    COALESCE(SUM(t.ts_grand_total),0) AS omzet,
+    COALESCE(SUM(h.hpp),0) AS hpp,
+    COALESCE(SUM(t.ts_grand_total),0) - COALESCE(SUM(h.hpp),0) AS laba
+FROM transactions t
+LEFT JOIN (
+    SELECT td.ts_id, COALESCE(SUM(td.tsd_buy_price * td.tsd_quantity),0) AS hpp
+    FROM transaction_details td
+    GROUP BY td.ts_id
+) h ON h.ts_id = t.ts_id
+WHERE t.deleted_at IS NULL
+  AND t.ts_status = 1
+  AND t.created_at >= @start
+  AND t.created_at < @end
+GROUP BY DATE(t.created_at)
+ORDER BY DATE(t.created_at) ASC
+", conn);
+            cmd.Parameters.AddWithValue("@start", startInclusive);
+            cmd.Parameters.AddWithValue("@end", endExclusive);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        private DataTable QuerySalesByCashier(DateTime startInclusive, DateTime endExclusive)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            using var cmd = new NpgsqlCommand(@"
+SELECT
+    t.user_id AS cashier_id,
+    COALESCE(u.username,'') AS cashier,
+    COUNT(*) AS transaksi,
+    COALESCE(SUM(t.ts_grand_total),0) AS omzet,
+    COALESCE(SUM(h.hpp),0) AS hpp,
+    COALESCE(SUM(t.ts_grand_total),0) - COALESCE(SUM(h.hpp),0) AS laba
+FROM transactions t
+LEFT JOIN users u ON u.id = t.user_id
+LEFT JOIN (
+    SELECT td.ts_id, COALESCE(SUM(td.tsd_buy_price * td.tsd_quantity),0) AS hpp
+    FROM transaction_details td
+    GROUP BY td.ts_id
+) h ON h.ts_id = t.ts_id
+WHERE t.deleted_at IS NULL
+  AND t.ts_status = 1
+  AND t.created_at >= @start
+  AND t.created_at < @end
+GROUP BY t.user_id, COALESCE(u.username,'')
+ORDER BY omzet DESC
+", conn);
+            cmd.Parameters.AddWithValue("@start", startInclusive);
+            cmd.Parameters.AddWithValue("@end", endExclusive);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        private DataTable QuerySalesByProduct(DateTime startInclusive, DateTime endExclusive, int? topN)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            string limit = topN.HasValue && topN.Value > 0 ? "LIMIT @top" : "";
+            using var cmd = new NpgsqlCommand($@"
+SELECT
+    td.item_id,
+    COALESCE(i.name,'') AS produk,
+    COALESCE(SUM(td.tsd_quantity),0) AS qty,
+    COALESCE(SUM(td.tsd_total),0) AS omzet,
+    COALESCE(SUM(td.tsd_buy_price * td.tsd_quantity),0) AS hpp,
+    COALESCE(SUM(td.tsd_total),0) - COALESCE(SUM(td.tsd_buy_price * td.tsd_quantity),0) AS laba
+FROM transaction_details td
+JOIN transactions t ON t.ts_id = td.ts_id
+LEFT JOIN items i ON i.id = td.item_id
+WHERE t.deleted_at IS NULL
+  AND t.ts_status = 1
+  AND t.created_at >= @start
+  AND t.created_at < @end
+GROUP BY td.item_id, COALESCE(i.name,'')
+ORDER BY omzet DESC
+{limit}
+", conn);
+
+            cmd.Parameters.AddWithValue("@start", startInclusive);
+            cmd.Parameters.AddWithValue("@end", endExclusive);
+            if (topN.HasValue && topN.Value > 0)
+                cmd.Parameters.AddWithValue("@top", topN.Value);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        private DataTable QuerySalesByCategory(DateTime startInclusive, DateTime endExclusive)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            using var cmd = new NpgsqlCommand(@"
+SELECT
+    c.id AS category_id,
+    COALESCE(c.name,'') AS kategori,
+    COALESCE(SUM(td.tsd_quantity),0) AS qty,
+    COALESCE(SUM(td.tsd_total),0) AS omzet,
+    COALESCE(SUM(td.tsd_buy_price * td.tsd_quantity),0) AS hpp,
+    COALESCE(SUM(td.tsd_total),0) - COALESCE(SUM(td.tsd_buy_price * td.tsd_quantity),0) AS laba
+FROM transaction_details td
+JOIN transactions t ON t.ts_id = td.ts_id
+LEFT JOIN items i ON i.id = td.item_id
+LEFT JOIN categories c ON c.id = i.category_id
+WHERE t.deleted_at IS NULL
+  AND t.ts_status = 1
+  AND t.created_at >= @start
+  AND t.created_at < @end
+GROUP BY c.id, COALESCE(c.name,'')
+ORDER BY omzet DESC
+", conn);
+            cmd.Parameters.AddWithValue("@start", startInclusive);
+            cmd.Parameters.AddWithValue("@end", endExclusive);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        private DataTable QueryPaymentRecap(DateTime startInclusive, DateTime endExclusive)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            using var cmd = new NpgsqlCommand(@"
+SELECT
+    COALESCE(t.ts_method,'') AS metode,
+    COUNT(*) AS transaksi,
+    COALESCE(SUM(t.ts_grand_total),0) AS omzet
+FROM transactions t
+WHERE t.deleted_at IS NULL
+  AND t.ts_status = 1
+  AND t.created_at >= @start
+  AND t.created_at < @end
+GROUP BY COALESCE(t.ts_method,'')
+ORDER BY omzet DESC
+", conn);
+            cmd.Parameters.AddWithValue("@start", startInclusive);
+            cmd.Parameters.AddWithValue("@end", endExclusive);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        private DataTable QueryShiftClosings(DateTime startInclusive, DateTime endExclusive)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            using var cmd = new NpgsqlCommand(@"
+SELECT
+    cs.id AS shift_id,
+    cs.user_id,
+    COALESCE(u.username,'') AS cashier,
+    cs.terminal_id,
+    cs.opened_at,
+    cs.closed_at,
+    cs.status,
+    COALESCE(cs.opening_cash,0) AS opening_cash,
+    COALESCE(cs.expected_cash,0) AS expected_cash,
+    COALESCE(cs.closing_cash,0) AS closing_cash,
+    COALESCE(cs.difference_cash,0) AS difference_cash
+FROM cashier_shifts cs
+LEFT JOIN users u ON u.id = cs.user_id
+WHERE cs.opened_at >= @start
+  AND cs.opened_at < @end
+ORDER BY cs.opened_at DESC
+", conn);
+            cmd.Parameters.AddWithValue("@start", startInclusive);
+            cmd.Parameters.AddWithValue("@end", endExclusive);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        private DataTable QueryStockNow()
+        {
+            var ic = new POS_qu.Controllers.ItemController();
+            return ic.GetItems(null, null);
+        }
+
+        private DataTable QueryStockLow()
+        {
+            var dt = QueryStockNow();
+            if (dt == null) return dt;
+            if (!dt.Columns.Contains("stock") || !dt.Columns.Contains("min_qty")) return dt;
+
+            var view = new DataView(dt);
+            view.RowFilter = "min_qty > 0 AND stock <= min_qty";
+            return view.ToTable();
+        }
+
+        private bool ColumnExists(NpgsqlConnection conn, string tableName, string columnName)
+        {
+            using var cmd = new NpgsqlCommand(@"
+SELECT 1
+FROM information_schema.columns
+WHERE table_schema='public'
+  AND table_name = @t
+  AND column_name = @c
+LIMIT 1
+", conn);
+            cmd.Parameters.AddWithValue("@t", tableName);
+            cmd.Parameters.AddWithValue("@c", columnName);
+            return cmd.ExecuteScalar() != null;
+        }
+
+        private DataTable QueryStockLog(DateTime startInclusive, DateTime endExclusive)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            bool hasWarehouseId = ColumnExists(conn, "stock_log", "warehouse_id");
+            bool hasRefType = ColumnExists(conn, "stock_log", "ref_type");
+            bool hasRefId = ColumnExists(conn, "stock_log", "ref_id");
+            bool hasUnitCost = ColumnExists(conn, "stock_log", "unit_cost");
+
+            string selectWarehouse = hasWarehouseId ? "sl.warehouse_id," : "NULL::int AS warehouse_id,";
+            string selectRefType = hasRefType ? "sl.ref_type," : "NULL::text AS ref_type,";
+            string selectRefId = hasRefId ? "sl.ref_id," : "NULL::bigint AS ref_id,";
+            string selectUnitCost = hasUnitCost ? "sl.unit_cost," : "NULL::numeric AS unit_cost,";
+
+            using var cmd = new NpgsqlCommand($@"
+SELECT
+    sl.created_at,
+    sl.product_id AS item_id,
+    COALESCE(i.name,'') AS item_name,
+    sl.tipe_transaksi,
+    sl.qty_masuk,
+    sl.qty_keluar,
+    sl.sisa_stock,
+    {selectWarehouse}
+    {selectRefType}
+    {selectRefId}
+    {selectUnitCost}
+    COALESCE(sl.keterangan,'') AS keterangan
+FROM stock_log sl
+LEFT JOIN items i ON i.id = sl.product_id
+WHERE sl.created_at >= @start
+  AND sl.created_at < @end
+ORDER BY sl.created_at DESC
+", conn);
+            cmd.Parameters.AddWithValue("@start", startInclusive);
+            cmd.Parameters.AddWithValue("@end", endExclusive);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        private DataTable QueryPurchaseBySupplier(DateTime startInclusive, DateTime endExclusive)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            bool hasCreatedAt = ColumnExists(conn, "purchase_orders", "created_at");
+            string dateFilter = hasCreatedAt ? "po.created_at >= @start AND po.created_at < @end" : "po.order_date >= @start::date AND po.order_date < @end::date";
+
+            using var cmd = new NpgsqlCommand($@"
+SELECT
+    po.supplier_id,
+    COALESCE(s.name,'') AS supplier,
+    COUNT(*) AS total_po,
+    COALESCE(SUM(po.total_amount),0) AS total_belanja
+FROM purchase_orders po
+LEFT JOIN suppliers s ON s.id = po.supplier_id
+WHERE {dateFilter}
+GROUP BY po.supplier_id, COALESCE(s.name,'')
+ORDER BY total_belanja DESC
+", conn);
+            cmd.Parameters.AddWithValue("@start", startInclusive);
+            cmd.Parameters.AddWithValue("@end", endExclusive);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        private DataTable QueryGoodsIn(DateTime startInclusive, DateTime endExclusive)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            using var cmd = new NpgsqlCommand(@"
+SELECT
+    ia.adjustment_no,
+    ia.adjustment_date,
+    COALESCE(w.name,'') AS warehouse,
+    COALESCE(SUM(ii.qty),0) AS qty_total,
+    COALESCE(SUM(COALESCE(ii.buy_price,0) * ii.qty),0) AS total_hpp,
+    COALESCE(ia.reason,'') AS reason,
+    COALESCE(ia.note,'') AS note
+FROM inventory_adjustments ia
+JOIN inventory_adjustment_items ii ON ii.adjustment_id = ia.id
+LEFT JOIN warehouses w ON w.id = ia.warehouse_id
+WHERE ia.direction = 'IN'
+  AND ia.adjustment_date >= @start::date
+  AND ia.adjustment_date < @end::date
+GROUP BY ia.adjustment_no, ia.adjustment_date, COALESCE(w.name,''), COALESCE(ia.reason,''), COALESCE(ia.note,'')
+ORDER BY ia.adjustment_date DESC, ia.adjustment_no DESC
+", conn);
+            cmd.Parameters.AddWithValue("@start", startInclusive);
+            cmd.Parameters.AddWithValue("@end", endExclusive);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        private DataTable QueryCustomerTransactions(DateTime startInclusive, DateTime endExclusive)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            using var cmd = new NpgsqlCommand(@"
+SELECT
+    t.created_at,
+    t.ts_id,
+    t.ts_numbering,
+    t.ts_method,
+    COALESCE(c.name, t.ts_freename, 'Guest') AS customer,
+    t.ts_grand_total
+FROM transactions t
+LEFT JOIN customers c ON c.id = t.ts_customer
+WHERE t.deleted_at IS NULL
+  AND t.ts_status = 1
+  AND t.created_at >= @start
+  AND t.created_at < @end
+ORDER BY t.created_at DESC
+", conn);
+            cmd.Parameters.AddWithValue("@start", startInclusive);
+            cmd.Parameters.AddWithValue("@end", endExclusive);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        private DataTable QueryTopCustomers(DateTime startInclusive, DateTime endExclusive)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            using var cmd = new NpgsqlCommand(@"
+SELECT
+    t.ts_customer AS customer_id,
+    COALESCE(c.name, t.ts_freename, 'Guest') AS customer,
+    COUNT(*) AS transaksi,
+    COALESCE(SUM(t.ts_grand_total),0) AS omzet
+FROM transactions t
+LEFT JOIN customers c ON c.id = t.ts_customer
+WHERE t.deleted_at IS NULL
+  AND t.ts_status = 1
+  AND t.created_at >= @start
+  AND t.created_at < @end
+GROUP BY t.ts_customer, COALESCE(c.name, t.ts_freename, 'Guest')
+ORDER BY transaksi DESC, omzet DESC
+LIMIT 50
+", conn);
+            cmd.Parameters.AddWithValue("@start", startInclusive);
+            cmd.Parameters.AddWithValue("@end", endExclusive);
+            using var da = new NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
         }
 
         private void SetMenuVisibility(int roleId)

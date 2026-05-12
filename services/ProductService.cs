@@ -65,16 +65,23 @@ namespace POS_qu.Services
             }
         }
 
-        public bool DeleteProduct(int id, out string message)
+        public bool DeleteProduct(int id, out bool archived, out string message)
         {
             try
             {
-                _repository.DeleteItem(id);
-                message = "Produk berhasil dihapus.";
+                bool ok = _repository.DeleteItem(id, out archived);
+                if (!ok)
+                {
+                    message = "Produk tidak ditemukan.";
+                    return false;
+                }
+
+                message = "Produk dinonaktifkan (arsip).";
                 return true;
             }
             catch (Exception ex)
             {
+                archived = false;
                 message = $"Gagal menghapus produk: {ex.Message}";
                 return false;
             }

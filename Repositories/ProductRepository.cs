@@ -524,18 +524,31 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
             }
         }
 
-        public void DeleteItem(int id)
+        public bool DeleteItem(int id, out bool archived)
         {
-            using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
+            archived = true;
+
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+
+            using (var existsCmd = new NpgsqlCommand("SELECT deleted_at FROM items WHERE id = @id", con))
             {
-                con.Open();
-                string sql = "DELETE FROM items WHERE id = @id";
-                using (var cmd = new NpgsqlCommand(sql, con))
-                {
-                    cmd.Parameters.AddWithValue("@id", id);
-                    cmd.ExecuteNonQuery();
-                }
+                existsCmd.Parameters.AddWithValue("@id", id);
+                using var reader = existsCmd.ExecuteReader();
+                if (!reader.Read())
+                    return false;
+
+                if (!reader.IsDBNull(0))
+                    return true;
             }
+
+            using (var cmd = new NpgsqlCommand("UPDATE items SET deleted_at = NOW() WHERE id = @id AND deleted_at IS NULL", con))
+            {
+                cmd.Parameters.AddWithValue("@id", id);
+                cmd.ExecuteNonQuery();
+            }
+
+            return true;
         }
 
         public DataTable GetCategories() => GetLookupTable("SELECT id, name AS display FROM categories ORDER BY name ASC");

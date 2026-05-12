@@ -413,6 +413,10 @@ namespace POS_qu
                     CloseShift();
                     return true;
 
+                case Keys.Control | Keys.R:
+                    ShowCashierReportsMenu();
+                    return true;
+
                 case Keys.Control | Keys.Alt | Keys.P:
                     ShowPaymentShortcutSettingsModal();
                     return true;
@@ -799,6 +803,7 @@ WHERE id=@id;", conn, tran);
                 lb.Items.Add("Ctrl+K  • Cari barang (Search)");
                 lb.Items.Add("Ctrl+N  • Transaksi baru");
                 lb.Items.Add("Ctrl+P  • Bayar");
+                lb.Items.Add("Ctrl+R  • Laporan Kasir");
                 lb.Items.Add("F3      • Draft");
                 lb.Items.Add("Ctrl+D  • Buka Draft");
                 lb.Items.Add("F12     • Help");
@@ -807,6 +812,350 @@ WHERE id=@id;", conn, tran);
                 f.Controls.Add(lb);
                 f.ShowDialog(this);
             }
+        }
+
+        private void ShowCashierReportsMenu()
+        {
+            var session = SessionUser.GetCurrentUser();
+            if (session == null)
+            {
+                MessageBox.Show("Sesi kasir tidak ditemukan.");
+                return;
+            }
+
+            using var modal = new Form
+            {
+                Text = "Laporan Kasir",
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(520, 420),
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                Padding = new Padding(14)
+            };
+
+            var lb = new ListBox
+            {
+                Dock = DockStyle.Fill,
+                Font = new Font("Segoe UI", 11F),
+                IntegralHeight = false
+            };
+
+            var items = new[]
+            {
+                "Omzet Hari Ini",
+                "Produk Paling Laku (Hari Ini)",
+                "Rekap Pembayaran (Hari Ini)",
+                "Ringkasan Shift Aktif",
+                "Daftar Transaksi Shift Aktif"
+            };
+            lb.Items.AddRange(items);
+
+            var pnlBtn = new Panel { Dock = DockStyle.Bottom, Height = 52 };
+            var btnOpen = new Button { Text = "Buka", Dock = DockStyle.Right, Width = 110 };
+            var btnClose = new Button { Text = "Tutup", Dock = DockStyle.Right, Width = 110 };
+            pnlBtn.Controls.Add(btnClose);
+            pnlBtn.Controls.Add(btnOpen);
+
+            void OpenSelected()
+            {
+                if (lb.SelectedIndex < 0) return;
+                string selected = lb.SelectedItem?.ToString() ?? "";
+                try
+                {
+                    if (selected == "Omzet Hari Ini")
+                    {
+                        var start = DateTime.Today;
+                        var end = DateTime.Today.AddDays(1);
+                        var dt = QueryCashierOmzet(start, end);
+                        ShowReportGrid("Kasir • Omzet Hari Ini", dt);
+                    }
+                    else if (selected == "Produk Paling Laku (Hari Ini)")
+                    {
+                        var start = DateTime.Today;
+                        var end = DateTime.Today.AddDays(1);
+                        var dt = QueryCashierTopProducts(start, end);
+                        ShowReportGrid("Kasir • Produk Paling Laku (Hari Ini)", dt);
+                    }
+                    else if (selected == "Rekap Pembayaran (Hari Ini)")
+                    {
+                        var start = DateTime.Today;
+                        var end = DateTime.Today.AddDays(1);
+                        var dt = QueryCashierPaymentRecap(start, end);
+                        ShowReportGrid("Kasir • Rekap Pembayaran (Hari Ini)", dt);
+                    }
+                    else if (selected == "Ringkasan Shift Aktif")
+                    {
+                        if (session.ShiftId <= 0)
+                        {
+                            MessageBox.Show("Shift belum aktif.");
+                            return;
+                        }
+                        var dt = QueryShiftSummary(session.ShiftId);
+                        ShowReportGrid($"Kasir • Ringkasan Shift #{session.ShiftId}", dt);
+                    }
+                    else if (selected == "Daftar Transaksi Shift Aktif")
+                    {
+                        if (session.ShiftId <= 0)
+                        {
+                            MessageBox.Show("Shift belum aktif.");
+                            return;
+                        }
+                        var dt = QueryShiftTransactions(session.ShiftId);
+                        ShowReportGrid($"Kasir • Transaksi Shift #{session.ShiftId}", dt);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Gagal memuat laporan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+
+            btnOpen.Click += (s, e) => OpenSelected();
+            btnClose.Click += (s, e) => modal.Close();
+            lb.DoubleClick += (s, e) => OpenSelected();
+
+            modal.Controls.Add(lb);
+            modal.Controls.Add(pnlBtn);
+            modal.ShowDialog(this);
+        }
+
+        private void ShowReportGrid(string title, DataTable dt)
+        {
+            using var f = new Form
+            {
+                Text = title,
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(980, 640)
+            };
+
+            var grid = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells,
+                BackgroundColor = Color.White
+            };
+
+            grid.DefaultCellStyle.FormatProvider = POS_qu.Helpers.UiNumberFormat.DotCulture;
+            grid.DataSource = dt;
+
+            static bool IsMoneyColumn(string name)
+            {
+                if (string.IsNullOrWhiteSpace(name)) return false;
+                return name.Contains("omzet", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("total", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("hpp", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("laba", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("profit", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("amount", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("harga", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("price", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("cash", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("nilai", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("grand", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("opening", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("expected", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("closing", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("difference", StringComparison.OrdinalIgnoreCase)
+                    || name.Contains("unit_cost", StringComparison.OrdinalIgnoreCase);
+            }
+
+            grid.CellFormatting += (_, e) =>
+            {
+                try
+                {
+                    if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+                    var col = grid.Columns[e.ColumnIndex];
+                    var key = col?.DataPropertyName;
+                    if (string.IsNullOrWhiteSpace(key)) key = col?.Name;
+                    if (string.IsNullOrWhiteSpace(key)) key = col?.HeaderText;
+                    if (!IsMoneyColumn(key ?? "")) return;
+
+                    if (e.Value == null || e.Value == DBNull.Value) return;
+
+                    decimal v;
+                    if (e.Value is decimal dec) v = dec;
+                    else if (e.Value is double dbl) v = Convert.ToDecimal(dbl);
+                    else if (e.Value is float fl) v = Convert.ToDecimal(fl);
+                    else if (e.Value is int i) v = i;
+                    else if (e.Value is long l) v = l;
+                    else
+                    {
+                        string s = Convert.ToString(e.Value) ?? "";
+                        if (string.IsNullOrWhiteSpace(s)) return;
+
+                        string digitsOnly = s.Replace(".", "").Replace(",", "").Replace("Rp", "", StringComparison.OrdinalIgnoreCase).Trim();
+                        if (!decimal.TryParse(digitsOnly, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out v))
+                            return;
+                    }
+
+                    e.Value = v.ToString("N0", POS_qu.Helpers.UiNumberFormat.DotCulture);
+                    e.FormattingApplied = true;
+                }
+                catch
+                {
+                }
+            };
+
+            foreach (DataGridViewColumn col in grid.Columns)
+            {
+                if (col.ValueType == typeof(decimal) || col.ValueType == typeof(double) || col.ValueType == typeof(float))
+                {
+                    col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    col.DefaultCellStyle.Format = "N0";
+                }
+                if (col.ValueType == typeof(int) || col.ValueType == typeof(long))
+                {
+                    col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                }
+
+                var colKey = !string.IsNullOrWhiteSpace(col.DataPropertyName) ? col.DataPropertyName : col.Name;
+                if (IsMoneyColumn(colKey))
+                {
+                    col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    col.DefaultCellStyle.FormatProvider = POS_qu.Helpers.UiNumberFormat.DotCulture;
+                    col.DefaultCellStyle.Format = "N0";
+                }
+            }
+
+            f.Controls.Add(grid);
+            f.ShowDialog(this);
+        }
+
+        private DataTable QueryCashierOmzet(DateTime startInclusive, DateTime endExclusive)
+        {
+            using var conn = new Npgsql.NpgsqlConnection(POS_qu.Helpers.DbConfig.ConnectionString);
+            conn.Open();
+            using var cmd = new Npgsql.NpgsqlCommand(@"
+SELECT
+    COUNT(*) AS transaksi,
+    COALESCE(SUM(ts_grand_total),0) AS omzet
+FROM transactions
+WHERE deleted_at IS NULL
+  AND ts_status = 1
+  AND created_at >= @start
+  AND created_at < @end
+", conn);
+            cmd.Parameters.AddWithValue("@start", startInclusive);
+            cmd.Parameters.AddWithValue("@end", endExclusive);
+            using var da = new Npgsql.NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        private DataTable QueryCashierTopProducts(DateTime startInclusive, DateTime endExclusive)
+        {
+            using var conn = new Npgsql.NpgsqlConnection(POS_qu.Helpers.DbConfig.ConnectionString);
+            conn.Open();
+            using var cmd = new Npgsql.NpgsqlCommand(@"
+SELECT
+    td.item_id,
+    COALESCE(i.name,'') AS produk,
+    COALESCE(SUM(td.tsd_quantity),0) AS qty,
+    COALESCE(SUM(td.tsd_total),0) AS omzet
+FROM transaction_details td
+JOIN transactions t ON t.ts_id = td.ts_id
+LEFT JOIN items i ON i.id = td.item_id
+WHERE t.deleted_at IS NULL
+  AND t.ts_status = 1
+  AND t.created_at >= @start
+  AND t.created_at < @end
+GROUP BY td.item_id, COALESCE(i.name,'')
+ORDER BY omzet DESC
+LIMIT 50
+", conn);
+            cmd.Parameters.AddWithValue("@start", startInclusive);
+            cmd.Parameters.AddWithValue("@end", endExclusive);
+            using var da = new Npgsql.NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        private DataTable QueryCashierPaymentRecap(DateTime startInclusive, DateTime endExclusive)
+        {
+            using var conn = new Npgsql.NpgsqlConnection(POS_qu.Helpers.DbConfig.ConnectionString);
+            conn.Open();
+            using var cmd = new Npgsql.NpgsqlCommand(@"
+SELECT
+    COALESCE(ts_method,'') AS metode,
+    COUNT(*) AS transaksi,
+    COALESCE(SUM(ts_grand_total),0) AS omzet
+FROM transactions
+WHERE deleted_at IS NULL
+  AND ts_status = 1
+  AND created_at >= @start
+  AND created_at < @end
+GROUP BY COALESCE(ts_method,'')
+ORDER BY omzet DESC
+", conn);
+            cmd.Parameters.AddWithValue("@start", startInclusive);
+            cmd.Parameters.AddWithValue("@end", endExclusive);
+            using var da = new Npgsql.NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        private DataTable QueryShiftSummary(int shiftId)
+        {
+            using var conn = new Npgsql.NpgsqlConnection(POS_qu.Helpers.DbConfig.ConnectionString);
+            conn.Open();
+            using var cmd = new Npgsql.NpgsqlCommand(@"
+SELECT
+    @sid AS shift_id,
+    COALESCE(cs.opening_cash,0) AS opening_cash,
+    COALESCE(cs.expected_cash,0) AS expected_cash,
+    COALESCE(cs.closing_cash,0) AS closing_cash,
+    COALESCE(cs.difference_cash,0) AS difference_cash,
+    cs.opened_at,
+    cs.closed_at,
+    cs.status,
+    COALESCE(s.trx_count,0) AS transaksi,
+    COALESCE(s.omzet,0) AS omzet
+FROM cashier_shifts cs
+LEFT JOIN (
+    SELECT shift_id, COUNT(*) AS trx_count, COALESCE(SUM(ts_grand_total),0) AS omzet
+    FROM transactions
+    WHERE deleted_at IS NULL AND ts_status = 1 AND shift_id = @sid
+    GROUP BY shift_id
+) s ON s.shift_id = cs.id
+WHERE cs.id = @sid
+", conn);
+            cmd.Parameters.AddWithValue("@sid", shiftId);
+            using var da = new Npgsql.NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
+        }
+
+        private DataTable QueryShiftTransactions(int shiftId)
+        {
+            using var conn = new Npgsql.NpgsqlConnection(POS_qu.Helpers.DbConfig.ConnectionString);
+            conn.Open();
+            using var cmd = new Npgsql.NpgsqlCommand(@"
+SELECT
+    created_at,
+    ts_id,
+    ts_numbering,
+    ts_method,
+    ts_grand_total,
+    user_id
+FROM transactions
+WHERE deleted_at IS NULL
+  AND ts_status = 1
+  AND shift_id = @sid
+ORDER BY created_at DESC
+", conn);
+            cmd.Parameters.AddWithValue("@sid", shiftId);
+            using var da = new Npgsql.NpgsqlDataAdapter(cmd);
+            var dt = new DataTable();
+            da.Fill(dt);
+            return dt;
         }
 
         private void PromptOpenShiftIfNeeded()

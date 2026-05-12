@@ -10,7 +10,7 @@ namespace POS_qu.Core.Interfaces
         Item GetItemById(int id);
         int InsertItem(Item item);
         void UpdateItem(Item item);
-        void DeleteItem(int id);
+        bool DeleteItem(int id, out bool archived);
         
         DataTable GetCategories();
         DataTable GetUnits();
