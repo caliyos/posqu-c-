@@ -330,6 +330,13 @@ VALUES (@aid, @iid, @q, @bp, @n)
 
                     if (_direction == InventoryAdjustmentDirection.In)
                     {
+                        var oldBuy = GetCurrentBuyPrice(r.ItemId, con, tran);
+                        if (oldBuy != r.BuyPrice)
+                        {
+                            InsertBuyPriceHistory(r.ItemId, oldBuy, r.BuyPrice, "adjustment_in", adjId, userId, con, tran);
+                            UpdateItemBuyPrice(r.ItemId, r.BuyPrice, con, tran);
+                        }
+
                         UpsertStockAdd(con, tran, r.ItemId, warehouseId, r.Qty);
                         InsertStockLayer(con, tran, r.ItemId, warehouseId, r.Qty, r.BuyPrice);
                         InsertStockLogForAdjustment(
@@ -602,6 +609,37 @@ WHERE id = @id
                 throw new InvalidOperationException("Stock layer tidak cukup (" + method + ").");
 
             return allocations;
+        }
+
+        private decimal GetCurrentBuyPrice(long itemId, NpgsqlConnection con, NpgsqlTransaction tran)
+        {
+            using var cmd = new NpgsqlCommand("SELECT COALESCE(buy_price,0) FROM items WHERE id = @id", con, tran);
+            cmd.Parameters.AddWithValue("@id", itemId);
+            var obj = cmd.ExecuteScalar();
+            return obj == null || obj == DBNull.Value ? 0m : Convert.ToDecimal(obj);
+        }
+
+        private void UpdateItemBuyPrice(long itemId, decimal newPrice, NpgsqlConnection con, NpgsqlTransaction tran)
+        {
+            using var cmd = new NpgsqlCommand("UPDATE items SET buy_price = @p, updated_at = NOW() WHERE id = @id", con, tran);
+            cmd.Parameters.AddWithValue("@id", itemId);
+            cmd.Parameters.AddWithValue("@p", newPrice < 0 ? 0m : newPrice);
+            cmd.ExecuteNonQuery();
+        }
+
+        private void InsertBuyPriceHistory(long itemId, decimal oldPrice, decimal newPrice, string sourceType, int sourceId, int changedBy, NpgsqlConnection con, NpgsqlTransaction tran)
+        {
+            using var cmd = new NpgsqlCommand(@"
+INSERT INTO item_buy_price_histories (item_id, old_price, new_price, source_type, source_id, changed_by, changed_at)
+VALUES (@iid, @old, @new, @t, @sid, @by, NOW())
+", con, tran);
+            cmd.Parameters.AddWithValue("@iid", itemId);
+            cmd.Parameters.AddWithValue("@old", oldPrice);
+            cmd.Parameters.AddWithValue("@new", newPrice < 0 ? 0m : newPrice);
+            cmd.Parameters.AddWithValue("@t", (object?)sourceType ?? DBNull.Value);
+            cmd.Parameters.AddWithValue("@sid", sourceId);
+            cmd.Parameters.AddWithValue("@by", changedBy > 0 ? changedBy : (object)DBNull.Value);
+            cmd.ExecuteNonQuery();
         }
     }
 }

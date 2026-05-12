@@ -1794,7 +1794,15 @@ ORDER BY i.id ASC, w.id ASC
                     }
                 }
                 // Gunakan label dari designer
-                label9.Text = $"Nilai Stock (HPP): {sumStockValue:N0} | Nilai Jual: {sumRetailValue:N0}";
+                int selectedWarehouseId = GetSelectedWarehouseId();
+                var now = DateTime.Now;
+                var systemStart = new DateTime(1970, 1, 1);
+                decimal pembelianTotal = GetPurchasesValue(systemStart, now, selectedWarehouseId);
+                decimal persediaanValue = GetInventoryValueNowFromLayers(selectedWarehouseId, fallback: sumStockValue);
+                decimal hppTotalSistem = pembelianTotal - persediaanValue;
+
+                label9.Text =
+                    $"Persediaan (Stock Layer): {persediaanValue:N0} | Pembelian Total: {pembelianTotal:N0} | HPP (Total Sistem): {hppTotalSistem:N0} | Nilai Jual: {sumRetailValue:N0}";
                 label10.Text = _viewAllUnits
                     ? $"Mode: All Unit | Stock (Base): {sumQty:N0} | Total Item: {invCount + nonInvCount:N0} (Inv:{invCount:N0}/Non:{nonInvCount:N0})"
                     : $"Jumlah Stock: {sumQty:N0} | Total Item: {rows:N0} (Inv:{invCount:N0}/Non:{nonInvCount:N0})";
@@ -1805,6 +1813,161 @@ ORDER BY i.id ASC, w.id ASC
             {
                 // ignore summary errors
             }
+        }
+
+        private decimal GetInventoryValueAt(DateTime asOf, int warehouseId)
+        {
+            try
+            {
+                using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+                conn.Open();
+
+                bool hasStockLayerId = ColumnExists(conn, "stock_log", "stock_layer_id");
+                bool hasIsAllocation = ColumnExists(conn, "stock_log", "is_allocation");
+                bool hasCreatedAt = ColumnExists(conn, "stock_layers", "created_at");
+
+                if (!hasCreatedAt)
+                    return 0m;
+
+                string whFilter = warehouseId > 0 ? "AND sl.warehouse_id = @wh" : "";
+                if (hasStockLayerId && hasIsAllocation)
+                {
+                    using var cmd = new NpgsqlCommand($@"
+SELECT COALESCE(SUM( (sl.qty_remaining::numeric + COALESCE(a.qty_after,0)) * sl.buy_price ),0)
+FROM stock_layers sl
+LEFT JOIN (
+    SELECT stock_layer_id, COALESCE(SUM(qty_keluar),0) AS qty_after
+    FROM stock_log
+    WHERE is_allocation = TRUE
+      AND stock_layer_id IS NOT NULL
+      AND created_at > @asof
+    GROUP BY stock_layer_id
+) a ON a.stock_layer_id = sl.id
+WHERE sl.created_at <= @asof
+{whFilter}
+", conn);
+                    cmd.Parameters.AddWithValue("@asof", asOf);
+                    if (warehouseId > 0) cmd.Parameters.AddWithValue("@wh", warehouseId);
+                    var obj = cmd.ExecuteScalar();
+                    return obj == null || obj == DBNull.Value ? 0m : Convert.ToDecimal(obj);
+                }
+                else
+                {
+                    using var cmd = new NpgsqlCommand($@"
+SELECT COALESCE(SUM(sl.qty_remaining::numeric * sl.buy_price),0)
+FROM stock_layers sl
+WHERE sl.created_at <= @asof
+{whFilter}
+", conn);
+                    cmd.Parameters.AddWithValue("@asof", asOf);
+                    if (warehouseId > 0) cmd.Parameters.AddWithValue("@wh", warehouseId);
+                    var obj = cmd.ExecuteScalar();
+                    return obj == null || obj == DBNull.Value ? 0m : Convert.ToDecimal(obj);
+                }
+            }
+            catch
+            {
+                return 0m;
+            }
+        }
+
+        private decimal GetPurchasesValue(DateTime startInclusive, DateTime endExclusive, int warehouseId)
+        {
+            decimal poTotal = 0m;
+            decimal adjInTotal = 0m;
+
+            try
+            {
+                using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+                conn.Open();
+
+                bool poHasWarehouse = ColumnExists(conn, "purchase_orders", "warehouse_id");
+                string whFilterPo = warehouseId > 0 && poHasWarehouse ? "AND po.warehouse_id = @wh" : "";
+
+                using (var cmd = new NpgsqlCommand($@"
+SELECT COALESCE(SUM(poi.quantity * poi.unit_price),0)
+FROM purchase_order_items poi
+JOIN purchase_orders po ON po.id = poi.po_id
+WHERE po.order_date >= @start::date
+  AND po.order_date < @end::date
+  AND COALESCE(po.status,'') ILIKE 'RECEIV%'
+{whFilterPo}
+", conn))
+                {
+                    cmd.Parameters.AddWithValue("@start", startInclusive);
+                    cmd.Parameters.AddWithValue("@end", endExclusive);
+                    if (warehouseId > 0 && poHasWarehouse) cmd.Parameters.AddWithValue("@wh", warehouseId);
+                    var obj = cmd.ExecuteScalar();
+                    poTotal = obj == null || obj == DBNull.Value ? 0m : Convert.ToDecimal(obj);
+                }
+
+                string whFilterAdj = warehouseId > 0 ? "AND ia.warehouse_id = @wh" : "";
+                using (var cmd = new NpgsqlCommand($@"
+SELECT COALESCE(SUM(ii.qty * COALESCE(ii.buy_price,0)),0)
+FROM inventory_adjustment_items ii
+JOIN inventory_adjustments ia ON ia.id = ii.adjustment_id
+WHERE ia.direction = 'IN'
+  AND ia.adjustment_date >= @start::date
+  AND ia.adjustment_date < @end::date
+{whFilterAdj}
+", conn))
+                {
+                    cmd.Parameters.AddWithValue("@start", startInclusive);
+                    cmd.Parameters.AddWithValue("@end", endExclusive);
+                    if (warehouseId > 0) cmd.Parameters.AddWithValue("@wh", warehouseId);
+                    var obj = cmd.ExecuteScalar();
+                    adjInTotal = obj == null || obj == DBNull.Value ? 0m : Convert.ToDecimal(obj);
+                }
+            }
+            catch
+            {
+                return 0m;
+            }
+
+            return poTotal + adjInTotal;
+        }
+
+        private decimal GetInventoryValueNowFromLayers(int warehouseId, decimal fallback)
+        {
+            try
+            {
+                using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+                conn.Open();
+
+                if (!ColumnExists(conn, "stock_layers", "qty_remaining") || !ColumnExists(conn, "stock_layers", "buy_price"))
+                    return fallback;
+
+                string whFilter = warehouseId > 0 ? "AND warehouse_id = @wh" : "";
+
+                using var cmd = new NpgsqlCommand($@"
+SELECT COALESCE(SUM(COALESCE(qty_remaining,0)::numeric * COALESCE(buy_price,0)),0)
+FROM stock_layers
+WHERE COALESCE(qty_remaining,0) > 0
+{whFilter}
+", conn);
+                if (warehouseId > 0) cmd.Parameters.AddWithValue("@wh", warehouseId);
+                var obj = cmd.ExecuteScalar();
+                return obj == null || obj == DBNull.Value ? 0m : Convert.ToDecimal(obj);
+            }
+            catch
+            {
+                return fallback;
+            }
+        }
+
+        private bool ColumnExists(NpgsqlConnection conn, string tableName, string columnName)
+        {
+            using var cmd = new NpgsqlCommand(@"
+SELECT 1
+FROM information_schema.columns
+WHERE table_schema='public'
+  AND table_name = @t
+  AND column_name = @c
+LIMIT 1
+", conn);
+            cmd.Parameters.AddWithValue("@t", tableName);
+            cmd.Parameters.AddWithValue("@c", columnName);
+            return cmd.ExecuteScalar() != null;
         }
 
         private void ConfigureGridColumns()
@@ -1869,7 +2032,7 @@ ORDER BY i.id ASC, w.id ASC
             if (dataGridView1.Columns.Contains("buy_price"))
             {
                 var c = dataGridView1.Columns["buy_price"];
-                c.HeaderText = "HPP";
+                c.HeaderText = "Harga Beli Terakhir";
                 c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 c.DefaultCellStyle.Format = "N0";
                 c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
