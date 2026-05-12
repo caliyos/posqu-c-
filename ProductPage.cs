@@ -1718,8 +1718,9 @@ ORDER BY i.id ASC, w.id ASC
             dataGridView1.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(245, 245, 245);
             dataGridView1.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(80, 80, 80);
             dataGridView1.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 11, FontStyle.Bold);
-            dataGridView1.ColumnHeadersHeight = 45;
-            dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            dataGridView1.ColumnHeadersDefaultCellStyle.WrapMode = DataGridViewTriState.True;
+            dataGridView1.ColumnHeadersHeight = 64;
+            dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.EnableResizing;
             
             dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridView1.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.None;
@@ -2009,34 +2010,34 @@ LIMIT 1
             {
                 var c = dataGridView1.Columns["warehouse_name"];
                 c.HeaderText = "Gudang";
-                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                c.FillWeight = 140;
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+                c.MinimumWidth = 110;
                 c.SortMode = DataGridViewColumnSortMode.Automatic;
             }
             if (dataGridView1.Columns.Contains("unit_name"))
             {
                 var c = dataGridView1.Columns["unit_name"];
                 c.HeaderText = "Satuan";
-                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                c.FillWeight = 90;
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+                c.MinimumWidth = 90;
             }
             if (dataGridView1.Columns.Contains("sell_price"))
             {
                 var c = dataGridView1.Columns["sell_price"];
-                c.HeaderText = "Harga";
+                c.HeaderText = "Harga Jual";
                 c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 c.DefaultCellStyle.Format = "N0";
-                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                c.FillWeight = 110;
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+                c.MinimumWidth = 110;
             }
             if (dataGridView1.Columns.Contains("buy_price"))
             {
                 var c = dataGridView1.Columns["buy_price"];
-                c.HeaderText = "Harga Beli Terakhir";
+                c.HeaderText = "Harga Beli\nTerakhir";
                 c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 c.DefaultCellStyle.Format = "N0";
-                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                c.FillWeight = 110;
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+                c.MinimumWidth = 120;
             }
             if (dataGridView1.Columns.Contains("stock"))
             {
@@ -2044,17 +2045,17 @@ LIMIT 1
                 c.HeaderText = "Stok";
                 c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 c.DefaultCellStyle.Format = _viewAllUnits ? "N2" : "N0";
-                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                c.FillWeight = 90;
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+                c.MinimumWidth = 90;
             }
             if (dataGridView1.Columns.Contains("min_threshold"))
             {
                 var c = dataGridView1.Columns["min_threshold"];
-                c.HeaderText = "Min Qty";
+                c.HeaderText = "Min\nQty";
                 c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 c.DefaultCellStyle.Format = _viewAllUnits ? "N2" : "N0";
-                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                c.FillWeight = 80;
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+                c.MinimumWidth = 80;
                 c.Visible = true;
                 if (dataGridView1.Columns.Contains("stock"))
                     c.DisplayIndex = Math.Min(dataGridView1.Columns["stock"].DisplayIndex + 1, dataGridView1.Columns.Count - 1);
@@ -2062,11 +2063,11 @@ LIMIT 1
             if (dataGridView1.Columns.Contains("stock_value"))
             {
                 var c = dataGridView1.Columns["stock_value"];
-                c.HeaderText = "Nilai Stok (HPP)";
+                c.HeaderText = "Nilai Stok\n(HPP)";
                 c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 c.DefaultCellStyle.Format = "N0";
-                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                c.FillWeight = 140;
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+                c.MinimumWidth = 140;
             }
             if (dataGridView1.Columns.Contains("retail_value"))
             {
@@ -2074,8 +2075,8 @@ LIMIT 1
                 c.HeaderText = "Nilai Jual";
                 c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 c.DefaultCellStyle.Format = "N0";
-                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                c.FillWeight = 140;
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+                c.MinimumWidth = 120;
             }
 
             string[] hideCols = new[]
