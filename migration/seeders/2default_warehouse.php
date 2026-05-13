@@ -10,8 +10,8 @@ try {
 
     $warehouses = [
         [1, 'Main Store', 'store'],
-        [2, 'Gudang 1', 'warehouse'],
-        [3, 'Gudang 2', 'warehouse'],
+        // [2, 'Gudang 1', 'warehouse'],
+        // [3, 'Gudang 2', 'warehouse'],
     ];
 
     $stmt = $db->prepare("

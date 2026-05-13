@@ -368,7 +368,7 @@ SELECT
     pt.quantity AS qty,
     pt.unit,
     pt.unitid,
-    u.name AS unit_variant,
+    COALESCE(pt.unit, u.name, '') AS unit_variant,
     COALESCE(pt.tsd_conversion_rate, 1) AS conversion_rate,
     pt.sell_price,
     pt.buy_price,
@@ -379,7 +379,7 @@ SELECT
     pt.total
 FROM pending_transactions pt
 LEFT JOIN items i ON i.id = pt.item_id AND pt.item_id > 0
-LEFT JOIN units u ON u.id = i.unit
+LEFT JOIN units u ON u.id = pt.unitid
 WHERE pt.cart_session_code = @session
 ORDER BY pt.created_at;"
             : @"
@@ -392,7 +392,7 @@ SELECT
     pt.quantity AS qty,
     pt.unit,
     pt.unitid,
-    u.name AS unit_variant,
+    COALESCE(pt.unit, u.name, '') AS unit_variant,
     COALESCE(pt.tsd_conversion_rate, 1) AS conversion_rate,
     pt.sell_price,
     pt.buy_price,
@@ -403,7 +403,7 @@ SELECT
     pt.total
 FROM pending_transactions pt
 LEFT JOIN items i ON i.id = pt.item_id AND pt.item_id > 0
-LEFT JOIN units u ON u.id = i.unit
+LEFT JOIN units u ON u.id = pt.unitid
 WHERE pt.cart_session_code = @session
 ORDER BY pt.created_at;";
 

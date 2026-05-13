@@ -630,8 +630,9 @@ namespace POS_qu
             };
             dgvManager.LoadPage();
 
-            cmbPageSize.Items.AddRange(new object[] { "10", "50", "100", "200", "500", "1000" });
-            cmbPageSize.SelectedIndex = 3;
+            cmbPageSize.Items.Clear();
+            cmbPageSize.Items.AddRange(new object[] { 10, 50, 100, 200, 500, 1000 });
+            if (cmbPageSize.Items.Count > 0) cmbPageSize.SelectedItem = 200;
 
 
             ApplyProfessionalGridStyle();

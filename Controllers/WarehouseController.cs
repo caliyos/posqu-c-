@@ -14,7 +14,30 @@ namespace POS_qu.Controllers
             using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 con.Open();
-                string sql = "SELECT id, name, type, is_active FROM warehouses ORDER BY id ASC";
+                string sql = @"
+SELECT id, name, type, is_active
+FROM warehouses
+ORDER BY CASE WHEN COALESCE(type,'') = 'store' THEN 0 ELSE 1 END, id ASC";
+                using (var cmd = new NpgsqlCommand(sql, con))
+                using (var da = new NpgsqlDataAdapter(cmd))
+                {
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+                    return dt;
+                }
+            }
+        }
+
+        public DataTable GetActiveWarehouses()
+        {
+            using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                con.Open();
+                string sql = @"
+SELECT id, name, type, is_active
+FROM warehouses
+WHERE is_active = TRUE
+ORDER BY CASE WHEN COALESCE(type,'') = 'store' THEN 0 ELSE 1 END, id ASC";
                 using (var cmd = new NpgsqlCommand(sql, con))
                 using (var da = new NpgsqlDataAdapter(cmd))
                 {

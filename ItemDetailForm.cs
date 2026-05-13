@@ -62,6 +62,7 @@ namespace POS_qu
             _item = LoadFullItemForEdit(item);
             LoadItem(_item); // Mode Edit
             cmbWarehouse.SelectedValue = _item.initial_warehouse_id;
+            RefreshStockFromSelectedWarehouse();
 
         }
 
@@ -274,14 +275,27 @@ namespace POS_qu
         {
             try
             {
-                using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
-                conn.Open();
-                using var adapter = new NpgsqlDataAdapter("SELECT id, name FROM warehouses ORDER BY name ASC", conn);
-                var dt = new DataTable();
-                adapter.Fill(dt);
-                cmbWarehouse.DataSource = dt;
+                var wc = new WarehouseController();
+                var dt = wc.GetActiveWarehouses();
+                if (dt == null) dt = new DataTable();
+
+                var comboDt = new DataTable();
+                comboDt.Columns.Add("id", typeof(int));
+                comboDt.Columns.Add("name", typeof(string));
+
+                foreach (DataRow r in dt.Rows)
+                {
+                    int id = r["id"] != DBNull.Value ? Convert.ToInt32(r["id"]) : 0;
+                    if (id <= 0) continue;
+                    string name = r["name"]?.ToString() ?? $"Gudang {id}";
+                    comboDt.Rows.Add(id, name);
+                }
+
+                cmbWarehouse.DataSource = comboDt;
                 cmbWarehouse.DisplayMember = "name";
                 cmbWarehouse.ValueMember = "id";
+                if (cmbWarehouse.Items.Count > 0 && cmbWarehouse.SelectedIndex < 0)
+                    cmbWarehouse.SelectedIndex = 0;
             }
             catch {}
         }
@@ -504,10 +518,10 @@ namespace POS_qu
         private void UpdateStockOutput()
         {
             if (lblStockOut == null) return;
-            int val = 0;
-            int.TryParse(txtStock.Text, out val);
+            decimal val = ParseQty(txtStock.Text);
             string unitName = cmbUnit.SelectedIndex >= 0 ? cmbUnit.Text : "pcs";
-            lblStockOut.Text = $"{val:N0} {unitName}";
+            string qtyText = val % 1m == 0m ? val.ToString("N0") : val.ToString("N2");
+            lblStockOut.Text = $"{qtyText} {unitName}";
             // nilai stok (HPP) dan nilai jual
             decimal bp = UiNumberFormat.ParseMoney(txtBuyPrice.Text);
             decimal sp = UiNumberFormat.ParseMoney(txtSellPrice.Text);
@@ -515,6 +529,56 @@ namespace POS_qu
             var jual = sp * val;
             if (lblStockValueHpp != null) lblStockValueHpp.Text = $"Nilai Stok (HPP): {hpp:N0}";
             if (lblStockValueSell != null) lblStockValueSell.Text = $"Nilai Jual: {jual:N0}";
+        }
+
+        private static decimal ParseQty(string text)
+        {
+            text ??= "";
+            text = text.Trim();
+            if (text.Length == 0) return 0m;
+
+            if (decimal.TryParse(text, System.Globalization.NumberStyles.Number, UiNumberFormat.DotCulture, out var v))
+                return v;
+            if (decimal.TryParse(text, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out v))
+                return v;
+            if (decimal.TryParse(text, out v))
+                return v;
+            return 0m;
+        }
+
+        private decimal GetCurrentStockFromDb(int itemId, int warehouseId)
+        {
+            if (itemId <= 0 || warehouseId <= 0) return 0m;
+            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+            con.Open();
+            using var cmd = new NpgsqlCommand(@"
+SELECT COALESCE(qty,0)
+FROM stocks
+WHERE item_id=@id AND warehouse_id=@wh
+LIMIT 1
+", con);
+            cmd.Parameters.AddWithValue("@id", itemId);
+            cmd.Parameters.AddWithValue("@wh", warehouseId);
+            var obj = cmd.ExecuteScalar();
+            return obj == null || obj == DBNull.Value ? 0m : Convert.ToDecimal(obj);
+        }
+
+        private void RefreshStockFromSelectedWarehouse()
+        {
+            if (editingItemId == null || editingItemId.Value <= 0) return;
+            int whId = 0;
+            try { whId = cmbWarehouse.SelectedValue != null ? Convert.ToInt32(cmbWarehouse.SelectedValue) : 0; } catch { whId = 0; }
+            if (whId <= 0) return;
+
+            try
+            {
+                var qty = GetCurrentStockFromDb(editingItemId.Value, whId);
+                txtStock.Text = qty % 1m == 0m ? qty.ToString("0") : qty.ToString("0.####");
+                UpdateStockOutput();
+            }
+            catch
+            {
+            }
         }
 
 
