@@ -145,11 +145,10 @@ namespace POS_qu
             dgvMultiPrice.AlternatingRowsDefaultCellStyle = cellStyleAlt;
 
             cmbValuation.Items.Clear();
-            cmbValuation.Items.Add("FIFO");
-            cmbValuation.Items.Add("AVG");
-            cmbValuation.Items.Add("LIFO");
-            cmbValuation.Items.Add("FEFO");
-            var defaultMethod = new SettingController().GetDefaultHppMethod();
+            var setting = new SettingController();
+            var activeMethods = setting.GetActiveHppMethods();
+            foreach (var m in activeMethods) cmbValuation.Items.Add(m);
+            var defaultMethod = setting.GetDefaultHppMethod();
             int idxDef = cmbValuation.FindStringExact(defaultMethod ?? "FIFO");
             cmbValuation.SelectedIndex = idxDef >= 0 ? idxDef : 0;
 

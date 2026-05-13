@@ -19,7 +19,15 @@ namespace POS_qu
 
         private void HppMethodSettingForm_Load(object sender, EventArgs e)
         {
+            var active = new POS_qu.Controllers.SettingController().GetActiveHppMethods();
+            rbFifo.Enabled = active.Contains("FIFO");
+            rbAvg.Enabled = active.Contains("AVG");
+            rbLifo.Enabled = active.Contains("LIFO");
+            rbFefo.Enabled = active.Contains("FEFO");
+
             string current = GetCurrentDefaultMethod();
+            if (!active.Contains((current ?? "").Trim().ToUpperInvariant()))
+                current = active.FirstOrDefault() ?? "FIFO";
             SelectRadio(current);
         }
 
@@ -27,6 +35,9 @@ namespace POS_qu
         {
             string method = GetSelectedMethod();
             if (string.IsNullOrWhiteSpace(method)) method = "FIFO";
+            var active = new POS_qu.Controllers.SettingController().GetActiveHppMethods();
+            if (!active.Contains((method ?? "").Trim().ToUpperInvariant()))
+                method = active.FirstOrDefault() ?? "FIFO";
 
             using var con = new NpgsqlConnection(DbConfig.ConnectionString);
             con.Open();
@@ -68,4 +79,3 @@ namespace POS_qu
         }
     }
 }
-

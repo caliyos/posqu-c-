@@ -1,4 +1,5 @@
 using Npgsql;
+using POS_qu.Controllers;
 using POS_qu.Helpers;
 using POS_qu.Models;
 using POS_qu.DTO;
@@ -352,13 +353,19 @@ WHERE item_id = @id AND warehouse_id = @wh
 
         public string GetItemValuationMethod(NpgsqlConnection con, NpgsqlTransaction tran, int itemId)
         {
+            var active = new SettingController().GetActiveHppMethods();
+            bool fifoOnly = active.Count == 1 && string.Equals(active[0], "FIFO", StringComparison.OrdinalIgnoreCase);
+            if (fifoOnly) return "FIFO";
+
             string sql = "SELECT valuation_method FROM items WHERE id = @id";
-            using (var cmd = new NpgsqlCommand(sql, con, tran))
-            {
-                cmd.Parameters.AddWithValue("@id", itemId);
-                var res = cmd.ExecuteScalar();
-                return res != null && res != DBNull.Value ? res.ToString() : "FIFO";
-            }
+            using var cmd = new NpgsqlCommand(sql, con, tran);
+            cmd.Parameters.AddWithValue("@id", itemId);
+            var res = cmd.ExecuteScalar();
+            var method = res != null && res != DBNull.Value ? (res.ToString() ?? "") : "";
+            method = (method ?? "").Trim().ToUpperInvariant();
+            if (active.Count > 0 && active.Contains(method))
+                return method;
+            return active.FirstOrDefault() ?? "FIFO";
         }
 
         public void DeletePendingTransactions(NpgsqlConnection con, NpgsqlTransaction tran, string code)

@@ -1071,6 +1071,15 @@ namespace POS_qu.Services
 
         private static IStockValuationStrategy CreateStockValuationStrategy(string method)
         {
+            try
+            {
+                var active = new POS_qu.Controllers.SettingController().GetActiveHppMethods();
+                if (active.Count == 1 && string.Equals(active[0], "FIFO", StringComparison.OrdinalIgnoreCase))
+                    return new POS_qu.Services.StockValuation.FifoStrategy();
+            }
+            catch
+            {
+            }
             method = (method ?? "FIFO").Trim().ToUpperInvariant();
             if (method == "AVG") return new POS_qu.Services.StockValuation.AverageStrategy();
             if (method == "LIFO") return new POS_qu.Services.StockValuation.LifoStrategy();

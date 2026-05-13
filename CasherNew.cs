@@ -936,11 +936,22 @@ WHERE id=@id;", conn, tran);
                 AllowUserToAddRows = false,
                 AllowUserToDeleteRows = false,
                 AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells,
-                BackgroundColor = Color.White
+                BackgroundColor = Color.White,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                MultiSelect = false
             };
 
             grid.DefaultCellStyle.FormatProvider = POS_qu.Helpers.UiNumberFormat.DotCulture;
             grid.DataSource = dt;
+
+            bool hasTsId = dt != null && dt.Columns.Contains("ts_id");
+            bool enableReprint = hasTsId && (title ?? "").Contains("Transaksi", StringComparison.OrdinalIgnoreCase);
+
+            if (enableReprint)
+            {
+                if (grid.Columns.Contains("ts_id"))
+                    grid.Columns["ts_id"].Visible = false;
+            }
 
             static bool IsMoneyColumn(string name)
             {
@@ -1021,8 +1032,289 @@ WHERE id=@id;", conn, tran);
                 }
             }
 
+            if (enableReprint)
+            {
+                void doReprint()
+                {
+                    int tsId = 0;
+                    try
+                    {
+                        if (grid.SelectedRows.Count > 0 && grid.Columns.Contains("ts_id"))
+                            tsId = Convert.ToInt32(grid.SelectedRows[0].Cells["ts_id"].Value);
+                    }
+                    catch
+                    {
+                        tsId = 0;
+                    }
+
+                    if (tsId <= 0)
+                    {
+                        MessageBox.Show("Pilih transaksi dulu.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+
+                    try
+                    {
+                        var built = BuildReceiptTextFromTransaction(tsId);
+                        ShowReceiptActionsModal(f, "Cetak Ulang Invoice", built.receiptText, "invoice_" + built.saleNumber);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message, "Gagal cetak ulang", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+
+                var menu = new ContextMenuStrip();
+                var miReprint = new ToolStripMenuItem("Cetak Ulang Invoice");
+                miReprint.Click += (_, __) => doReprint();
+                menu.Items.Add(miReprint);
+                grid.ContextMenuStrip = menu;
+
+                grid.CellDoubleClick += (_, e) =>
+                {
+                    if (e.RowIndex < 0) return;
+                    doReprint();
+                };
+
+                var pnlBottom = new Panel { Dock = DockStyle.Bottom, Height = 56, Padding = new Padding(10, 8, 10, 8), BackColor = Color.WhiteSmoke };
+                var btnClose = new Button { Text = "Tutup", Dock = DockStyle.Right, Width = 120 };
+                var btnReprint = new Button { Text = "Cetak Ulang Invoice", Dock = DockStyle.Right, Width = 180 };
+                btnReprint.Click += (_, __) => doReprint();
+                btnClose.Click += (_, __) => f.Close();
+                pnlBottom.Controls.Add(btnClose);
+                pnlBottom.Controls.Add(btnReprint);
+                f.Controls.Add(pnlBottom);
+            }
+
             f.Controls.Add(grid);
             f.ShowDialog(this);
+        }
+
+        private (string receiptText, string saleNumber) BuildReceiptTextFromTransaction(int tsId)
+        {
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+
+            string saleNumber = "";
+            string method = "";
+            short status = 0;
+            decimal grandTotal = 0m;
+            decimal paid = 0m;
+            decimal change = 0m;
+            DateTime createdAt = DateTime.Now;
+            int userId = 0;
+            int shiftId = 0;
+            int terminalId = 0;
+            int warehouseId = 0;
+            string note = "";
+            decimal discount = 0m;
+            decimal delivery = 0m;
+
+            using (var cmd = new NpgsqlCommand(@"
+SELECT
+    ts_numbering,
+    COALESCE(ts_method,''),
+    COALESCE(ts_status,0),
+    COALESCE(ts_grand_total,0),
+    COALESCE(ts_payment_amount,0),
+    COALESCE(ts_change,0),
+    created_at,
+    COALESCE(user_id,0),
+    COALESCE(shift_id,0),
+    COALESCE(terminal_id,0),
+    COALESCE(warehouse_id,0),
+    COALESCE(ts_note,''),
+    COALESCE(ts_global_discount_amount,0),
+    COALESCE(ts_delivery_amount,0)
+FROM transactions
+WHERE ts_id = @id
+LIMIT 1
+", conn))
+            {
+                cmd.Parameters.AddWithValue("@id", tsId);
+                using var r = cmd.ExecuteReader();
+                if (!r.Read())
+                    throw new Exception("Transaksi tidak ditemukan.");
+
+                saleNumber = (r[0]?.ToString() ?? "").Trim();
+                method = (r[1]?.ToString() ?? "").Trim();
+                status = Convert.ToInt16(r[2]);
+                grandTotal = Convert.ToDecimal(r[3]);
+                paid = Convert.ToDecimal(r[4]);
+                change = Convert.ToDecimal(r[5]);
+                createdAt = r[6] != DBNull.Value ? Convert.ToDateTime(r[6]) : DateTime.Now;
+                userId = Convert.ToInt32(r[7]);
+                shiftId = Convert.ToInt32(r[8]);
+                terminalId = Convert.ToInt32(r[9]);
+                warehouseId = Convert.ToInt32(r[10]);
+                note = (r[11]?.ToString() ?? "").Trim();
+                discount = Convert.ToDecimal(r[12]);
+                delivery = Convert.ToDecimal(r[13]);
+            }
+
+            var dtItems = new DataTable();
+            using (var cmd = new NpgsqlCommand(@"
+SELECT
+    COALESCE(i.name, td.tsd_name) AS name,
+    COALESCE(i.barcode, td.tsd_barcode) AS barcode,
+    COALESCE(td.tsd_quantity,0) AS qty,
+    COALESCE(td.tsd_unit,'') AS unit,
+    COALESCE(td.tsd_sell_price,0) AS price,
+    COALESCE(td.tsd_total,0) AS total,
+    COALESCE(td.tsd_discount_total,0) AS disc,
+    COALESCE(td.tsd_tax,0) AS tax,
+    COALESCE(td.tsd_note,'') AS note
+FROM transaction_details td
+LEFT JOIN items i ON i.id = td.item_id AND td.item_id > 0
+WHERE td.ts_id = @id
+ORDER BY td.tsd_id
+", conn))
+            {
+                cmd.Parameters.AddWithValue("@id", tsId);
+                using var da = new NpgsqlDataAdapter(cmd);
+                da.Fill(dtItems);
+            }
+
+            var session = SessionUser.GetCurrentUser();
+            string terminalName = session?.TerminalName ?? "";
+            string cashierName = session?.Username ?? "";
+
+            if (terminalId > 0)
+            {
+                try
+                {
+                    using var cmd = new NpgsqlCommand("SELECT terminal_name FROM terminals WHERE id=@id LIMIT 1", conn);
+                    cmd.Parameters.AddWithValue("@id", terminalId);
+                    var v = cmd.ExecuteScalar();
+                    var s = v != null && v != DBNull.Value ? (v.ToString() ?? "") : "";
+                    if (!string.IsNullOrWhiteSpace(s)) terminalName = s.Trim();
+                }
+                catch
+                {
+                }
+            }
+
+            if (userId > 0)
+            {
+                try
+                {
+                    var s = Utility.GetUserName(userId);
+                    if (!string.IsNullOrWhiteSpace(s)) cashierName = s.Trim();
+                }
+                catch
+                {
+                }
+            }
+
+            string warehouseName = GetWarehouseLabelById(warehouseId);
+
+            string judul = "", alamat = "", telepon = "", footer = "";
+            bool showNamaToko = true, showAlamat = true, showTelepon = true, showFooter = true;
+            using (var cmd = new NpgsqlCommand("SELECT * FROM struk_setting ORDER BY updated_at DESC LIMIT 1;", conn))
+            using (var reader = cmd.ExecuteReader())
+            {
+                if (reader.Read())
+                {
+                    judul = reader["judul"]?.ToString()?.Trim() ?? "";
+                    alamat = reader["alamat"]?.ToString()?.Trim() ?? "";
+                    telepon = reader["telepon"]?.ToString()?.Trim() ?? "";
+                    footer = reader["footer"]?.ToString()?.Trim() ?? "";
+                    showNamaToko = reader["is_visible_nama_toko"] as bool? ?? true;
+                    showAlamat = reader["is_visible_alamat"] as bool? ?? true;
+                    showTelepon = reader["is_visible_telepon"] as bool? ?? true;
+                    showFooter = reader["is_visible_footer"] as bool? ?? true;
+                }
+            }
+
+            var lines = new List<string>();
+            void Add(string s) => lines.Add(s ?? "");
+
+            if (showNamaToko && !string.IsNullOrEmpty(judul)) Add(judul);
+            if (showAlamat && !string.IsNullOrEmpty(alamat)) Add(alamat);
+            if (showTelepon && !string.IsNullOrEmpty(telepon)) Add(telepon);
+            Add(new string('-', 32));
+            Add($"No       : {saleNumber}");
+            if (!string.IsNullOrWhiteSpace(terminalName)) Add($"Terminal : {terminalName}");
+            if (!string.IsNullOrWhiteSpace(warehouseName)) Add($"Gudang   : {warehouseName}");
+            if (!string.IsNullOrWhiteSpace(cashierName)) Add($"Kasir    : {cashierName}");
+            if (shiftId > 0) Add($"Shift    : {shiftId}");
+            Add($"Tanggal  : {createdAt:yyyy-MM-dd}");
+            Add($"Waktu    : {createdAt:HH:mm:ss}");
+            Add(new string('-', 32));
+
+            decimal sumSubtotal = 0m;
+            decimal sumDisc = 0m;
+            decimal sumTax = 0m;
+
+            foreach (DataRow row in dtItems.Rows)
+            {
+                var name = row["name"]?.ToString() ?? "";
+                var unit = row["unit"]?.ToString() ?? "";
+                var noteRow = row["note"]?.ToString() ?? "";
+
+                decimal qty = row["qty"] != DBNull.Value ? Convert.ToDecimal(row["qty"]) : 0m;
+                decimal price = row["price"] != DBNull.Value ? Convert.ToDecimal(row["price"]) : 0m;
+                decimal total = row["total"] != DBNull.Value ? Convert.ToDecimal(row["total"]) : 0m;
+                decimal discRow = row["disc"] != DBNull.Value ? Convert.ToDecimal(row["disc"]) : 0m;
+                decimal taxRow = row["tax"] != DBNull.Value ? Convert.ToDecimal(row["tax"]) : 0m;
+
+                sumSubtotal += total;
+                sumDisc += discRow;
+                sumTax += taxRow;
+
+                Add(name);
+                var qtySatuan = $"{qty:N0} {unit}".Trim();
+                var lineSub = qty * price;
+                if (lineSub < 0m) lineSub = 0m;
+                Add($"{qtySatuan} x {price:N0} = {lineSub:N0}");
+                Add($"Total: {total:N0}");
+                if (discRow > 0m) Add($"Disc : -{discRow:N0}");
+                if (taxRow > 0m) Add($"Tax  : {taxRow:N0}");
+                if (!string.IsNullOrWhiteSpace(noteRow)) Add($"Note: {noteRow}");
+                Add("");
+            }
+
+            Add(new string('-', 32));
+            Add($"Subtotal".PadRight(20) + $"{sumSubtotal:N0}".PadLeft(10));
+            if (sumTax > 0m) Add($"Pajak".PadRight(20) + $"{sumTax:N0}".PadLeft(10));
+            if (sumDisc > 0m) Add($"Diskon Item".PadRight(20) + $"-{sumDisc:N0}".PadLeft(10));
+            if (discount > 0m) Add($"Diskon Global".PadRight(20) + $"-{discount:N0}".PadLeft(10));
+            if (delivery > 0m) Add($"Delivery".PadRight(20) + $"{delivery:N0}".PadLeft(10));
+            Add(new string('-', 32));
+            Add($"Grand Total".PadRight(20) + $"{grandTotal:N0}".PadLeft(10));
+            Add(new string('-', 32));
+
+            string statusText = status == 1 ? "Paid" : (status == 2 ? "Partial" : "Unpaid");
+            Add($"Status Bayar : {statusText}");
+            Add($"Metode Bayar : {method}");
+            Add($"Jumlah Bayar : {paid:N0}");
+            Add($"Kembalian    : {change:N0}");
+            if (!string.IsNullOrWhiteSpace(note)) Add($"Note: {note}");
+            Add(new string('-', 32));
+
+            if (showFooter && !string.IsNullOrEmpty(footer)) Add(footer);
+
+            if (string.IsNullOrWhiteSpace(saleNumber)) saleNumber = "trx_" + tsId;
+            return (string.Join(Environment.NewLine, lines), saleNumber);
+        }
+
+        private static string GetWarehouseLabelById(int warehouseId)
+        {
+            if (warehouseId <= 0) return "-";
+            try
+            {
+                using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+                con.Open();
+                using var cmd = new NpgsqlCommand("SELECT name FROM warehouses WHERE id = @id LIMIT 1", con);
+                cmd.Parameters.AddWithValue("@id", warehouseId);
+                var v = cmd.ExecuteScalar();
+                var name = v != null && v != DBNull.Value ? (v.ToString() ?? "") : "";
+                if (!string.IsNullOrWhiteSpace(name)) return name.Trim();
+            }
+            catch
+            {
+            }
+            return "#" + warehouseId;
         }
 
         private DataTable QueryCashierOmzet(DateTime startInclusive, DateTime endExclusive)
@@ -3197,7 +3489,7 @@ WHERE deleted_at IS NULL
 
             var desc = new Label
             {
-                Text = "Cetak / simpan / kirim faktur draft.",
+                Text = "Cetak / simpan / kirim faktur.",
                 Font = new Font("Segoe UI", 10F),
                 ForeColor = Color.FromArgb(90, 90, 90),
                 AutoSize = false,

@@ -26,6 +26,10 @@ ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS purchase_prefix VARCHAR(20) NOT
 ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS purchase_last_date DATE NULL;
 ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS purchase_last_number INT NOT NULL DEFAULT 0;
 ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS default_hpp_method VARCHAR(20) NOT NULL DEFAULT 'FIFO';
+ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS hpp_fifo_active BOOLEAN NOT NULL DEFAULT TRUE;
+ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS hpp_avg_active BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS hpp_lifo_active BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS hpp_fefo_active BOOLEAN NOT NULL DEFAULT FALSE;
 ", conn);
             cmd.ExecuteNonQuery();
         }
@@ -124,6 +128,36 @@ LIMIT 1
 ", conn);
             var res = cmd.ExecuteScalar();
             return res != null && res != DBNull.Value ? res.ToString() : "FIFO";
+        }
+
+        public List<string> GetActiveHppMethods()
+        {
+            EnsureSettingTokoSchema();
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+            using var cmd = new NpgsqlCommand(@"
+SELECT
+    COALESCE(hpp_fifo_active, TRUE) AS fifo,
+    COALESCE(hpp_avg_active, FALSE) AS avg,
+    COALESCE(hpp_lifo_active, FALSE) AS lifo,
+    COALESCE(hpp_fefo_active, FALSE) AS fefo
+FROM settingtoko
+WHERE id = 1
+LIMIT 1
+", conn);
+            using var r = cmd.ExecuteReader();
+
+            var list = new List<string>();
+            if (r.Read())
+            {
+                if (Convert.ToBoolean(r["fifo"])) list.Add("FIFO");
+                if (Convert.ToBoolean(r["avg"])) list.Add("AVG");
+                if (Convert.ToBoolean(r["lifo"])) list.Add("LIFO");
+                if (Convert.ToBoolean(r["fefo"])) list.Add("FEFO");
+            }
+
+            if (list.Count == 0) list.Add("FIFO");
+            return list;
         }
 
         public void SetDefaultHppMethod(string method)

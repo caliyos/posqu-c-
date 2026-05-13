@@ -463,9 +463,10 @@ namespace POS_qu
             friendly.Columns.Add("Jumlah");
             friendly.Columns.Add("Satuan");
             friendly.Columns.Add("Harga Satuan");
-            friendly.Columns.Add("HPP");
-            friendly.Columns.Add("Laba");
             friendly.Columns.Add("Subtotal");
+            friendly.Columns.Add("Hpp Per Item");
+            friendly.Columns.Add("Total HPP");
+            friendly.Columns.Add("Laba");
             friendly.Columns.Add("Diskon");
             friendly.Columns.Add("Pajak");
             friendly.Columns.Add("Catatan");
@@ -488,6 +489,8 @@ namespace POS_qu
 
                 decimal lineHpp = buy * qty;
                 decimal lineProfit = total - lineHpp;
+
+
                 sumSubtotal += total;
                 sumHpp += lineHpp;
                 friendly.Rows.Add(
@@ -497,9 +500,10 @@ namespace POS_qu
                     qty.ToString("N0"),
                     unit,
                     price.ToString("N0"),
+                    total.ToString("N0"),
+                    buy.ToString("N0"),
                     lineHpp.ToString("N0"),
                     lineProfit.ToString("N0"),
-                    total.ToString("N0"),
                     disc.ToString("N0"),
                     tax.ToString("N0"),
                     note

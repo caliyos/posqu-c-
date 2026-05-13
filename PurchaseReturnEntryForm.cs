@@ -433,6 +433,15 @@ VALUES (@rid, @item, @qty, @price, @note, NOW())
 
         private static Core.Interfaces.IStockValuationStrategy CreateStrategy(string method)
         {
+            try
+            {
+                var active = new POS_qu.Controllers.SettingController().GetActiveHppMethods();
+                if (active.Count == 1 && string.Equals(active[0], "FIFO", StringComparison.OrdinalIgnoreCase))
+                    return new FifoStrategy();
+            }
+            catch
+            {
+            }
             method = (method ?? "FIFO").Trim().ToUpperInvariant();
             if (method == "AVG") return new AverageStrategy();
             if (method == "LIFO") return new LifoStrategy();
