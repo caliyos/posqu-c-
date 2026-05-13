@@ -213,7 +213,7 @@ namespace POS_qu.Services
                             CartSessionCode = invoice.CartSessionCode
                         }).ToList();
 
-                        DeductStockFillBuyPriceAndLog(
+                        details = DeductStockFillBuyPriceAndLog(
                             con,
                             tran,
                             details,
@@ -372,7 +372,7 @@ namespace POS_qu.Services
                             CartSessionCode = invoice.CartSessionCode
                         }).ToList();
 
-                        DeductStockFillBuyPriceAndLog(
+                        details = DeductStockFillBuyPriceAndLog(
                             con,
                             tran,
                             details,
@@ -523,7 +523,7 @@ namespace POS_qu.Services
                     CartSessionCode = invoice.CartSessionCode
                 }).ToList();
 
-                DeductStockFillBuyPriceAndLog(
+                details = DeductStockFillBuyPriceAndLog(
                     con,
                     tran,
                     details,
@@ -896,7 +896,10 @@ namespace POS_qu.Services
 
         //////////////////////////////////// END CICILAN //////////////
 
-        private void DeductStockFillBuyPriceAndLog(
+        private static decimal RoundMoney(decimal v) =>
+            Math.Round(v, 2, MidpointRounding.AwayFromZero);
+
+        private List<TransactionDetail> DeductStockFillBuyPriceAndLog(
             NpgsqlConnection con,
             NpgsqlTransaction tran,
             List<TransactionDetail> details,
@@ -906,23 +909,33 @@ namespace POS_qu.Services
             int userId,
             int? loginId)
         {
+            var resultDetails = new List<TransactionDetail>(details?.Count ?? 0);
+            if (details == null || details.Count == 0) return resultDetails;
+
             foreach (var d in details)
             {
-                if (d.ItemId <= 0) continue;
-                if (!_repo.IsInventoryItem(con, tran, d.ItemId)) continue;
+                if (d == null)
+                    continue;
+
+                if (d.ItemId <= 0 || !_repo.IsInventoryItem(con, tran, d.ItemId))
+                {
+                    resultDetails.Add(d);
+                    continue;
+                }
 
                 decimal conv = d.TsdConversionRate <= 0 ? 1 : d.TsdConversionRate;
                 decimal qtyBase = d.TsdQuantity * conv;
-                if (qtyBase == 0) continue;
+                if (qtyBase == 0)
+                {
+                    resultDetails.Add(d);
+                    continue;
+                }
 
                 _repo.ReleaseReservedStockInWarehouse(con, tran, d.ItemId, warehouseId, qtyBase);
 
                 string method = _repo.GetItemValuationMethod(con, tran, d.ItemId);
                 var strategy = CreateStockValuationStrategy(method);
                 var deduction = strategy.CalculateCOGSAndDeductStock(d.ItemId, warehouseId, qtyBase, con, tran);
-
-                decimal unitCostPerSoldUnit = d.TsdQuantity != 0 ? (deduction.TotalCogs / d.TsdQuantity) : 0m;
-                d.TsdBuyPrice = Math.Round(unitCostPerSoldUnit, 2);
 
                 decimal newStock = _repo.GetCurrentStockInWarehouse(con, tran, d.ItemId, warehouseId);
                 int parentId = _repo.InsertStockLog(con, tran, new StockLog
@@ -967,7 +980,93 @@ namespace POS_qu.Services
                         ParentId = parentId
                     });
                 }
+
+                var lines = deduction.Lines
+                    .Where(l => l != null && l.Qty != 0)
+                    .ToList();
+
+                if (lines.Count == 0)
+                {
+                    d.TsdBuyPrice = 0m;
+                    resultDetails.Add(d);
+                    continue;
+                }
+
+                var groups = lines
+                    .GroupBy(l => l.UnitCost)
+                    .Select(g => new { UnitCost = g.Key, QtyBase = g.Sum(x => x.Qty) })
+                    .Where(x => x.QtyBase != 0)
+                    .OrderBy(x => x.UnitCost)
+                    .ToList();
+
+                if (groups.Count <= 1)
+                {
+                    var one = groups[0];
+                    d.TsdBuyPrice = RoundMoney(one.UnitCost * conv);
+                    resultDetails.Add(d);
+                    continue;
+                }
+
+                decimal totalQtyBase = groups.Sum(x => x.QtyBase);
+                if (totalQtyBase == 0)
+                {
+                    decimal unitCostPerSoldUnit = d.TsdQuantity != 0 ? (deduction.TotalCogs / d.TsdQuantity) : 0m;
+                    d.TsdBuyPrice = RoundMoney(unitCostPerSoldUnit);
+                    resultDetails.Add(d);
+                    continue;
+                }
+
+                decimal sumDisc = 0m;
+                decimal sumTax = 0m;
+                decimal sumTotal = 0m;
+
+                for (int i = 0; i < groups.Count; i++)
+                {
+                    var g = groups[i];
+                    bool isLast = i == groups.Count - 1;
+                    decimal ratio = g.QtyBase / totalQtyBase;
+
+                    decimal qtyUnit = conv != 0 ? (g.QtyBase / conv) : 0m;
+                    if (qtyUnit == 0) continue;
+
+                    decimal disc = isLast ? (d.TsdDiscountTotal - sumDisc) : RoundMoney(d.TsdDiscountTotal * ratio);
+                    decimal tax = isLast ? (d.TsdTax - sumTax) : RoundMoney(d.TsdTax * ratio);
+                    decimal total = isLast ? (d.TsdTotal - sumTotal) : RoundMoney(d.TsdTotal * ratio);
+
+                    sumDisc += disc;
+                    sumTax += tax;
+                    sumTotal += total;
+
+                    var nd = new TransactionDetail
+                    {
+                        TsId = d.TsId,
+                        ItemId = d.ItemId,
+                        WarehouseId = d.WarehouseId,
+                        Name = d.Name,
+                        Barcode = d.Barcode,
+                        TsdSellPrice = d.TsdSellPrice,
+                        TsdBuyPrice = RoundMoney(g.UnitCost * conv),
+                        TsdQuantity = qtyUnit,
+                        TsdUnit = d.TsdUnit,
+                        TsdNote = d.TsdNote,
+                        TsdDiscountPercentage = d.TsdDiscountPercentage,
+                        TsdDiscountTotal = disc,
+                        TsdTax = tax,
+                        TsdTotal = total,
+                        TsdConversionRate = d.TsdConversionRate,
+                        TsdPricePerUnit = d.TsdPricePerUnit,
+                        TsdUnitVariant = d.TsdUnitVariant,
+                        CreatedBy = d.CreatedBy,
+                        CreatedAt = d.CreatedAt,
+                        CartSessionCode = d.CartSessionCode
+                    };
+
+                    nd.TsdDiscountPerItem = qtyUnit != 0 ? RoundMoney(disc / qtyUnit) : 0m;
+                    resultDetails.Add(nd);
+                }
             }
+
+            return resultDetails;
         }
 
         private static IStockValuationStrategy CreateStockValuationStrategy(string method)

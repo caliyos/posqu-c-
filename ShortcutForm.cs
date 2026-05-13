@@ -34,6 +34,7 @@ namespace POS_qu
             listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + K", "Cari Barang (Search) + pilih item" }));
             listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + F", "Cari Barang (Search) + pilih item" }));
             listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + S", "Fokus ke kolom input cari barang" }));
+            listShortcut.Items.Add(new ListViewItem(new[] { "Ctrl + R", "Casher Report" }));
             listShortcut.Items.Add(new ListViewItem(new[] { "F4", "Pilih Customer" }));
             listShortcut.Items.Add(new ListViewItem(new[] { "F3", "Simpan Draft" }));
             listShortcut.Items.Add(new ListViewItem(new[] { "F8", "Fokus ke cart (grid item)" }));
