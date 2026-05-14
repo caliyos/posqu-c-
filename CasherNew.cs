@@ -29,6 +29,7 @@ namespace POS_qu
 {
     public partial class CasherNew : Form
     {
+        private static readonly Dictionary<int, string> _priceLevelNameCache = new Dictionary<int, string>();
         private readonly Dictionary<Control, Color> _focusOriginalBackColor = new();
         private readonly Dictionary<Button, (Color BackColor, Color ForeColor)> _focusOriginalButtonColors = new();
         private readonly Dictionary<Control, Color> _focusOriginalBorderColor = new();
@@ -1341,6 +1342,8 @@ WHERE id=@id;", conn, tran);
             string note = "";
             decimal discount = 0m;
             decimal delivery = 0m;
+            int customerId = 0;
+            string customerFreeName = "";
 
             using (var cmd = new NpgsqlCommand(@"
 SELECT
@@ -1357,7 +1360,9 @@ SELECT
     COALESCE(warehouse_id,0),
     COALESCE(ts_note,''),
     COALESCE(ts_global_discount_amount,0),
-    COALESCE(ts_delivery_amount,0)
+    COALESCE(ts_delivery_amount,0),
+    COALESCE(ts_customer,0),
+    COALESCE(ts_freename,'')
 FROM transactions
 WHERE ts_id = @id
 LIMIT 1
@@ -1382,6 +1387,8 @@ LIMIT 1
                 note = (r[11]?.ToString() ?? "").Trim();
                 discount = Convert.ToDecimal(r[12]);
                 delivery = Convert.ToDecimal(r[13]);
+                customerId = Convert.ToInt32(r[14]);
+                customerFreeName = (r[15]?.ToString() ?? "").Trim();
             }
 
             var dtItems = new DataTable();
@@ -1394,6 +1401,7 @@ SELECT
     COALESCE(td.tsd_sell_price,0) AS price,
     COALESCE(td.tsd_total,0) AS total,
     COALESCE(td.tsd_discount_total,0) AS disc,
+    COALESCE(td.tsd_discount_percentage,0) AS disc_percent,
     COALESCE(td.tsd_tax,0) AS tax,
     COALESCE(td.tsd_note,'') AS note
 FROM transaction_details td
@@ -1461,6 +1469,47 @@ ORDER BY td.tsd_id
             var lines = new List<string>();
             void Add(string s) => lines.Add(s ?? "");
 
+            string customerName = customerFreeName;
+            int priceLevelId = 1;
+            string priceLevelName = TryGetPriceLevelName(1);
+            if (customerId > 0)
+            {
+                try
+                {
+                    using var cmd = new NpgsqlCommand(@"
+SELECT
+    COALESCE(c.name,''),
+    COALESCE(c.price_level_id,1),
+    COALESCE(pl.name,'')
+FROM customers c
+LEFT JOIN price_levels pl ON pl.id = c.price_level_id
+WHERE c.id = @id
+LIMIT 1
+", conn);
+                    cmd.Parameters.AddWithValue("@id", customerId);
+                    using var r = cmd.ExecuteReader();
+                    if (r.Read())
+                    {
+                        var cn = (r[0]?.ToString() ?? "").Trim();
+                        if (!string.IsNullOrWhiteSpace(cn)) customerName = cn;
+                        priceLevelId = Convert.ToInt32(r[1]);
+                        var pln = (r[2]?.ToString() ?? "").Trim();
+                        if (!string.IsNullOrWhiteSpace(pln)) priceLevelName = pln;
+                        else priceLevelName = TryGetPriceLevelName(priceLevelId);
+                    }
+                }
+                catch
+                {
+                    priceLevelId = 1;
+                    priceLevelName = TryGetPriceLevelName(1);
+                }
+            }
+            else
+            {
+                priceLevelId = 1;
+                priceLevelName = TryGetPriceLevelName(1);
+            }
+
             if (showNamaToko && !string.IsNullOrEmpty(judul)) Add(judul);
             if (showAlamat && !string.IsNullOrEmpty(alamat)) Add(alamat);
             if (showTelepon && !string.IsNullOrEmpty(telepon)) Add(telepon);
@@ -1470,6 +1519,12 @@ ORDER BY td.tsd_id
             if (!string.IsNullOrWhiteSpace(warehouseName)) Add($"Gudang   : {warehouseName}");
             if (!string.IsNullOrWhiteSpace(cashierName)) Add($"Kasir    : {cashierName}");
             if (shiftId > 0) Add($"Shift    : {shiftId}");
+            if (!string.IsNullOrWhiteSpace(customerName))
+            {
+                if (customerId > 0) Add($"Pelanggan: {customerName} (#{customerId})");
+                else Add($"Pelanggan: {customerName}");
+            }
+            Add($"Jenis Harga: {priceLevelName}");
             Add($"Tanggal  : {createdAt:yyyy-MM-dd}");
             Add($"Waktu    : {createdAt:HH:mm:ss}");
             Add(new string('-', 32));
@@ -1488,6 +1543,7 @@ ORDER BY td.tsd_id
                 decimal price = row["price"] != DBNull.Value ? Convert.ToDecimal(row["price"]) : 0m;
                 decimal total = row["total"] != DBNull.Value ? Convert.ToDecimal(row["total"]) : 0m;
                 decimal discRow = row["disc"] != DBNull.Value ? Convert.ToDecimal(row["disc"]) : 0m;
+                decimal discPercentRow = row["disc_percent"] != DBNull.Value ? Convert.ToDecimal(row["disc_percent"]) : 0m;
                 decimal taxRow = row["tax"] != DBNull.Value ? Convert.ToDecimal(row["tax"]) : 0m;
 
                 sumSubtotal += total;
@@ -1495,12 +1551,18 @@ ORDER BY td.tsd_id
                 sumTax += taxRow;
 
                 Add(name);
+                if (string.Equals(noteRow, "Bonus promo", StringComparison.OrdinalIgnoreCase))
+                    Add("Promo : Bonus promo");
                 var qtySatuan = $"{qty:N0} {unit}".Trim();
                 var lineSub = qty * price;
                 if (lineSub < 0m) lineSub = 0m;
                 Add($"{qtySatuan} x {price:N0} = {lineSub:N0}");
                 Add($"Total: {total:N0}");
-                if (discRow > 0m) Add($"Disc : -{discRow:N0}");
+                if (discRow > 0m)
+                {
+                    if (discPercentRow > 0m) Add($"Disc : {discPercentRow:N0}% (-{discRow:N0})");
+                    else Add($"Disc : -{discRow:N0}");
+                }
                 if (taxRow > 0m) Add($"Tax  : {taxRow:N0}");
                 if (!string.IsNullOrWhiteSpace(noteRow)) Add($"Note: {noteRow}");
                 Add("");
@@ -1522,12 +1584,54 @@ ORDER BY td.tsd_id
             Add($"Jumlah Bayar : {paid:N0}");
             Add($"Kembalian    : {change:N0}");
             if (!string.IsNullOrWhiteSpace(note)) Add($"Note: {note}");
+            var approvals = GetSupervisorApprovalLinesForTransaction(tsId);
+            if (approvals.Count > 0)
+            {
+                Add(new string('-', 32));
+                Add("Supervisor Approval:");
+                foreach (var a in approvals)
+                    Add(a);
+            }
             Add(new string('-', 32));
 
             if (showFooter && !string.IsNullOrEmpty(footer)) Add(footer);
 
             if (string.IsNullOrWhiteSpace(saleNumber)) saleNumber = "trx_" + tsId;
             return (string.Join(Environment.NewLine, lines), saleNumber);
+        }
+
+        private static List<string> GetSupervisorApprovalLinesForTransaction(int tsId)
+        {
+            var lines = new List<string>();
+            if (tsId <= 0) return lines;
+            try
+            {
+                using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+                con.Open();
+                using var cmd = new NpgsqlCommand(@"
+SELECT created_at, action, description
+FROM audit_logs
+WHERE reference_id = @id
+  AND LOWER(action) LIKE 'supervisorapproval_%'
+ORDER BY created_at DESC
+LIMIT 5
+", con);
+                cmd.Parameters.AddWithValue("@id", tsId);
+                using var r = cmd.ExecuteReader();
+                while (r.Read())
+                {
+                    var at = r[0] != DBNull.Value ? Convert.ToDateTime(r[0]) : DateTime.Now;
+                    var action = (r[1]?.ToString() ?? "").Trim();
+                    var desc = (r[2]?.ToString() ?? "").Trim();
+                    var s = $"{at:yyyy-MM-dd HH:mm} {action}";
+                    if (!string.IsNullOrWhiteSpace(desc) && desc != "{}") s += $" {desc}";
+                    lines.Add(s);
+                }
+            }
+            catch
+            {
+            }
+            return lines;
         }
 
         private static string GetWarehouseLabelById(int warehouseId)
@@ -1912,6 +2016,24 @@ WHERE deleted_at IS NULL
             var customerDto = ShowCustomerPicker();
             if (customerDto != null)
             {
+                var session = SessionUser.GetCurrentUser();
+                var beforePriceLevelId = _currentInvoice?.PriceLevelId ?? 1;
+                var beforeItems = (_currentInvoice?.Items ?? new List<InvoiceItem>())
+                    .Select(i => new
+                    {
+                        i.ItemId,
+                        i.UnitId,
+                        i.Barcode,
+                        i.Name,
+                        i.Qty,
+                        i.Price,
+                        i.Total,
+                        i.DiscountPercent,
+                        i.DiscountAmount,
+                        i.Note
+                    })
+                    .ToList();
+
                 _currentInvoice.CustomerId = customerDto.Id;
                 _currentInvoice.CustomerName = customerDto.Name;
                 _currentInvoice.PriceLevelId = customerDto.PriceLevelId ?? 1;
@@ -1924,7 +2046,113 @@ WHERE deleted_at IS NULL
                     _currentInvoice = _cartService.RecalculateCartPrices(_currentInvoice);
                     RenderInvoice(_currentInvoice);
                     RefreshInvoicePanel();
+                    RenderReceiptUI(
+                        _currentInvoice,
+                        SessionUser.GetCurrentUser().TerminalName,
+                        SessionUser.GetCurrentUser().Username,
+                        SessionUser.GetCurrentUser().ShiftId.ToString(),
+                        "Unpaid",
+                        _currentInvoice.GrandTotal.ToString(),
+                        "-",
+                        "0"
+                    );
+                    UpdateInvoiceSummary();
                 }
+
+                try
+                {
+                    var afterPriceLevelId = _currentInvoice?.PriceLevelId ?? 1;
+                    var changes = (_currentInvoice?.Items ?? new List<InvoiceItem>())
+                        .Select(i =>
+                        {
+                            var b = beforeItems.FirstOrDefault(x => x.ItemId == i.ItemId && x.UnitId == i.UnitId);
+                            return new
+                            {
+                                i.ItemId,
+                                i.UnitId,
+                                i.Barcode,
+                                i.Name,
+                                i.Qty,
+                                OldPrice = b?.Price ?? 0m,
+                                NewPrice = i.Price,
+                                OldTotal = b?.Total ?? 0m,
+                                NewTotal = i.Total,
+                                i.DiscountPercent,
+                                i.DiscountAmount,
+                                i.Note,
+                                PriceChanged = (b?.Price ?? 0m) != i.Price,
+                                TotalChanged = (b?.Total ?? 0m) != i.Total
+                            };
+                        })
+                        .Where(x => x.PriceChanged || x.TotalChanged)
+                        .ToList();
+
+                    var details = new
+                    {
+                        terminal_id = session?.TerminalId ?? 0,
+                        shift_id = session?.ShiftId ?? 0,
+                        cashier = session?.Username ?? "",
+                        action = "cart_reprice_by_customer",
+                        cart_session_code = _currentInvoice?.CartSessionCode ?? Session.CartSessionCode,
+                        customer = new
+                        {
+                            id = customerDto.Id,
+                            name = customerDto.Name,
+                            price_level_id = customerDto.PriceLevelId ?? 1,
+                            price_level_name = TryGetPriceLevelName(customerDto.PriceLevelId ?? 1)
+                        },
+                        before = new
+                        {
+                            price_level_id = beforePriceLevelId,
+                            price_level_name = TryGetPriceLevelName(beforePriceLevelId)
+                        },
+                        after = new
+                        {
+                            price_level_id = afterPriceLevelId,
+                            price_level_name = TryGetPriceLevelName(afterPriceLevelId)
+                        },
+                        changes
+                    };
+
+                    if (session != null)
+                    {
+                        dlogger.Log(
+                            session.UserId.ToString(),
+                            "Cart_RepriceByCustomer",
+                            customerDto.Id,
+                            "{}",
+                            JsonSerializer.Serialize(details)
+                        );
+                    }
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        private static string TryGetPriceLevelName(int priceLevelId)
+        {
+            if (priceLevelId <= 0) priceLevelId = 1;
+            if (_priceLevelNameCache.TryGetValue(priceLevelId, out var cached) && !string.IsNullOrWhiteSpace(cached))
+                return cached;
+
+            try
+            {
+                using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+                con.Open();
+                using var cmd = new NpgsqlCommand("SELECT name FROM price_levels WHERE id = @id LIMIT 1", con);
+                cmd.Parameters.AddWithValue("@id", priceLevelId);
+                var v = cmd.ExecuteScalar();
+                var name = v != null && v != DBNull.Value ? (v.ToString() ?? "") : "";
+                name = (name ?? "").Trim();
+                if (string.IsNullOrWhiteSpace(name)) name = "#" + priceLevelId;
+                _priceLevelNameCache[priceLevelId] = name;
+                return name;
+            }
+            catch
+            {
+                return "#" + priceLevelId;
             }
         }
 
@@ -3049,6 +3277,13 @@ WHERE deleted_at IS NULL
             Add($"Gudang   : {GetWarehouseLabelFromInvoice(invoice)}");
             Add($"Kasir    : {user}");
             Add($"Shift    : {shift}");
+            if (!string.IsNullOrWhiteSpace(invoice.CustomerName))
+            {
+                if ((invoice.CustomerId ?? 0) > 0) Add($"Pelanggan: {invoice.CustomerName} (#{invoice.CustomerId})");
+                else Add($"Pelanggan: {invoice.CustomerName}");
+            }
+            if (invoice.PriceLevelId != 1)
+                Add($"Jenis Harga: {TryGetPriceLevelName(invoice.PriceLevelId)}");
             Add($"Tanggal  : {DateTime.Now:yyyy-MM-dd}");
             Add($"Waktu    : {DateTime.Now:HH:mm:ss}");
             Add(new string('-', 32));
@@ -3065,6 +3300,8 @@ WHERE deleted_at IS NULL
                     else d += $"  Disc -{item.DiscountAmount:N0}";
                 }
                 Add(item.Name ?? "");
+                if (string.Equals(item.Note, "Bonus promo", StringComparison.OrdinalIgnoreCase))
+                    Add("Promo : Bonus promo");
                 Add(d);
                 Add($"Total: {item.Total:N0}");
                 if (!string.IsNullOrWhiteSpace(item.Note)) Add($"Note: {item.Note}");

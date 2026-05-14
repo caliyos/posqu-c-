@@ -3,13 +3,17 @@ using POS_qu.Repositories;
 using POS_qu.Controllers;
 using POS_qu.Core;
 using POS_qu.Helpers;
+using Npgsql;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Printing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text;
+using System.Text.Json;
 using System.Windows.Forms;
 
 namespace POS_qu
@@ -53,6 +57,8 @@ namespace POS_qu
             btnExportPdf.Click += BtnExportPdf_Click;
             cbStatus.SelectedIndexChanged += (s, e) => LoadData();
 
+            TryInjectAuditLogUi();
+
             _printDoc.BeginPrint += PrintDoc_BeginPrint;
             _printDoc.PrintPage += PrintDoc_PrintPage;
 
@@ -86,6 +92,296 @@ namespace POS_qu
             dtTo.ValueChanged += (_, __) => { if (!_uiInit) LoadData(); };
 
             Load += (_, __) => LoadData();
+        }
+
+        private void TryInjectAuditLogUi()
+        {
+            try
+            {
+                if (panelHeader == null || btnPrintPreview == null) return;
+
+                var btnAuditLogs = new Button
+                {
+                    Name = "btnAuditLogs",
+                    Text = "Audit Logs",
+                    Anchor = btnPrintPreview.Anchor,
+                    BackColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = btnPrintPreview.Font,
+                    Size = new Size(120, btnPrintPreview.Height),
+                    Location = new Point(btnPrintPreview.Left - 130, btnPrintPreview.Top),
+                    UseVisualStyleBackColor = false
+                };
+                btnAuditLogs.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+                btnAuditLogs.Click += (_, __) => OpenAuditLogsForSelectedTransaction();
+                panelHeader.Controls.Add(btnAuditLogs);
+                btnAuditLogs.BringToFront();
+
+                if (dgvTransactions != null)
+                {
+                    var menu = dgvTransactions.ContextMenuStrip ?? new ContextMenuStrip();
+                    var mi = menu.Items.Cast<ToolStripItem>().FirstOrDefault(x => x.Name == "miAuditLogs");
+                    if (mi == null)
+                    {
+                        var miAudit = new ToolStripMenuItem { Name = "miAuditLogs", Text = "Audit Logs (Transaksi)" };
+                        miAudit.Click += (_, __) => OpenAuditLogsForSelectedTransaction();
+                        menu.Items.Add(miAudit);
+                        dgvTransactions.ContextMenuStrip = menu;
+                    }
+                }
+            }
+            catch
+            {
+            }
+        }
+
+        private void OpenAuditLogsForSelectedTransaction()
+        {
+            var tsId = GetSelectedTransactionId();
+            if (tsId <= 0)
+            {
+                MessageBox.Show("Pilih transaksi dulu.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            ShowAuditLogsByReferenceId("Audit Logs • Transaksi", tsId);
+        }
+
+        private void ShowAuditLogsByReferenceId(string title, int referenceId)
+        {
+            using var f = new Form();
+            f.Text = $"{title} #{referenceId}";
+            f.StartPosition = FormStartPosition.CenterParent;
+            f.Size = new Size(1100, 720);
+            f.MinimizeBox = false;
+            f.MaximizeBox = true;
+            f.FormBorderStyle = FormBorderStyle.Sizable;
+
+            var pnlTop = new Panel { Dock = DockStyle.Top, Height = 86, Padding = new Padding(12), BackColor = Color.White };
+            var lbl = new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 24,
+                Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold),
+                Text = $"Audit Logs untuk Transaksi #{referenceId}"
+            };
+
+            var row = new Panel { Dock = DockStyle.Top, Height = 40 };
+            var txtSearch = new TextBox { PlaceholderText = "Cari (action/description/details)...", Dock = DockStyle.Fill, Font = new Font("Segoe UI", 10F) };
+            var cmbCol = new ComboBox { Dock = DockStyle.Right, Width = 170, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 10F) };
+            cmbCol.Items.AddRange(new object[] { "action", "description", "details", "user_id" });
+            cmbCol.SelectedIndex = 0;
+            var btnReload = new Button { Text = "Reload", Dock = DockStyle.Right, Width = 110 };
+            var btnDetails = new Button { Text = "Lihat Detail", Dock = DockStyle.Right, Width = 140 };
+
+            row.Controls.Add(txtSearch);
+            row.Controls.Add(btnDetails);
+            row.Controls.Add(btnReload);
+            row.Controls.Add(cmbCol);
+
+            pnlTop.Controls.Add(row);
+            pnlTop.Controls.Add(lbl);
+
+            var grid = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                MultiSelect = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None,
+                BackgroundColor = Color.White
+            };
+
+            var pnlBottom = new Panel { Dock = DockStyle.Bottom, Height = 56, Padding = new Padding(12), BackColor = Color.WhiteSmoke };
+            var lblPaging = new Label { Dock = DockStyle.Left, Width = 260, TextAlign = ContentAlignment.MiddleLeft };
+            var btnFirst = new Button { Text = "⏮", Dock = DockStyle.Right, Width = 50 };
+            var btnPrev = new Button { Text = "◀", Dock = DockStyle.Right, Width = 50 };
+            var btnNext = new Button { Text = "▶", Dock = DockStyle.Right, Width = 50 };
+            var btnLast = new Button { Text = "⏭", Dock = DockStyle.Right, Width = 50 };
+            var cmbPage = new ComboBox { Dock = DockStyle.Right, Width = 90, DropDownStyle = ComboBoxStyle.DropDownList };
+            cmbPage.Items.AddRange(new object[] { "25", "50", "100", "200" });
+            cmbPage.SelectedIndex = 1;
+            var lblPage = new Label { Dock = DockStyle.Right, Width = 80, Text = "PageSize", TextAlign = ContentAlignment.MiddleRight };
+
+            pnlBottom.Controls.Add(btnLast);
+            pnlBottom.Controls.Add(btnNext);
+            pnlBottom.Controls.Add(btnPrev);
+            pnlBottom.Controls.Add(btnFirst);
+            pnlBottom.Controls.Add(cmbPage);
+            pnlBottom.Controls.Add(lblPage);
+            pnlBottom.Controls.Add(lblPaging);
+
+            f.Controls.Add(grid);
+            f.Controls.Add(pnlBottom);
+            f.Controls.Add(pnlTop);
+
+            DataTable LoadData()
+            {
+                using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+                con.Open();
+                using var cmd = new NpgsqlCommand(@"
+SELECT
+    id,
+    COALESCE(user_id,0) AS user_id,
+    COALESCE(action,'') AS action,
+    COALESCE(reference_id,0) AS reference_id,
+    COALESCE(description,'') AS description,
+    COALESCE(details,'') AS details,
+    created_at
+FROM audit_logs
+WHERE reference_id = @rid
+ORDER BY created_at DESC, id DESC
+LIMIT 2000
+", con);
+                cmd.Parameters.AddWithValue("@rid", referenceId);
+                var dt = new DataTable();
+                using var da = new NpgsqlDataAdapter(cmd);
+                da.Fill(dt);
+                return dt;
+            }
+
+            DataGridViewManager mgr = null;
+            void Bind(DataTable dt)
+            {
+                int pageSize = 50;
+                if (int.TryParse(cmbPage.SelectedItem?.ToString(), out var ps) && ps > 0) pageSize = ps;
+                mgr = new DataGridViewManager(grid, dt, pageSize);
+                mgr.PagingInfoLabel = lblPaging;
+                if (grid.Columns.Contains("id")) grid.Columns["id"].Visible = false;
+                if (grid.Columns.Contains("reference_id")) grid.Columns["reference_id"].Visible = false;
+                if (grid.Columns.Contains("details")) grid.Columns["details"].Visible = false;
+                if (grid.Columns.Contains("created_at")) { grid.Columns["created_at"].HeaderText = "Waktu"; grid.Columns["created_at"].Width = 160; }
+                if (grid.Columns.Contains("user_id")) { grid.Columns["user_id"].HeaderText = "User"; grid.Columns["user_id"].Width = 80; }
+                if (grid.Columns.Contains("action")) { grid.Columns["action"].HeaderText = "Action"; grid.Columns["action"].Width = 220; }
+                if (grid.Columns.Contains("description")) { grid.Columns["description"].HeaderText = "Description"; grid.Columns["description"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill; }
+            }
+
+            string PrettyJson(string raw)
+            {
+                if (string.IsNullOrWhiteSpace(raw)) return "";
+                var t = raw.Trim();
+                if (t == "{}" || t == "[]") return t;
+                try
+                {
+                    using var doc = JsonDocument.Parse(t);
+                    return JsonSerializer.Serialize(doc.RootElement, new JsonSerializerOptions { WriteIndented = true });
+                }
+                catch
+                {
+                    return raw;
+                }
+            }
+
+            void ShowSelectedDetails()
+            {
+                try
+                {
+                    if (grid.SelectedRows.Count == 0) return;
+                    var r = grid.SelectedRows[0];
+                    var action = r.Cells["action"]?.Value?.ToString() ?? "";
+                    var desc = r.Cells["description"]?.Value?.ToString() ?? "";
+                    var details = "";
+                    try
+                    {
+                        details = r.Cells["details"]?.Value?.ToString() ?? "";
+                    }
+                    catch
+                    {
+                        details = "";
+                    }
+
+                    using var modal = new Form();
+                    modal.Text = "Detail Audit Log";
+                    modal.StartPosition = FormStartPosition.CenterParent;
+                    modal.Size = new Size(980, 720);
+                    modal.MinimizeBox = false;
+                    modal.MaximizeBox = true;
+
+                    var txt = new TextBox
+                    {
+                        Multiline = true,
+                        ReadOnly = true,
+                        ScrollBars = ScrollBars.Both,
+                        Dock = DockStyle.Fill,
+                        Font = new Font("Consolas", 10F),
+                        WordWrap = false,
+                        Text = $"ACTION: {action}{Environment.NewLine}{Environment.NewLine}DESC:{Environment.NewLine}{desc}{Environment.NewLine}{Environment.NewLine}DETAILS:{Environment.NewLine}{PrettyJson(details)}"
+                    };
+                    var btnCopy = new Button { Text = "Copy", Dock = DockStyle.Bottom, Height = 44 };
+                    btnCopy.Click += (_, __) =>
+                    {
+                        try { Clipboard.SetText(txt.Text ?? ""); } catch { }
+                    };
+                    modal.Controls.Add(txt);
+                    modal.Controls.Add(btnCopy);
+                    modal.ShowDialog(f);
+                }
+                catch
+                {
+                }
+            }
+
+            void Reload()
+            {
+                try
+                {
+                    var dt = LoadData();
+                    Bind(dt);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Gagal load audit logs", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+
+            btnReload.Click += (_, __) => Reload();
+            btnDetails.Click += (_, __) => ShowSelectedDetails();
+            grid.CellDoubleClick += (_, e) => { if (e.RowIndex >= 0) ShowSelectedDetails(); };
+
+            txtSearch.TextChanged += (_, __) =>
+            {
+                try
+                {
+                    if (mgr == null) return;
+                    mgr.Filter(txtSearch.Text ?? "", cmbCol.SelectedItem?.ToString() ?? "action");
+                }
+                catch
+                {
+                }
+            };
+            cmbCol.SelectedIndexChanged += (_, __) =>
+            {
+                try
+                {
+                    if (mgr == null) return;
+                    mgr.Filter(txtSearch.Text ?? "", cmbCol.SelectedItem?.ToString() ?? "action");
+                }
+                catch
+                {
+                }
+            };
+
+            cmbPage.SelectedIndexChanged += (_, __) =>
+            {
+                try
+                {
+                    if (mgr == null) return;
+                    if (int.TryParse(cmbPage.SelectedItem?.ToString(), out var ps) && ps > 0)
+                        mgr.SetPageSize(ps);
+                }
+                catch
+                {
+                }
+            };
+
+            btnFirst.Click += (_, __) => { try { mgr?.FirstPage(); } catch { } };
+            btnPrev.Click += (_, __) => { try { mgr?.PreviousPage(); } catch { } };
+            btnNext.Click += (_, __) => { try { mgr?.NextPage(); } catch { } };
+            btnLast.Click += (_, __) => { try { mgr?.LastPage(); } catch { } };
+
+            Reload();
+            f.ShowDialog(this);
         }
 
         private void LoadData()
@@ -448,13 +744,21 @@ namespace POS_qu
             DataTable dt;
             if (_isOrderView)
             {
-                int orderId = Convert.ToInt32(dgvTransactions.SelectedRows[0].Cells["order_id"].Value);
+                if (!TryGetSelectedRowIntValue(dgvTransactions.SelectedRows[0], "order_id", out int orderId) || orderId <= 0)
+                {
+                    dgvDetails.DataSource = new DataTable();
+                    return;
+                }
                 dt = _orderController.GetOrderDetailsTable(orderId);
                 LoadOrderDetailsToGrid(dt);
                 return;
             }
 
-            int tsId = Convert.ToInt32(dgvTransactions.SelectedRows[0].Cells["ts_id"].Value);
+            if (!TryGetSelectedRowIntValue(dgvTransactions.SelectedRows[0], "ts_id", out int tsId) || tsId <= 0)
+            {
+                dgvDetails.DataSource = new DataTable();
+                return;
+            }
             dt = _repo.GetTransactionDetailsById(tsId);
             var friendly = new DataTable();
             friendly.Columns.Add("Gudang");
@@ -478,13 +782,13 @@ namespace POS_qu
                 var wh = r.Table.Columns.Contains("warehouse_name") ? (r["warehouse_name"]?.ToString() ?? "") : "";
                 var name = r["name"]?.ToString() ?? "";
                 var barcode = r["barcode"]?.ToString() ?? "";
-                var qty = Convert.ToDecimal(r["tsd_quantity"]);
+                var qty = r["tsd_quantity"] != DBNull.Value ? Convert.ToDecimal(r["tsd_quantity"]) : 0m;
                 var unit = r["tsd_unit"]?.ToString() ?? "";
-                var price = Convert.ToDecimal(r["tsd_sell_price"]);
+                var price = r["tsd_sell_price"] != DBNull.Value ? Convert.ToDecimal(r["tsd_sell_price"]) : 0m;
                 var buy = r.Table.Columns.Contains("tsd_buy_price") && r["tsd_buy_price"] != DBNull.Value ? Convert.ToDecimal(r["tsd_buy_price"]) : 0m;
-                var total = Convert.ToDecimal(r["tsd_total"]);
-                var disc = Convert.ToDecimal(r["tsd_discount_total"]);
-                var tax = Convert.ToDecimal(r["tsd_tax"]);
+                var total = r["tsd_total"] != DBNull.Value ? Convert.ToDecimal(r["tsd_total"]) : 0m;
+                var disc = r.Table.Columns.Contains("tsd_discount_total") && r["tsd_discount_total"] != DBNull.Value ? Convert.ToDecimal(r["tsd_discount_total"]) : 0m;
+                var tax = r.Table.Columns.Contains("tsd_tax") && r["tsd_tax"] != DBNull.Value ? Convert.ToDecimal(r["tsd_tax"]) : 0m;
                 var note = r["tsd_note"]?.ToString() ?? "";
 
                 decimal lineHpp = buy * qty;
@@ -534,6 +838,36 @@ namespace POS_qu
                 dgvDetails.Columns["HPP"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             if (dgvDetails.Columns.Contains("Laba"))
                 dgvDetails.Columns["Laba"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+        }
+
+        private static bool TryGetSelectedRowIntValue(DataGridViewRow row, string columnName, out int value)
+        {
+            value = 0;
+            if (row == null) return false;
+            if (string.IsNullOrWhiteSpace(columnName)) return false;
+            if (row.DataGridView == null) return false;
+            if (!row.DataGridView.Columns.Contains(columnName)) return false;
+
+            object v;
+            try { v = row.Cells[columnName].Value; }
+            catch { return false; }
+            if (v == null || v == DBNull.Value) return false;
+
+            try
+            {
+                if (v is int i) { value = i; return true; }
+                if (v is long l) { value = l > int.MaxValue ? int.MaxValue : (l < int.MinValue ? int.MinValue : (int)l); return true; }
+                if (v is short s) { value = s; return true; }
+                if (v is decimal d) { value = d > int.MaxValue ? int.MaxValue : (d < int.MinValue ? int.MinValue : (int)d); return true; }
+                if (v is double db) { value = db > int.MaxValue ? int.MaxValue : (db < int.MinValue ? int.MinValue : (int)db); return true; }
+                var text = v.ToString();
+                if (string.IsNullOrWhiteSpace(text)) return false;
+                return int.TryParse(text, out value);
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private void LoadOrderDetailsToGrid(DataTable dt)
@@ -609,7 +943,7 @@ namespace POS_qu
         {
             if (_isOrderView) return 0;
             if (dgvTransactions.SelectedRows.Count == 0) return 0;
-            return Convert.ToInt32(dgvTransactions.SelectedRows[0].Cells["ts_id"].Value);
+            return TryGetSelectedRowIntValue(dgvTransactions.SelectedRows[0], "ts_id", out int tsId) ? tsId : 0;
         }
 
         private void BtnPrintPreview_Click(object sender, EventArgs e)
@@ -747,26 +1081,25 @@ namespace POS_qu
             g.DrawString("Metode: " + (_printData.PaymentMethod ?? ""), fontSub, Brushes.Black, bounds.Left, y);
             y += line + 6;
 
+            if (!string.IsNullOrWhiteSpace(_printData.CustomerName))
+            {
+                var cid = _printData.CustomerId > 0 ? $" (#{_printData.CustomerId})" : "";
+                g.DrawString("Pelanggan: " + _printData.CustomerName + cid, fontSub, Brushes.Black, bounds.Left, y);
+                y += line;
+            }
+            if (!string.IsNullOrWhiteSpace(_printData.PriceLevelName))
+            {
+                g.DrawString("Jenis Harga: " + _printData.PriceLevelName, fontSub, Brushes.Black, bounds.Left, y);
+                y += line;
+            }
+            y += 2;
+
             g.DrawLine(Pens.Black, bounds.Left, y, bounds.Right, y);
             y += 10;
 
-            int colName = bounds.Left;
-            int colQty = bounds.Right - 220;
-            int colPrice = bounds.Right - 140;
-            int colTotal = bounds.Right - 10;
-
-            g.DrawString("Item", fontBold, Brushes.Black, colName, y);
-            g.DrawString("Qty", fontBold, Brushes.Black, colQty, y);
-            g.DrawString("Harga", fontBold, Brushes.Black, colPrice, y);
-            g.DrawString("Total", fontBold, Brushes.Black, colTotal - 80, y);
-            y += line;
-
-            g.DrawLine(Pens.Black, bounds.Left, y, bounds.Right, y);
-            y += 8;
-
             while (_printRowCursor < _printData.Items.Rows.Count)
             {
-                if (y > bounds.Bottom - 220)
+                if (y > bounds.Bottom - 260)
                 {
                     e.HasMorePages = true;
                     return;
@@ -774,16 +1107,46 @@ namespace POS_qu
 
                 var r = _printData.Items.Rows[_printRowCursor];
                 string name = r["name"]?.ToString() ?? "";
-                string qty = Convert.ToDecimal(r["qty"]).ToString("N0");
-                string price = Convert.ToDecimal(r["price"]).ToString("N0");
-                string total = Convert.ToDecimal(r["total"]).ToString("N0");
+                decimal qty = Convert.ToDecimal(r["qty"]);
+                string unit = r["unit"]?.ToString() ?? "";
+                decimal price = Convert.ToDecimal(r["price"]);
+                decimal sub = Convert.ToDecimal(r["subtotal"]);
+                decimal disc = Convert.ToDecimal(r["disc"]);
+                decimal discPercent = Convert.ToDecimal(r["disc_percent"]);
+                decimal total = Convert.ToDecimal(r["total"]);
+                string note = r["note"]?.ToString() ?? "";
 
-                g.DrawString(name, fontSub, Brushes.Black, colName, y);
-                g.DrawString(qty, fontMono, Brushes.Black, colQty, y);
-                g.DrawString(price, fontMono, Brushes.Black, colPrice, y);
-                var sizeTotal = g.MeasureString(total, fontMono);
-                g.DrawString(total, fontMono, Brushes.Black, colTotal - sizeTotal.Width, y);
+                g.DrawString(name, fontSub, Brushes.Black, bounds.Left, y);
                 y += line;
+
+                var qtyS = qty.ToString("N0");
+                if (!string.IsNullOrWhiteSpace(unit)) qtyS += " " + unit;
+                var line1 = $"{qtyS} x {price:N0} = {sub:N0}";
+                g.DrawString(line1, fontMono, Brushes.Black, bounds.Left, y);
+                y += line;
+
+                if (disc > 0m)
+                {
+                    var d = discPercent > 0m ? $"Diskon: {discPercent:N0}% (-{disc:N0})" : $"Diskon: -{disc:N0}";
+                    g.DrawString(d, fontMono, Brushes.Black, bounds.Left, y);
+                    y += line;
+                }
+
+                g.DrawString("Harga Final: " + total.ToString("N0"), fontMono, Brushes.Black, bounds.Left, y);
+                y += line;
+
+                if (string.Equals(note, "Bonus promo", StringComparison.OrdinalIgnoreCase))
+                {
+                    g.DrawString("Promo: Bonus promo", fontMono, Brushes.Black, bounds.Left, y);
+                    y += line;
+                }
+                else if (!string.IsNullOrWhiteSpace(note))
+                {
+                    g.DrawString("Catatan: " + note, fontMono, Brushes.Black, bounds.Left, y);
+                    y += line;
+                }
+
+                y += 4;
 
                 _printRowCursor++;
             }
@@ -804,8 +1167,32 @@ namespace POS_qu
             DrawMoneyLine(g, "Kembalian", _printData.ChangeAmount, fontSub, fontMono, bounds, ref y);
 
             y += 10;
+            g.DrawLine(Pens.Black, bounds.Left, y, bounds.Right, y);
+            y += 10;
+            g.DrawString("Supervisor Approval:", fontBold, Brushes.Black, bounds.Left, y);
+            y += line;
+            if (_printData.SupervisorApprovals != null && _printData.SupervisorApprovals.Count > 0)
+            {
+                foreach (var a in _printData.SupervisorApprovals)
+                {
+                    if (y > bounds.Bottom - 120)
+                    {
+                        e.HasMorePages = true;
+                        return;
+                    }
+                    g.DrawString(a, fontSub, Brushes.Black, bounds.Left, y);
+                    y += line;
+                }
+            }
+            else
+            {
+                g.DrawString("-", fontSub, Brushes.Black, bounds.Left, y);
+                y += line;
+            }
+
             if (!string.IsNullOrWhiteSpace(_printData.Footer))
             {
+                y += 6;
                 g.DrawLine(Pens.Black, bounds.Left, y, bounds.Right, y);
                 y += 10;
                 g.DrawString(_printData.Footer, fontSub, Brushes.Black, bounds.Left, y);
@@ -843,7 +1230,9 @@ SELECT
     COALESCE(t.ts_tax_mode,'NON') AS ts_tax_mode,
     COALESCE(t.ts_tax_amount,0) AS ts_tax_amount,
     COALESCE(t.ts_global_discount_amount,0) AS ts_global_discount_amount,
-    COALESCE(u.username,'') AS cashier
+    COALESCE(u.username,'') AS cashier,
+    COALESCE(t.ts_customer,0) AS ts_customer,
+    COALESCE(t.ts_freename,'') AS ts_freename
 FROM transactions t
 LEFT JOIN users u ON u.id = t.user_id
 WHERE t.ts_id = @id
@@ -862,16 +1251,33 @@ LIMIT 1
             var items = new DataTable();
             items.Columns.Add("name", typeof(string));
             items.Columns.Add("qty", typeof(decimal));
+            items.Columns.Add("unit", typeof(string));
             items.Columns.Add("price", typeof(decimal));
+            items.Columns.Add("subtotal", typeof(decimal));
+            items.Columns.Add("disc", typeof(decimal));
+            items.Columns.Add("disc_percent", typeof(decimal));
             items.Columns.Add("total", typeof(decimal));
+            items.Columns.Add("note", typeof(string));
 
             foreach (DataRow r in details.Rows)
             {
+                var qty = Convert.ToDecimal(r["tsd_quantity"]);
+                var price = Convert.ToDecimal(r["tsd_sell_price"]);
+                var sub = qty * price;
+                var disc = r.Table.Columns.Contains("tsd_discount_total") && r["tsd_discount_total"] != DBNull.Value ? Convert.ToDecimal(r["tsd_discount_total"]) : 0m;
+                var discPercent = r.Table.Columns.Contains("tsd_discount_percentage") && r["tsd_discount_percentage"] != DBNull.Value ? Convert.ToDecimal(r["tsd_discount_percentage"]) : 0m;
+                var unit = r.Table.Columns.Contains("tsd_unit") ? (r["tsd_unit"]?.ToString() ?? "") : "";
+                var note = r.Table.Columns.Contains("tsd_note") ? (r["tsd_note"]?.ToString() ?? "") : "";
                 items.Rows.Add(
                     r["name"]?.ToString() ?? "",
-                    Convert.ToDecimal(r["tsd_quantity"]),
-                    Convert.ToDecimal(r["tsd_sell_price"]),
-                    Convert.ToDecimal(r["tsd_total"])
+                    qty,
+                    unit,
+                    price,
+                    sub,
+                    disc,
+                    discPercent,
+                    Convert.ToDecimal(r["tsd_total"]),
+                    note
                 );
             }
 
@@ -888,6 +1294,59 @@ LIMIT 1
                         storePhone = reader["telepon"]?.ToString()?.Trim() ?? "";
                         footer = reader["footer"]?.ToString()?.Trim() ?? "";
                     }
+                }
+            }
+            catch
+            {
+            }
+
+            int customerId = 0;
+            try { customerId = Convert.ToInt32(h["ts_customer"]); } catch { customerId = 0; }
+            string customerName = "";
+            try { customerName = (h["ts_freename"]?.ToString() ?? "").Trim(); } catch { customerName = ""; }
+
+            string priceLevelName = "retail";
+            if (customerId > 0)
+            {
+                try
+                {
+                    using var cmd = new Npgsql.NpgsqlCommand(@"
+SELECT COALESCE(pl.name,'retail')
+FROM customers c
+LEFT JOIN price_levels pl ON pl.id = c.price_level_id
+WHERE c.id = @id
+LIMIT 1
+", con);
+                    cmd.Parameters.AddWithValue("@id", customerId);
+                    var v = cmd.ExecuteScalar();
+                    var s = v != null && v != DBNull.Value ? (v.ToString() ?? "") : "";
+                    if (!string.IsNullOrWhiteSpace(s)) priceLevelName = s.Trim();
+                }
+                catch
+                {
+                    priceLevelName = "retail";
+                }
+            }
+
+            var approvals = new List<string>();
+            try
+            {
+                using var cmd = new Npgsql.NpgsqlCommand(@"
+SELECT created_at, action
+FROM audit_logs
+WHERE reference_id = @id
+  AND LOWER(action) LIKE 'supervisorapproval_%'
+ORDER BY created_at DESC
+LIMIT 10
+", con);
+                cmd.Parameters.AddWithValue("@id", tsId);
+                using var r = cmd.ExecuteReader();
+                while (r.Read())
+                {
+                    var at = r[0] != DBNull.Value ? Convert.ToDateTime(r[0]) : DateTime.Now;
+                    var action = (r[1]?.ToString() ?? "").Trim();
+                    if (!string.IsNullOrWhiteSpace(action))
+                        approvals.Add($"{at:yyyy-MM-dd HH:mm} {action}");
                 }
             }
             catch
@@ -912,7 +1371,11 @@ LIMIT 1
                 GlobalDiscount = Convert.ToDecimal(h["ts_global_discount_amount"]),
                 GrandTotal = Convert.ToDecimal(h["ts_grand_total"]),
                 PaidAmount = Convert.ToDecimal(h["ts_payment_amount"]),
-                ChangeAmount = Convert.ToDecimal(h["ts_change"])
+                ChangeAmount = Convert.ToDecimal(h["ts_change"]),
+                CustomerId = customerId,
+                CustomerName = customerName,
+                PriceLevelName = priceLevelName,
+                SupervisorApprovals = approvals
             };
         }
 
@@ -923,6 +1386,9 @@ LIMIT 1
             public DateTime SaleDate { get; set; }
             public string PaymentMethod { get; set; }
             public string Cashier { get; set; }
+            public int CustomerId { get; set; }
+            public string CustomerName { get; set; }
+            public string PriceLevelName { get; set; }
             public string StoreName { get; set; }
             public string StoreAddress { get; set; }
             public string StorePhone { get; set; }
@@ -935,6 +1401,7 @@ LIMIT 1
             public decimal GrandTotal { get; set; }
             public decimal PaidAmount { get; set; }
             public decimal ChangeAmount { get; set; }
+            public List<string> SupervisorApprovals { get; set; } = new List<string>();
         }
     }
 }

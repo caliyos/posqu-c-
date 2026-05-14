@@ -916,14 +916,31 @@ LIMIT 1
 
     public InvoiceData RecalculateCartPrices(InvoiceData invoice)
     {
+        if (invoice == null) return new InvoiceData();
+        if (invoice.Items == null || invoice.Items.Count == 0) return invoice;
+
+        var cartSessionCode = !string.IsNullOrWhiteSpace(invoice.CartSessionCode)
+            ? invoice.CartSessionCode
+            : Session.CartSessionCode;
+
+        if (!string.IsNullOrWhiteSpace(cartSessionCode))
+            invoice.CartSessionCode = cartSessionCode;
+
         var itemsCopy = invoice.Items.ToList();
         foreach (var item in itemsCopy)
         {
             item.IsEditMode = true;
-            item.AdditionalQuantity = item.Qty; // Keep same quantity, just recalculate
-            invoice = UpdateCartItemStock(item, invoice);
+            item.AdditionalQuantity = item.Qty;
+            UpdateCartItemStock(item, invoice);
         }
-        return invoice;
+
+        if (string.IsNullOrWhiteSpace(cartSessionCode))
+            return invoice;
+
+        var rows = _repo.GetPendingItems(cartSessionCode);
+        var updated = InvoiceBuilder.FromPending(rows);
+        CopyInvoiceMeta(invoice, updated);
+        return updated;
     }
 
 

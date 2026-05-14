@@ -840,7 +840,7 @@ LIMIT 1
             Label lblMinQty = new Label() { Left = 20, Top = 140, Text = "Min Qty", AutoSize = true };
             TextBox txtMinQty = new TextBox() { Left = 150, Top = 138, Width = 100, Text = price.MinQty.ToString() };
             
-            Label lblMaxQty = new Label() { Left = 260, Top = 140, Text = "Max Qty", AutoSize = true };
+            Label lblMaxQty = new Label() { Left = 250, Top = 140, Text = "Max Qty", AutoSize = true };
             TextBox txtMaxQty = new TextBox() { Left = 330, Top = 138, Width = 70, Text = price.MaxQty?.ToString() };
 
             Label lblPrice = new Label() { Left = 20, Top = 180, Text = "Harga Jual", AutoSize = true };

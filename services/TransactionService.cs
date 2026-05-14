@@ -139,6 +139,23 @@ namespace POS_qu.Services
                         var numberingService = new POS_qu.Services.DocumentNumberingService();
                         var saleNo = numberingService.Generate("SALE", DateTime.Now.Date, con, tran);
                         int warehouseId = invoice != null && invoice.WarehouseId > 0 ? invoice.WarehouseId : (sessionUser.WarehouseId <= 0 ? 1 : sessionUser.WarehouseId);
+                        var netAfterItemDiscount = invoice.Items.Sum(x => x.Total);
+                        if (netAfterItemDiscount < 0m) netAfterItemDiscount = 0m;
+                        decimal globalDiscValue;
+                        if (invoice.GlobalDiscountIsAmount)
+                        {
+                            globalDiscValue = invoice.GlobalDiscountValue;
+                        }
+                        else
+                        {
+                            var p = invoice.GlobalDiscountPercent;
+                            if (p < 0m) p = 0m;
+                            if (p > 100m) p = 100m;
+                            globalDiscValue = Math.Round((netAfterItemDiscount * p) / 100m, 2, MidpointRounding.AwayFromZero);
+                        }
+                        if (globalDiscValue < 0m) globalDiscValue = 0m;
+                        if (globalDiscValue > netAfterItemDiscount) globalDiscValue = netAfterItemDiscount;
+                        var grandTotal = CalculateGrandTotal(invoice);
 
                         // ===============================
                         // BUILD TRANSACTION OBJECT
@@ -157,15 +174,15 @@ namespace POS_qu.Services
                             TsChange = invoice.ChangeAmount,
                             TsInternalNote = "Processed via POS system",
                             TsNote = invoice.GlobalNote ?? string.Empty,
-                            TsDiscountTotal = 0,
-                            TsGrandTotal = CalculateGrandTotal(invoice),
-                            TsTotalBeforeTax = CalculateGrandTotal(invoice),
+                            TsDiscountTotal = globalDiscValue,
+                            TsGrandTotal = grandTotal,
+                            TsTotalBeforeTax = netAfterItemDiscount,
                             TsTaxMode = "NON",
                             TsTaxRate = 0,
                             TsTaxAmount = 0,
-                            TsCustomer = null,
+                            TsCustomer = invoice.CustomerId,
                             TsDelivery = invoice.DeliveryAmount,
-                            TsFreename = "Guest",
+                            TsFreename = string.IsNullOrWhiteSpace(invoice.CustomerName) ? "Guest" : invoice.CustomerName,
                             UserId = sessionUser.UserId,
                             CreatedBy = sessionUser.UserId,
                             TerminalId = sessionUser.TerminalId,
@@ -302,6 +319,22 @@ namespace POS_qu.Services
                         var numberingService = new POS_qu.Services.DocumentNumberingService();
                         var saleNo = numberingService.Generate("SALE", DateTime.Now.Date, con, tran);
                         int warehouseId = invoice != null && invoice.WarehouseId > 0 ? invoice.WarehouseId : (sessionUser.WarehouseId <= 0 ? 1 : sessionUser.WarehouseId);
+                        var netAfterItemDiscount = invoice.Items.Sum(x => x.Total);
+                        if (netAfterItemDiscount < 0m) netAfterItemDiscount = 0m;
+                        decimal globalDiscValue;
+                        if (invoice.GlobalDiscountIsAmount)
+                        {
+                            globalDiscValue = invoice.GlobalDiscountValue;
+                        }
+                        else
+                        {
+                            var p = invoice.GlobalDiscountPercent;
+                            if (p < 0m) p = 0m;
+                            if (p > 100m) p = 100m;
+                            globalDiscValue = Math.Round((netAfterItemDiscount * p) / 100m, 2, MidpointRounding.AwayFromZero);
+                        }
+                        if (globalDiscValue < 0m) globalDiscValue = 0m;
+                        if (globalDiscValue > netAfterItemDiscount) globalDiscValue = netAfterItemDiscount;
 
                         // ===============================
                         // BUILD TRANSACTION HEADER
@@ -320,15 +353,15 @@ namespace POS_qu.Services
                             TsChange = 0,
                             TsInternalNote = "Installment Transaction",
                             TsNote = note ?? "",
-                            TsDiscountTotal = 0,
+                            TsDiscountTotal = globalDiscValue,
                             TsGrandTotal = grandTotal,
-                            TsTotalBeforeTax = grandTotal,
+                            TsTotalBeforeTax = netAfterItemDiscount,
                             TsTaxMode = "NON",
                             TsTaxRate = 0,
                             TsTaxAmount = 0,
-                            TsCustomer = null,
+                            TsCustomer = invoice.CustomerId,
                             TsDelivery = invoice.DeliveryAmount,
-                            TsFreename = customerName ?? "Guest",
+                            TsFreename = string.IsNullOrWhiteSpace(invoice.CustomerName) ? (customerName ?? "Guest") : invoice.CustomerName,
                             UserId = sessionUser.UserId,
                             CreatedBy = sessionUser.UserId,
                             TerminalId = sessionUser.TerminalId,
@@ -462,6 +495,22 @@ namespace POS_qu.Services
                 var numberingService = new POS_qu.Services.DocumentNumberingService();
                 var saleNo = numberingService.Generate("SALE", DateTime.Now.Date, con, tran);
                 int warehouseId = invoice != null && invoice.WarehouseId > 0 ? invoice.WarehouseId : (sessionUser.WarehouseId <= 0 ? 1 : sessionUser.WarehouseId);
+                var netAfterItemDiscount = invoice.Items.Sum(x => x.Total);
+                if (netAfterItemDiscount < 0m) netAfterItemDiscount = 0m;
+                decimal globalDiscValue;
+                if (invoice.GlobalDiscountIsAmount)
+                {
+                    globalDiscValue = invoice.GlobalDiscountValue;
+                }
+                else
+                {
+                    var p = invoice.GlobalDiscountPercent;
+                    if (p < 0m) p = 0m;
+                    if (p > 100m) p = 100m;
+                    globalDiscValue = Math.Round((netAfterItemDiscount * p) / 100m, 2, MidpointRounding.AwayFromZero);
+                }
+                if (globalDiscValue < 0m) globalDiscValue = 0m;
+                if (globalDiscValue > netAfterItemDiscount) globalDiscValue = netAfterItemDiscount;
 
                 Transactions transaction = new Transactions
                 {
@@ -476,15 +525,15 @@ namespace POS_qu.Services
                     TsChange = invoice.ChangeAmount,
                     TsInternalNote = "Split payment",
                     TsNote = invoice.GlobalNote ?? string.Empty,
-                    TsDiscountTotal = 0,
+                    TsDiscountTotal = globalDiscValue,
                     TsGrandTotal = grandTotal,
-                    TsTotalBeforeTax = grandTotal,
+                    TsTotalBeforeTax = netAfterItemDiscount,
                     TsTaxMode = "NON",
                     TsTaxRate = 0,
                     TsTaxAmount = 0,
-                    TsCustomer = null,
+                    TsCustomer = invoice.CustomerId,
                     TsDelivery = invoice.DeliveryAmount,
-                    TsFreename = "Guest",
+                    TsFreename = string.IsNullOrWhiteSpace(invoice.CustomerName) ? "Guest" : invoice.CustomerName,
                     UserId = sessionUser.UserId,
                     CreatedBy = sessionUser.UserId,
                     TerminalId = sessionUser.TerminalId,

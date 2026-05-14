@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
 using POS_qu;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -608,6 +608,269 @@ namespace POSqu_menu
                 var dt = QueryTopCustomers(start, end);
                 ShowReportGrid("Customer • Paling Aktif", dt);
             };
+
+            EnsureSeparator("sepReportsAudit");
+            EnsureMenu("miAuditLogs", "Audit Logs").Click += (s, e) =>
+            {
+                ShowAuditLogsBrowser();
+            };
+        }
+
+        private void ShowAuditLogsBrowser()
+        {
+            using var f = new Form();
+            f.Text = "Audit Logs";
+            f.StartPosition = FormStartPosition.CenterParent;
+            f.Size = new Size(1200, 780);
+            f.MinimizeBox = false;
+            f.MaximizeBox = true;
+            f.FormBorderStyle = FormBorderStyle.Sizable;
+
+            var pnlTop = new Panel { Dock = DockStyle.Top, Height = 122, Padding = new Padding(12), BackColor = Color.White };
+            var lblTitle = new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 28,
+                Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold),
+                Text = "Audit Logs • Search"
+            };
+
+            var pnlFilters = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 6,
+                RowCount = 2
+            };
+            pnlFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+            pnlFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35));
+            pnlFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+            pnlFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 35));
+            pnlFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+            pnlFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 30));
+            pnlFilters.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
+            pnlFilters.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
+
+            var lblFrom = new Label { Text = "Dari", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var dtFrom = new DateTimePicker { Dock = DockStyle.Fill, Format = DateTimePickerFormat.Custom, CustomFormat = "yyyy-MM-dd HH:mm" };
+            var lblTo = new Label { Text = "Sampai", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var dtTo = new DateTimePicker { Dock = DockStyle.Fill, Format = DateTimePickerFormat.Custom, CustomFormat = "yyyy-MM-dd HH:mm" };
+            var lblLimit = new Label { Text = "Limit", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var cmbLimit = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
+            cmbLimit.Items.AddRange(new object[] { "200", "500", "1000", "2000" });
+            cmbLimit.SelectedIndex = 1;
+
+            var lblAction = new Label { Text = "Action", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var txtAction = new TextBox { Dock = DockStyle.Fill, PlaceholderText = "mis: Transaction_Complete / Cart_" };
+            var lblUser = new Label { Text = "User ID", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var txtUserId = new TextBox { Dock = DockStyle.Fill, PlaceholderText = "opsional" };
+            var lblRef = new Label { Text = "Ref ID", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var txtRefId = new TextBox { Dock = DockStyle.Fill, PlaceholderText = "ts_id / item_id / dll" };
+
+            pnlFilters.Controls.Add(lblFrom, 0, 0);
+            pnlFilters.Controls.Add(dtFrom, 1, 0);
+            pnlFilters.Controls.Add(lblTo, 2, 0);
+            pnlFilters.Controls.Add(dtTo, 3, 0);
+            pnlFilters.Controls.Add(lblLimit, 4, 0);
+            pnlFilters.Controls.Add(cmbLimit, 5, 0);
+
+            pnlFilters.Controls.Add(lblAction, 0, 1);
+            pnlFilters.Controls.Add(txtAction, 1, 1);
+            pnlFilters.Controls.Add(lblUser, 2, 1);
+            pnlFilters.Controls.Add(txtUserId, 3, 1);
+            pnlFilters.Controls.Add(lblRef, 4, 1);
+            pnlFilters.Controls.Add(txtRefId, 5, 1);
+
+            pnlTop.Controls.Add(pnlFilters);
+            pnlTop.Controls.Add(lblTitle);
+
+            var pnlMid = new Panel { Dock = DockStyle.Top, Height = 54, Padding = new Padding(12), BackColor = Color.White };
+            var txtKeyword = new TextBox { Dock = DockStyle.Fill, PlaceholderText = "Kata kunci (description/details)...", Font = new Font("Segoe UI", 10F) };
+            var btnSearch = new Button { Text = "Search", Dock = DockStyle.Right, Width = 120 };
+            var btnDetail = new Button { Text = "Lihat Detail", Dock = DockStyle.Right, Width = 140 };
+            pnlMid.Controls.Add(txtKeyword);
+            pnlMid.Controls.Add(btnDetail);
+            pnlMid.Controls.Add(btnSearch);
+
+            var grid = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                MultiSelect = false,
+                BackgroundColor = Color.White
+            };
+
+            var pnlBottom = new Panel { Dock = DockStyle.Bottom, Height = 56, Padding = new Padding(12), BackColor = Color.WhiteSmoke };
+            var lblCount = new Label { Dock = DockStyle.Left, Width = 520, TextAlign = ContentAlignment.MiddleLeft };
+            var btnClose = new Button { Text = "Tutup", Dock = DockStyle.Right, Width = 120 };
+            pnlBottom.Controls.Add(btnClose);
+            pnlBottom.Controls.Add(lblCount);
+
+            f.Controls.Add(grid);
+            f.Controls.Add(pnlBottom);
+            f.Controls.Add(pnlMid);
+            f.Controls.Add(pnlTop);
+
+            dtFrom.Value = DateTime.Today;
+            dtTo.Value = DateTime.Today.AddDays(1).AddSeconds(-1);
+
+            string PrettyJson(string raw)
+            {
+                if (string.IsNullOrWhiteSpace(raw)) return "";
+                var t = raw.Trim();
+                if (t == "{}" || t == "[]") return t;
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(t);
+                    return System.Text.Json.JsonSerializer.Serialize(doc.RootElement, new System.Text.Json.JsonSerializerOptions { WriteIndented = true });
+                }
+                catch
+                {
+                    return raw;
+                }
+            }
+
+            DataTable Query()
+            {
+                var from = dtFrom.Value;
+                var to = dtTo.Value;
+                if (to < from) to = from;
+                int limit = 500;
+                int.TryParse(cmbLimit.SelectedItem?.ToString(), out limit);
+                if (limit <= 0) limit = 500;
+
+                var action = (txtAction.Text ?? "").Trim();
+                var keyword = (txtKeyword.Text ?? "").Trim();
+                var userIdText = (txtUserId.Text ?? "").Trim();
+                var refIdText = (txtRefId.Text ?? "").Trim();
+
+                using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+                con.Open();
+
+                var sql = new StringBuilder();
+                sql.Append(@"
+SELECT
+    id,
+    COALESCE(user_id,0) AS user_id,
+    COALESCE(action,'') AS action,
+    COALESCE(reference_id,0) AS reference_id,
+    COALESCE(description,'') AS description,
+    COALESCE(details,'') AS details,
+    created_at
+FROM audit_logs
+WHERE created_at >= @from AND created_at <= @to
+");
+
+                var cmd = new NpgsqlCommand();
+                cmd.Connection = con;
+                cmd.Parameters.AddWithValue("@from", from);
+                cmd.Parameters.AddWithValue("@to", to);
+
+                if (!string.IsNullOrWhiteSpace(action))
+                {
+                    sql.Append(" AND action ILIKE @action ");
+                    cmd.Parameters.AddWithValue("@action", "%" + action + "%");
+                }
+
+                if (long.TryParse(userIdText, out var uid) && uid > 0)
+                {
+                    sql.Append(" AND user_id = @uid ");
+                    cmd.Parameters.AddWithValue("@uid", uid);
+                }
+
+                if (long.TryParse(refIdText, out var rid) && rid > 0)
+                {
+                    sql.Append(" AND reference_id = @rid ");
+                    cmd.Parameters.AddWithValue("@rid", rid);
+                }
+
+                if (!string.IsNullOrWhiteSpace(keyword))
+                {
+                    sql.Append(" AND (COALESCE(description,'') ILIKE @kw OR COALESCE(details,'') ILIKE @kw) ");
+                    cmd.Parameters.AddWithValue("@kw", "%" + keyword + "%");
+                }
+
+                sql.Append(" ORDER BY created_at DESC, id DESC LIMIT " + limit);
+                cmd.CommandText = sql.ToString();
+
+                var dt = new DataTable();
+                using var da = new NpgsqlDataAdapter(cmd);
+                da.Fill(dt);
+                return dt;
+            }
+
+            void RefreshGrid()
+            {
+                try
+                {
+                    var dt = Query();
+                    grid.DataSource = dt;
+                    if (grid.Columns.Contains("id")) grid.Columns["id"].Visible = false;
+                    if (grid.Columns.Contains("details")) grid.Columns["details"].Visible = false;
+                    if (grid.Columns.Contains("created_at")) { grid.Columns["created_at"].HeaderText = "Waktu"; grid.Columns["created_at"].Width = 160; }
+                    if (grid.Columns.Contains("user_id")) { grid.Columns["user_id"].HeaderText = "User"; grid.Columns["user_id"].Width = 80; }
+                    if (grid.Columns.Contains("reference_id")) { grid.Columns["reference_id"].HeaderText = "Ref"; grid.Columns["reference_id"].Width = 90; }
+                    if (grid.Columns.Contains("action")) { grid.Columns["action"].HeaderText = "Action"; grid.Columns["action"].Width = 240; }
+                    if (grid.Columns.Contains("description")) { grid.Columns["description"].HeaderText = "Description"; grid.Columns["description"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill; }
+                    lblCount.Text = $"Rows: {dt.Rows.Count:N0}";
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Gagal load audit logs", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+
+            void ShowSelected()
+            {
+                try
+                {
+                    if (grid.SelectedRows.Count == 0) return;
+                    var r = grid.SelectedRows[0];
+                    var action = r.Cells["action"]?.Value?.ToString() ?? "";
+                    var user = r.Cells["user_id"]?.Value?.ToString() ?? "";
+                    var rid = r.Cells["reference_id"]?.Value?.ToString() ?? "";
+                    var created = r.Cells["created_at"]?.Value?.ToString() ?? "";
+                    var desc = r.Cells["description"]?.Value?.ToString() ?? "";
+                    var details = "";
+                    try { details = r.Cells["details"]?.Value?.ToString() ?? ""; } catch { details = ""; }
+
+                    using var modal = new Form();
+                    modal.Text = "Detail Audit Log";
+                    modal.StartPosition = FormStartPosition.CenterParent;
+                    modal.Size = new Size(980, 720);
+                    modal.MinimizeBox = false;
+                    modal.MaximizeBox = true;
+
+                    var txt = new TextBox
+                    {
+                        Multiline = true,
+                        ReadOnly = true,
+                        ScrollBars = ScrollBars.Both,
+                        Dock = DockStyle.Fill,
+                        Font = new Font("Consolas", 10F),
+                        WordWrap = false,
+                        Text = $"WAKTU: {created}{Environment.NewLine}USER: {user}{Environment.NewLine}REF: {rid}{Environment.NewLine}ACTION: {action}{Environment.NewLine}{Environment.NewLine}DESC:{Environment.NewLine}{desc}{Environment.NewLine}{Environment.NewLine}DETAILS:{Environment.NewLine}{PrettyJson(details)}"
+                    };
+                    var btnCopy = new Button { Text = "Copy", Dock = DockStyle.Bottom, Height = 44 };
+                    btnCopy.Click += (_, __) => { try { Clipboard.SetText(txt.Text ?? ""); } catch { } };
+                    modal.Controls.Add(txt);
+                    modal.Controls.Add(btnCopy);
+                    modal.ShowDialog(f);
+                }
+                catch
+                {
+                }
+            }
+
+            btnSearch.Click += (_, __) => RefreshGrid();
+            btnDetail.Click += (_, __) => ShowSelected();
+            grid.CellDoubleClick += (_, e) => { if (e.RowIndex >= 0) ShowSelected(); };
+            btnClose.Click += (_, __) => f.Close();
+
+            RefreshGrid();
+            f.ShowDialog(this);
         }
 
         private bool TryAskDateRange(string title, out DateTime start, out DateTime endExclusive)
