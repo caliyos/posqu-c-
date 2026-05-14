@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
 using POS_qu;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -1220,14 +1220,28 @@ LIMIT 50
 
         private void SetMenuVisibility(int roleId)
         {
-            // contoh roleId: 1=admin, 2=kasir, 3=supervisor (atau backoffice)
+            // roleId: 1=admin, 2=cashier/casher, 3=supervisor
 
-            masterToolStripMenuItem.Visible = (roleId == 1 || roleId == 3); // Admin & Backoffice
-            casherToolStripMenuItem.Visible = (roleId == 1 || roleId == 2); // Admin & Supervisor
-            productToolStripMenuItem.Visible = (roleId == 1 || roleId == 3);  // Admin & Kasir
-            penjualanToolStripMenuItem.Visible = (roleId == 1 || roleId == 3); // Admin & Supervisor
-            reportsToolStripMenuItem.Visible = (roleId == 1 || roleId == 3); // Admin & Supervisor
-            settingsToolStripMenuItem.Visible = (roleId == 1); // Admin & Supervisor
+            bool isAdmin = roleId == 1;
+            bool isCashier = roleId == 2;
+            bool isSupervisor = roleId == 3;
+
+            // Admin: semua menu
+            // Cashier: hanya menu kasir
+            // Supervisor: produk + stock + laporan (tanpa settings)
+
+            if (masterToolStripMenuItem != null) masterToolStripMenuItem.Visible = isAdmin;
+            if (productToolStripMenuItem != null) productToolStripMenuItem.Visible = isAdmin || isSupervisor;
+            if (stockMenuToolStripMenuItem != null) stockMenuToolStripMenuItem.Visible = isAdmin || isSupervisor;
+            if (promosiDiskonToolStripMenuItem != null) promosiDiskonToolStripMenuItem.Visible = isAdmin;
+            if (casherToolStripMenuItem != null) casherToolStripMenuItem.Visible = isAdmin || isCashier;
+            if (pembelianToolStripMenuItem != null) pembelianToolStripMenuItem.Visible = isAdmin;
+            if (reportsToolStripMenuItem != null) reportsToolStripMenuItem.Visible = isAdmin || isSupervisor;
+            if (printingToolStripMenuItem != null) printingToolStripMenuItem.Visible = isAdmin;
+            if (settingsToolStripMenuItem != null) settingsToolStripMenuItem.Visible = isAdmin;
+
+            // Submenu laporan: ikut parent (reports). Ini biar tidak muncul “nyempil”.
+            if (penjualanToolStripMenuItem != null) penjualanToolStripMenuItem.Visible = (reportsToolStripMenuItem?.Visible ?? false);
         }
 
         private void UpdatePanel2Size()

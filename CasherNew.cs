@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 //using System.Reflection.Emit;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Diagnostics;
@@ -338,6 +339,166 @@ namespace POS_qu
                             MessageBoxIcon.Question
                         );
                         if (confirm != DialogResult.Yes) return true;
+
+                        var s = SessionUser.GetCurrentUser();
+                        if (s != null && POS_qu.Helpers.Utility.ShouldRequireSupervisorApproval("void_transaction", s, _currentInvoice.GrandTotal))
+                        {
+                            bool requireReason = POS_qu.Helpers.Utility.IsSupervisorApprovalReasonRequired("void_transaction");
+                            if (!POS_qu.Helpers.Utility.TrySupervisorApproval(
+                                    this,
+                                    "Otorisasi: Void Transaksi",
+                                    "Void transaksi membutuhkan persetujuan supervisor.",
+                                    requireReason,
+                                    out int approverId,
+                                    out string approverUsername,
+                                    out string approvalReason
+                                ))
+                            {
+                                return true;
+                            }
+
+                            try
+                            {
+                                string reasonSafe = (approvalReason ?? "").Replace("\"", "\\\"");
+                                string codeSafe = (_currentInvoice.CartSessionCode ?? "").Replace("\"", "\\\"");
+                                dlogger.Log(
+                                    approverId.ToString(),
+                                    "SupervisorApproval_VoidTransaction",
+                                    null,
+                                    $"{{\"cashier\":\"{s.Username}\",\"approved_by\":\"{approverUsername}\",\"reason\":\"{reasonSafe}\"}}",
+                                    $"{{\"cart_session_code\":\"{codeSafe}\",\"grand_total\":{_currentInvoice.GrandTotal}}}"
+                                );
+                            }
+                            catch { }
+
+                            try
+                            {
+                                var invoiceSnapshot = new
+                                {
+                                    CartSessionCode = _currentInvoice.CartSessionCode,
+                                    CustomerId = _currentInvoice.CustomerId,
+                                    CustomerName = _currentInvoice.CustomerName,
+                                    PriceLevelId = _currentInvoice.PriceLevelId,
+                                    Subtotal = _currentInvoice.Subtotal,
+                                    TotalDiscount = _currentInvoice.TotalDiscount,
+                                    GlobalDiscountPercent = _currentInvoice.GlobalDiscountPercent,
+                                    GlobalDiscountIsAmount = _currentInvoice.GlobalDiscountIsAmount,
+                                    GlobalDiscountValue = _currentInvoice.GlobalDiscountValue,
+                                    DeliveryAmount = _currentInvoice.DeliveryAmount,
+                                    GrandTotal = _currentInvoice.GrandTotal,
+                                    GlobalNote = _currentInvoice.GlobalNote,
+                                    Items = (_currentInvoice.Items ?? new List<InvoiceItem>()).Select(i => new
+                                    {
+                                        i.pt_id,
+                                        i.ItemId,
+                                        i.Barcode,
+                                        i.Name,
+                                        i.Unit,
+                                        i.UnitId,
+                                        i.UnitVariant,
+                                        i.ConversionRate,
+                                        i.Qty,
+                                        i.Price,
+                                        i.CostPrice,
+                                        i.DiscountPercent,
+                                        i.DiscountAmount,
+                                        i.Tax,
+                                        i.Total,
+                                        i.Note
+                                    }).ToList()
+                                };
+
+                                string details = JsonSerializer.Serialize(new
+                                {
+                                    terminal_id = s.TerminalId,
+                                    shift_id = s.ShiftId,
+                                    cashier = s.Username,
+                                    action = "void_transaction",
+                                    approved_by = approverUsername,
+                                    reason = approvalReason,
+                                    invoice = invoiceSnapshot
+                                });
+
+                                dlogger.Log(
+                                    s.UserId.ToString(),
+                                    "VoidTransaction",
+                                    null,
+                                    "{}",
+                                    details
+                                );
+                            }
+                            catch { }
+                        }
+                        else if (s != null)
+                        {
+                            try
+                            {
+                                var invoiceSnapshot = new
+                                {
+                                    CartSessionCode = _currentInvoice.CartSessionCode,
+                                    CustomerId = _currentInvoice.CustomerId,
+                                    CustomerName = _currentInvoice.CustomerName,
+                                    PriceLevelId = _currentInvoice.PriceLevelId,
+                                    Subtotal = _currentInvoice.Subtotal,
+                                    TotalDiscount = _currentInvoice.TotalDiscount,
+                                    GlobalDiscountPercent = _currentInvoice.GlobalDiscountPercent,
+                                    GlobalDiscountIsAmount = _currentInvoice.GlobalDiscountIsAmount,
+                                    GlobalDiscountValue = _currentInvoice.GlobalDiscountValue,
+                                    DeliveryAmount = _currentInvoice.DeliveryAmount,
+                                    GrandTotal = _currentInvoice.GrandTotal,
+                                    GlobalNote = _currentInvoice.GlobalNote,
+                                    Items = (_currentInvoice.Items ?? new List<InvoiceItem>()).Select(i => new
+                                    {
+                                        i.pt_id,
+                                        i.ItemId,
+                                        i.Barcode,
+                                        i.Name,
+                                        i.Unit,
+                                        i.UnitId,
+                                        i.UnitVariant,
+                                        i.ConversionRate,
+                                        i.Qty,
+                                        i.Price,
+                                        i.CostPrice,
+                                        i.DiscountPercent,
+                                        i.DiscountAmount,
+                                        i.Tax,
+                                        i.Total,
+                                        i.Note
+                                    }).ToList()
+                                };
+
+                                string details = JsonSerializer.Serialize(new
+                                {
+                                    terminal_id = s.TerminalId,
+                                    shift_id = s.ShiftId,
+                                    cashier = s.Username,
+                                    action = "void_transaction",
+                                    invoice = invoiceSnapshot
+                                });
+
+                                dlogger.Log(
+                                    s.UserId.ToString(),
+                                    "VoidTransaction",
+                                    null,
+                                    "{}",
+                                    details
+                                );
+                            }
+                            catch { }
+                        }
+
+                        try
+                        {
+                            var code = _currentInvoice.CartSessionCode ?? Session.CartSessionCode;
+                            if (s != null && !string.IsNullOrWhiteSpace(code))
+                                _cartService.VoidCurrentTransaction(code, s.TerminalId, s.UserId, s.WarehouseId);
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show(ex.Message, "Gagal void transaksi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            return true;
+                        }
                     }
                     StartNewTransaction();
                     RenderInvoice(_currentInvoice);

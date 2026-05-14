@@ -285,6 +285,51 @@ ORDER BY u.id ASC";
             }
         }
 
+        public bool SetUserPin(int userId, string pinPlain)
+        {
+            if (userId <= 0) return false;
+            pinPlain ??= "";
+            pinPlain = pinPlain.Trim();
+            if (string.IsNullOrWhiteSpace(pinPlain)) return false;
+
+            string pinHash = BCrypt.Net.BCrypt.HashPassword(pinPlain);
+
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                conn.Open();
+
+                using (var ensure = new NpgsqlCommand("ALTER TABLE users ADD COLUMN IF NOT EXISTS pin_hash TEXT;", conn))
+                {
+                    ensure.ExecuteNonQuery();
+                }
+
+                using (var cmd = new NpgsqlCommand("UPDATE users SET pin_hash = @h WHERE id = @id", conn))
+                {
+                    cmd.Parameters.AddWithValue("@h", pinHash);
+                    cmd.Parameters.AddWithValue("@id", userId);
+                    return cmd.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
+        public bool ClearUserPin(int userId)
+        {
+            if (userId <= 0) return false;
+            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
+            {
+                conn.Open();
+                using (var ensure = new NpgsqlCommand("ALTER TABLE users ADD COLUMN IF NOT EXISTS pin_hash TEXT;", conn))
+                {
+                    ensure.ExecuteNonQuery();
+                }
+                using (var cmd = new NpgsqlCommand("UPDATE users SET pin_hash = NULL WHERE id = @id", conn))
+                {
+                    cmd.Parameters.AddWithValue("@id", userId);
+                    return cmd.ExecuteNonQuery() > 0;
+                }
+            }
+        }
+
         public DataTable GetSupervisorApprovalSettings()
         {
             var dt = new DataTable();

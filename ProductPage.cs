@@ -519,6 +519,9 @@ namespace POS_qu
 
         private void btnDelete_Click_1(object sender, EventArgs e)
         {
+            if (!POS_qu.Helpers.Utility.EnsurePermission(this, "delete_product", "Hapus Item"))
+                return;
+
             var selectedItems = new HashSet<int>();
 
             foreach (DataGridViewRow row in dataGridView1.Rows)

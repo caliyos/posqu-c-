@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using System;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
@@ -154,6 +154,83 @@ namespace POS_qu.Helpers
             return userName;
         }
 
+        public static bool IsAdmin()
+        {
+            return POS_qu.Models.SessionUser.GetCurrentUser()?.RoleId == 1;
+        }
+
+        public static bool HasRole(params int[] roleIds)
+        {
+            var u = POS_qu.Models.SessionUser.GetCurrentUser();
+            if (u == null) return false;
+            if (roleIds == null || roleIds.Length == 0) return false;
+            return roleIds.Contains(u.RoleId);
+        }
+
+        public static bool EnsureAdmin(IWin32Window owner, string actionTitle)
+        {
+            if (IsAdmin()) return true;
+            MessageBox.Show(owner, "Akses ditolak. Hanya Admin yang boleh melakukan aksi ini.", actionTitle ?? "Akses Ditolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+
+        private static readonly Dictionary<int, HashSet<string>> _permCacheByRole = new();
+        private static DateTime _permCacheAtUtc = DateTime.MinValue;
+
+        public static bool HasPermission(string permissionName)
+        {
+            permissionName ??= "";
+            permissionName = permissionName.Trim();
+            if (string.IsNullOrWhiteSpace(permissionName)) return false;
+
+            var u = POS_qu.Models.SessionUser.GetCurrentUser();
+            if (u == null) return false;
+            if (u.RoleId == 1) return true;
+
+            try
+            {
+                if ((DateTime.UtcNow - _permCacheAtUtc).TotalMinutes > 3)
+                {
+                    _permCacheByRole.Clear();
+                    _permCacheAtUtc = DateTime.UtcNow;
+                }
+
+                if (_permCacheByRole.TryGetValue(u.RoleId, out var cached))
+                    return cached.Contains(permissionName);
+
+                using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+                conn.Open();
+
+                using var cmd = new NpgsqlCommand(@"
+SELECT p.name
+FROM permission_role pr
+JOIN permissions p ON p.id = pr.permission_id
+WHERE pr.role_id = @rid
+", conn);
+                cmd.Parameters.AddWithValue("@rid", u.RoleId);
+                using var r = cmd.ExecuteReader();
+                var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                while (r.Read())
+                {
+                    var n = r["name"]?.ToString();
+                    if (!string.IsNullOrWhiteSpace(n)) set.Add(n.Trim());
+                }
+                _permCacheByRole[u.RoleId] = set;
+                return set.Contains(permissionName);
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public static bool EnsurePermission(IWin32Window owner, string permissionName, string actionTitle)
+        {
+            if (HasPermission(permissionName)) return true;
+            MessageBox.Show(owner, "Akses ditolak. Kamu tidak punya izin untuk aksi ini.", actionTitle ?? "Akses Ditolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return false;
+        }
+
         public static bool TrySupervisorApproval(
             IWin32Window owner,
             string actionTitle,
@@ -192,21 +269,17 @@ namespace POS_qu.Helpers
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 2,
-                RowCount = 4,
+                RowCount = 3,
                 Padding = new Padding(0, 12, 0, 0)
             };
             pnl.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
             pnl.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
             pnl.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
-            pnl.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
             pnl.RowStyles.Add(new RowStyle(SizeType.Absolute, 80));
             pnl.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            var lblUser = new Label { Text = "Username", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 10F) };
-            var txtUser = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 12F) };
-
-            var lblPass = new Label { Text = "Password", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 10F) };
-            var txtPass = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 12F), UseSystemPasswordChar = true };
+            var lblPin = new Label { Text = "PIN Supervisor", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 10F) };
+            var txtPin = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 16F, FontStyle.Bold), UseSystemPasswordChar = true, MaxLength = 8 };
 
             var lblReason = new Label { Text = "Reason", Dock = DockStyle.Fill, TextAlign = ContentAlignment.TopLeft, Font = new Font("Segoe UI", 10F) };
             var txtReason = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11F), Multiline = true, ScrollBars = ScrollBars.Vertical };
@@ -222,13 +295,11 @@ namespace POS_qu.Helpers
                 TextAlign = ContentAlignment.MiddleLeft
             };
 
-            pnl.Controls.Add(lblUser, 0, 0);
-            pnl.Controls.Add(txtUser, 1, 0);
-            pnl.Controls.Add(lblPass, 0, 1);
-            pnl.Controls.Add(txtPass, 1, 1);
-            pnl.Controls.Add(lblReason, 0, 2);
-            pnl.Controls.Add(txtReason, 1, 2);
-            pnl.Controls.Add(lblHint, 1, 3);
+            pnl.Controls.Add(lblPin, 0, 0);
+            pnl.Controls.Add(txtPin, 1, 0);
+            pnl.Controls.Add(lblReason, 0, 1);
+            pnl.Controls.Add(txtReason, 1, 1);
+            pnl.Controls.Add(lblHint, 1, 2);
 
             var footer = new Panel { Dock = DockStyle.Bottom, Height = 56 };
             var btnCancel = new Button { Text = "Batal (Esc)", Dock = DockStyle.Right, Width = 120 };
@@ -252,13 +323,12 @@ namespace POS_qu.Helpers
 
             bool TryCheckCredentials()
             {
-                string u = (txtUser.Text ?? "").Trim();
-                string p = (txtPass.Text ?? "").Trim();
+                string pin = (txtPin.Text ?? "").Trim();
                 string r = (txtReason.Text ?? "").Trim();
 
-                if (string.IsNullOrWhiteSpace(u) || string.IsNullOrWhiteSpace(p))
+                if (string.IsNullOrWhiteSpace(pin))
                 {
-                    MessageBox.Show(modal, "Isi username dan password supervisor.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show(modal, "Masukkan PIN supervisor.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return false;
                 }
                 if (requireReason && string.IsNullOrWhiteSpace(r))
@@ -269,50 +339,46 @@ namespace POS_qu.Helpers
 
                 using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
                 conn.Open();
+                using (var ensure = new NpgsqlCommand("ALTER TABLE users ADD COLUMN IF NOT EXISTS pin_hash TEXT;", conn))
+                {
+                    ensure.ExecuteNonQuery();
+                }
+
                 using var cmd = new NpgsqlCommand(@"
 SELECT
     u.id,
     u.username,
-    u.password_hash,
+    u.pin_hash,
     COALESCE(r.id,0) AS role_id,
     COALESCE(r.name,'') AS role_name
 FROM users u
 LEFT JOIN role_user ru ON ru.user_id = u.id
 LEFT JOIN roles r ON r.id = ru.role_id
-WHERE u.username = @username
-LIMIT 1
+WHERE u.pin_hash IS NOT NULL AND u.pin_hash <> ''
 ", conn);
-                cmd.Parameters.AddWithValue("@username", u);
                 using var reader = cmd.ExecuteReader();
-                if (!reader.Read())
+                while (reader.Read())
                 {
-                    MessageBox.Show(modal, "User tidak ditemukan.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return false;
+                    int userId = reader["id"] != DBNull.Value ? Convert.ToInt32(reader["id"]) : 0;
+                    string username = reader["username"]?.ToString() ?? "";
+                    string hash = reader["pin_hash"]?.ToString() ?? "";
+                    int roleId = reader["role_id"] != DBNull.Value ? Convert.ToInt32(reader["role_id"]) : 0;
+                    string roleName = (reader["role_name"]?.ToString() ?? "").Trim().ToLowerInvariant();
+
+                    bool roleOk = roleId == 1 || roleId == 3 || roleName == "admin" || roleName == "supervisor";
+                    if (!roleOk) continue;
+
+                    if (!string.IsNullOrWhiteSpace(hash) && BCrypt.Net.BCrypt.Verify(pin, hash))
+                    {
+                        approverUserIdLocal = userId;
+                        approverUsernameLocal = username;
+                        approvalReasonLocal = r;
+                        return true;
+                    }
                 }
 
-                int userId = reader["id"] != DBNull.Value ? Convert.ToInt32(reader["id"]) : 0;
-                string username = reader["username"]?.ToString() ?? "";
-                string hash = reader["password_hash"]?.ToString() ?? "";
-                int roleId = reader["role_id"] != DBNull.Value ? Convert.ToInt32(reader["role_id"]) : 0;
-                string roleName = (reader["role_name"]?.ToString() ?? "").Trim().ToLowerInvariant();
-
-                bool roleOk = roleId == 1 || roleId == 3 || roleName == "admin" || roleName == "supervisor";
-                if (!roleOk)
-                {
-                    MessageBox.Show(modal, "Akun ini bukan supervisor/admin.", "Ditolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return false;
-                }
-
-                if (string.IsNullOrWhiteSpace(hash) || !BCrypt.Net.BCrypt.Verify(p, hash))
-                {
-                    MessageBox.Show(modal, "Password salah.", "Ditolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return false;
-                }
-
-                approverUserIdLocal = userId;
-                approverUsernameLocal = username;
-                approvalReasonLocal = r;
-                return true;
+                MessageBox.Show(modal, "PIN salah atau PIN belum diset untuk supervisor/admin.", "Ditolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
             }
 
             btnOk.Click += (_, __) =>
@@ -326,7 +392,13 @@ LIMIT 1
 
             modal.AcceptButton = btnOk;
             modal.CancelButton = btnCancel;
-            modal.Shown += (_, __) => txtUser.Focus();
+            txtPin.KeyPress += (_, e) =>
+            {
+                if (char.IsControl(e.KeyChar)) return;
+                if (!char.IsDigit(e.KeyChar)) e.Handled = true;
+            };
+
+            modal.Shown += (_, __) => txtPin.Focus();
             modal.KeyDown += (_, e) =>
             {
                 if (e.KeyCode == Keys.Escape)

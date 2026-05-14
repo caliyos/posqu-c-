@@ -51,6 +51,7 @@ namespace POS_qu
         private System.Windows.Forms.Panel panelUsersBottom;
         private System.Windows.Forms.Button btnUsersRefresh;
         private System.Windows.Forms.Button btnSaveRoleUsers;
+        private System.Windows.Forms.Button btnSetUserPin;
 
         private System.Windows.Forms.TabControl tabUsersApproval;
         private System.Windows.Forms.TabPage tabUsers;
@@ -121,6 +122,7 @@ namespace POS_qu
             panelUsersBottom = new System.Windows.Forms.Panel();
             btnUsersRefresh = new System.Windows.Forms.Button();
             btnSaveRoleUsers = new System.Windows.Forms.Button();
+            btnSetUserPin = new System.Windows.Forms.Button();
             tabUsersApproval = new System.Windows.Forms.TabControl();
             tabUsers = new System.Windows.Forms.TabPage();
             tabSupervisorApproval = new System.Windows.Forms.TabPage();
@@ -671,6 +673,7 @@ namespace POS_qu
             panelUsersBottom.BackColor = System.Drawing.Color.White;
             panelUsersBottom.Controls.Add(btnUsersRefresh);
             panelUsersBottom.Controls.Add(btnSaveRoleUsers);
+            panelUsersBottom.Controls.Add(btnSetUserPin);
             panelUsersBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
             panelUsersBottom.Location = new System.Drawing.Point(0, 306);
             panelUsersBottom.Name = "panelUsersBottom";
@@ -702,6 +705,18 @@ namespace POS_qu
             btnSaveRoleUsers.TabIndex = 1;
             btnSaveRoleUsers.Text = "Simpan Assign User";
             btnSaveRoleUsers.UseVisualStyleBackColor = false;
+            // 
+            // btnSetUserPin
+            // 
+            btnSetUserPin.BackColor = System.Drawing.Color.White;
+            btnSetUserPin.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200);
+            btnSetUserPin.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnSetUserPin.Location = new System.Drawing.Point(350, 14);
+            btnSetUserPin.Name = "btnSetUserPin";
+            btnSetUserPin.Size = new System.Drawing.Size(140, 34);
+            btnSetUserPin.TabIndex = 2;
+            btnSetUserPin.Text = "Set PIN";
+            btnSetUserPin.UseVisualStyleBackColor = false;
             // 
             // panelApprovalTop
             // 

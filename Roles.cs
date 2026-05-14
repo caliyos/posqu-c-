@@ -65,6 +65,7 @@ namespace POS_qu
 
             btnUsersRefresh.Click += (s, e) => ReloadUsersSection();
             btnSaveRoleUsers.Click += BtnSaveRoleUsers_Click;
+            btnSetUserPin.Click += BtnSetUserPin_Click;
 
             dgvApproval.CurrentCellDirtyStateChanged += (s, e) =>
             {
@@ -74,6 +75,146 @@ namespace POS_qu
             txtApprovalSearch.TextChanged += (s, e) => ApplyApprovalFilter();
             btnApprovalRefresh.Click += (s, e) => ReloadApprovalSettings();
             btnSaveApprovalSettings.Click += BtnSaveApprovalSettings_Click;
+        }
+
+        private void BtnSetUserPin_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                if (dgvUsers.CurrentRow == null)
+                {
+                    MessageBox.Show("Pilih user dulu.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                int userId = 0;
+                string username = "";
+                string name = "";
+                bool assigned = false;
+
+                if (dgvUsers.CurrentRow.DataBoundItem is DataRowView rv)
+                {
+                    if (rv.Row.Table.Columns.Contains("id") && rv["id"] != DBNull.Value) userId = Convert.ToInt32(rv["id"]);
+                    if (rv.Row.Table.Columns.Contains("username")) username = rv["username"]?.ToString() ?? "";
+                    if (rv.Row.Table.Columns.Contains("name")) name = rv["name"]?.ToString() ?? "";
+                    if (rv.Row.Table.Columns.Contains("assigned") && rv["assigned"] != DBNull.Value) assigned = Convert.ToBoolean(rv["assigned"]);
+                }
+                else
+                {
+                    if (dgvUsers.Columns.Contains("id") && dgvUsers.CurrentRow.Cells["id"].Value != null && dgvUsers.CurrentRow.Cells["id"].Value != DBNull.Value)
+                        userId = Convert.ToInt32(dgvUsers.CurrentRow.Cells["id"].Value);
+                    if (dgvUsers.Columns.Contains("username")) username = dgvUsers.CurrentRow.Cells["username"].Value?.ToString() ?? "";
+                    if (dgvUsers.Columns.Contains("name")) name = dgvUsers.CurrentRow.Cells["name"].Value?.ToString() ?? "";
+                    if (dgvUsers.Columns.Contains("assigned") && dgvUsers.CurrentRow.Cells["assigned"].Value != null && dgvUsers.CurrentRow.Cells["assigned"].Value != DBNull.Value)
+                        assigned = Convert.ToBoolean(dgvUsers.CurrentRow.Cells["assigned"].Value);
+                }
+
+                if (userId <= 0)
+                {
+                    MessageBox.Show("UserId tidak valid.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                if (_selectedRoleId == 3 && !assigned)
+                {
+                    MessageBox.Show("User ini belum di-assign ke role Supervisor.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                using var modal = new Form
+                {
+                    Text = "Set PIN Supervisor",
+                    StartPosition = FormStartPosition.CenterParent,
+                    Size = new Size(460, 300),
+                    FormBorderStyle = FormBorderStyle.FixedDialog,
+                    MaximizeBox = false,
+                    MinimizeBox = false,
+                    Padding = new Padding(16),
+                    KeyPreview = true
+                };
+
+                var lbl = new Label
+                {
+                    Dock = DockStyle.Top,
+                    Height = 42,
+                    Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold),
+                    Text = $"User: {(!string.IsNullOrWhiteSpace(username) ? username : name)}"
+                };
+
+                var pnl = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, RowCount = 3, Padding = new Padding(0, 8, 0, 0) };
+                pnl.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120));
+                pnl.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+                pnl.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
+                pnl.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
+                pnl.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+                var lblPin1 = new Label { Text = "PIN", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+                var txtPin1 = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 16F, FontStyle.Bold), UseSystemPasswordChar = true, MaxLength = 8 };
+                var lblPin2 = new Label { Text = "Ulangi", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+                var txtPin2 = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 16F, FontStyle.Bold), UseSystemPasswordChar = true, MaxLength = 8 };
+                var lblHint = new Label { Text = "PIN angka 4-6 digit", Dock = DockStyle.Fill, ForeColor = Color.DimGray };
+
+                void digitsOnly(object? s, KeyPressEventArgs e)
+                {
+                    if (char.IsControl(e.KeyChar)) return;
+                    if (!char.IsDigit(e.KeyChar)) e.Handled = true;
+                }
+                txtPin1.KeyPress += digitsOnly;
+                txtPin2.KeyPress += digitsOnly;
+
+                pnl.Controls.Add(lblPin1, 0, 0);
+                pnl.Controls.Add(txtPin1, 1, 0);
+                pnl.Controls.Add(lblPin2, 0, 1);
+                pnl.Controls.Add(txtPin2, 1, 1);
+                pnl.Controls.Add(lblHint, 1, 2);
+
+                var footer = new Panel { Dock = DockStyle.Bottom, Height = 56 };
+                var btnCancel = new Button { Text = "Batal (Esc)", Dock = DockStyle.Right, Width = 120 };
+                var btnSave = new Button { Text = "Simpan", Dock = DockStyle.Right, Width = 120, BackColor = Color.FromArgb(22, 163, 74), ForeColor = Color.White, FlatStyle = FlatStyle.Flat };
+                btnSave.FlatAppearance.BorderSize = 0;
+                footer.Controls.Add(btnCancel);
+                footer.Controls.Add(btnSave);
+
+                btnCancel.Click += (_, __) => modal.Close();
+                btnSave.Click += (_, __) =>
+                {
+                    string p1 = (txtPin1.Text ?? "").Trim();
+                    string p2 = (txtPin2.Text ?? "").Trim();
+                    if (p1.Length < 4 || p1.Length > 6)
+                    {
+                        MessageBox.Show(modal, "PIN harus 4-6 digit.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+                    if (p1 != p2)
+                    {
+                        MessageBox.Show(modal, "PIN tidak sama.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+
+                    bool ok = _controller.SetUserPin(userId, p1);
+                    if (!ok)
+                    {
+                        MessageBox.Show(modal, "Gagal menyimpan PIN.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        return;
+                    }
+
+                    MessageBox.Show(modal, "PIN tersimpan.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    modal.Close();
+                };
+
+                modal.AcceptButton = btnSave;
+                modal.CancelButton = btnCancel;
+                modal.Shown += (_, __) => txtPin1.Focus();
+
+                modal.Controls.Add(pnl);
+                modal.Controls.Add(footer);
+                modal.Controls.Add(lbl);
+                modal.ShowDialog(this);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         private void Roles_Load(object sender, EventArgs e)
@@ -100,44 +241,76 @@ namespace POS_qu
             _dtApprovalSettings = _controller.GetSupervisorApprovalSettings();
             dgvApproval.DataSource = _dtApprovalSettings;
 
-            if (dgvApproval.Columns.Contains("action_code")) dgvApproval.Columns["action_code"].Visible = false;
-            if (dgvApproval.Columns.Contains("sort_order")) dgvApproval.Columns["sort_order"].HeaderText = "Urut";
-            if (dgvApproval.Columns.Contains("action_name"))
+            DataGridViewColumn FindCol(string name)
             {
-                dgvApproval.Columns["action_name"].HeaderText = "Aksi";
-                dgvApproval.Columns["action_name"].ReadOnly = true;
-                dgvApproval.Columns["action_name"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-                dgvApproval.Columns["action_name"].MinimumWidth = 240;
+                if (dgvApproval == null || dgvApproval.Columns == null) return null;
+                foreach (DataGridViewColumn c in dgvApproval.Columns)
+                {
+                    if (c == null) continue;
+                    if (string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase)) return c;
+                    if (string.Equals(c.DataPropertyName, name, StringComparison.OrdinalIgnoreCase)) return c;
+                }
+                return null;
             }
-            if (dgvApproval.Columns.Contains("is_enabled"))
+
+            void ApplyApprovalGridLayout()
             {
-                dgvApproval.Columns["is_enabled"].HeaderText = "Aktif";
-                dgvApproval.Columns["is_enabled"].Width = 80;
-            }
-            if (dgvApproval.Columns.Contains("require_for_cashier"))
-            {
-                dgvApproval.Columns["require_for_cashier"].HeaderText = "Minta Supervisor (Kasir)";
-                dgvApproval.Columns["require_for_cashier"].Width = 190;
-            }
-            if (dgvApproval.Columns.Contains("min_amount"))
-            {
-                dgvApproval.Columns["min_amount"].HeaderText = "Min Nominal";
-                dgvApproval.Columns["min_amount"].Width = 140;
-                dgvApproval.Columns["min_amount"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-                dgvApproval.Columns["min_amount"].DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
-                dgvApproval.Columns["min_amount"].DefaultCellStyle.Format = "N0";
-            }
-            if (dgvApproval.Columns.Contains("require_reason"))
-            {
-                dgvApproval.Columns["require_reason"].HeaderText = "Wajib Alasan";
-                dgvApproval.Columns["require_reason"].Width = 130;
-            }
-            if (dgvApproval.Columns.Contains("sort_order"))
-            {
-                dgvApproval.Columns["sort_order"].Width = 70;
+                var colActionCode = FindCol("action_code");
+                if (colActionCode != null) colActionCode.Visible = false;
+
+                var colSortOrder = FindCol("sort_order");
+                if (colSortOrder != null)
+                {
+                    colSortOrder.HeaderText = "Urut";
+                    colSortOrder.Width = 70;
+                }
+
+                var colActionName = FindCol("action_name");
+                if (colActionName != null && colActionName.DataGridView != null)
+                {
+                    colActionName.HeaderText = "Aksi";
+                    colActionName.ReadOnly = true;
+                    colActionName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                    colActionName.FillWeight = 350;
+                }
+
+                var colEnabled = FindCol("is_enabled");
+                if (colEnabled != null)
+                {
+                    colEnabled.HeaderText = "Aktif";
+                    colEnabled.Width = 80;
+                }
+
+                var colRequireCashier = FindCol("require_for_cashier");
+                if (colRequireCashier != null)
+                {
+                    colRequireCashier.HeaderText = "Minta Supervisor (Kasir)";
+                    colRequireCashier.Width = 190;
+                }
+
+                var colMinAmount = FindCol("min_amount");
+                if (colMinAmount != null)
+                {
+                    colMinAmount.HeaderText = "Min Nominal";
+                    colMinAmount.Width = 140;
+                    colMinAmount.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                    colMinAmount.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
+                    colMinAmount.DefaultCellStyle.Format = "N0";
+                }
+
+                var colRequireReason = FindCol("require_reason");
+                if (colRequireReason != null)
+                {
+                    colRequireReason.HeaderText = "Wajib Alasan";
+                    colRequireReason.Width = 130;
+                }
             }
 
             ApplyApprovalFilter();
+            if (IsHandleCreated)
+                BeginInvoke((Action)ApplyApprovalGridLayout);
+            else
+                ApplyApprovalGridLayout();
         }
 
         private void ApplyApprovalFilter()

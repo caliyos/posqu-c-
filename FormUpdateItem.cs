@@ -7,6 +7,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -136,6 +137,8 @@ namespace POS_qu
                 var session = SessionUser.GetCurrentUser();
                 var lineValue = _unitPrice * (int)numQty.Value;
                 if (lineValue < 0m) lineValue = -lineValue;
+                string approvedByUsername = "";
+                string approvalReasonText = "";
 
                 if (session != null && POS_qu.Helpers.Utility.ShouldRequireSupervisorApproval("delete_item", session, lineValue))
                 {
@@ -152,6 +155,9 @@ namespace POS_qu
                         return;
                     }
 
+                    approvedByUsername = approverUsername;
+                    approvalReasonText = approvalReason;
+
                     try
                     {
                         var logger = new POS_qu.Helpers.DbLogger();
@@ -165,6 +171,89 @@ namespace POS_qu
                     }
                     catch { }
                 }
+
+                try
+                {
+                    if (session != null)
+                    {
+                        var invoiceSnapshot = new
+                        {
+                            CartSessionCode = _invoiceData?.CartSessionCode,
+                            CustomerId = _invoiceData?.CustomerId,
+                            CustomerName = _invoiceData?.CustomerName,
+                            PriceLevelId = _invoiceData?.PriceLevelId ?? 1,
+                            Subtotal = _invoiceData?.Subtotal ?? 0m,
+                            TotalDiscount = _invoiceData?.TotalDiscount ?? 0m,
+                            GlobalDiscountPercent = _invoiceData?.GlobalDiscountPercent ?? 0m,
+                            GlobalDiscountIsAmount = _invoiceData?.GlobalDiscountIsAmount ?? false,
+                            GlobalDiscountValue = _invoiceData?.GlobalDiscountValue ?? 0m,
+                            DeliveryAmount = _invoiceData?.DeliveryAmount ?? 0m,
+                            GrandTotal = _invoiceData?.GrandTotal ?? 0m,
+                            GlobalNote = _invoiceData?.GlobalNote ?? "",
+                            Items = (_invoiceData?.Items ?? new List<InvoiceItem>()).Select(i => new
+                            {
+                                i.pt_id,
+                                i.ItemId,
+                                i.Barcode,
+                                i.Name,
+                                i.Unit,
+                                i.UnitId,
+                                i.UnitVariant,
+                                i.ConversionRate,
+                                i.Qty,
+                                i.Price,
+                                i.CostPrice,
+                                i.DiscountPercent,
+                                i.DiscountAmount,
+                                i.Tax,
+                                i.Total,
+                                i.Note
+                            }).ToList()
+                        };
+
+                        var itemSnapshot = new
+                        {
+                            _item.pt_id,
+                            _item.ItemId,
+                            _item.Barcode,
+                            _item.Name,
+                            _item.Unit,
+                            _item.UnitId,
+                            _item.UnitVariant,
+                            _item.ConversionRate,
+                            _item.Qty,
+                            _item.Price,
+                            _item.DiscountPercent,
+                            _item.DiscountAmount,
+                            _item.Tax,
+                            _item.Total,
+                            _item.Note
+                        };
+
+                        string details = JsonSerializer.Serialize(new
+                        {
+                            terminal_id = session.TerminalId,
+                            shift_id = session.ShiftId,
+                            cashier = session.Username,
+                            action = "void_item",
+                            approved_by = approvedByUsername,
+                            reason = approvalReasonText,
+                            line_value = lineValue,
+                            item = itemSnapshot,
+                            invoice = invoiceSnapshot
+                        });
+
+                        var loggerCashier = new POS_qu.Helpers.DbLogger();
+                        loggerCashier.Log(
+                            session.UserId.ToString(),
+                            "VoidItem",
+                            _item?.ItemId,
+                            "{}",
+                            details
+                        );
+                    }
+                }
+                catch { }
 
                 // Ambil item dari Tag atau variabel form
                 var itemToRemove = _item; // pastikan _item adalah InvoiceItem yang sedang di modal

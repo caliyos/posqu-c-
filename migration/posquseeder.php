@@ -491,6 +491,7 @@ $db->exec("TRUNCATE TABLE terminals, users, permissions, roles RESTART IDENTITY 
     $permissions = [
         [1, 'manage_users', 'Manage users and roles'],
         [2, 'manage_products', 'Manage products'],
+        [8, 'delete_product', 'Delete/archive product'],
         [3, 'manage_purchases', 'Manage product purchases'],
         [4, 'view_reports', 'View reports and analytics'],
         [5, 'access_cashier', 'Access cashier menu'],
@@ -509,15 +510,35 @@ $db->exec("TRUNCATE TABLE terminals, users, permissions, roles RESTART IDENTITY 
     // ================================
     // Passwords are bcrypt hashes
     $users = [
-        [1, 'Admin', 'admin', password_hash('admin123', PASSWORD_BCRYPT)],
-        [2, 'Casher', 'casher', password_hash('casher123', PASSWORD_BCRYPT)],
-        [3, 'Supervisor', 'supervisor', password_hash('supervisor123', PASSWORD_BCRYPT)],
+        [1, 'Yoz', 'admin', password_hash('admin123', PASSWORD_BCRYPT)],
+        [2, 'Indah', 'casher', password_hash('casher123', PASSWORD_BCRYPT)],
+        [3, 'Kaleb', 'supervisor', password_hash('supervisor123', PASSWORD_BCRYPT)],
     ];
 
     $stmt = $db->prepare("INSERT INTO users (id, name, username, password_hash, created_at) VALUES (?,?, ?, ?, NOW())");
     foreach ($users as $u) {
         $stmt->execute($u);
         echo "✅ Inserted user: {$u[1]}\n";
+    }
+
+    // ================================
+    // Seed PIN (Supervisor/Admin)
+    // ================================
+    // PIN disimpan sebagai bcrypt (pin_hash)
+    $db->exec("ALTER TABLE users ADD COLUMN IF NOT EXISTS pin_hash TEXT;");
+
+    $pinMap = [
+        'admin' => '1234',
+        'supervisor' => '4321',
+    ];
+
+    $stmt = $db->prepare("UPDATE users SET pin_hash = :pin_hash WHERE username = :username");
+    foreach ($pinMap as $username => $pinPlain) {
+        $stmt->execute([
+            ':username' => $username,
+            ':pin_hash' => password_hash($pinPlain, PASSWORD_BCRYPT),
+        ]);
+        echo "✅ Seed PIN untuk user: {$username}\n";
     }
 
     // ================================

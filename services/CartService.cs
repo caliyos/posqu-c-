@@ -442,6 +442,104 @@ public class CartService : ICartService
         return updated;
     }
 
+    public void VoidCurrentTransaction(string cartSessionCode, int terminalId, int cashierId, int defaultWarehouseId)
+    {
+        cartSessionCode ??= "";
+        if (string.IsNullOrWhiteSpace(cartSessionCode)) return;
+        if (terminalId <= 0 || cashierId <= 0) return;
+
+        using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+        conn.Open();
+        using var tran = conn.BeginTransaction();
+
+        try
+        {
+            var lines = new List<(int ItemId, int WarehouseId, int BaseQty)>();
+
+            bool hasWarehouse = false;
+            using (var chk = new NpgsqlCommand(@"
+SELECT 1
+FROM information_schema.columns
+WHERE table_schema='public' AND table_name='pending_transactions' AND column_name='warehouse_id'
+LIMIT 1
+", conn, tran))
+            {
+                hasWarehouse = chk.ExecuteScalar() != null;
+            }
+
+            string selectSql = hasWarehouse
+                ? @"
+SELECT
+    item_id,
+    COALESCE(warehouse_id, @wid) AS warehouse_id,
+    quantity,
+    COALESCE(tsd_conversion_rate, 1) AS conversion_rate
+FROM pending_transactions
+WHERE cart_session_code = @code
+  AND terminal_id = @terminal
+  AND cashier_id = @cashier
+"
+                : @"
+SELECT
+    item_id,
+    @wid AS warehouse_id,
+    quantity,
+    COALESCE(tsd_conversion_rate, 1) AS conversion_rate
+FROM pending_transactions
+WHERE cart_session_code = @code
+  AND terminal_id = @terminal
+  AND cashier_id = @cashier
+";
+
+            using (var cmd = new NpgsqlCommand(selectSql, conn, tran))
+            {
+                cmd.Parameters.AddWithValue("@code", cartSessionCode);
+                cmd.Parameters.AddWithValue("@terminal", terminalId);
+                cmd.Parameters.AddWithValue("@cashier", cashierId);
+                cmd.Parameters.AddWithValue("@wid", defaultWarehouseId <= 0 ? 1 : defaultWarehouseId);
+                using var r = cmd.ExecuteReader();
+                while (r.Read())
+                {
+                    int itemId = r["item_id"] != DBNull.Value ? Convert.ToInt32(r["item_id"]) : 0;
+                    int wid = r["warehouse_id"] != DBNull.Value ? Convert.ToInt32(r["warehouse_id"]) : (defaultWarehouseId <= 0 ? 1 : defaultWarehouseId);
+                    decimal qty = r["quantity"] != DBNull.Value ? Convert.ToDecimal(r["quantity"]) : 0m;
+                    int conv = r["conversion_rate"] != DBNull.Value ? Convert.ToInt32(r["conversion_rate"]) : 1;
+                    if (conv <= 0) conv = 1;
+
+                    if (itemId <= 0) continue;
+                    int baseQty = (int)Math.Round(qty * conv, 0, MidpointRounding.AwayFromZero);
+                    if (baseQty == 0) continue;
+                    lines.Add((itemId, wid, baseQty));
+                }
+            }
+
+            foreach (var l in lines)
+            {
+                _repo.TryUpdateReservedStock(conn, tran, l.ItemId, l.WarehouseId, -l.BaseQty);
+            }
+
+            using (var del = new NpgsqlCommand(@"
+DELETE FROM pending_transactions
+WHERE cart_session_code = @code
+  AND terminal_id = @terminal
+  AND cashier_id = @cashier
+", conn, tran))
+            {
+                del.Parameters.AddWithValue("@code", cartSessionCode);
+                del.Parameters.AddWithValue("@terminal", terminalId);
+                del.Parameters.AddWithValue("@cashier", cashierId);
+                del.ExecuteNonQuery();
+            }
+
+            tran.Commit();
+        }
+        catch
+        {
+            try { tran.Rollback(); } catch { }
+            throw;
+        }
+    }
+
     private static void CopyInvoiceMeta(InvoiceData from, InvoiceData to)
     {
         if (from == null || to == null) return;
