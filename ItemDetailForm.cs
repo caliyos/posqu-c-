@@ -31,6 +31,15 @@ namespace POS_qu
         private readonly Dictionary<int, decimal> _baseBuyPriceByComponentItemId = new Dictionary<int, decimal>();
         private bool _syncingAssemblySellPrice;
         private bool _syncingMaterialsGrid;
+        private const string ProductTypeStockable = "Stockable (Inventory Item)";
+        private const string ProductTypeConsumable = "Consumable (Non-Stock Item)";
+        private const string ProductTypeService = "Service";
+        private const string ProductTypeManufactured = "Manufactured (BOM/Assembly)";
+
+        private const string ProductTypeCodeStockable = "stockable";
+        private const string ProductTypeCodeConsumable = "consumable";
+        private const string ProductTypeCodeService = "service";
+        private const string ProductTypeCodeManufactured = "manufactured";
 
         public ItemDetailForm()
         {
@@ -159,6 +168,14 @@ namespace POS_qu
             txtSellPrice.TextChanged += (s, e) => UpdateStockOutput();
             UpdateStockOutput();
             cmbSort.SelectedIndexChanged += cmbSort_SelectedIndexChanged;
+
+            if (cmbProductType != null)
+            {
+                cmbProductType.SelectedIndexChanged -= cmbProductType_SelectedIndexChanged;
+                cmbProductType.SelectedIndexChanged += cmbProductType_SelectedIndexChanged;
+                if (cmbProductType.SelectedIndex < 0) cmbProductType.SelectedIndex = 0;
+                ApplyProductTypeUi(setFlagsFromType: false);
+            }
         }
 
         private void ApplyProfessionalStyle()
@@ -317,6 +334,12 @@ namespace POS_qu
             cmbSupplier.SelectedIndex = -1;
 
             SetDefaultSettings();
+            if (cmbProductType != null)
+            {
+                cmbProductType.SelectedItem = ProductTypeStockable;
+                if (cmbProductType.SelectedIndex < 0) cmbProductType.SelectedIndex = 0;
+                ApplyProductTypeUi(setFlagsFromType: true);
+            }
 
             txtBarcode.Focus();
         }
@@ -358,6 +381,28 @@ namespace POS_qu
             chk_IsPackage.Checked = _item.IsPackage;
             chk_IsProduced.Checked = _item.IsProduced;
 
+            if (cmbProductType != null)
+            {
+                var code = (_item.product_type_code ?? "").Trim().ToLowerInvariant();
+                if (code == ProductTypeCodeManufactured)
+                    cmbProductType.SelectedItem = ProductTypeManufactured;
+                else if (code == ProductTypeCodeService)
+                    cmbProductType.SelectedItem = ProductTypeService;
+                else if (code == ProductTypeCodeConsumable)
+                    cmbProductType.SelectedItem = ProductTypeConsumable;
+                else if (code == ProductTypeCodeStockable)
+                    cmbProductType.SelectedItem = ProductTypeStockable;
+                else if (_item.IsProduced || _item.HasMaterials)
+                    cmbProductType.SelectedItem = ProductTypeManufactured;
+                else if (_item.is_inventory_p)
+                    cmbProductType.SelectedItem = ProductTypeStockable;
+                else
+                    cmbProductType.SelectedItem = ProductTypeConsumable;
+
+                if (cmbProductType.SelectedIndex < 0) cmbProductType.SelectedIndex = 0;
+                ApplyProductTypeUi(setFlagsFromType: false);
+            }
+
             var prices = _productService.GetItemPrices(_item.id);
             dgvMultiPrice.DataSource = new BindingList<ItemPrice>(prices);
             _item.Prices = prices; // Ensure it's in the object too
@@ -389,6 +434,92 @@ namespace POS_qu
 
             UpdateStockOutput();
             LoadUnitVariantsUI();
+        }
+
+        private void cmbProductType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ApplyProductTypeUi(setFlagsFromType: true);
+        }
+
+        private void ApplyProductTypeUi(bool setFlagsFromType)
+        {
+            string type = cmbProductType?.SelectedItem?.ToString() ?? ProductTypeStockable;
+
+            bool stockable = type == ProductTypeStockable;
+            bool consumable = type == ProductTypeConsumable;
+            bool service = type == ProductTypeService;
+            bool manufactured = type == ProductTypeManufactured;
+
+            bool showInventorySection = stockable || manufactured;
+            bool showStockInputs = stockable || manufactured;
+
+            if (grpInventory != null) grpInventory.Visible = showInventorySection;
+
+            if (label8 != null) label8.Visible = showStockInputs;
+            if (txtStock != null) txtStock.Visible = showStockInputs;
+            if (label14 != null) label14.Visible = showStockInputs;
+            if (txtMinQty != null) txtMinQty.Visible = showStockInputs;
+            if (lblStockOut != null) lblStockOut.Visible = showStockInputs;
+            if (lblStockValueHpp != null) lblStockValueHpp.Visible = showStockInputs;
+            if (lblStockValueSell != null) lblStockValueSell.Visible = showStockInputs;
+
+            bool allowMaterials = manufactured;
+            if (btnAddMaterial != null) btnAddMaterial.Enabled = allowMaterials;
+            if (btnRemoveMaterial != null) btnRemoveMaterial.Enabled = allowMaterials;
+            if (dgvMaterials != null) dgvMaterials.Enabled = allowMaterials;
+            if (txtAssemblySellPrice != null) txtAssemblySellPrice.Enabled = allowMaterials;
+
+            if (chk_is_inventory_p != null)
+            {
+                chk_is_inventory_p.Visible = stockable || manufactured;
+                chk_is_inventory_p.Enabled = false;
+            }
+            if (chk_IsProduced != null)
+            {
+                chk_IsProduced.Visible = manufactured;
+                chk_IsProduced.Enabled = false;
+            }
+            if (chk_HasMaterials != null)
+            {
+                chk_HasMaterials.Visible = manufactured;
+                chk_HasMaterials.Enabled = false;
+            }
+            if (chk_IsPackage != null)
+            {
+                chk_IsPackage.Visible = !service;
+            }
+
+            if (setFlagsFromType)
+            {
+                if (manufactured)
+                {
+                    chk_is_inventory_p.Checked = true;
+                    chk_IsProduced.Checked = true;
+                    chk_HasMaterials.Checked = true;
+                }
+                else if (stockable)
+                {
+                    chk_is_inventory_p.Checked = true;
+                    chk_IsProduced.Checked = false;
+                    chk_HasMaterials.Checked = false;
+                }
+                else if (consumable || service)
+                {
+                    chk_is_inventory_p.Checked = false;
+                    chk_IsProduced.Checked = false;
+                    chk_HasMaterials.Checked = false;
+                    chk_IsPackage.Checked = false;
+                }
+            }
+        }
+
+        private string GetProductTypeCodeFromUi()
+        {
+            string type = cmbProductType?.SelectedItem?.ToString() ?? ProductTypeStockable;
+            if (type == ProductTypeManufactured) return ProductTypeCodeManufactured;
+            if (type == ProductTypeService) return ProductTypeCodeService;
+            if (type == ProductTypeConsumable) return ProductTypeCodeConsumable;
+            return ProductTypeCodeStockable;
         }
 
 
@@ -469,6 +600,7 @@ namespace POS_qu
             _item.ExpiredAt = dtpExpired.Value.Date;
             
             _item.valuation_method = cmbValuation?.Text ?? "FIFO";
+            _item.product_type_code = GetProductTypeCodeFromUi();
 
             // Update multi-price
             _item.Prices = ((BindingList<ItemPrice>)dgvMultiPrice.DataSource).ToList();

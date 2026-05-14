@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿    ﻿﻿﻿﻿﻿﻿﻿  using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿    ﻿﻿﻿﻿﻿﻿﻿  using Npgsql;
     using System;
     using System.Collections.Generic;
     using System.Data;
@@ -231,6 +231,14 @@ LIMIT 1";
                             setUnitId.ExecuteNonQuery();
                         }
 
+                        if (HasColumn(vCon, tran, "items", "product_type_code"))
+                        {
+                            using var setType = new NpgsqlCommand("UPDATE items SET product_type_code = @pt WHERE id = @id", vCon, tran);
+                            setType.Parameters.AddWithValue("@pt", string.IsNullOrWhiteSpace(item.product_type_code) ? "stockable" : item.product_type_code);
+                            setType.Parameters.AddWithValue("@id", newItemId);
+                            setType.ExecuteNonQuery();
+                        }
+
                         // ----------------------
                         // Insert item_prices
                         // ----------------------
@@ -378,6 +386,14 @@ LIMIT 1";
                             setUnitId.Parameters.AddWithValue("@unit", unitIdSafe2);
                             setUnitId.Parameters.AddWithValue("@id", item.id);
                             setUnitId.ExecuteNonQuery();
+                        }
+
+                        if (HasColumn(vCon, tran, "items", "product_type_code"))
+                        {
+                            using var setType = new NpgsqlCommand("UPDATE items SET product_type_code = @pt WHERE id = @id", vCon, tran);
+                            setType.Parameters.AddWithValue("@pt", string.IsNullOrWhiteSpace(item.product_type_code) ? "stockable" : item.product_type_code);
+                            setType.Parameters.AddWithValue("@id", item.id);
+                            setType.ExecuteNonQuery();
                         }
 
                         // ----------------------

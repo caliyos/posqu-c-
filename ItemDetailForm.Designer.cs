@@ -33,6 +33,8 @@ namespace POS_qu
             label3 = new Label();
             label4 = new Label();
             label5 = new Label();
+            lblProductType = new Label();
+            cmbProductType = new ComboBox();
             txtBarcode = new TextBox();
             txtName = new TextBox();
             cmbUnit = new ComboBox();
@@ -100,10 +102,12 @@ namespace POS_qu
             label11 = new Label();
             label10 = new Label();
             label9 = new Label();
+            label14 = new Label();
             label8 = new Label();
             txtDiscountFormula = new TextBox();
             txtSellPrice = new TextBox();
             txtBuyPrice = new TextBox();
+            txtMinQty = new TextBox();
             txtStock = new TextBox();
             dtpExpired = new DateTimePicker();
             lblExpired = new Label();
@@ -113,8 +117,18 @@ namespace POS_qu
             btnSimpan = new Button();
             cmbSort = new ComboBox();
             label13 = new Label();
-            label14 = new Label();
-            txtMinQty = new TextBox();
+            pnlRoot = new Panel();
+            pnlBottomBar = new Panel();
+            flpBottomActions = new FlowLayoutPanel();
+            splitMain = new SplitContainer();
+            pnlLeft = new Panel();
+            grpInventory = new GroupBox();
+            tlpInventory = new TableLayoutPanel();
+            grpInfo = new GroupBox();
+            tlpInfo = new TableLayoutPanel();
+            pnlBrandRow = new Panel();
+            pnlRackRow = new Panel();
+            tlpRight = new TableLayoutPanel();
             panel1.SuspendLayout();
             tabHarga.SuspendLayout();
             tabPageUnitVariant.SuspendLayout();
@@ -125,45 +139,64 @@ namespace POS_qu
             ((System.ComponentModel.ISupportInitialize)dgvMaterials).BeginInit();
             pnlPricing.SuspendLayout();
             panel2.SuspendLayout();
+            pnlRoot.SuspendLayout();
+            pnlBottomBar.SuspendLayout();
+            flpBottomActions.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitMain).BeginInit();
+            splitMain.Panel1.SuspendLayout();
+            splitMain.Panel2.SuspendLayout();
+            splitMain.SuspendLayout();
+            pnlLeft.SuspendLayout();
+            grpInventory.SuspendLayout();
+            tlpInventory.SuspendLayout();
+            grpInfo.SuspendLayout();
+            tlpInfo.SuspendLayout();
+            pnlBrandRow.SuspendLayout();
+            pnlRackRow.SuspendLayout();
+            tlpRight.SuspendLayout();
             SuspendLayout();
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new Point(38, 26);
-            label1.Margin = new Padding(2, 0, 2, 0);
+            label1.Dock = DockStyle.Fill;
+            label1.Location = new Point(2, 6);
+            label1.Margin = new Padding(2, 6, 2, 6);
             label1.Name = "label1";
-            label1.Size = new Size(83, 28);
+            label1.Size = new Size(156, 28);
             label1.TabIndex = 0;
             label1.Text = "Barcode";
             // 
             // label2
             // 
             label2.AutoSize = true;
-            label2.Location = new Point(38, 58);
-            label2.Margin = new Padding(2, 0, 2, 0);
+            label2.Dock = DockStyle.Fill;
+            label2.Location = new Point(2, 46);
+            label2.Margin = new Padding(2, 6, 2, 6);
             label2.Name = "label2";
-            label2.Size = new Size(130, 28);
+            label2.Size = new Size(156, 28);
             label2.TabIndex = 0;
             label2.Text = "Nama Barang";
             // 
             // label3
             // 
             label3.AutoSize = true;
-            label3.Location = new Point(38, 109);
-            label3.Margin = new Padding(2, 0, 2, 0);
+            label3.Dock = DockStyle.Fill;
+            label3.Location = new Point(2, 126);
+            label3.Margin = new Padding(2, 6, 2, 6);
             label3.Name = "label3";
-            label3.Size = new Size(57, 28);
+            label3.Size = new Size(156, 28);
             label3.TabIndex = 0;
             label3.Text = "Units";
             // 
             // label4
             // 
             label4.AutoSize = true;
-            label4.Location = new Point(38, 147);
-            label4.Margin = new Padding(2, 0, 2, 0);
+            label4.Dock = DockStyle.Fill;
+            label4.Location = new Point(2, 206);
+            label4.Margin = new Padding(2, 6, 2, 6);
             label4.Name = "label4";
-            label4.Size = new Size(92, 28);
+            label4.Size = new Size(156, 28);
             label4.TabIndex = 0;
             label4.Text = "Category";
             label4.TextAlign = ContentAlignment.TopCenter;
@@ -171,87 +204,119 @@ namespace POS_qu
             // label5
             // 
             label5.AutoSize = true;
-            label5.Location = new Point(38, 186);
-            label5.Margin = new Padding(2, 0, 2, 0);
+            label5.Dock = DockStyle.Fill;
+            label5.Location = new Point(2, 246);
+            label5.Margin = new Padding(2, 6, 2, 6);
             label5.Name = "label5";
-            label5.Size = new Size(85, 28);
+            label5.Size = new Size(156, 28);
             label5.TabIndex = 0;
             label5.Text = "Supplier";
             label5.TextAlign = ContentAlignment.TopCenter;
             // 
+            // lblProductType
+            // 
+            lblProductType.AutoSize = true;
+            lblProductType.Dock = DockStyle.Fill;
+            lblProductType.Location = new Point(2, 86);
+            lblProductType.Margin = new Padding(2, 6, 2, 6);
+            lblProductType.Name = "lblProductType";
+            lblProductType.Size = new Size(156, 28);
+            lblProductType.TabIndex = 0;
+            lblProductType.Text = "Tipe Produk";
+            // 
+            // cmbProductType
+            // 
+            cmbProductType.Dock = DockStyle.Fill;
+            cmbProductType.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbProductType.FormattingEnabled = true;
+            cmbProductType.Items.AddRange(new object[] { "Stockable (Inventory Item)", "Consumable (Non-Stock Item)", "Service", "Manufactured (BOM/Assembly)" });
+            cmbProductType.Location = new Point(162, 82);
+            cmbProductType.Margin = new Padding(2);
+            cmbProductType.Name = "cmbProductType";
+            cmbProductType.Size = new Size(405, 36);
+            cmbProductType.TabIndex = 3;
+            // 
             // txtBarcode
             // 
-            txtBarcode.Location = new Point(192, 26);
+            txtBarcode.Dock = DockStyle.Fill;
+            txtBarcode.Location = new Point(162, 2);
             txtBarcode.Margin = new Padding(2);
             txtBarcode.Name = "txtBarcode";
-            txtBarcode.Size = new Size(327, 34);
+            txtBarcode.Size = new Size(405, 34);
             txtBarcode.TabIndex = 1;
             // 
             // txtName
             // 
-            txtName.Location = new Point(192, 58);
+            txtName.Dock = DockStyle.Fill;
+            txtName.Location = new Point(162, 42);
             txtName.Margin = new Padding(2);
             txtName.Name = "txtName";
-            txtName.Size = new Size(327, 34);
+            txtName.Size = new Size(405, 34);
             txtName.TabIndex = 2;
             // 
             // cmbUnit
             // 
+            cmbUnit.Dock = DockStyle.Fill;
             cmbUnit.FormattingEnabled = true;
-            cmbUnit.Location = new Point(192, 102);
+            cmbUnit.Location = new Point(162, 122);
             cmbUnit.Margin = new Padding(2);
             cmbUnit.Name = "cmbUnit";
-            cmbUnit.Size = new Size(244, 36);
-            cmbUnit.TabIndex = 3;
+            cmbUnit.Size = new Size(405, 36);
+            cmbUnit.TabIndex = 5;
             // 
             // cmbCategory
             // 
+            cmbCategory.Dock = DockStyle.Fill;
             cmbCategory.FormattingEnabled = true;
-            cmbCategory.Location = new Point(192, 141);
+            cmbCategory.Location = new Point(162, 202);
             cmbCategory.Margin = new Padding(2);
             cmbCategory.Name = "cmbCategory";
-            cmbCategory.Size = new Size(244, 36);
-            cmbCategory.TabIndex = 4;
+            cmbCategory.Size = new Size(405, 36);
+            cmbCategory.TabIndex = 7;
             // 
             // cmbSupplier
             // 
+            cmbSupplier.Dock = DockStyle.Fill;
             cmbSupplier.FormattingEnabled = true;
-            cmbSupplier.Location = new Point(192, 179);
+            cmbSupplier.Location = new Point(162, 242);
             cmbSupplier.Margin = new Padding(2);
             cmbSupplier.Name = "cmbSupplier";
-            cmbSupplier.Size = new Size(327, 36);
-            cmbSupplier.TabIndex = 5;
+            cmbSupplier.Size = new Size(405, 36);
+            cmbSupplier.TabIndex = 8;
             // 
             // lblBrand
             // 
             lblBrand.AutoSize = true;
+            lblBrand.Dock = DockStyle.Fill;
             lblBrand.Font = new Font("Segoe UI", 10F);
-            lblBrand.Location = new Point(38, 296);
-            lblBrand.Margin = new Padding(2, 0, 2, 0);
+            lblBrand.Location = new Point(2, 286);
+            lblBrand.Margin = new Padding(2, 6, 2, 6);
             lblBrand.Name = "lblBrand";
-            lblBrand.Size = new Size(57, 28);
+            lblBrand.Size = new Size(156, 92);
             lblBrand.TabIndex = 57;
             lblBrand.Text = "Merk";
             // 
             // cmbBrand
             // 
+            cmbBrand.Dock = DockStyle.Fill;
             cmbBrand.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbBrand.Font = new Font("Segoe UI", 10F);
             cmbBrand.FormattingEnabled = true;
-            cmbBrand.Location = new Point(192, 292);
+            cmbBrand.Location = new Point(0, 0);
             cmbBrand.Margin = new Padding(2);
             cmbBrand.Name = "cmbBrand";
-            cmbBrand.Size = new Size(280, 36);
+            cmbBrand.Size = new Size(363, 36);
             cmbBrand.TabIndex = 58;
             // 
             // btnAddBrand
             // 
+            btnAddBrand.Dock = DockStyle.Right;
             btnAddBrand.FlatAppearance.BorderColor = Color.LightGray;
             btnAddBrand.FlatStyle = FlatStyle.Flat;
-            btnAddBrand.Location = new Point(480, 292);
+            btnAddBrand.Location = new Point(363, 0);
             btnAddBrand.Margin = new Padding(2);
             btnAddBrand.Name = "btnAddBrand";
-            btnAddBrand.Size = new Size(39, 31);
+            btnAddBrand.Size = new Size(42, 100);
             btnAddBrand.TabIndex = 59;
             btnAddBrand.Text = "+";
             btnAddBrand.UseVisualStyleBackColor = true;
@@ -260,33 +325,36 @@ namespace POS_qu
             // lblRack
             // 
             lblRack.AutoSize = true;
+            lblRack.Dock = DockStyle.Fill;
             lblRack.Font = new Font("Segoe UI", 10F);
-            lblRack.Location = new Point(38, 334);
-            lblRack.Margin = new Padding(2, 0, 2, 0);
+            lblRack.Location = new Point(2, 390);
+            lblRack.Margin = new Padding(2, 6, 2, 6);
             lblRack.Name = "lblRack";
-            lblRack.Size = new Size(44, 28);
+            lblRack.Size = new Size(156, 92);
             lblRack.TabIndex = 60;
             lblRack.Text = "Rak";
             // 
             // cmbRack
             // 
+            cmbRack.Dock = DockStyle.Fill;
             cmbRack.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbRack.Font = new Font("Segoe UI", 10F);
             cmbRack.FormattingEnabled = true;
-            cmbRack.Location = new Point(192, 330);
+            cmbRack.Location = new Point(0, 0);
             cmbRack.Margin = new Padding(2);
             cmbRack.Name = "cmbRack";
-            cmbRack.Size = new Size(280, 36);
+            cmbRack.Size = new Size(363, 36);
             cmbRack.TabIndex = 61;
             // 
             // btnAddRack
             // 
+            btnAddRack.Dock = DockStyle.Right;
             btnAddRack.FlatAppearance.BorderColor = Color.LightGray;
             btnAddRack.FlatStyle = FlatStyle.Flat;
-            btnAddRack.Location = new Point(480, 330);
+            btnAddRack.Location = new Point(363, 0);
             btnAddRack.Margin = new Padding(2);
             btnAddRack.Name = "btnAddRack";
-            btnAddRack.Size = new Size(39, 31);
+            btnAddRack.Size = new Size(42, 100);
             btnAddRack.TabIndex = 62;
             btnAddRack.Text = "+";
             btnAddRack.UseVisualStyleBackColor = true;
@@ -295,45 +363,49 @@ namespace POS_qu
             // lblWarehouse
             // 
             lblWarehouse.AutoSize = true;
+            lblWarehouse.Dock = DockStyle.Fill;
             lblWarehouse.Font = new Font("Segoe UI", 10F);
-            lblWarehouse.Location = new Point(38, 372);
-            lblWarehouse.Margin = new Padding(2, 0, 2, 0);
+            lblWarehouse.Location = new Point(2, 6);
+            lblWarehouse.Margin = new Padding(2, 6, 2, 6);
             lblWarehouse.Name = "lblWarehouse";
-            lblWarehouse.Size = new Size(109, 28);
+            lblWarehouse.Size = new Size(156, 28);
             lblWarehouse.TabIndex = 63;
             lblWarehouse.Text = "Ke Gudang";
             // 
             // cmbWarehouse
             // 
+            cmbWarehouse.Dock = DockStyle.Fill;
             cmbWarehouse.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbWarehouse.Font = new Font("Segoe UI", 10F);
             cmbWarehouse.FormattingEnabled = true;
-            cmbWarehouse.Location = new Point(192, 368);
+            cmbWarehouse.Location = new Point(162, 2);
             cmbWarehouse.Margin = new Padding(2);
             cmbWarehouse.Name = "cmbWarehouse";
-            cmbWarehouse.Size = new Size(327, 36);
+            cmbWarehouse.Size = new Size(405, 36);
             cmbWarehouse.TabIndex = 64;
             // 
             // lblValuation
             // 
             lblValuation.AutoSize = true;
+            lblValuation.Dock = DockStyle.Fill;
             lblValuation.Font = new Font("Segoe UI", 10F);
-            lblValuation.Location = new Point(38, 410);
-            lblValuation.Margin = new Padding(2, 0, 2, 0);
+            lblValuation.Location = new Point(2, 46);
+            lblValuation.Margin = new Padding(2, 6, 2, 6);
             lblValuation.Name = "lblValuation";
-            lblValuation.Size = new Size(152, 28);
+            lblValuation.Size = new Size(156, 28);
             lblValuation.TabIndex = 65;
             lblValuation.Text = "Sistem Penilaian";
             // 
             // cmbValuation
             // 
+            cmbValuation.Dock = DockStyle.Fill;
             cmbValuation.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbValuation.Font = new Font("Segoe UI", 10F);
             cmbValuation.FormattingEnabled = true;
-            cmbValuation.Location = new Point(192, 406);
+            cmbValuation.Location = new Point(162, 42);
             cmbValuation.Margin = new Padding(2);
             cmbValuation.Name = "cmbValuation";
-            cmbValuation.Size = new Size(160, 36);
+            cmbValuation.Size = new Size(405, 36);
             cmbValuation.TabIndex = 66;
             // 
             // panel1
@@ -349,10 +421,11 @@ namespace POS_qu
             panel1.Controls.Add(chk_IsPurchasable);
             panel1.Controls.Add(chk_is_inventory_p);
             panel1.Controls.Add(label6);
-            panel1.Location = new Point(38, 450);
-            panel1.Margin = new Padding(2);
+            panel1.Dock = DockStyle.Top;
+            panel1.Location = new Point(0, 700);
+            panel1.Margin = new Padding(0, 10, 0, 0);
             panel1.Name = "panel1";
-            panel1.Size = new Size(525, 301);
+            panel1.Size = new Size(589, 301);
             panel1.TabIndex = 7;
             // 
             // chk_IsProduced
@@ -458,12 +531,13 @@ namespace POS_qu
             tabHarga.Controls.Add(tabPageUnitVariant);
             tabHarga.Controls.Add(Harga);
             tabHarga.Controls.Add(Bahan);
+            tabHarga.Dock = DockStyle.Fill;
             tabHarga.ItemSize = new Size(160, 34);
-            tabHarga.Location = new Point(567, 318);
-            tabHarga.Margin = new Padding(2);
+            tabHarga.Location = new Point(0, 270);
+            tabHarga.Margin = new Padding(0);
             tabHarga.Name = "tabHarga";
             tabHarga.SelectedIndex = 0;
-            tabHarga.Size = new Size(1167, 429);
+            tabHarga.Size = new Size(1136, 571);
             tabHarga.SizeMode = TabSizeMode.Fixed;
             tabHarga.TabIndex = 15;
             // 
@@ -475,7 +549,7 @@ namespace POS_qu
             tabPageUnitVariant.Location = new Point(4, 38);
             tabPageUnitVariant.Margin = new Padding(2);
             tabPageUnitVariant.Name = "tabPageUnitVariant";
-            tabPageUnitVariant.Size = new Size(1159, 387);
+            tabPageUnitVariant.Size = new Size(1128, 529);
             tabPageUnitVariant.TabIndex = 3;
             tabPageUnitVariant.Text = "Multi Variant";
             tabPageUnitVariant.UseVisualStyleBackColor = true;
@@ -539,7 +613,7 @@ namespace POS_qu
             Harga.Margin = new Padding(2);
             Harga.Name = "Harga";
             Harga.Padding = new Padding(2);
-            Harga.Size = new Size(1159, 387);
+            Harga.Size = new Size(1128, 529);
             Harga.TabIndex = 0;
             Harga.Text = "Multi Harga";
             Harga.UseVisualStyleBackColor = true;
@@ -617,7 +691,7 @@ namespace POS_qu
             Bahan.Location = new Point(4, 38);
             Bahan.Margin = new Padding(2);
             Bahan.Name = "Bahan";
-            Bahan.Size = new Size(1159, 387);
+            Bahan.Size = new Size(1128, 529);
             Bahan.TabIndex = 2;
             Bahan.Text = "Item Berbahan / Rakitan";
             Bahan.UseVisualStyleBackColor = true;
@@ -820,10 +894,11 @@ namespace POS_qu
             pnlPricing.Controls.Add(txtBuyPrice);
             pnlPricing.Controls.Add(txtMinQty);
             pnlPricing.Controls.Add(txtStock);
-            pnlPricing.Location = new Point(614, 26);
-            pnlPricing.Margin = new Padding(2);
+            pnlPricing.Dock = DockStyle.Fill;
+            pnlPricing.Location = new Point(0, 0);
+            pnlPricing.Margin = new Padding(0, 0, 0, 10);
             pnlPricing.Name = "pnlPricing";
-            pnlPricing.Size = new Size(1120, 250);
+            pnlPricing.Size = new Size(1136, 260);
             pnlPricing.TabIndex = 67;
             // 
             // lblStockOut
@@ -966,6 +1041,16 @@ namespace POS_qu
             label9.TabIndex = 1;
             label9.Text = "Harga Beli";
             // 
+            // label14
+            // 
+            label14.AutoSize = true;
+            label14.Location = new Point(20, 58);
+            label14.Margin = new Padding(2, 0, 2, 0);
+            label14.Name = "label14";
+            label14.Size = new Size(82, 28);
+            label14.TabIndex = 1;
+            label14.Text = "min_qty";
+            // 
             // label8
             // 
             label8.AutoSize = true;
@@ -1000,6 +1085,14 @@ namespace POS_qu
             txtBuyPrice.Size = new Size(218, 34);
             txtBuyPrice.TabIndex = 17;
             // 
+            // txtMinQty
+            // 
+            txtMinQty.Location = new Point(170, 53);
+            txtMinQty.Margin = new Padding(2);
+            txtMinQty.Name = "txtMinQty";
+            txtMinQty.Size = new Size(95, 34);
+            txtMinQty.TabIndex = 16;
+            // 
             // txtStock
             // 
             txtStock.Location = new Point(170, 15);
@@ -1011,41 +1104,45 @@ namespace POS_qu
             // dtpExpired
             // 
             dtpExpired.Checked = false;
+            dtpExpired.Dock = DockStyle.Left;
             dtpExpired.Font = new Font("Segoe UI", 10F);
             dtpExpired.Format = DateTimePickerFormat.Short;
-            dtpExpired.Location = new Point(192, 258);
+            dtpExpired.Location = new Point(162, 530);
             dtpExpired.Margin = new Padding(2);
             dtpExpired.Name = "dtpExpired";
             dtpExpired.ShowCheckBox = true;
-            dtpExpired.Size = new Size(113, 34);
+            dtpExpired.Size = new Size(160, 34);
             dtpExpired.TabIndex = 54;
             // 
             // lblExpired
             // 
             lblExpired.AutoSize = true;
+            lblExpired.Dock = DockStyle.Fill;
             lblExpired.Font = new Font("Segoe UI", 10F);
-            lblExpired.Location = new Point(38, 258);
-            lblExpired.Margin = new Padding(2, 0, 2, 0);
+            lblExpired.Location = new Point(2, 534);
+            lblExpired.Margin = new Padding(2, 6, 2, 6);
             lblExpired.Name = "lblExpired";
-            lblExpired.Size = new Size(81, 28);
+            lblExpired.Size = new Size(156, 28);
             lblExpired.TabIndex = 55;
             lblExpired.Text = "Expired:";
             // 
             // txtNote
             // 
-            txtNote.Location = new Point(192, 224);
+            txtNote.Dock = DockStyle.Fill;
+            txtNote.Location = new Point(162, 490);
             txtNote.Margin = new Padding(2);
             txtNote.Name = "txtNote";
-            txtNote.Size = new Size(327, 34);
+            txtNote.Size = new Size(405, 34);
             txtNote.TabIndex = 6;
             // 
             // label7
             // 
             label7.AutoSize = true;
-            label7.Location = new Point(38, 224);
-            label7.Margin = new Padding(2, 0, 2, 0);
+            label7.Dock = DockStyle.Fill;
+            label7.Location = new Point(2, 494);
+            label7.Margin = new Padding(2, 6, 2, 6);
             label7.Name = "label7";
-            label7.Size = new Size(112, 28);
+            label7.Size = new Size(156, 28);
             label7.TabIndex = 0;
             label7.Text = "Keterangan";
             label7.TextAlign = ContentAlignment.TopCenter;
@@ -1056,10 +1153,10 @@ namespace POS_qu
             btnCancel.FlatAppearance.BorderSize = 0;
             btnCancel.FlatStyle = FlatStyle.Flat;
             btnCancel.ForeColor = Color.White;
-            btnCancel.Location = new Point(1535, 795);
+            btnCancel.Location = new Point(2, 2);
             btnCancel.Margin = new Padding(2);
             btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(90, 45);
+            btnCancel.Size = new Size(120, 45);
             btnCancel.TabIndex = 51;
             btnCancel.Text = "Batal";
             btnCancel.UseVisualStyleBackColor = true;
@@ -1072,10 +1169,10 @@ namespace POS_qu
             btnSimpan.FlatStyle = FlatStyle.Flat;
             btnSimpan.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnSimpan.ForeColor = Color.White;
-            btnSimpan.Location = new Point(1644, 795);
+            btnSimpan.Location = new Point(126, 2);
             btnSimpan.Margin = new Padding(2);
             btnSimpan.Name = "btnSimpan";
-            btnSimpan.Size = new Size(90, 45);
+            btnSimpan.Size = new Size(140, 45);
             btnSimpan.TabIndex = 50;
             btnSimpan.Text = "Simpan";
             btnSimpan.UseVisualStyleBackColor = true;
@@ -1083,39 +1180,220 @@ namespace POS_qu
             // 
             // cmbSort
             // 
+            cmbSort.Dock = DockStyle.Fill;
             cmbSort.FormattingEnabled = true;
-            cmbSort.Location = new Point(495, 101);
+            cmbSort.Location = new Point(163, 163);
             cmbSort.Name = "cmbSort";
-            cmbSort.Size = new Size(114, 36);
+            cmbSort.Size = new Size(403, 36);
             cmbSort.TabIndex = 56;
             // 
             // label13
             // 
             label13.AutoSize = true;
-            label13.Location = new Point(438, 105);
-            label13.Margin = new Padding(2, 0, 2, 0);
+            label13.Dock = DockStyle.Fill;
+            label13.Location = new Point(2, 166);
+            label13.Margin = new Padding(2, 6, 2, 6);
             label13.Name = "label13";
-            label13.Size = new Size(72, 28);
+            label13.Size = new Size(156, 28);
             label13.TabIndex = 0;
-            label13.Text = "Urutan";
+            label13.Text = "Urut Unit";
             // 
-            // label14
+            // pnlRoot
             // 
-            label14.AutoSize = true;
-            label14.Location = new Point(20, 58);
-            label14.Margin = new Padding(2, 0, 2, 0);
-            label14.Name = "label14";
-            label14.Size = new Size(82, 28);
-            label14.TabIndex = 1;
-            label14.Text = "min_qty";
+            pnlRoot.BackColor = Color.Transparent;
+            pnlRoot.Controls.Add(pnlBottomBar);
+            pnlRoot.Controls.Add(splitMain);
+            pnlRoot.Dock = DockStyle.Fill;
+            pnlRoot.Location = new Point(0, 0);
+            pnlRoot.Name = "pnlRoot";
+            pnlRoot.Padding = new Padding(16);
+            pnlRoot.Size = new Size(1791, 873);
+            pnlRoot.TabIndex = 0;
             // 
-            // txtMinQty
+            // pnlBottomBar
             // 
-            txtMinQty.Location = new Point(170, 53);
-            txtMinQty.Margin = new Padding(2);
-            txtMinQty.Name = "txtMinQty";
-            txtMinQty.Size = new Size(95, 34);
-            txtMinQty.TabIndex = 16;
+            pnlBottomBar.BackColor = Color.Transparent;
+            pnlBottomBar.Controls.Add(flpBottomActions);
+            pnlBottomBar.Dock = DockStyle.Bottom;
+            pnlBottomBar.Location = new Point(16, 787);
+            pnlBottomBar.Name = "pnlBottomBar";
+            pnlBottomBar.Padding = new Padding(0, 10, 0, 0);
+            pnlBottomBar.Size = new Size(1759, 70);
+            pnlBottomBar.TabIndex = 0;
+            // 
+            // flpBottomActions
+            // 
+            flpBottomActions.AutoSize = true;
+            flpBottomActions.Controls.Add(btnSimpan);
+            flpBottomActions.Controls.Add(btnCancel);
+            flpBottomActions.Dock = DockStyle.Right;
+            flpBottomActions.FlowDirection = FlowDirection.RightToLeft;
+            flpBottomActions.Location = new Point(1491, 10);
+            flpBottomActions.Margin = new Padding(0);
+            flpBottomActions.Name = "flpBottomActions";
+            flpBottomActions.Size = new Size(268, 60);
+            flpBottomActions.TabIndex = 0;
+            flpBottomActions.WrapContents = false;
+            // 
+            // splitMain
+            // 
+            splitMain.Dock = DockStyle.Fill;
+            splitMain.Location = new Point(16, 16);
+            splitMain.Name = "splitMain";
+            // 
+            // splitMain.Panel1
+            // 
+            splitMain.Panel1.Controls.Add(pnlLeft);
+            splitMain.Panel1MinSize = 520;
+            // 
+            // splitMain.Panel2
+            // 
+            splitMain.Panel2.Controls.Add(tlpRight);
+            splitMain.Panel2MinSize = 700;
+            splitMain.Size = new Size(1759, 841);
+            splitMain.SplitterDistance = 615;
+            splitMain.SplitterWidth = 8;
+            splitMain.TabIndex = 1;
+            // 
+            // pnlLeft
+            // 
+            pnlLeft.AutoScroll = true;
+            pnlLeft.BackColor = Color.Transparent;
+            pnlLeft.Controls.Add(panel1);
+            pnlLeft.Controls.Add(grpInventory);
+            pnlLeft.Controls.Add(grpInfo);
+            pnlLeft.Dock = DockStyle.Fill;
+            pnlLeft.Location = new Point(0, 0);
+            pnlLeft.Name = "pnlLeft";
+            pnlLeft.Size = new Size(615, 841);
+            pnlLeft.TabIndex = 0;
+            // 
+            // grpInventory
+            // 
+            grpInventory.Controls.Add(tlpInventory);
+            grpInventory.Dock = DockStyle.Top;
+            grpInventory.Location = new Point(0, 520);
+            grpInventory.Name = "grpInventory";
+            grpInventory.Padding = new Padding(10);
+            grpInventory.Size = new Size(589, 180);
+            grpInventory.TabIndex = 8;
+            grpInventory.TabStop = false;
+            grpInventory.Text = "Persediaan";
+            // 
+            // tlpInventory
+            // 
+            tlpInventory.AutoSize = true;
+            tlpInventory.ColumnCount = 2;
+            tlpInventory.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160F));
+            tlpInventory.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tlpInventory.Controls.Add(lblWarehouse, 0, 0);
+            tlpInventory.Controls.Add(cmbWarehouse, 1, 0);
+            tlpInventory.Controls.Add(lblValuation, 0, 1);
+            tlpInventory.Controls.Add(cmbValuation, 1, 1);
+            tlpInventory.Dock = DockStyle.Top;
+            tlpInventory.Location = new Point(10, 37);
+            tlpInventory.Name = "tlpInventory";
+            tlpInventory.RowCount = 2;
+            tlpInventory.RowStyles.Add(new RowStyle());
+            tlpInventory.RowStyles.Add(new RowStyle());
+            tlpInventory.Size = new Size(569, 80);
+            tlpInventory.TabIndex = 0;
+            // 
+            // grpInfo
+            // 
+            grpInfo.Controls.Add(tlpInfo);
+            grpInfo.Dock = DockStyle.Top;
+            grpInfo.Location = new Point(0, 0);
+            grpInfo.Name = "grpInfo";
+            grpInfo.Padding = new Padding(10);
+            grpInfo.Size = new Size(589, 520);
+            grpInfo.TabIndex = 9;
+            grpInfo.TabStop = false;
+            grpInfo.Text = "Informasi Produk";
+            // 
+            // tlpInfo
+            // 
+            tlpInfo.AutoSize = true;
+            tlpInfo.ColumnCount = 2;
+            tlpInfo.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 160F));
+            tlpInfo.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tlpInfo.Controls.Add(label1, 0, 0);
+            tlpInfo.Controls.Add(txtBarcode, 1, 0);
+            tlpInfo.Controls.Add(label2, 0, 1);
+            tlpInfo.Controls.Add(txtName, 1, 1);
+            tlpInfo.Controls.Add(lblProductType, 0, 2);
+            tlpInfo.Controls.Add(cmbProductType, 1, 2);
+            tlpInfo.Controls.Add(label3, 0, 3);
+            tlpInfo.Controls.Add(cmbUnit, 1, 3);
+            tlpInfo.Controls.Add(label13, 0, 4);
+            tlpInfo.Controls.Add(cmbSort, 1, 4);
+            tlpInfo.Controls.Add(label4, 0, 5);
+            tlpInfo.Controls.Add(cmbCategory, 1, 5);
+            tlpInfo.Controls.Add(label5, 0, 6);
+            tlpInfo.Controls.Add(cmbSupplier, 1, 6);
+            tlpInfo.Controls.Add(lblBrand, 0, 7);
+            tlpInfo.Controls.Add(pnlBrandRow, 1, 7);
+            tlpInfo.Controls.Add(lblRack, 0, 8);
+            tlpInfo.Controls.Add(pnlRackRow, 1, 8);
+            tlpInfo.Controls.Add(label7, 0, 9);
+            tlpInfo.Controls.Add(txtNote, 1, 9);
+            tlpInfo.Controls.Add(lblExpired, 0, 10);
+            tlpInfo.Controls.Add(dtpExpired, 1, 10);
+            tlpInfo.Dock = DockStyle.Top;
+            tlpInfo.GrowStyle = TableLayoutPanelGrowStyle.FixedSize;
+            tlpInfo.Location = new Point(10, 37);
+            tlpInfo.Name = "tlpInfo";
+            tlpInfo.RowCount = 11;
+            tlpInfo.RowStyles.Add(new RowStyle());
+            tlpInfo.RowStyles.Add(new RowStyle());
+            tlpInfo.RowStyles.Add(new RowStyle());
+            tlpInfo.RowStyles.Add(new RowStyle());
+            tlpInfo.RowStyles.Add(new RowStyle());
+            tlpInfo.RowStyles.Add(new RowStyle());
+            tlpInfo.RowStyles.Add(new RowStyle());
+            tlpInfo.RowStyles.Add(new RowStyle());
+            tlpInfo.RowStyles.Add(new RowStyle());
+            tlpInfo.RowStyles.Add(new RowStyle());
+            tlpInfo.RowStyles.Add(new RowStyle());
+            tlpInfo.Size = new Size(569, 568);
+            tlpInfo.TabIndex = 0;
+            // 
+            // pnlBrandRow
+            // 
+            pnlBrandRow.Controls.Add(cmbBrand);
+            pnlBrandRow.Controls.Add(btnAddBrand);
+            pnlBrandRow.Dock = DockStyle.Fill;
+            pnlBrandRow.Location = new Point(162, 282);
+            pnlBrandRow.Margin = new Padding(2);
+            pnlBrandRow.Name = "pnlBrandRow";
+            pnlBrandRow.Size = new Size(405, 100);
+            pnlBrandRow.TabIndex = 58;
+            // 
+            // pnlRackRow
+            // 
+            pnlRackRow.Controls.Add(cmbRack);
+            pnlRackRow.Controls.Add(btnAddRack);
+            pnlRackRow.Dock = DockStyle.Fill;
+            pnlRackRow.Location = new Point(162, 386);
+            pnlRackRow.Margin = new Padding(2);
+            pnlRackRow.Name = "pnlRackRow";
+            pnlRackRow.Size = new Size(405, 100);
+            pnlRackRow.TabIndex = 61;
+            // 
+            // tlpRight
+            // 
+            tlpRight.ColumnCount = 1;
+            tlpRight.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tlpRight.Controls.Add(pnlPricing, 0, 0);
+            tlpRight.Controls.Add(tabHarga, 0, 1);
+            tlpRight.Dock = DockStyle.Fill;
+            tlpRight.Location = new Point(0, 0);
+            tlpRight.Name = "tlpRight";
+            tlpRight.RowCount = 2;
+            tlpRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 270F));
+            tlpRight.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            tlpRight.Size = new Size(1136, 841);
+            tlpRight.TabIndex = 0;
             // 
             // ItemDetailForm
             // 
@@ -1123,44 +1401,16 @@ namespace POS_qu
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(244, 246, 249);
             ClientSize = new Size(1791, 873);
-            Controls.Add(btnSimpan);
-            Controls.Add(btnCancel);
-            Controls.Add(pnlPricing);
-            Controls.Add(cmbSort);
-            Controls.Add(lblExpired);
-            Controls.Add(dtpExpired);
-            Controls.Add(tabHarga);
-            Controls.Add(panel1);
-            Controls.Add(cmbValuation);
-            Controls.Add(lblValuation);
-            Controls.Add(cmbWarehouse);
-            Controls.Add(lblWarehouse);
-            Controls.Add(btnAddRack);
-            Controls.Add(cmbRack);
-            Controls.Add(lblRack);
-            Controls.Add(btnAddBrand);
-            Controls.Add(cmbBrand);
-            Controls.Add(lblBrand);
-            Controls.Add(cmbSupplier);
-            Controls.Add(cmbCategory);
-            Controls.Add(cmbUnit);
-            Controls.Add(txtNote);
-            Controls.Add(txtName);
-            Controls.Add(txtBarcode);
-            Controls.Add(label7);
-            Controls.Add(label5);
-            Controls.Add(label4);
-            Controls.Add(label13);
-            Controls.Add(label3);
-            Controls.Add(label2);
-            Controls.Add(label1);
+            Controls.Add(pnlRoot);
             Font = new Font("Segoe UI", 10F);
             FormBorderStyle = FormBorderStyle.FixedSingle;
-            MaximizeBox = false;
             MinimizeBox = false;
+            MinimumSize = new Size(1791, 873);
             Name = "ItemDetailForm";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Detail Item";
+            WindowState = FormWindowState.Maximized;
+            Load += ItemDetailForm_Load;
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
             tabHarga.ResumeLayout(false);
@@ -1176,8 +1426,27 @@ namespace POS_qu
             pnlPricing.PerformLayout();
             panel2.ResumeLayout(false);
             panel2.PerformLayout();
+            pnlRoot.ResumeLayout(false);
+            pnlBottomBar.ResumeLayout(false);
+            pnlBottomBar.PerformLayout();
+            flpBottomActions.ResumeLayout(false);
+            splitMain.Panel1.ResumeLayout(false);
+            splitMain.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitMain).EndInit();
+            splitMain.ResumeLayout(false);
+            pnlLeft.ResumeLayout(false);
+            grpInventory.ResumeLayout(false);
+            grpInventory.PerformLayout();
+            tlpInventory.ResumeLayout(false);
+            tlpInventory.PerformLayout();
+            grpInfo.ResumeLayout(false);
+            grpInfo.PerformLayout();
+            tlpInfo.ResumeLayout(false);
+            tlpInfo.PerformLayout();
+            pnlBrandRow.ResumeLayout(false);
+            pnlRackRow.ResumeLayout(false);
+            tlpRight.ResumeLayout(false);
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
@@ -1187,6 +1456,8 @@ namespace POS_qu
         private Label label3;
         private Label label4;
         private Label label5;
+        private Label lblProductType;
+        private ComboBox cmbProductType;
         private TextBox txtBarcode;
         private TextBox txtName;
         private ComboBox cmbUnit;
@@ -1269,5 +1540,17 @@ namespace POS_qu
         private Label lblAssemblyMarginValue;
         private Label label14;
         private TextBox txtMinQty;
+        private Panel pnlRoot;
+        private SplitContainer splitMain;
+        private Panel pnlLeft;
+        private GroupBox grpInfo;
+        private TableLayoutPanel tlpInfo;
+        private Panel pnlBrandRow;
+        private Panel pnlRackRow;
+        private GroupBox grpInventory;
+        private TableLayoutPanel tlpInventory;
+        private TableLayoutPanel tlpRight;
+        private Panel pnlBottomBar;
+        private FlowLayoutPanel flpBottomActions;
     }
 }

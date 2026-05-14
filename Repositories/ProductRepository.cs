@@ -140,6 +140,7 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
                                 HasMaterials = reader["is_have_bahan"] != DBNull.Value && Convert.ToBoolean(reader["is_have_bahan"]),
                                 IsPackage = reader["is_box"] != DBNull.Value && Convert.ToBoolean(reader["is_box"]),
                                 IsProduced = reader["is_produksi"] != DBNull.Value && Convert.ToBoolean(reader["is_produksi"]),
+                                product_type_code = HasField(reader, "product_type_code") ? (reader["product_type_code"]?.ToString() ?? "") : "",
                                 discount_formula = reader["discount_formula"]?.ToString() ?? "",
                                 ExpiredAt = reader["expired_at"] != DBNull.Value ? Convert.ToDateTime(reader["expired_at"]) : null,
                                 note = reader["note"]?.ToString(),
@@ -207,6 +208,14 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
                             cmd.Parameters.AddWithValue("@expired_at", item.ExpiredAt.HasValue ? (object)item.ExpiredAt.Value.Date : DBNull.Value);
 
                             newItemId = Convert.ToInt32(cmd.ExecuteScalar());
+                        }
+
+                        if (HasColumn(con, tran, "items", "product_type_code"))
+                        {
+                            using var cmdPt = new NpgsqlCommand("UPDATE items SET product_type_code = @pt WHERE id = @id", con, tran);
+                            cmdPt.Parameters.AddWithValue("@pt", string.IsNullOrWhiteSpace(item.product_type_code) ? "stockable" : item.product_type_code);
+                            cmdPt.Parameters.AddWithValue("@id", newItemId);
+                            cmdPt.ExecuteNonQuery();
                         }
 
                         // Insert initial stock to default warehouse (or specified warehouse)
@@ -359,6 +368,14 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
                             cmd.Parameters.AddWithValue("@expired_at", item.ExpiredAt.HasValue ? (object)item.ExpiredAt.Value.Date : DBNull.Value);
 
                             cmd.ExecuteNonQuery();
+                        }
+
+                        if (HasColumn(con, tran, "items", "product_type_code"))
+                        {
+                            using var cmdPt = new NpgsqlCommand("UPDATE items SET product_type_code = @pt WHERE id = @id", con, tran);
+                            cmdPt.Parameters.AddWithValue("@pt", string.IsNullOrWhiteSpace(item.product_type_code) ? "stockable" : item.product_type_code);
+                            cmdPt.Parameters.AddWithValue("@id", item.id);
+                            cmdPt.ExecuteNonQuery();
                         }
 
                         int warehouseId = item.initial_warehouse_id ?? 1;
@@ -636,6 +653,32 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
                 }
             }
             return variants;
+        }
+
+        private static bool HasColumn(NpgsqlConnection con, NpgsqlTransaction tran, string tableName, string columnName)
+        {
+            using var cmd = new NpgsqlCommand(@"
+SELECT 1
+FROM information_schema.columns
+WHERE table_schema='public'
+  AND table_name = @t
+  AND column_name = @c
+LIMIT 1
+", con, tran);
+            cmd.Parameters.AddWithValue("@t", tableName);
+            cmd.Parameters.AddWithValue("@c", columnName);
+            var obj = cmd.ExecuteScalar();
+            return obj != null && obj != DBNull.Value;
+        }
+
+        private static bool HasField(IDataRecord record, string fieldName)
+        {
+            for (int i = 0; i < record.FieldCount; i++)
+            {
+                if (string.Equals(record.GetName(i), fieldName, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
         }
 
         private DataTable GetLookupTable(string query)

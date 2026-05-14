@@ -64,6 +64,8 @@ namespace POS_qu.Models
         public bool IsPackage { get; set; }          // is_box
         public bool IsProduced { get; set; }         // is_produksi
 
+        public string product_type_code { get; set; } = "stockable";
+
         // Helper untuk mapping dari DB Y/N ke bool
 
         // DISCOUNT FORMULA PER ITEM
