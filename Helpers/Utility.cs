@@ -1,6 +1,7 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using System;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.Drawing.Printing;
 using System.Globalization;
 using System.Linq;
@@ -8,7 +9,9 @@ using System.Net.NetworkInformation;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using Npgsql;
+using BCrypt.Net;
 
 namespace POS_qu.Helpers
 {
@@ -149,6 +152,292 @@ namespace POS_qu.Helpers
             }
 
             return userName;
+        }
+
+        public static bool TrySupervisorApproval(
+            IWin32Window owner,
+            string actionTitle,
+            string? reasonPlaceholder,
+            bool requireReason,
+            out int approverUserId,
+            out string approverUsername,
+            out string approvalReason
+        )
+        {
+            approverUserId = 0;
+            approverUsername = "";
+            approvalReason = "";
+
+            using var modal = new Form
+            {
+                Text = actionTitle,
+                StartPosition = FormStartPosition.CenterParent,
+                Size = new Size(520, 340),
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                Padding = new Padding(18),
+                KeyPreview = true
+            };
+
+            var lblTitle = new Label
+            {
+                Text = "Supervisor Approval Required",
+                Dock = DockStyle.Top,
+                Height = 36,
+                Font = new Font("Segoe UI Semibold", 14F, FontStyle.Bold)
+            };
+
+            var pnl = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 2,
+                RowCount = 4,
+                Padding = new Padding(0, 12, 0, 0)
+            };
+            pnl.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 150));
+            pnl.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+            pnl.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
+            pnl.RowStyles.Add(new RowStyle(SizeType.Absolute, 44));
+            pnl.RowStyles.Add(new RowStyle(SizeType.Absolute, 80));
+            pnl.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
+
+            var lblUser = new Label { Text = "Username", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 10F) };
+            var txtUser = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 12F) };
+
+            var lblPass = new Label { Text = "Password", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft, Font = new Font("Segoe UI", 10F) };
+            var txtPass = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 12F), UseSystemPasswordChar = true };
+
+            var lblReason = new Label { Text = "Reason", Dock = DockStyle.Fill, TextAlign = ContentAlignment.TopLeft, Font = new Font("Segoe UI", 10F) };
+            var txtReason = new TextBox { Dock = DockStyle.Fill, Font = new Font("Segoe UI", 11F), Multiline = true, ScrollBars = ScrollBars.Vertical };
+            if (!string.IsNullOrWhiteSpace(reasonPlaceholder))
+                txtReason.Text = reasonPlaceholder;
+
+            var lblHint = new Label
+            {
+                Text = "Enter = Approve • Esc = Cancel",
+                Dock = DockStyle.Fill,
+                ForeColor = Color.DimGray,
+                Font = new Font("Segoe UI", 9F, FontStyle.Italic),
+                TextAlign = ContentAlignment.MiddleLeft
+            };
+
+            pnl.Controls.Add(lblUser, 0, 0);
+            pnl.Controls.Add(txtUser, 1, 0);
+            pnl.Controls.Add(lblPass, 0, 1);
+            pnl.Controls.Add(txtPass, 1, 1);
+            pnl.Controls.Add(lblReason, 0, 2);
+            pnl.Controls.Add(txtReason, 1, 2);
+            pnl.Controls.Add(lblHint, 1, 3);
+
+            var footer = new Panel { Dock = DockStyle.Bottom, Height = 56 };
+            var btnCancel = new Button { Text = "Batal (Esc)", Dock = DockStyle.Right, Width = 120 };
+            var btnOk = new Button
+            {
+                Text = "Approve",
+                Dock = DockStyle.Right,
+                Width = 120,
+                BackColor = Color.FromArgb(0, 122, 255),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat
+            };
+            btnOk.FlatAppearance.BorderSize = 0;
+            footer.Controls.Add(btnCancel);
+            footer.Controls.Add(btnOk);
+
+            bool approved = false;
+            int approverUserIdLocal = 0;
+            string approverUsernameLocal = "";
+            string approvalReasonLocal = "";
+
+            bool TryCheckCredentials()
+            {
+                string u = (txtUser.Text ?? "").Trim();
+                string p = (txtPass.Text ?? "").Trim();
+                string r = (txtReason.Text ?? "").Trim();
+
+                if (string.IsNullOrWhiteSpace(u) || string.IsNullOrWhiteSpace(p))
+                {
+                    MessageBox.Show(modal, "Isi username dan password supervisor.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return false;
+                }
+                if (requireReason && string.IsNullOrWhiteSpace(r))
+                {
+                    MessageBox.Show(modal, "Alasan wajib diisi untuk aksi ini.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return false;
+                }
+
+                using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+                conn.Open();
+                using var cmd = new NpgsqlCommand(@"
+SELECT
+    u.id,
+    u.username,
+    u.password_hash,
+    COALESCE(r.id,0) AS role_id,
+    COALESCE(r.name,'') AS role_name
+FROM users u
+LEFT JOIN role_user ru ON ru.user_id = u.id
+LEFT JOIN roles r ON r.id = ru.role_id
+WHERE u.username = @username
+LIMIT 1
+", conn);
+                cmd.Parameters.AddWithValue("@username", u);
+                using var reader = cmd.ExecuteReader();
+                if (!reader.Read())
+                {
+                    MessageBox.Show(modal, "User tidak ditemukan.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return false;
+                }
+
+                int userId = reader["id"] != DBNull.Value ? Convert.ToInt32(reader["id"]) : 0;
+                string username = reader["username"]?.ToString() ?? "";
+                string hash = reader["password_hash"]?.ToString() ?? "";
+                int roleId = reader["role_id"] != DBNull.Value ? Convert.ToInt32(reader["role_id"]) : 0;
+                string roleName = (reader["role_name"]?.ToString() ?? "").Trim().ToLowerInvariant();
+
+                bool roleOk = roleId == 1 || roleId == 3 || roleName == "admin" || roleName == "supervisor";
+                if (!roleOk)
+                {
+                    MessageBox.Show(modal, "Akun ini bukan supervisor/admin.", "Ditolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return false;
+                }
+
+                if (string.IsNullOrWhiteSpace(hash) || !BCrypt.Net.BCrypt.Verify(p, hash))
+                {
+                    MessageBox.Show(modal, "Password salah.", "Ditolak", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return false;
+                }
+
+                approverUserIdLocal = userId;
+                approverUsernameLocal = username;
+                approvalReasonLocal = r;
+                return true;
+            }
+
+            btnOk.Click += (_, __) =>
+            {
+                if (!TryCheckCredentials()) return;
+                approved = true;
+                modal.DialogResult = DialogResult.OK;
+                modal.Close();
+            };
+            btnCancel.Click += (_, __) => { modal.DialogResult = DialogResult.Cancel; modal.Close(); };
+
+            modal.AcceptButton = btnOk;
+            modal.CancelButton = btnCancel;
+            modal.Shown += (_, __) => txtUser.Focus();
+            modal.KeyDown += (_, e) =>
+            {
+                if (e.KeyCode == Keys.Escape)
+                {
+                    modal.DialogResult = DialogResult.Cancel;
+                    modal.Close();
+                    e.Handled = true;
+                }
+            };
+
+            modal.Controls.Add(pnl);
+            modal.Controls.Add(footer);
+            modal.Controls.Add(lblTitle);
+
+            modal.ShowDialog(owner);
+            approverUserId = approverUserIdLocal;
+            approverUsername = approverUsernameLocal;
+            approvalReason = approvalReasonLocal;
+            return approved;
+        }
+
+        public static bool TrySupervisorApproval(
+            IWin32Window owner,
+            string actionTitle,
+            string? reasonPlaceholder,
+            out int approverUserId,
+            out string approverUsername,
+            out string approvalReason
+        )
+        {
+            return TrySupervisorApproval(owner, actionTitle, reasonPlaceholder, false, out approverUserId, out approverUsername, out approvalReason);
+        }
+
+        public static bool IsSupervisorApprovalReasonRequired(string actionCode)
+        {
+            try
+            {
+                using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+                conn.Open();
+                using var exists = new NpgsqlCommand("SELECT (to_regclass('public.supervisor_approval_settings') IS NOT NULL);", conn);
+                var exObj = exists.ExecuteScalar();
+                bool tableExists = exObj != null && exObj != DBNull.Value && Convert.ToBoolean(exObj);
+                if (!tableExists)
+                {
+                    return string.Equals(actionCode, "delete_item", StringComparison.OrdinalIgnoreCase);
+                }
+
+                using var cmd = new NpgsqlCommand(@"
+SELECT require_reason
+FROM supervisor_approval_settings
+WHERE action_code = @c
+LIMIT 1
+", conn);
+                cmd.Parameters.AddWithValue("@c", (actionCode ?? "").Trim());
+                var obj = cmd.ExecuteScalar();
+                return obj != null && obj != DBNull.Value && Convert.ToBoolean(obj);
+            }
+            catch
+            {
+                return string.Equals(actionCode, "delete_item", StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        public static bool ShouldRequireSupervisorApproval(string actionCode, POS_qu.Models.SessionUser session, decimal amount)
+        {
+            if (session == null) return false;
+            if (session.RoleId == 1 || session.RoleId == 3) return false;
+            if (session.RoleId != 2) return false;
+
+            try
+            {
+                using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+                conn.Open();
+                using var exists = new NpgsqlCommand("SELECT (to_regclass('public.supervisor_approval_settings') IS NOT NULL);", conn);
+                var exObj = exists.ExecuteScalar();
+                bool tableExists = exObj != null && exObj != DBNull.Value && Convert.ToBoolean(exObj);
+
+                if (!tableExists)
+                {
+                    if (string.Equals(actionCode, "close_shift", StringComparison.OrdinalIgnoreCase)) return true;
+                    if (string.Equals(actionCode, "reprint_receipt", StringComparison.OrdinalIgnoreCase)) return true;
+                    if (string.Equals(actionCode, "delete_item", StringComparison.OrdinalIgnoreCase)) return amount >= 100000m;
+                    return false;
+                }
+
+                using var cmd = new NpgsqlCommand(@"
+SELECT is_enabled, require_for_cashier, COALESCE(min_amount,0) AS min_amount
+FROM supervisor_approval_settings
+WHERE action_code = @c
+LIMIT 1
+", conn);
+                cmd.Parameters.AddWithValue("@c", (actionCode ?? "").Trim());
+                using var r = cmd.ExecuteReader();
+                if (!r.Read()) return false;
+
+                bool enabled = r["is_enabled"] != DBNull.Value && Convert.ToBoolean(r["is_enabled"]);
+                bool requireCashier = r["require_for_cashier"] != DBNull.Value && Convert.ToBoolean(r["require_for_cashier"]);
+                decimal minAmount = r["min_amount"] != DBNull.Value ? Convert.ToDecimal(r["min_amount"]) : 0m;
+
+                if (!enabled) return false;
+                if (!requireCashier) return false;
+                if (minAmount > 0m && amount < minAmount) return false;
+                return true;
+            }
+            catch
+            {
+                if (string.Equals(actionCode, "close_shift", StringComparison.OrdinalIgnoreCase)) return true;
+                if (string.Equals(actionCode, "reprint_receipt", StringComparison.OrdinalIgnoreCase)) return true;
+                if (string.Equals(actionCode, "delete_item", StringComparison.OrdinalIgnoreCase)) return amount >= 100000m;
+                return false;
+            }
         }
 
 

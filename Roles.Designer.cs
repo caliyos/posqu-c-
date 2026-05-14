@@ -52,6 +52,18 @@ namespace POS_qu
         private System.Windows.Forms.Button btnUsersRefresh;
         private System.Windows.Forms.Button btnSaveRoleUsers;
 
+        private System.Windows.Forms.TabControl tabUsersApproval;
+        private System.Windows.Forms.TabPage tabUsers;
+        private System.Windows.Forms.TabPage tabSupervisorApproval;
+        private System.Windows.Forms.Panel panelApprovalTop;
+        private System.Windows.Forms.Label lblApproval;
+        private System.Windows.Forms.Label lblApprovalSearch;
+        private System.Windows.Forms.TextBox txtApprovalSearch;
+        private System.Windows.Forms.DataGridView dgvApproval;
+        private System.Windows.Forms.Panel panelApprovalBottom;
+        private System.Windows.Forms.Button btnApprovalRefresh;
+        private System.Windows.Forms.Button btnSaveApprovalSettings;
+
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -109,6 +121,17 @@ namespace POS_qu
             panelUsersBottom = new System.Windows.Forms.Panel();
             btnUsersRefresh = new System.Windows.Forms.Button();
             btnSaveRoleUsers = new System.Windows.Forms.Button();
+            tabUsersApproval = new System.Windows.Forms.TabControl();
+            tabUsers = new System.Windows.Forms.TabPage();
+            tabSupervisorApproval = new System.Windows.Forms.TabPage();
+            panelApprovalTop = new System.Windows.Forms.Panel();
+            lblApproval = new System.Windows.Forms.Label();
+            lblApprovalSearch = new System.Windows.Forms.Label();
+            txtApprovalSearch = new System.Windows.Forms.TextBox();
+            dgvApproval = new System.Windows.Forms.DataGridView();
+            panelApprovalBottom = new System.Windows.Forms.Panel();
+            btnApprovalRefresh = new System.Windows.Forms.Button();
+            btnSaveApprovalSettings = new System.Windows.Forms.Button();
             panelHeader.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitMain).BeginInit();
             splitMain.Panel1.SuspendLayout();
@@ -127,6 +150,12 @@ namespace POS_qu
             panelUsersTop.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvUsers).BeginInit();
             panelUsersBottom.SuspendLayout();
+            tabUsersApproval.SuspendLayout();
+            tabUsers.SuspendLayout();
+            tabSupervisorApproval.SuspendLayout();
+            panelApprovalTop.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvApproval).BeginInit();
+            panelApprovalBottom.SuspendLayout();
             SuspendLayout();
             // 
             // panelHeader
@@ -374,9 +403,7 @@ namespace POS_qu
             splitRight.Panel1.Controls.Add(dgvPermissions);
             splitRight.Panel1.Controls.Add(panelPermEdit);
             splitRight.Panel1.Controls.Add(panelPermTop);
-            splitRight.Panel2.Controls.Add(dgvUsers);
-            splitRight.Panel2.Controls.Add(panelUsersBottom);
-            splitRight.Panel2.Controls.Add(panelUsersTop);
+            splitRight.Panel2.Controls.Add(tabUsersApproval);
             splitRight.Size = new System.Drawing.Size(1036, 830);
             splitRight.SplitterDistance = 420;
             splitRight.TabIndex = 0;
@@ -548,6 +575,43 @@ namespace POS_qu
             lblPermName.TabIndex = 0;
             lblPermName.Text = "Nama Izin";
             // 
+            // tabUsersApproval
+            // 
+            tabUsersApproval.Controls.Add(tabUsers);
+            tabUsersApproval.Controls.Add(tabSupervisorApproval);
+            tabUsersApproval.Dock = System.Windows.Forms.DockStyle.Fill;
+            tabUsersApproval.Location = new System.Drawing.Point(0, 0);
+            tabUsersApproval.Name = "tabUsersApproval";
+            tabUsersApproval.SelectedIndex = 0;
+            tabUsersApproval.Size = new System.Drawing.Size(1036, 406);
+            tabUsersApproval.TabIndex = 0;
+            // 
+            // tabUsers
+            // 
+            tabUsers.Controls.Add(dgvUsers);
+            tabUsers.Controls.Add(panelUsersBottom);
+            tabUsers.Controls.Add(panelUsersTop);
+            tabUsers.Location = new System.Drawing.Point(4, 34);
+            tabUsers.Name = "tabUsers";
+            tabUsers.Padding = new System.Windows.Forms.Padding(0);
+            tabUsers.Size = new System.Drawing.Size(1028, 368);
+            tabUsers.TabIndex = 0;
+            tabUsers.Text = "Users";
+            tabUsers.UseVisualStyleBackColor = true;
+            // 
+            // tabSupervisorApproval
+            // 
+            tabSupervisorApproval.Controls.Add(dgvApproval);
+            tabSupervisorApproval.Controls.Add(panelApprovalBottom);
+            tabSupervisorApproval.Controls.Add(panelApprovalTop);
+            tabSupervisorApproval.Location = new System.Drawing.Point(4, 34);
+            tabSupervisorApproval.Name = "tabSupervisorApproval";
+            tabSupervisorApproval.Padding = new System.Windows.Forms.Padding(0);
+            tabSupervisorApproval.Size = new System.Drawing.Size(1028, 368);
+            tabSupervisorApproval.TabIndex = 1;
+            tabSupervisorApproval.Text = "Supervisor Approval";
+            tabSupervisorApproval.UseVisualStyleBackColor = true;
+            // 
             // panelUsersTop
             // 
             panelUsersTop.BackColor = System.Drawing.Color.White;
@@ -558,7 +622,7 @@ namespace POS_qu
             panelUsersTop.Location = new System.Drawing.Point(0, 0);
             panelUsersTop.Name = "panelUsersTop";
             panelUsersTop.Padding = new System.Windows.Forms.Padding(12);
-            panelUsersTop.Size = new System.Drawing.Size(1036, 74);
+            panelUsersTop.Size = new System.Drawing.Size(1028, 74);
             panelUsersTop.TabIndex = 0;
             // 
             // lblUsers
@@ -599,7 +663,7 @@ namespace POS_qu
             dgvUsers.RowHeadersVisible = false;
             dgvUsers.RowHeadersWidth = 62;
             dgvUsers.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            dgvUsers.Size = new System.Drawing.Size(1036, 274);
+            dgvUsers.Size = new System.Drawing.Size(1028, 232);
             dgvUsers.TabIndex = 1;
             // 
             // panelUsersBottom
@@ -608,10 +672,10 @@ namespace POS_qu
             panelUsersBottom.Controls.Add(btnUsersRefresh);
             panelUsersBottom.Controls.Add(btnSaveRoleUsers);
             panelUsersBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
-            panelUsersBottom.Location = new System.Drawing.Point(0, 348);
+            panelUsersBottom.Location = new System.Drawing.Point(0, 306);
             panelUsersBottom.Name = "panelUsersBottom";
             panelUsersBottom.Padding = new System.Windows.Forms.Padding(12, 8, 12, 8);
-            panelUsersBottom.Size = new System.Drawing.Size(1036, 62);
+            panelUsersBottom.Size = new System.Drawing.Size(1028, 62);
             panelUsersBottom.TabIndex = 2;
             // 
             // btnUsersRefresh
@@ -638,6 +702,97 @@ namespace POS_qu
             btnSaveRoleUsers.TabIndex = 1;
             btnSaveRoleUsers.Text = "Simpan Assign User";
             btnSaveRoleUsers.UseVisualStyleBackColor = false;
+            // 
+            // panelApprovalTop
+            // 
+            panelApprovalTop.BackColor = System.Drawing.Color.White;
+            panelApprovalTop.Controls.Add(txtApprovalSearch);
+            panelApprovalTop.Controls.Add(lblApprovalSearch);
+            panelApprovalTop.Controls.Add(lblApproval);
+            panelApprovalTop.Dock = System.Windows.Forms.DockStyle.Top;
+            panelApprovalTop.Location = new System.Drawing.Point(0, 0);
+            panelApprovalTop.Name = "panelApprovalTop";
+            panelApprovalTop.Padding = new System.Windows.Forms.Padding(12);
+            panelApprovalTop.Size = new System.Drawing.Size(1028, 74);
+            panelApprovalTop.TabIndex = 0;
+            // 
+            // lblApproval
+            // 
+            lblApproval.AutoSize = true;
+            lblApproval.Font = new System.Drawing.Font("Segoe UI Semibold", 12F, System.Drawing.FontStyle.Bold);
+            lblApproval.ForeColor = System.Drawing.Color.FromArgb(51, 51, 51);
+            lblApproval.Location = new System.Drawing.Point(12, 10);
+            lblApproval.Name = "lblApproval";
+            lblApproval.Size = new System.Drawing.Size(216, 28);
+            lblApproval.TabIndex = 0;
+            lblApproval.Text = "Supervisor Approval";
+            // 
+            // lblApprovalSearch
+            // 
+            lblApprovalSearch.AutoSize = true;
+            lblApprovalSearch.Location = new System.Drawing.Point(12, 42);
+            lblApprovalSearch.Name = "lblApprovalSearch";
+            lblApprovalSearch.Size = new System.Drawing.Size(86, 25);
+            lblApprovalSearch.TabIndex = 1;
+            lblApprovalSearch.Text = "Cari aksi:";
+            // 
+            // txtApprovalSearch
+            // 
+            txtApprovalSearch.Location = new System.Drawing.Point(110, 38);
+            txtApprovalSearch.Name = "txtApprovalSearch";
+            txtApprovalSearch.Size = new System.Drawing.Size(320, 31);
+            txtApprovalSearch.TabIndex = 2;
+            // 
+            // dgvApproval
+            // 
+            dgvApproval.AllowUserToAddRows = false;
+            dgvApproval.AllowUserToDeleteRows = false;
+            dgvApproval.Dock = System.Windows.Forms.DockStyle.Fill;
+            dgvApproval.Location = new System.Drawing.Point(0, 74);
+            dgvApproval.MultiSelect = false;
+            dgvApproval.Name = "dgvApproval";
+            dgvApproval.RowHeadersVisible = false;
+            dgvApproval.RowHeadersWidth = 62;
+            dgvApproval.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            dgvApproval.Size = new System.Drawing.Size(1028, 232);
+            dgvApproval.TabIndex = 1;
+            // 
+            // panelApprovalBottom
+            // 
+            panelApprovalBottom.BackColor = System.Drawing.Color.White;
+            panelApprovalBottom.Controls.Add(btnApprovalRefresh);
+            panelApprovalBottom.Controls.Add(btnSaveApprovalSettings);
+            panelApprovalBottom.Dock = System.Windows.Forms.DockStyle.Bottom;
+            panelApprovalBottom.Location = new System.Drawing.Point(0, 306);
+            panelApprovalBottom.Name = "panelApprovalBottom";
+            panelApprovalBottom.Padding = new System.Windows.Forms.Padding(12, 8, 12, 8);
+            panelApprovalBottom.Size = new System.Drawing.Size(1028, 62);
+            panelApprovalBottom.TabIndex = 2;
+            // 
+            // btnApprovalRefresh
+            // 
+            btnApprovalRefresh.BackColor = System.Drawing.Color.White;
+            btnApprovalRefresh.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(200, 200, 200);
+            btnApprovalRefresh.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnApprovalRefresh.Location = new System.Drawing.Point(12, 14);
+            btnApprovalRefresh.Name = "btnApprovalRefresh";
+            btnApprovalRefresh.Size = new System.Drawing.Size(120, 34);
+            btnApprovalRefresh.TabIndex = 0;
+            btnApprovalRefresh.Text = "Refresh";
+            btnApprovalRefresh.UseVisualStyleBackColor = false;
+            // 
+            // btnSaveApprovalSettings
+            // 
+            btnSaveApprovalSettings.BackColor = System.Drawing.Color.FromArgb(22, 163, 74);
+            btnSaveApprovalSettings.FlatAppearance.BorderSize = 0;
+            btnSaveApprovalSettings.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            btnSaveApprovalSettings.ForeColor = System.Drawing.Color.White;
+            btnSaveApprovalSettings.Location = new System.Drawing.Point(150, 14);
+            btnSaveApprovalSettings.Name = "btnSaveApprovalSettings";
+            btnSaveApprovalSettings.Size = new System.Drawing.Size(220, 34);
+            btnSaveApprovalSettings.TabIndex = 1;
+            btnSaveApprovalSettings.Text = "Simpan Pengaturan";
+            btnSaveApprovalSettings.UseVisualStyleBackColor = false;
             // 
             // Roles
             // 
@@ -674,6 +829,13 @@ namespace POS_qu
             panelUsersTop.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)dgvUsers).EndInit();
             panelUsersBottom.ResumeLayout(false);
+            tabUsersApproval.ResumeLayout(false);
+            tabUsers.ResumeLayout(false);
+            tabSupervisorApproval.ResumeLayout(false);
+            panelApprovalTop.ResumeLayout(false);
+            panelApprovalTop.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvApproval).EndInit();
+            panelApprovalBottom.ResumeLayout(false);
             ResumeLayout(false);
         }
     }

@@ -170,8 +170,8 @@ namespace POS_qu
 
             if (!_isOrderView && dgvTransactions.Columns["user_id"] != null)
             {
-                dgvTransactions.Columns["user_id"].HeaderText = "User";
-                dgvTransactions.Columns["user_id"].Width = 90;
+                dgvTransactions.Columns["user_id"].HeaderText = "Kasir";
+                dgvTransactions.Columns["user_id"].Width = 140;
             }
 
             if (!_isOrderView && dgvTransactions.Columns.Contains("deleted_at"))

@@ -19,6 +19,7 @@ namespace POS_qu
         private DataTable _dtRoles;
         private DataTable _dtRolePermissions;
         private DataTable _dtRoleUsers;
+        private DataTable _dtApprovalSettings;
 
         public Roles()
         {
@@ -64,6 +65,15 @@ namespace POS_qu
 
             btnUsersRefresh.Click += (s, e) => ReloadUsersSection();
             btnSaveRoleUsers.Click += BtnSaveRoleUsers_Click;
+
+            dgvApproval.CurrentCellDirtyStateChanged += (s, e) =>
+            {
+                if (dgvApproval.IsCurrentCellDirty)
+                    dgvApproval.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            };
+            txtApprovalSearch.TextChanged += (s, e) => ApplyApprovalFilter();
+            btnApprovalRefresh.Click += (s, e) => ReloadApprovalSettings();
+            btnSaveApprovalSettings.Click += BtnSaveApprovalSettings_Click;
         }
 
         private void Roles_Load(object sender, EventArgs e)
@@ -71,6 +81,7 @@ namespace POS_qu
             ApplyGridStyle(dgvRoles);
             ApplyGridStyle(dgvPermissions);
             ApplyGridStyle(dgvUsers);
+            ApplyGridStyle(dgvApproval);
 
             cmbPageSize.Items.Clear();
             cmbPageSize.Items.AddRange(new object[] { 10, 50, 100, 500 });
@@ -79,8 +90,89 @@ namespace POS_qu
             ReloadRoles();
             ReloadPermissionsSection();
             ReloadUsersSection();
+            ReloadApprovalSettings();
 
             ClearRoleForm();
+        }
+
+        private void ReloadApprovalSettings()
+        {
+            _dtApprovalSettings = _controller.GetSupervisorApprovalSettings();
+            dgvApproval.DataSource = _dtApprovalSettings;
+
+            if (dgvApproval.Columns.Contains("action_code")) dgvApproval.Columns["action_code"].Visible = false;
+            if (dgvApproval.Columns.Contains("sort_order")) dgvApproval.Columns["sort_order"].HeaderText = "Urut";
+            if (dgvApproval.Columns.Contains("action_name"))
+            {
+                dgvApproval.Columns["action_name"].HeaderText = "Aksi";
+                dgvApproval.Columns["action_name"].ReadOnly = true;
+                dgvApproval.Columns["action_name"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                dgvApproval.Columns["action_name"].MinimumWidth = 240;
+            }
+            if (dgvApproval.Columns.Contains("is_enabled"))
+            {
+                dgvApproval.Columns["is_enabled"].HeaderText = "Aktif";
+                dgvApproval.Columns["is_enabled"].Width = 80;
+            }
+            if (dgvApproval.Columns.Contains("require_for_cashier"))
+            {
+                dgvApproval.Columns["require_for_cashier"].HeaderText = "Minta Supervisor (Kasir)";
+                dgvApproval.Columns["require_for_cashier"].Width = 190;
+            }
+            if (dgvApproval.Columns.Contains("min_amount"))
+            {
+                dgvApproval.Columns["min_amount"].HeaderText = "Min Nominal";
+                dgvApproval.Columns["min_amount"].Width = 140;
+                dgvApproval.Columns["min_amount"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                dgvApproval.Columns["min_amount"].DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
+                dgvApproval.Columns["min_amount"].DefaultCellStyle.Format = "N0";
+            }
+            if (dgvApproval.Columns.Contains("require_reason"))
+            {
+                dgvApproval.Columns["require_reason"].HeaderText = "Wajib Alasan";
+                dgvApproval.Columns["require_reason"].Width = 130;
+            }
+            if (dgvApproval.Columns.Contains("sort_order"))
+            {
+                dgvApproval.Columns["sort_order"].Width = 70;
+            }
+
+            ApplyApprovalFilter();
+        }
+
+        private void ApplyApprovalFilter()
+        {
+            if (_dtApprovalSettings == null) return;
+            string q = (txtApprovalSearch.Text ?? "").Trim().Replace("'", "''");
+            if (string.IsNullOrWhiteSpace(q))
+            {
+                _dtApprovalSettings.DefaultView.RowFilter = "";
+            }
+            else
+            {
+                _dtApprovalSettings.DefaultView.RowFilter = $"action_name LIKE '%{q}%' OR action_code LIKE '%{q}%'";
+            }
+        }
+
+        private void BtnSaveApprovalSettings_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                dgvApproval.EndEdit();
+                _dtApprovalSettings?.AcceptChanges();
+                bool ok = _controller.SaveSupervisorApprovalSettings(_dtApprovalSettings);
+                if (!ok)
+                {
+                    MessageBox.Show("Gagal menyimpan pengaturan supervisor approval.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+                MessageBox.Show("Pengaturan supervisor approval tersimpan.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ReloadApprovalSettings();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
         private void cmbPageSize_SelectedIndexChanged(object sender, EventArgs e)

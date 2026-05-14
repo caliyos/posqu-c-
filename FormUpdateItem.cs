@@ -133,6 +133,39 @@ namespace POS_qu
 
             if (result == DialogResult.Yes)
             {
+                var session = SessionUser.GetCurrentUser();
+                var lineValue = _unitPrice * (int)numQty.Value;
+                if (lineValue < 0m) lineValue = -lineValue;
+
+                if (session != null && POS_qu.Helpers.Utility.ShouldRequireSupervisorApproval("delete_item", session, lineValue))
+                {
+                    if (!POS_qu.Helpers.Utility.TrySupervisorApproval(
+                            this,
+                            "Otorisasi: Hapus Item",
+                            "Hapus item nilai besar membutuhkan persetujuan supervisor.",
+                            POS_qu.Helpers.Utility.IsSupervisorApprovalReasonRequired("delete_item"),
+                            out int approverId,
+                            out string approverUsername,
+                            out string approvalReason
+                        ))
+                    {
+                        return;
+                    }
+
+                    try
+                    {
+                        var logger = new POS_qu.Helpers.DbLogger();
+                        logger.Log(
+                            approverId.ToString(),
+                            "SupervisorApproval_DeleteItem",
+                            _item?.ItemId,
+                            $"{{\"cashier\":\"{session.Username}\",\"approved_by\":\"{approverUsername}\",\"reason\":\"{(approvalReason ?? "").Replace("\"", "\\\"")}\"}}",
+                            $"{{\"item_id\":{_item?.ItemId ?? 0},\"pt_id\":{_item?.pt_id ?? 0},\"name\":\"{(_item?.Name ?? "").Replace("\"", "\\\"")}\",\"value\":{lineValue}}}"
+                        );
+                    }
+                    catch { }
+                }
+
                 // Ambil item dari Tag atau variabel form
                 var itemToRemove = _item; // pastikan _item adalah InvoiceItem yang sedang di modal
 

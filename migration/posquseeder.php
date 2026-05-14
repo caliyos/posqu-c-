@@ -509,9 +509,9 @@ $db->exec("TRUNCATE TABLE terminals, users, permissions, roles RESTART IDENTITY 
     // ================================
     // Passwords are bcrypt hashes
     $users = [
-        [1, 'yoz','admin', '$2a$10$QMO96WOaMPGZ075dFKDOIeTX8323MGhe9QfS2bduTMjFa15l7RRQW'],
-        [2, 'kaleb','kasir', '$2a$10$iW5cGwZIKQICFZ101H.zzezBWomfymDc7wIE6ASGFNTMehYlkq.I.'],
-        [3, 'indah', 'supervisor', '$2a$10$SJgIDsAM3.SCFVLN6btWNeecqfm6as/KiSHB.m.rDI.0KQgdM/h12'],
+        [1, 'Admin', 'admin', password_hash('admin123', PASSWORD_BCRYPT)],
+        [2, 'Casher', 'casher', password_hash('casher123', PASSWORD_BCRYPT)],
+        [3, 'Supervisor', 'supervisor', password_hash('supervisor123', PASSWORD_BCRYPT)],
     ];
 
     $stmt = $db->prepare("INSERT INTO users (id, name, username, password_hash, created_at) VALUES (?,?, ?, ?, NOW())");

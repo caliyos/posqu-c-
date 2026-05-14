@@ -155,12 +155,14 @@ SELECT
     order_note,
     terminal_id,
     shift_id,
-    user_id,
-    created_by,
+    COALESCE(u.username, orders.user_id::text) AS user_id,
+    COALESCE(uc.username, orders.created_by::text) AS created_by,
     created_at,
     updated_at,
     deleted_at
 FROM orders
+LEFT JOIN users u ON u.id = orders.user_id
+LEFT JOIN users uc ON uc.id = orders.created_by
 WHERE deleted_at IS NULL
   AND created_at >= @from
   AND created_at < @to

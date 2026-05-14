@@ -608,9 +608,17 @@ ORDER BY td.tsd_id
         {
             using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
             conn.Open();
+            bool hasUsersTable = TableExists(conn, null, "users");
             using var cmd = new NpgsqlCommand(@"
-SELECT ts_id, ts_numbering, ts_grand_total, ts_method, created_at, user_id
+SELECT
+    ts_id,
+    ts_numbering,
+    ts_grand_total,
+    ts_method,
+    created_at,
+    " + (hasUsersTable ? "COALESCE(u.username, transactions.user_id::text)" : "transactions.user_id::text") + @" AS user_id
 FROM transactions
+ " + (hasUsersTable ? "LEFT JOIN users u ON u.id = transactions.user_id" : "") + @"
 WHERE ts_method = 'RETURN' AND deleted_at IS NULL
 ORDER BY created_at DESC
 ", conn);
@@ -662,14 +670,19 @@ WHERE ts_id = @id AND deleted_at IS NULL
             bool hasWarehouseId = ColumnExists(conn, null, "transactions", "warehouse_id");
             bool hasWarehousesTable = TableExists(conn, null, "warehouses");
             bool joinWarehouses = hasWarehouseId && hasWarehousesTable;
+            bool hasUsersTable = TableExists(conn, null, "users");
 
             string warehouseSelect = hasWarehouseId
                 ? "    t.warehouse_id,\r\n" + (joinWarehouses ? "    COALESCE(w.name,'') AS warehouse_name,\r\n" : "    '' AS warehouse_name,\r\n")
                 : "";
             string warehouseJoin = joinWarehouses ? "LEFT JOIN warehouses w ON w.id = t.warehouse_id\r\n" : "";
-            string groupBy = hasWarehouseId
-                ? (joinWarehouses ? "GROUP BY t.ts_id, t.warehouse_id, w.name" : "GROUP BY t.ts_id, t.warehouse_id")
-                : "GROUP BY t.ts_id";
+            string usersJoin = hasUsersTable ? "LEFT JOIN users u ON u.id = t.user_id\r\n" : "";
+
+            var groupByParts = new List<string> { "t.ts_id" };
+            if (hasWarehouseId) groupByParts.Add("t.warehouse_id");
+            if (joinWarehouses) groupByParts.Add("w.name");
+            if (hasUsersTable) groupByParts.Add("u.username");
+            string groupBy = "GROUP BY " + string.Join(", ", groupByParts);
 
             string sql = $@"
 SELECT
@@ -681,11 +694,12 @@ SELECT
     t.ts_method,
     t.ts_status,
     t.created_at,
-    t.user_id,
+    {(hasUsersTable ? "COALESCE(u.username, t.user_id::text)" : "t.user_id::text")} AS user_id,
     t.deleted_at
 FROM transactions t
 LEFT JOIN transaction_details td ON td.ts_id = t.ts_id
 {warehouseJoin}
+{usersJoin}
 {where}
 {groupBy}
 ORDER BY t.created_at DESC, t.ts_id DESC

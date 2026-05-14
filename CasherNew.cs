@@ -831,7 +831,8 @@ WHERE id=@id;", conn, tran);
                 FormBorderStyle = FormBorderStyle.FixedDialog,
                 MaximizeBox = false,
                 MinimizeBox = false,
-                Padding = new Padding(14)
+                Padding = new Padding(14),
+                KeyPreview = true
             };
 
             var lb = new ListBox
@@ -853,7 +854,7 @@ WHERE id=@id;", conn, tran);
 
             var pnlBtn = new Panel { Dock = DockStyle.Bottom, Height = 52 };
             var btnOpen = new Button { Text = "Buka", Dock = DockStyle.Right, Width = 110 };
-            var btnClose = new Button { Text = "Tutup", Dock = DockStyle.Right, Width = 110 };
+            var btnClose = new Button { Text = "Tutup (Esc)", Dock = DockStyle.Right, Width = 130 };
             pnlBtn.Controls.Add(btnClose);
             pnlBtn.Controls.Add(btnOpen);
 
@@ -915,6 +916,27 @@ WHERE id=@id;", conn, tran);
             btnClose.Click += (s, e) => modal.Close();
             lb.DoubleClick += (s, e) => OpenSelected();
 
+            modal.AcceptButton = btnOpen;
+            modal.CancelButton = btnClose;
+            modal.Shown += (_, __) =>
+            {
+                if (lb.Items.Count > 0 && lb.SelectedIndex < 0) lb.SelectedIndex = 0;
+                lb.Focus();
+            };
+            modal.KeyDown += (_, e) =>
+            {
+                if (e.KeyCode == Keys.Escape)
+                {
+                    modal.Close();
+                    e.Handled = true;
+                }
+                else if (e.KeyCode == Keys.Enter)
+                {
+                    OpenSelected();
+                    e.Handled = true;
+                }
+            };
+
             modal.Controls.Add(lb);
             modal.Controls.Add(pnlBtn);
             modal.ShowDialog(this);
@@ -926,7 +948,8 @@ WHERE id=@id;", conn, tran);
             {
                 Text = title,
                 StartPosition = FormStartPosition.CenterParent,
-                Size = new Size(980, 640)
+                Size = new Size(980, 640),
+                KeyPreview = true
             };
 
             var grid = new DataGridView
@@ -951,6 +974,15 @@ WHERE id=@id;", conn, tran);
             {
                 if (grid.Columns.Contains("ts_id"))
                     grid.Columns["ts_id"].Visible = false;
+            }
+            else
+            {
+                var pnlBottomCommon = new Panel { Dock = DockStyle.Bottom, Height = 56, Padding = new Padding(10, 8, 10, 8), BackColor = Color.WhiteSmoke };
+                var btnCloseCommon = new Button { Text = "Tutup (Esc)", Dock = DockStyle.Right, Width = 130 };
+                btnCloseCommon.Click += (_, __) => f.Close();
+                pnlBottomCommon.Controls.Add(btnCloseCommon);
+                f.CancelButton = btnCloseCommon;
+                f.Controls.Add(pnlBottomCommon);
             }
 
             static bool IsMoneyColumn(string name)
@@ -1055,6 +1087,35 @@ WHERE id=@id;", conn, tran);
 
                     try
                     {
+                        var s = SessionUser.GetCurrentUser();
+                        if (s != null && POS_qu.Helpers.Utility.ShouldRequireSupervisorApproval("reprint_receipt", s, 0m))
+                        {
+                            if (!POS_qu.Helpers.Utility.TrySupervisorApproval(
+                                    f,
+                                    "Otorisasi: Reprint Struk",
+                                    "Reprint struk membutuhkan persetujuan supervisor.",
+                                    POS_qu.Helpers.Utility.IsSupervisorApprovalReasonRequired("reprint_receipt"),
+                                    out int approverId,
+                                    out string approverUsername,
+                                    out string approvalReason
+                                ))
+                            {
+                                return;
+                            }
+
+                            try
+                            {
+                                dlogger.Log(
+                                    approverId.ToString(),
+                                    "SupervisorApproval_ReprintReceipt",
+                                    tsId,
+                                    $"{{\"cashier\":\"{s.Username}\",\"approved_by\":\"{approverUsername}\",\"reason\":\"{(approvalReason ?? "").Replace("\"", "\\\"")}\"}}",
+                                    $"{{\"ts_id\":{tsId}}}"
+                                );
+                            }
+                            catch { }
+                        }
+
                         var built = BuildReceiptTextFromTransaction(tsId);
                         ShowReceiptActionsModal(f, "Cetak Ulang Invoice", built.receiptText, "invoice_" + built.saleNumber);
                     }
@@ -1077,16 +1138,26 @@ WHERE id=@id;", conn, tran);
                 };
 
                 var pnlBottom = new Panel { Dock = DockStyle.Bottom, Height = 56, Padding = new Padding(10, 8, 10, 8), BackColor = Color.WhiteSmoke };
-                var btnClose = new Button { Text = "Tutup", Dock = DockStyle.Right, Width = 120 };
+                var btnClose = new Button { Text = "Tutup (Esc)", Dock = DockStyle.Right, Width = 130 };
                 var btnReprint = new Button { Text = "Cetak Ulang Invoice", Dock = DockStyle.Right, Width = 180 };
                 btnReprint.Click += (_, __) => doReprint();
                 btnClose.Click += (_, __) => f.Close();
+                f.CancelButton = btnClose;
                 pnlBottom.Controls.Add(btnClose);
                 pnlBottom.Controls.Add(btnReprint);
                 f.Controls.Add(pnlBottom);
             }
 
             f.Controls.Add(grid);
+            f.Shown += (_, __) => grid.Focus();
+            f.KeyDown += (_, e) =>
+            {
+                if (e.KeyCode == Keys.Escape)
+                {
+                    f.Close();
+                    e.Handled = true;
+                }
+            };
             f.ShowDialog(this);
         }
 
@@ -1436,8 +1507,9 @@ SELECT
     ts_numbering,
     ts_method,
     ts_grand_total,
-    user_id
+    COALESCE(u.username,'') AS user_id
 FROM transactions
+LEFT JOIN users u ON u.id = transactions.user_id
 WHERE deleted_at IS NULL
   AND ts_status = 1
   AND shift_id = @sid
@@ -1506,6 +1578,34 @@ ORDER BY created_at DESC
 
                 int shiftId = Convert.ToInt32(open["id"]);
                 decimal openingCash = (decimal)open["opening_cash"];
+
+                if (session != null && POS_qu.Helpers.Utility.ShouldRequireSupervisorApproval("close_shift", session, 0m))
+                {
+                    if (!POS_qu.Helpers.Utility.TrySupervisorApproval(
+                            this,
+                            "Otorisasi: Tutup Shift",
+                            "Tutup shift membutuhkan persetujuan supervisor.",
+                            POS_qu.Helpers.Utility.IsSupervisorApprovalReasonRequired("close_shift"),
+                            out int approverId,
+                            out string approverUsername,
+                            out string approvalReason
+                        ))
+                    {
+                        return;
+                    }
+
+                    try
+                    {
+                        dlogger.Log(
+                            approverId.ToString(),
+                            "SupervisorApproval_CloseShift",
+                            shiftId,
+                            $"{{\"cashier\":\"{session.Username}\",\"approved_by\":\"{approverUsername}\",\"reason\":\"{(approvalReason ?? "").Replace("\"", "\\\"")}\"}}",
+                            $"{{\"shift_id\":{shiftId}}}"
+                        );
+                    }
+                    catch { }
+                }
 
                 decimal cashSales = 0m;
                 using (var con = new Npgsql.NpgsqlConnection(POS_qu.Helpers.DbConfig.ConnectionString))

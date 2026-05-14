@@ -958,7 +958,7 @@ LIMIT 1
 
         private void ItemDetailForm_Load(object sender, EventArgs e)
         {
-            LoadUnitVariantsUI();
+            //LoadUnitVariantsUI();
             //LoadPriceLevelsUI();
             SyncSellPriceToAssembly();
             UpdateMaterialsTotals();

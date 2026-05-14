@@ -137,7 +137,7 @@ namespace POS_qu
                 grid.Columns["created_at"].HeaderText = "Tanggal";
                 grid.Columns["created_at"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm";
             }
-            if (grid.Columns["user_id"] != null) grid.Columns["user_id"].HeaderText = "User";
+            if (grid.Columns["user_id"] != null) grid.Columns["user_id"].HeaderText = "Kasir";
         }
 
         private void BtnDetail_Click(object? sender, EventArgs e)
