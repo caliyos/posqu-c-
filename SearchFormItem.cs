@@ -236,19 +236,19 @@ namespace POS_qu
 
         private void FormatCurrencyColumns()
         {
-            foreach (DataGridViewColumn column in dataGridViewSearchResults.Columns)
+            string[] numericCols =
             {
-                // Check if the column's data type is numeric
-                if (column.Name == "sell_price" || column.Name == "total" || column.Name == "price_per_pcs" || column.Name == "price_per_pcs_asli")
-                {
-                    // Format as currency with the Rp symbol and correct number format
-                    column.DefaultCellStyle.Format = "#,0.##";  // This will add thousand separator
-                    column.DefaultCellStyle.NullValue = "Rp. 0"; // To handle null values
+                "sell_price","total","price_per_pcs","price_per_pcs_asli",
+                "stock","reserved_stock","ready_stock"
+            };
 
-                    // Add the "Rp." symbol manually in the display value
-                    column.DefaultCellStyle.FormatProvider = new System.Globalization.CultureInfo("id-ID");
-                    column.DefaultCellStyle.Format = "Rp #,0";  // Format as Rp. xxxxx
-                }
+            foreach (var key in numericCols)
+            {
+                if (!dataGridViewSearchResults.Columns.Contains(key)) continue;
+                var col = dataGridViewSearchResults.Columns[key];
+                col.DefaultCellStyle.Format = "N2";
+                col.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
+                col.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
         }
 

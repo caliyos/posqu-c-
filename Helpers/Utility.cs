@@ -19,40 +19,97 @@ namespace POS_qu.Helpers
     {
         public static readonly CultureInfo DotCulture = BuildDotCulture();
 
+
         private static CultureInfo BuildDotCulture()
         {
-            var c = (CultureInfo)CultureInfo.GetCultureInfo("en-US").Clone();
+            var c = (CultureInfo)CultureInfo.GetCultureInfo("id-ID").Clone();
+
+            // Ribuan
             c.NumberFormat.NumberGroupSeparator = ".";
             c.NumberFormat.CurrencyGroupSeparator = ".";
-            c.NumberFormat.NumberDecimalSeparator = ".";
-            c.NumberFormat.CurrencyDecimalSeparator = ".";
+
+            // Decimal
+            c.NumberFormat.NumberDecimalSeparator = ",";
+            c.NumberFormat.CurrencyDecimalSeparator = ",";
+
             return c;
         }
+
 
         public static void ApplyDotCulture()
         {
             CultureInfo.DefaultThreadCurrentCulture = DotCulture;
             CultureInfo.DefaultThreadCurrentUICulture = DotCulture;
+
             Thread.CurrentThread.CurrentCulture = DotCulture;
             Thread.CurrentThread.CurrentUICulture = DotCulture;
         }
 
+
+        // =========================
+        // FORMAT NUMBER
+        // =========================
+
+        public static string FormatNumber(decimal value, int decimals = 0)
+        {
+            return value.ToString($"N{decimals}", DotCulture);
+        }
+
+        public static string FormatNumber(decimal? value, int decimals = 0)
+        {
+            return (value ?? 0m).ToString($"N{decimals}", DotCulture);
+        }
+
+
+        // =========================
+        // FORMAT MONEY
+        // =========================
+
+        public static string FormatMoney(decimal value)
+        {
+            return value.ToString("N0", DotCulture);
+        }
+
+        public static string FormatMoney(decimal? value)
+        {
+            return (value ?? 0m).ToString("N0", DotCulture);
+        }
+
+
+        // =========================
+        // PARSE MONEY TEXT
+        // =========================
+
         public static decimal ParseMoney(string? text)
         {
             text ??= "";
-            string clean = text.Replace("Rp", "", StringComparison.OrdinalIgnoreCase)
-                               .Replace(".", "")
-                               .Replace(",", "")
-                               .Trim();
-            if (decimal.TryParse(clean, NumberStyles.Number, CultureInfo.InvariantCulture, out var value))
+
+            string clean = text
+                .Replace("Rp", "", StringComparison.OrdinalIgnoreCase)
+                .Replace(".", "")
+                .Replace(",", ".")
+                .Trim();
+
+            if (decimal.TryParse(
+                clean,
+                NumberStyles.Any,
+                CultureInfo.InvariantCulture,
+                out var value))
+            {
                 return value;
+            }
+
             return 0m;
         }
+
+        // =========================
+        // FORMAT TEXT INPUT MONEY
+        // =========================
 
         public static string FormatMoneyText(string? text)
         {
             var v = ParseMoney(text);
-            return v.ToString("N0");
+            return v.ToString("N0", DotCulture);
         }
     }
 

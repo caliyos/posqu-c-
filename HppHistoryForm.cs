@@ -773,7 +773,7 @@ ORDER BY sl.created_at ASC, sl.id ASC";
             if (dgvStockCard.Columns.Contains("tanggal"))
             {
                 dgvStockCard.Columns["tanggal"].HeaderText = "Tanggal";
-                dgvStockCard.Columns["tanggal"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm";
+                dgvStockCard.Columns["tanggal"].DefaultCellStyle.Format = "dd/MM/yyyy HH:mm:ss";
                 dgvStockCard.Columns["tanggal"].Width = 160;
             }
             if (dgvStockCard.Columns.Contains("gudang"))

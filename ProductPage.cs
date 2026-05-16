@@ -611,16 +611,32 @@ namespace POS_qu
             if (dataGridView1.Columns.Contains("stock_value"))
             {
                 dataGridView1.Columns["stock_value"].HeaderText = "Nilai Stok (HPP)";
-                dataGridView1.Columns["stock_value"].DefaultCellStyle.Format = "N0";
+                dataGridView1.Columns["stock_value"].DefaultCellStyle.Format = "N2";
+                dataGridView1.Columns["stock_value"].DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
                 dataGridView1.Columns["stock_value"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
             if (dataGridView1.Columns.Contains("retail_value"))
             {
                 dataGridView1.Columns["retail_value"].HeaderText = "Nilai Jual";
-                dataGridView1.Columns["retail_value"].DefaultCellStyle.Format = "N0";
+                dataGridView1.Columns["retail_value"].DefaultCellStyle.Format = "N2";
+                dataGridView1.Columns["retail_value"].DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
                 dataGridView1.Columns["retail_value"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
+            if (dataGridView1.Columns.Contains("reserved_qty"))
+            {
+                var col = dataGridView1.Columns["reserved_qty"];
 
+                col.HeaderText = "Reserved Qty";
+
+                // format angka
+                col.DefaultCellStyle.Format = "N2";
+
+                // pakai culture Indonesia
+                col.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
+
+                col.DefaultCellStyle.Alignment =
+                    DataGridViewContentAlignment.MiddleRight;
+            }
             dgvManager = new DataGridViewManager(dataGridView1, dt, 100);
             dgvManager.PagingInfoLabel = lblPagingInfo;
             dgvManager.OnAfterLoadPage += () =>
@@ -663,15 +679,19 @@ namespace POS_qu
                 items.id,
                 items.name,
                 items.barcode,
-                items.buy_price,
-                items.sell_price,
-                CAST(COALESCE(s.qty, 0) AS NUMERIC(18,4)) AS stock,
-                CAST(COALESCE(s.min_qty, 0) AS NUMERIC(18,4)) AS min_qty,
-                CAST(COALESCE(s.reserved_qty, 0) AS NUMERIC(18,4)) AS reserved_qty,
-                items.valuation_method,
                 items.unit AS unit_id,
                 units.name AS unit_name,
+                CAST(COALESCE(s.qty, 0) AS NUMERIC(18,4)) AS stock,
+                items.sell_price,
+                items.buy_price,
+                CAST(COALESCE(s.reserved_qty, 0) AS NUMERIC(18,4)) AS reserved_qty,
+                CAST(COALESCE(s.min_qty, 0) AS NUMERIC(18,4)) AS min_qty,
                 CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
+                w.id AS warehouse_id,
+                w.name AS warehouse_name
+                items.valuation_method,
+              
+                
                 items.category_id,
                 categories.name AS category_name,
                 items.note,
@@ -689,9 +709,7 @@ namespace POS_qu
                 suppliers.name AS supplier_name,
                 items.flag,
                 items.created_at,
-                items.updated_at,
-                w.id AS warehouse_id,
-                w.name AS warehouse_name
+                items.updated_at
             FROM items
             JOIN warehouses w ON w.id = @warehouse_id
             LEFT JOIN stocks s ON s.item_id = items.id AND s.warehouse_id = w.id
@@ -747,15 +765,16 @@ SELECT
     items.id,
     items.name,
     items.barcode,
-    items.buy_price,
-    items.sell_price,
-    CAST(COALESCE(s.qty, 0) AS NUMERIC(18,4)) AS stock,
-    CAST(COALESCE(s.min_qty, 0) AS NUMERIC(18,4)) AS min_qty,
-    CAST(COALESCE(s.reserved_qty, 0) AS NUMERIC(18,4)) AS reserved_qty,
-    items.valuation_method,
     items.unit AS unit_id,
     units.name AS unit_name,
+    CAST(COALESCE(s.qty, 0) AS NUMERIC(18,4)) AS stock,
+    items.sell_price,
+    items.buy_price,
+    COALESCE(s.reserved_qty, 0) AS NUMERIC(18,4)) AS reserved_qty,
+    CAST(COALESCE(s.min_qty, 0) AS NUMERIC(18,4)) AS min_qty,
     CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
+    items.valuation_method,
+
     items.category_id,
     categories.name AS category_name,
     items.note,
@@ -2010,6 +2029,23 @@ LIMIT 1
                 c.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
                 c.FillWeight = 130;
             }
+            if (dataGridView1.Columns.Contains("unit_name"))
+            {
+                var c = dataGridView1.Columns["unit_name"];
+                c.HeaderText = "Satuan";
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+                c.MinimumWidth = 90;
+            }
+            if (dataGridView1.Columns.Contains("stock"))
+            {
+                var c = dataGridView1.Columns["stock"];
+                c.HeaderText = "Stok";
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                c.DefaultCellStyle.Format = "N2";
+                c.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+                c.MinimumWidth = 90;
+            }
             if (dataGridView1.Columns.Contains("warehouse_name"))
             {
                 var c = dataGridView1.Columns["warehouse_name"];
@@ -2018,19 +2054,14 @@ LIMIT 1
                 c.MinimumWidth = 110;
                 c.SortMode = DataGridViewColumnSortMode.Automatic;
             }
-            if (dataGridView1.Columns.Contains("unit_name"))
-            {
-                var c = dataGridView1.Columns["unit_name"];
-                c.HeaderText = "Satuan";
-                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-                c.MinimumWidth = 90;
-            }
+
             if (dataGridView1.Columns.Contains("sell_price"))
             {
                 var c = dataGridView1.Columns["sell_price"];
                 c.HeaderText = "Harga Jual";
                 c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-                c.DefaultCellStyle.Format = "N0";
+                c.DefaultCellStyle.Format = "N2";
+                c.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
                 c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
                 c.MinimumWidth = 110;
             }
@@ -2039,25 +2070,19 @@ LIMIT 1
                 var c = dataGridView1.Columns["buy_price"];
                 c.HeaderText = "Harga Beli\nTerakhir";
                 c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-                c.DefaultCellStyle.Format = "N0";
+                c.DefaultCellStyle.Format = "N2";
+                c.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
                 c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
                 c.MinimumWidth = 120;
             }
-            if (dataGridView1.Columns.Contains("stock"))
-            {
-                var c = dataGridView1.Columns["stock"];
-                c.HeaderText = "Stok";
-                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-                c.DefaultCellStyle.Format = _viewAllUnits ? "N2" : "N0";
-                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
-                c.MinimumWidth = 90;
-            }
+      
             if (dataGridView1.Columns.Contains("min_threshold"))
             {
                 var c = dataGridView1.Columns["min_threshold"];
                 c.HeaderText = "Min\nQty";
                 c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-                c.DefaultCellStyle.Format = _viewAllUnits ? "N2" : "N0";
+                c.DefaultCellStyle.Format = "N2";
+                c.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
                 c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
                 c.MinimumWidth = 80;
                 c.Visible = true;
@@ -2069,7 +2094,8 @@ LIMIT 1
                 var c = dataGridView1.Columns["stock_value"];
                 c.HeaderText = "Nilai Stok\n(HPP)";
                 c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-                c.DefaultCellStyle.Format = "N0";
+                c.DefaultCellStyle.Format = "N2";
+                c.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
                 c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
                 c.MinimumWidth = 140;
             }
@@ -2078,7 +2104,8 @@ LIMIT 1
                 var c = dataGridView1.Columns["retail_value"];
                 c.HeaderText = "Nilai Jual";
                 c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-                c.DefaultCellStyle.Format = "N0";
+                c.DefaultCellStyle.Format = "N2";
+                c.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
                 c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
                 c.MinimumWidth = 120;
             }

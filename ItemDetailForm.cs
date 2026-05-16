@@ -115,9 +115,9 @@ namespace POS_qu
             dgvMultiPrice.Columns.Clear();
             dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "UnitName", HeaderText = "Satuan", Width = 150 });
             dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "PriceLevelName", HeaderText = "Level Harga", Width = 150 });
-            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "MinQty", HeaderText = "Min Qty", Width = 100 });
-            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "MaxQty", HeaderText = "Max Qty", Width = 100 });
-            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Price", HeaderText = "Harga Jual", Width = 200, DefaultCellStyle = new DataGridViewCellStyle { Format = "N0" } });
+            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { Name = "colMinQty", DataPropertyName = "MinQty", HeaderText = "Min Qty", Width = 100, DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", FormatProvider = UiNumberFormat.DotCulture, Alignment = DataGridViewContentAlignment.MiddleRight } });
+            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { Name = "colMaxQty", DataPropertyName = "MaxQty", HeaderText = "Max Qty", Width = 100, DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", FormatProvider = UiNumberFormat.DotCulture, Alignment = DataGridViewContentAlignment.MiddleRight } });
+            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { Name = "colPrice", DataPropertyName = "Price", HeaderText = "Harga Jual", Width = 200, DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", FormatProvider = UiNumberFormat.DotCulture, Alignment = DataGridViewContentAlignment.MiddleRight } });
             dgvMultiPrice.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
             dgvMultiPrice.ReadOnly = true;
@@ -351,8 +351,8 @@ namespace POS_qu
         {
             _item = item;
             txtName.Text = _item.name;
-            txtBuyPrice.Text = _item.buy_price.ToString("N0");
-            txtSellPrice.Text = _item.sell_price.ToString("N0");
+            txtBuyPrice.Text = _item.buy_price.ToString("N2", UiNumberFormat.DotCulture);
+            txtSellPrice.Text = _item.sell_price.ToString("N2", UiNumberFormat.DotCulture);
             txtStock.Text = _item.stock.ToString();
             txtBarcode.Text = _item.barcode;
             txtNote.Text = _item.note;
@@ -545,7 +545,7 @@ namespace POS_qu
                 else if (decimal.TryParse(formula, out decimal nominal))
                 {
                     discountAmount = nominal;
-                    discountText = "Rp " + discountAmount.ToString("N0");
+                    discountText = "Rp " + discountAmount.ToString("N2", UiNumberFormat.DotCulture);
                 }
             }
             else discountText = "0";
@@ -555,8 +555,8 @@ namespace POS_qu
             decimal marginPercent = buyPrice != 0 ? (margin / buyPrice) * 100 : 0;
 
             outDiskon.Text = discountText;
-            outMargin.Text = $"{margin:N0} ({marginPercent:+0.##;-0.##}%)";
-            outHargaAkhir.Text = finalPrice.ToString("N0");
+            outMargin.Text = $"{margin.ToString("N2", UiNumberFormat.DotCulture)} ({marginPercent.ToString("+0.##;-0.##", UiNumberFormat.DotCulture)}%)";
+            outHargaAkhir.Text = finalPrice.ToString("N2", UiNumberFormat.DotCulture);
         }
 
         // ------------------------
@@ -652,15 +652,15 @@ namespace POS_qu
             if (lblStockOut == null) return;
             decimal val = ParseQty(txtStock.Text);
             string unitName = cmbUnit.SelectedIndex >= 0 ? cmbUnit.Text : "pcs";
-            string qtyText = val % 1m == 0m ? val.ToString("N0") : val.ToString("N2");
+            string qtyText = val.ToString("N2", UiNumberFormat.DotCulture);
             lblStockOut.Text = $"{qtyText} {unitName}";
             // nilai stok (HPP) dan nilai jual
             decimal bp = UiNumberFormat.ParseMoney(txtBuyPrice.Text);
             decimal sp = UiNumberFormat.ParseMoney(txtSellPrice.Text);
             var hpp = bp * val;
             var jual = sp * val;
-            if (lblStockValueHpp != null) lblStockValueHpp.Text = $"Nilai Stok (HPP): {hpp:N0}";
-            if (lblStockValueSell != null) lblStockValueSell.Text = $"Nilai Jual: {jual:N0}";
+            if (lblStockValueHpp != null) lblStockValueHpp.Text = $"Nilai Stok (HPP): {hpp.ToString("N2", UiNumberFormat.DotCulture)}";
+            if (lblStockValueSell != null) lblStockValueSell.Text = $"Nilai Jual: {jual.ToString("N2", UiNumberFormat.DotCulture)}";
         }
 
         private static decimal ParseQty(string text)
@@ -705,7 +705,7 @@ LIMIT 1
             try
             {
                 var qty = GetCurrentStockFromDb(editingItemId.Value, whId);
-                txtStock.Text = qty % 1m == 0m ? qty.ToString("0") : qty.ToString("0.####");
+                txtStock.Text = qty.ToString("N2", UiNumberFormat.DotCulture);
                 UpdateStockOutput();
             }
             catch
@@ -844,7 +844,7 @@ LIMIT 1
             TextBox txtMaxQty = new TextBox() { Left = 330, Top = 138, Width = 70, Text = price.MaxQty?.ToString() };
 
             Label lblPrice = new Label() { Left = 20, Top = 180, Text = "Harga Jual", AutoSize = true };
-            TextBox txtPrice = new TextBox() { Left = 150, Top = 178, Width = 250, Text = price.Price.ToString("N0") };
+            TextBox txtPrice = new TextBox() { Left = 150, Top = 178, Width = 250, Text = price.Price.ToString("N2", UiNumberFormat.DotCulture) };
 
             Label lblFinalPrice = new Label() { Left = 20, Top = 230, Width = 350, Text = "Harga Akhir: -" };
             Label lblMargin = new Label() { Left = 20, Top = 260, Width = 350, Text = "Margin: -" };
@@ -882,8 +882,8 @@ LIMIT 1
                 decimal margin = sellPrice - currentBuyPrice;
                 decimal marginPercent = currentBuyPrice > 0 ? (margin / currentBuyPrice) * 100 : 0;
 
-                lblFinalPrice.Text = $"Harga Akhir: {sellPrice:N0}";
-                lblMargin.Text = $"Margin: {margin:N0} ({marginPercent:+0.##;-0.##}%)";
+                lblFinalPrice.Text = $"Harga Akhir: {sellPrice.ToString("N2", UiNumberFormat.DotCulture)}";
+                lblMargin.Text = $"Margin: {margin.ToString("N2", UiNumberFormat.DotCulture)} ({marginPercent.ToString("+0.##;-0.##", UiNumberFormat.DotCulture)}%)";
             }
 
             txtPrice.TextChanged += (s, e) => Recalculate();
@@ -977,11 +977,11 @@ LIMIT 1
             {
                 dgvVariants.AutoGenerateColumns = false;
                 dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "UnitName", HeaderText = "Satuan", Width = 150 });
-                dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Conversion", HeaderText = "Konversi", Width = 100 });
-                dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "SellPrice", HeaderText = "Harga Jual", Width = 200, DefaultCellStyle = new DataGridViewCellStyle { Format = "N0" } });
+                dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { Name = "colConversion", DataPropertyName = "Conversion", HeaderText = "Konversi", Width = 100, DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", FormatProvider = UiNumberFormat.DotCulture, Alignment = DataGridViewContentAlignment.MiddleRight } });
+                dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { Name = "colSellPrice", DataPropertyName = "SellPrice", HeaderText = "Harga Jual", Width = 200, DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", FormatProvider = UiNumberFormat.DotCulture, Alignment = DataGridViewContentAlignment.MiddleRight } });
                 dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Barcode", HeaderText = "Barcode", Width = 200 });
-                dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Minqty", HeaderText = "Minqty", Width = 200 });
-                dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "Profit", HeaderText = "Profit", Width = 200 });
+                dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { Name = "colMinqty", DataPropertyName = "Minqty", HeaderText = "Minqty", Width = 200, DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", FormatProvider = UiNumberFormat.DotCulture, Alignment = DataGridViewContentAlignment.MiddleRight } });
+                dgvVariants.Columns.Add(new DataGridViewTextBoxColumn { Name = "colProfit", DataPropertyName = "Profit", HeaderText = "Profit", Width = 200, DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", FormatProvider = UiNumberFormat.DotCulture, Alignment = DataGridViewContentAlignment.MiddleRight } });
             }
 
             dgvVariants.DataSource = null; // Reset binding
@@ -1005,6 +1005,27 @@ LIMIT 1
             }
 
             dgvMaterials.DataSource = _materialsFromForm;
+            if (dgvMaterials.Columns.Contains("colMaterialQty"))
+            {
+                var c = dgvMaterials.Columns["colMaterialQty"];
+                c.DefaultCellStyle.Format = "N2";
+                c.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+            if (dgvMaterials.Columns.Contains("colMaterialPrice"))
+            {
+                var c = dgvMaterials.Columns["colMaterialPrice"];
+                c.DefaultCellStyle.Format = "N2";
+                c.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
+            if (dgvMaterials.Columns.Contains("colMaterialSubtotal"))
+            {
+                var c = dgvMaterials.Columns["colMaterialSubtotal"];
+                c.DefaultCellStyle.Format = "N2";
+                c.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
             dgvMaterials.DataBindingComplete += (s, e) =>
             {
                 _syncingMaterialsGrid = true;
@@ -1321,10 +1342,10 @@ LIMIT 1
                 totalHpp += (m.Qty * m.UnitCost);
             }
 
-            lblTotalHppValue.Text = totalHpp.ToString("N0");
+            lblTotalHppValue.Text = totalHpp.ToString("N2", UiNumberFormat.DotCulture);
             if (_materialsFromForm.Count > 0)
             {
-                txtBuyPrice.Text = totalHpp.ToString("0.##");
+                txtBuyPrice.Text = totalHpp.ToString("N2", UiNumberFormat.DotCulture);
             }
             UpdateAssemblyMargin();
         }
@@ -1343,7 +1364,7 @@ LIMIT 1
 
             decimal margin = sellPrice - totalHpp;
             decimal marginPercent = totalHpp > 0 ? (margin / totalHpp) * 100m : 0m;
-            lblAssemblyMarginValue.Text = $"{margin:N0} ({marginPercent:+0.##;-0.##}%)";
+            lblAssemblyMarginValue.Text = $"{margin.ToString("N2", UiNumberFormat.DotCulture)} ({marginPercent.ToString("+0.##;-0.##", UiNumberFormat.DotCulture)}%)";
         }
     }
 }
