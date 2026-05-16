@@ -2757,6 +2757,15 @@ WHERE deleted_at IS NULL
 
             flpInvoice.Controls.Add(panel);
             flpInvoice.Controls.Add(separator);
+            this.BeginInvoke(new Action(() =>
+            {
+                if (flpInvoice.Controls.Count > 0)
+                {
+                    flpInvoice.ScrollControlIntoView(
+                        flpInvoice.Controls[flpInvoice.Controls.Count - 1]
+                    );
+                }
+            }));
         }
 
         private void RenderReceiptUI(

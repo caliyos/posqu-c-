@@ -117,6 +117,23 @@ namespace POS_qu
                 panelHeader.Controls.Add(btnAuditLogs);
                 btnAuditLogs.BringToFront();
 
+                var btnStockLog = new Button
+                {
+                    Name = "btnStockLog",
+                    Text = "Stock Log",
+                    Anchor = btnPrintPreview.Anchor,
+                    BackColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Font = btnPrintPreview.Font,
+                    Size = new Size(120, btnPrintPreview.Height),
+                    Location = new Point(btnAuditLogs.Left - 130, btnAuditLogs.Top),
+                    UseVisualStyleBackColor = false
+                };
+                btnStockLog.FlatAppearance.BorderColor = Color.FromArgb(200, 200, 200);
+                btnStockLog.Click += (_, __) => OpenStockLogForSelectedTransaction();
+                panelHeader.Controls.Add(btnStockLog);
+                btnStockLog.BringToFront();
+
                 if (dgvTransactions != null)
                 {
                     var menu = dgvTransactions.ContextMenuStrip ?? new ContextMenuStrip();
@@ -126,6 +143,15 @@ namespace POS_qu
                         var miAudit = new ToolStripMenuItem { Name = "miAuditLogs", Text = "Audit Logs (Transaksi)" };
                         miAudit.Click += (_, __) => OpenAuditLogsForSelectedTransaction();
                         menu.Items.Add(miAudit);
+                        dgvTransactions.ContextMenuStrip = menu;
+                    }
+
+                    var mi2 = menu.Items.Cast<ToolStripItem>().FirstOrDefault(x => x.Name == "miStockLog");
+                    if (mi2 == null)
+                    {
+                        var miStock = new ToolStripMenuItem { Name = "miStockLog", Text = "Stock Log (Transaksi)" };
+                        miStock.Click += (_, __) => OpenStockLogForSelectedTransaction();
+                        menu.Items.Add(miStock);
                         dgvTransactions.ContextMenuStrip = menu;
                     }
                 }
@@ -144,6 +170,271 @@ namespace POS_qu
                 return;
             }
             ShowAuditLogsByReferenceId("Audit Logs • Transaksi", tsId);
+        }
+
+        private void OpenStockLogForSelectedTransaction()
+        {
+            var tsId = GetSelectedTransactionId();
+            if (tsId <= 0)
+            {
+                MessageBox.Show("Pilih transaksi dulu.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+            ShowStockLogByTransactionId(tsId);
+        }
+
+        private void ShowStockLogByTransactionId(int transactionId)
+        {
+            using var f = new Form();
+            f.Text = $"Stock Log • Transaksi #{transactionId}";
+            f.StartPosition = FormStartPosition.CenterParent;
+            f.Size = new Size(1200, 760);
+            f.MinimizeBox = false;
+            f.MaximizeBox = true;
+            f.FormBorderStyle = FormBorderStyle.Sizable;
+
+            var pnlTop = new Panel { Dock = DockStyle.Top, Height = 86, Padding = new Padding(12), BackColor = Color.White };
+            var lbl = new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 24,
+                Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold),
+                Text = $"Stock Log untuk Transaksi #{transactionId}"
+            };
+
+            var row = new Panel { Dock = DockStyle.Top, Height = 40 };
+            var txtSearch = new TextBox { PlaceholderText = "Cari (nama/barcode/tipe/keterangan)...", Dock = DockStyle.Fill, Font = new Font("Segoe UI", 10F) };
+            var cmbCol = new ComboBox { Dock = DockStyle.Right, Width = 190, DropDownStyle = ComboBoxStyle.DropDownList, Font = new Font("Segoe UI", 10F) };
+            cmbCol.Items.AddRange(new object[] { "item_name", "barcode", "tipe_transaksi", "ref_type", "keterangan", "warehouse", "product_id" });
+            cmbCol.SelectedIndex = 0;
+            var btnReload = new Button { Text = "Reload", Dock = DockStyle.Right, Width = 110 };
+            var btnDetails = new Button { Text = "Lihat Detail", Dock = DockStyle.Right, Width = 140 };
+
+            row.Controls.Add(txtSearch);
+            row.Controls.Add(btnDetails);
+            row.Controls.Add(btnReload);
+            row.Controls.Add(cmbCol);
+
+            pnlTop.Controls.Add(row);
+            pnlTop.Controls.Add(lbl);
+
+            var grid = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                MultiSelect = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.None,
+                BackgroundColor = Color.White
+            };
+
+            var pnlBottom = new Panel { Dock = DockStyle.Bottom, Height = 56, Padding = new Padding(12), BackColor = Color.WhiteSmoke };
+            var lblPaging = new Label { Dock = DockStyle.Left, Width = 260, TextAlign = ContentAlignment.MiddleLeft };
+            var btnFirst = new Button { Text = "⏮", Dock = DockStyle.Right, Width = 50 };
+            var btnPrev = new Button { Text = "◀", Dock = DockStyle.Right, Width = 50 };
+            var btnNext = new Button { Text = "▶", Dock = DockStyle.Right, Width = 50 };
+            var btnLast = new Button { Text = "⏭", Dock = DockStyle.Right, Width = 50 };
+            var cmbPage = new ComboBox { Dock = DockStyle.Right, Width = 90, DropDownStyle = ComboBoxStyle.DropDownList };
+            cmbPage.Items.AddRange(new object[] { "25", "50", "100", "200" });
+            cmbPage.SelectedIndex = 1;
+            var lblPage = new Label { Dock = DockStyle.Right, Width = 80, Text = "PageSize", TextAlign = ContentAlignment.MiddleRight };
+
+            pnlBottom.Controls.Add(btnLast);
+            pnlBottom.Controls.Add(btnNext);
+            pnlBottom.Controls.Add(btnPrev);
+            pnlBottom.Controls.Add(btnFirst);
+            pnlBottom.Controls.Add(cmbPage);
+            pnlBottom.Controls.Add(lblPage);
+            pnlBottom.Controls.Add(lblPaging);
+
+            f.Controls.Add(grid);
+            f.Controls.Add(pnlBottom);
+            f.Controls.Add(pnlTop);
+
+            DataTable LoadData()
+            {
+                using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+                con.Open();
+                using var cmd = new NpgsqlCommand(@"
+SELECT
+    sl.id,
+    sl.created_at,
+    sl.warehouse_id,
+    COALESCE(w.name,'') AS warehouse,
+    sl.product_id,
+    COALESCE(i.name,'') AS item_name,
+    COALESCE(i.barcode,'') AS barcode,
+    COALESCE(sl.tipe_transaksi,'') AS tipe_transaksi,
+    COALESCE(sl.ref_type,'') AS ref_type,
+    COALESCE(sl.ref_id,0) AS ref_id,
+    COALESCE(sl.qty_masuk,0) AS qty_masuk,
+    COALESCE(sl.qty_keluar,0) AS qty_keluar,
+    COALESCE(sl.sisa_stock,0) AS sisa_stock,
+    COALESCE(sl.keterangan,'') AS keterangan,
+    COALESCE(u.username,'') AS username,
+    COALESCE(sl.method,'') AS method,
+    COALESCE(sl.unit_cost,0) AS unit_cost,
+    COALESCE(sl.is_allocation,false) AS is_allocation,
+    COALESCE(sl.parent_id,0) AS parent_id
+FROM stock_log sl
+LEFT JOIN items i ON i.id = sl.product_id
+LEFT JOIN warehouses w ON w.id = sl.warehouse_id
+LEFT JOIN users u ON u.id = sl.user_id
+WHERE sl.ref_id = @rid
+  AND (COALESCE(sl.ref_type,'') IN ('SALE','RETURN','CANCEL') OR COALESCE(sl.ref_type,'') = '')
+ORDER BY sl.created_at DESC, sl.id DESC
+LIMIT 5000
+", con);
+                cmd.Parameters.AddWithValue("@rid", transactionId);
+                var dt = new DataTable();
+                using var da = new NpgsqlDataAdapter(cmd);
+                da.Fill(dt);
+                return dt;
+            }
+
+            DataGridViewManager mgr = null;
+            void Bind(DataTable dt)
+            {
+                int pageSize = 50;
+                if (int.TryParse(cmbPage.SelectedItem?.ToString(), out var ps) && ps > 0) pageSize = ps;
+                mgr = new DataGridViewManager(grid, dt, pageSize);
+                mgr.PagingInfoLabel = lblPaging;
+
+                if (grid.Columns.Contains("id")) grid.Columns["id"].Visible = false;
+                if (grid.Columns.Contains("warehouse_id")) grid.Columns["warehouse_id"].Visible = false;
+                if (grid.Columns.Contains("product_id")) grid.Columns["product_id"].Visible = false;
+                if (grid.Columns.Contains("created_at")) { grid.Columns["created_at"].HeaderText = "Waktu"; grid.Columns["created_at"].Width = 160; }
+                if (grid.Columns.Contains("warehouse")) { grid.Columns["warehouse"].HeaderText = "Gudang"; grid.Columns["warehouse"].Width = 150; }
+                if (grid.Columns.Contains("barcode")) { grid.Columns["barcode"].HeaderText = "Barcode"; grid.Columns["barcode"].Width = 130; }
+                if (grid.Columns.Contains("item_name")) { grid.Columns["item_name"].HeaderText = "Nama Barang"; grid.Columns["item_name"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill; }
+                if (grid.Columns.Contains("tipe_transaksi")) { grid.Columns["tipe_transaksi"].HeaderText = "Tipe"; grid.Columns["tipe_transaksi"].Width = 120; }
+                if (grid.Columns.Contains("ref_type")) { grid.Columns["ref_type"].HeaderText = "Ref"; grid.Columns["ref_type"].Width = 80; }
+                if (grid.Columns.Contains("ref_id")) { grid.Columns["ref_id"].HeaderText = "Ref ID"; grid.Columns["ref_id"].Width = 70; }
+                foreach (var c in new[] { "qty_masuk", "qty_keluar", "sisa_stock", "unit_cost" })
+                {
+                    if (grid.Columns.Contains(c))
+                    {
+                        grid.Columns[c].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                        grid.Columns[c].DefaultCellStyle.Format = "N2";
+                        grid.Columns[c].Width = 100;
+                    }
+                }
+                if (grid.Columns.Contains("username")) { grid.Columns["username"].HeaderText = "User"; grid.Columns["username"].Width = 110; }
+                if (grid.Columns.Contains("keterangan")) { grid.Columns["keterangan"].HeaderText = "Keterangan"; grid.Columns["keterangan"].Width = 240; }
+                if (grid.Columns.Contains("method")) { grid.Columns["method"].HeaderText = "Val"; grid.Columns["method"].Width = 60; }
+                if (grid.Columns.Contains("is_allocation")) { grid.Columns["is_allocation"].HeaderText = "Alloc"; grid.Columns["is_allocation"].Width = 60; }
+                if (grid.Columns.Contains("parent_id")) { grid.Columns["parent_id"].HeaderText = "Parent"; grid.Columns["parent_id"].Width = 70; }
+            }
+
+            void ShowSelectedDetails()
+            {
+                try
+                {
+                    if (grid.SelectedRows.Count == 0) return;
+                    var r = grid.SelectedRows[0];
+                    string Get(string col) => grid.Columns.Contains(col) ? (r.Cells[col]?.Value?.ToString() ?? "") : "";
+
+                    using var modal = new Form();
+                    modal.Text = "Detail Stock Log";
+                    modal.StartPosition = FormStartPosition.CenterParent;
+                    modal.Size = new Size(980, 720);
+                    modal.MinimizeBox = false;
+                    modal.MaximizeBox = true;
+
+                    var txt = new TextBox
+                    {
+                        Multiline = true,
+                        ReadOnly = true,
+                        ScrollBars = ScrollBars.Both,
+                        Dock = DockStyle.Fill,
+                        Font = new Font("Consolas", 10F),
+                        WordWrap = false,
+                        Text =
+                            $"Waktu: {Get("created_at")}{Environment.NewLine}" +
+                            $"Gudang: {Get("warehouse")} (#{Get("warehouse_id")}){Environment.NewLine}" +
+                            $"Item: {Get("item_name")} (#{Get("product_id")}){Environment.NewLine}" +
+                            $"Barcode: {Get("barcode")}{Environment.NewLine}" +
+                            $"Tipe: {Get("tipe_transaksi")}{Environment.NewLine}" +
+                            $"Ref: {Get("ref_type")} #{Get("ref_id")}{Environment.NewLine}" +
+                            $"Masuk: {Get("qty_masuk")}  Keluar: {Get("qty_keluar")}  Sisa: {Get("sisa_stock")}{Environment.NewLine}" +
+                            $"User: {Get("username")}{Environment.NewLine}" +
+                            $"Valuation: {Get("method")}  UnitCost: {Get("unit_cost")}{Environment.NewLine}" +
+                            $"Allocation: {Get("is_allocation")}  Parent: {Get("parent_id")}{Environment.NewLine}{Environment.NewLine}" +
+                            $"Keterangan:{Environment.NewLine}{Get("keterangan")}"
+                    };
+                    var btnCopy = new Button { Text = "Copy", Dock = DockStyle.Bottom, Height = 44 };
+                    btnCopy.Click += (_, __) => { try { Clipboard.SetText(txt.Text ?? ""); } catch { } };
+                    modal.Controls.Add(txt);
+                    modal.Controls.Add(btnCopy);
+                    modal.ShowDialog(f);
+                }
+                catch
+                {
+                }
+            }
+
+            void Reload()
+            {
+                try
+                {
+                    var dt = LoadData();
+                    Bind(dt);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Gagal load stock log", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+
+            btnReload.Click += (_, __) => Reload();
+            btnDetails.Click += (_, __) => ShowSelectedDetails();
+            grid.CellDoubleClick += (_, e) => { if (e.RowIndex >= 0) ShowSelectedDetails(); };
+
+            txtSearch.TextChanged += (_, __) =>
+            {
+                try
+                {
+                    if (mgr == null) return;
+                    mgr.Filter(txtSearch.Text ?? "", cmbCol.SelectedItem?.ToString() ?? "item_name");
+                }
+                catch
+                {
+                }
+            };
+            cmbCol.SelectedIndexChanged += (_, __) =>
+            {
+                try
+                {
+                    if (mgr == null) return;
+                    mgr.Filter(txtSearch.Text ?? "", cmbCol.SelectedItem?.ToString() ?? "item_name");
+                }
+                catch
+                {
+                }
+            };
+
+            cmbPage.SelectedIndexChanged += (_, __) =>
+            {
+                try
+                {
+                    if (mgr == null) return;
+                    if (int.TryParse(cmbPage.SelectedItem?.ToString(), out var ps) && ps > 0)
+                        mgr.SetPageSize(ps);
+                }
+                catch
+                {
+                }
+            };
+
+            btnFirst.Click += (_, __) => { try { mgr?.FirstPage(); } catch { } };
+            btnPrev.Click += (_, __) => { try { mgr?.PreviousPage(); } catch { } };
+            btnNext.Click += (_, __) => { try { mgr?.NextPage(); } catch { } };
+            btnLast.Click += (_, __) => { try { mgr?.LastPage(); } catch { } };
+
+            Reload();
+            f.ShowDialog(this);
         }
 
         private void ShowAuditLogsByReferenceId(string title, int referenceId)

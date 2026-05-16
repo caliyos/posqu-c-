@@ -1,4 +1,4 @@
-﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿using Npgsql;
 using POS_qu;
 using POS_qu.Helpers;
 using POS_qu.Models;
@@ -17,6 +17,8 @@ namespace POSqu_menu
 {
     public partial class MenuNative : Form
     {
+        private ToolStripItem _activeTopMenuItem;
+
 
         // Tambahkan field baru di dalam kelas MenuNative
         private Label labelMarquee;
@@ -137,10 +139,11 @@ namespace POSqu_menu
             this.StartPosition = FormStartPosition.CenterScreen;
             this.WindowState = FormWindowState.Maximized;
             this.Load += MenuNative_Load;
+            this.Text += "POSqu v1.0.0";
             //InitializeMarquee();
         }
 
-        
+
         //    public MenuNative()
         //{
         //    MessageBox.Show("CTOR 1");
@@ -161,6 +164,8 @@ namespace POSqu_menu
                 if (user == null)
                 {
                     label2.Text = "⚠️ Tidak ada sesi pengguna aktif.";
+                    label2.Visible = true;
+                    if (lblSessionInfo != null) lblSessionInfo.Text = "-";
                     return;
                 }
 
@@ -169,19 +174,20 @@ namespace POSqu_menu
 
                 string appTz = DbConfig.AppTimeZone ?? "";
                 string dbTz = GetDatabaseTimeZone() ?? "";
-                string tzLine = "";
-                if (!string.IsNullOrWhiteSpace(appTz) || !string.IsNullOrWhiteSpace(dbTz))
-                    tzLine = $"\n🕒 TimeZone App: {(!string.IsNullOrWhiteSpace(appTz) ? appTz : "-")} | DB: {(!string.IsNullOrWhiteSpace(dbTz) ? dbTz : "-")}";
-
-                // tampilkan semua data session user
-                label2.Text =
-                    $"👤 User: {user.Username} (ID: {user.UserId})\n" +
-                    $"🎭 Role: {user.RoleName} (ID: {user.RoleId})\n" +
-                    $"🖥️ Terminal: {user.TerminalName} (ID: {user.TerminalId})\n" +
-                    $"⏰ Shift: {user.ShiftId}\n" +
-                    $"💻 PC ID: {pcId}\n" +
-                    $"🗄️ Database: {dbSummary}" +
-                    tzLine;
+                label2.Visible = false;
+                if (lblSessionInfo != null)
+                {
+                    var now = DateTime.Now;
+                    lblSessionInfo.Text =
+                        $"User: {user.Username} (ID: {user.UserId})\n" +
+                        $"Role: {user.RoleName} (ID: {user.RoleId})\n" +
+                        $"Terminal: {user.TerminalName} (ID: {user.TerminalId})\n" +
+                        $"Shift: {user.ShiftId}\n" +
+                        $"PC ID: {pcId}\n" +
+                        $"Database: {dbSummary}\n" +
+                        $"TimeZone App: {(!string.IsNullOrWhiteSpace(appTz) ? appTz : "-")} | DB: {(!string.IsNullOrWhiteSpace(dbTz) ? dbTz : "-")}\n" +
+                        $"Time: {now:HH:mm:ss dd/MM/yyyy}";
+                }
 
                 LoadDashboardSummary();
                 RenderSalesBarsLast30Days();
@@ -230,11 +236,59 @@ namespace POSqu_menu
 
                 WireLocalFirstMenus();
                 SetupReportsMenu();
+                SetupMenuIdentity();
             }
             catch (Exception ex)
             {
                 label2.Text = "❌ Error memuat sesi: " + ex.Message;
+                label2.Visible = true;
             }
+        }
+
+        private void SetupMenuIdentity()
+        {
+            try
+            {
+                if (menuStrip1 == null) return;
+                menuStrip1.Renderer = new ToolStripProfessionalRenderer(new AppMenuColorTable());
+                menuStrip1.ItemClicked -= MenuStrip1_ItemClicked;
+                menuStrip1.ItemClicked += MenuStrip1_ItemClicked;
+            }
+            catch
+            {
+            }
+        }
+
+        private void MenuStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+            try
+            {
+                if (menuStrip1 == null) return;
+                if (e?.ClickedItem == null) return;
+                _activeTopMenuItem = e.ClickedItem;
+                foreach (ToolStripItem it in menuStrip1.Items)
+                {
+                    if (it == null) continue;
+                    it.BackColor = Color.Transparent;
+                    it.ForeColor = Color.Black;
+                }
+                _activeTopMenuItem.BackColor = Color.FromArgb(232, 240, 254);
+                _activeTopMenuItem.ForeColor = Color.FromArgb(26, 115, 232);
+            }
+            catch
+            {
+            }
+        }
+
+        private sealed class AppMenuColorTable : ProfessionalColorTable
+        {
+            public override Color MenuItemSelected => Color.FromArgb(232, 240, 254);
+            public override Color MenuItemBorder => Color.FromArgb(232, 240, 254);
+            public override Color ToolStripBorder => Color.FromArgb(230, 230, 230);
+            public override Color ToolStripDropDownBackground => Color.White;
+            public override Color ImageMarginGradientBegin => Color.White;
+            public override Color ImageMarginGradientMiddle => Color.White;
+            public override Color ImageMarginGradientEnd => Color.White;
         }
 
         private void ShowPendingAdmin()
@@ -614,6 +668,10 @@ namespace POSqu_menu
             {
                 ShowAuditLogsBrowser();
             };
+            EnsureMenu("miInventoryAuditTrail", "Inventory • Audit Trail").Click += (s, e) =>
+            {
+                ShowStockLogBrowser();
+            };
         }
 
         private void ShowAuditLogsBrowser()
@@ -869,6 +927,389 @@ WHERE created_at >= @from AND created_at <= @to
             grid.CellDoubleClick += (_, e) => { if (e.RowIndex >= 0) ShowSelected(); };
             btnClose.Click += (_, __) => f.Close();
 
+            RefreshGrid();
+            f.ShowDialog(this);
+        }
+
+        private void ShowStockLogBrowser()
+        {
+            using var f = new Form();
+            f.Text = "Inventory • Audit Trail";
+            f.StartPosition = FormStartPosition.CenterParent;
+            f.Size = new Size(1300, 800);
+            f.MinimizeBox = false;
+            f.MaximizeBox = true;
+            f.FormBorderStyle = FormBorderStyle.Sizable;
+
+            var pnlTop = new Panel { Dock = DockStyle.Top, Height = 162, Padding = new Padding(12), BackColor = Color.White };
+            var lblTitle = new Label
+            {
+                Dock = DockStyle.Top,
+                Height = 28,
+                Font = new Font("Segoe UI Semibold", 12F, FontStyle.Bold),
+                Text = "Inventory Audit Trail • Stock Log"
+            };
+
+            var pnlFilters = new TableLayoutPanel
+            {
+                Dock = DockStyle.Fill,
+                ColumnCount = 8,
+                RowCount = 3
+            };
+            pnlFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+            pnlFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
+            pnlFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+            pnlFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
+            pnlFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+            pnlFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
+            pnlFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110));
+            pnlFilters.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 25));
+            pnlFilters.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
+            pnlFilters.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
+            pnlFilters.RowStyles.Add(new RowStyle(SizeType.Absolute, 40));
+
+            var lblFrom = new Label { Text = "Dari", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var dtFrom = new DateTimePicker { Dock = DockStyle.Fill, Format = DateTimePickerFormat.Custom, CustomFormat = "yyyy-MM-dd HH:mm" };
+            var lblTo = new Label { Text = "Sampai", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var dtTo = new DateTimePicker { Dock = DockStyle.Fill, Format = DateTimePickerFormat.Custom, CustomFormat = "yyyy-MM-dd HH:mm" };
+            var lblWarehouse = new Label { Text = "Gudang", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var cmbWarehouse = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
+            var lblLimit = new Label { Text = "Limit", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var cmbLimit = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
+            cmbLimit.Items.AddRange(new object[] { "200", "500", "1000", "2000", "5000" });
+            cmbLimit.SelectedIndex = 1;
+
+            var lblType = new Label { Text = "Tipe", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var txtType = new TextBox { Dock = DockStyle.Fill, PlaceholderText = "transaction/purchase/opname/..." };
+            var lblRefType = new Label { Text = "Ref Type", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var txtRefType = new TextBox { Dock = DockStyle.Fill, PlaceholderText = "SALE/OPNAME/..." };
+            var lblRefId = new Label { Text = "Ref ID", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var txtRefId = new TextBox { Dock = DockStyle.Fill, PlaceholderText = "ts_id / po_id / ..." };
+            var lblUser = new Label { Text = "User ID", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var txtUserId = new TextBox { Dock = DockStyle.Fill, PlaceholderText = "opsional" };
+
+            var lblItem = new Label { Text = "Item", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var txtItem = new TextBox { Dock = DockStyle.Fill, PlaceholderText = "barcode/nama/id item..." };
+            var lblKeyword = new Label { Text = "Keyword", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var txtKeyword = new TextBox { Dock = DockStyle.Fill, PlaceholderText = "keterangan..." };
+            var lblOnlyStock = new Label { Text = "Stock ≠ 0", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var chkOnlyStock = new CheckBox { Dock = DockStyle.Fill, Checked = true };
+            var lblAlloc = new Label { Text = "Allocation", Dock = DockStyle.Fill, TextAlign = ContentAlignment.MiddleLeft };
+            var cmbAlloc = new ComboBox { Dock = DockStyle.Fill, DropDownStyle = ComboBoxStyle.DropDownList };
+            cmbAlloc.Items.AddRange(new object[] { "Semua", "Parent", "Allocation" });
+            cmbAlloc.SelectedIndex = 0;
+
+            pnlFilters.Controls.Add(lblFrom, 0, 0);
+            pnlFilters.Controls.Add(dtFrom, 1, 0);
+            pnlFilters.Controls.Add(lblTo, 2, 0);
+            pnlFilters.Controls.Add(dtTo, 3, 0);
+            pnlFilters.Controls.Add(lblWarehouse, 4, 0);
+            pnlFilters.Controls.Add(cmbWarehouse, 5, 0);
+            pnlFilters.Controls.Add(lblLimit, 6, 0);
+            pnlFilters.Controls.Add(cmbLimit, 7, 0);
+
+            pnlFilters.Controls.Add(lblType, 0, 1);
+            pnlFilters.Controls.Add(txtType, 1, 1);
+            pnlFilters.Controls.Add(lblRefType, 2, 1);
+            pnlFilters.Controls.Add(txtRefType, 3, 1);
+            pnlFilters.Controls.Add(lblRefId, 4, 1);
+            pnlFilters.Controls.Add(txtRefId, 5, 1);
+            pnlFilters.Controls.Add(lblUser, 6, 1);
+            pnlFilters.Controls.Add(txtUserId, 7, 1);
+
+            pnlFilters.Controls.Add(lblItem, 0, 2);
+            pnlFilters.Controls.Add(txtItem, 1, 2);
+            pnlFilters.Controls.Add(lblKeyword, 2, 2);
+            pnlFilters.Controls.Add(txtKeyword, 3, 2);
+            pnlFilters.Controls.Add(lblOnlyStock, 4, 2);
+            pnlFilters.Controls.Add(chkOnlyStock, 5, 2);
+            pnlFilters.Controls.Add(lblAlloc, 6, 2);
+            pnlFilters.Controls.Add(cmbAlloc, 7, 2);
+
+            pnlTop.Controls.Add(pnlFilters);
+            pnlTop.Controls.Add(lblTitle);
+
+            var pnlMid = new Panel { Dock = DockStyle.Top, Height = 54, Padding = new Padding(12), BackColor = Color.White };
+            var btnSearch = new Button { Text = "Search", Dock = DockStyle.Right, Width = 120 };
+            var btnDetail = new Button { Text = "Lihat Detail", Dock = DockStyle.Right, Width = 140 };
+            pnlMid.Controls.Add(btnDetail);
+            pnlMid.Controls.Add(btnSearch);
+
+            var grid = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                MultiSelect = false,
+                BackgroundColor = Color.White
+            };
+
+            var pnlBottom = new Panel { Dock = DockStyle.Bottom, Height = 56, Padding = new Padding(12), BackColor = Color.WhiteSmoke };
+            var lblCount = new Label { Dock = DockStyle.Left, Width = 720, TextAlign = ContentAlignment.MiddleLeft };
+            var btnClose = new Button { Text = "Tutup", Dock = DockStyle.Right, Width = 120 };
+            pnlBottom.Controls.Add(btnClose);
+            pnlBottom.Controls.Add(lblCount);
+
+            f.Controls.Add(grid);
+            f.Controls.Add(pnlBottom);
+            f.Controls.Add(pnlMid);
+            f.Controls.Add(pnlTop);
+
+            dtFrom.Value = DateTime.Today;
+            dtTo.Value = DateTime.Today.AddDays(1).AddSeconds(-1);
+
+            void LoadWarehouses()
+            {
+                cmbWarehouse.Items.Clear();
+                cmbWarehouse.Items.Add(new KeyValuePair<int, string>(0, "Semua"));
+                try
+                {
+                    using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+                    con.Open();
+                    using var cmd = new NpgsqlCommand("SELECT id, name FROM warehouses ORDER BY id", con);
+                    using var r = cmd.ExecuteReader();
+                    while (r.Read())
+                    {
+                        var id = r[0] != DBNull.Value ? Convert.ToInt32(r[0]) : 0;
+                        var name = (r[1]?.ToString() ?? "").Trim();
+                        if (id > 0)
+                            cmbWarehouse.Items.Add(new KeyValuePair<int, string>(id, string.IsNullOrWhiteSpace(name) ? ("#" + id) : name));
+                    }
+                }
+                catch
+                {
+                }
+                cmbWarehouse.DisplayMember = "Value";
+                cmbWarehouse.ValueMember = "Key";
+                cmbWarehouse.SelectedIndex = 0;
+            }
+
+            DataTable Query()
+            {
+                var from = dtFrom.Value;
+                var to = dtTo.Value;
+                if (to < from) to = from;
+                int limit = 500;
+                int.TryParse(cmbLimit.SelectedItem?.ToString(), out limit);
+                if (limit <= 0) limit = 500;
+
+                int whId = 0;
+                if (cmbWarehouse.SelectedItem is KeyValuePair<int, string> kv) whId = kv.Key;
+
+                var type = (txtType.Text ?? "").Trim();
+                var refType = (txtRefType.Text ?? "").Trim();
+                var refIdText = (txtRefId.Text ?? "").Trim();
+                var userIdText = (txtUserId.Text ?? "").Trim();
+                var item = (txtItem.Text ?? "").Trim();
+                var keyword = (txtKeyword.Text ?? "").Trim();
+                bool onlyStock = chkOnlyStock.Checked;
+                var allocMode = cmbAlloc.SelectedItem?.ToString() ?? "Semua";
+
+                using var con = new NpgsqlConnection(DbConfig.ConnectionString);
+                con.Open();
+
+                var sql = new StringBuilder();
+                sql.Append(@"
+SELECT
+    sl.id,
+    sl.created_at,
+    sl.warehouse_id,
+    COALESCE(w.name,'') AS warehouse,
+    sl.product_id,
+    COALESCE(i.name,'') AS item_name,
+    COALESCE(i.barcode,'') AS barcode,
+    COALESCE(sl.tipe_transaksi,'') AS tipe_transaksi,
+    COALESCE(sl.ref_type,'') AS ref_type,
+    COALESCE(sl.ref_id,0) AS ref_id,
+    COALESCE(sl.qty_masuk,0) AS qty_masuk,
+    COALESCE(sl.qty_keluar,0) AS qty_keluar,
+    COALESCE(sl.sisa_stock,0) AS sisa_stock,
+    COALESCE(sl.keterangan,'') AS keterangan,
+    COALESCE(u.username,'') AS username,
+    COALESCE(sl.method,'') AS method,
+    COALESCE(sl.unit_cost,0) AS unit_cost,
+    COALESCE(sl.is_allocation,false) AS is_allocation,
+    COALESCE(sl.parent_id,0) AS parent_id
+FROM stock_log sl
+LEFT JOIN items i ON i.id = sl.product_id
+LEFT JOIN warehouses w ON w.id = sl.warehouse_id
+LEFT JOIN users u ON u.id = sl.user_id
+WHERE sl.created_at >= @from AND sl.created_at <= @to
+");
+
+                var cmd = new NpgsqlCommand();
+                cmd.Connection = con;
+                cmd.Parameters.AddWithValue("@from", from);
+                cmd.Parameters.AddWithValue("@to", to);
+
+                if (whId > 0)
+                {
+                    sql.Append(" AND sl.warehouse_id = @wh ");
+                    cmd.Parameters.AddWithValue("@wh", whId);
+                }
+
+                if (!string.IsNullOrWhiteSpace(type))
+                {
+                    sql.Append(" AND COALESCE(sl.tipe_transaksi,'') ILIKE @type ");
+                    cmd.Parameters.AddWithValue("@type", "%" + type + "%");
+                }
+
+                if (!string.IsNullOrWhiteSpace(refType))
+                {
+                    sql.Append(" AND COALESCE(sl.ref_type,'') ILIKE @rtype ");
+                    cmd.Parameters.AddWithValue("@rtype", "%" + refType + "%");
+                }
+
+                if (long.TryParse(refIdText, out var rid) && rid > 0)
+                {
+                    sql.Append(" AND sl.ref_id = @rid ");
+                    cmd.Parameters.AddWithValue("@rid", (int)rid);
+                }
+
+                if (long.TryParse(userIdText, out var uid) && uid > 0)
+                {
+                    sql.Append(" AND sl.user_id = @uid ");
+                    cmd.Parameters.AddWithValue("@uid", (int)uid);
+                }
+
+                if (!string.IsNullOrWhiteSpace(item))
+                {
+                    if (int.TryParse(item, out var iid) && iid > 0)
+                    {
+                        sql.Append(" AND sl.product_id = @pid ");
+                        cmd.Parameters.AddWithValue("@pid", iid);
+                    }
+                    else
+                    {
+                        sql.Append(" AND (COALESCE(i.barcode,'') ILIKE @item OR COALESCE(i.name,'') ILIKE @item) ");
+                        cmd.Parameters.AddWithValue("@item", "%" + item + "%");
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(keyword))
+                {
+                    sql.Append(" AND COALESCE(sl.keterangan,'') ILIKE @kw ");
+                    cmd.Parameters.AddWithValue("@kw", "%" + keyword + "%");
+                }
+
+                if (onlyStock)
+                {
+                    sql.Append(" AND (COALESCE(sl.qty_masuk,0) <> 0 OR COALESCE(sl.qty_keluar,0) <> 0) ");
+                }
+
+                if (string.Equals(allocMode, "Parent", StringComparison.OrdinalIgnoreCase))
+                {
+                    sql.Append(" AND COALESCE(sl.is_allocation,false) = false ");
+                }
+                else if (string.Equals(allocMode, "Allocation", StringComparison.OrdinalIgnoreCase))
+                {
+                    sql.Append(" AND COALESCE(sl.is_allocation,false) = true ");
+                }
+
+                sql.Append(" ORDER BY sl.created_at DESC, sl.id DESC LIMIT " + limit);
+                cmd.CommandText = sql.ToString();
+
+                var dt = new DataTable();
+                using var da = new NpgsqlDataAdapter(cmd);
+                da.Fill(dt);
+                return dt;
+            }
+
+            void RefreshGrid()
+            {
+                try
+                {
+                    var dt = Query();
+                    grid.DataSource = dt;
+                    if (grid.Columns.Contains("id")) grid.Columns["id"].Visible = false;
+                    if (grid.Columns.Contains("warehouse_id")) grid.Columns["warehouse_id"].Visible = false;
+                    if (grid.Columns.Contains("product_id")) grid.Columns["product_id"].Visible = false;
+                    if (grid.Columns.Contains("created_at")) { grid.Columns["created_at"].HeaderText = "Waktu"; grid.Columns["created_at"].Width = 160; }
+                    if (grid.Columns.Contains("warehouse")) { grid.Columns["warehouse"].HeaderText = "Gudang"; grid.Columns["warehouse"].Width = 160; }
+                    if (grid.Columns.Contains("barcode")) { grid.Columns["barcode"].HeaderText = "Barcode"; grid.Columns["barcode"].Width = 140; }
+                    if (grid.Columns.Contains("item_name")) { grid.Columns["item_name"].HeaderText = "Nama Barang"; grid.Columns["item_name"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill; }
+                    foreach (var c in new[] { "qty_masuk", "qty_keluar", "sisa_stock" })
+                    {
+                        if (grid.Columns.Contains(c))
+                        {
+                            grid.Columns[c].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                            grid.Columns[c].DefaultCellStyle.Format = "N2";
+                            grid.Columns[c].Width = 110;
+                        }
+                    }
+                    if (grid.Columns.Contains("tipe_transaksi")) { grid.Columns["tipe_transaksi"].HeaderText = "Tipe"; grid.Columns["tipe_transaksi"].Width = 120; }
+                    if (grid.Columns.Contains("ref_type")) { grid.Columns["ref_type"].HeaderText = "Ref Type"; grid.Columns["ref_type"].Width = 110; }
+                    if (grid.Columns.Contains("ref_id")) { grid.Columns["ref_id"].HeaderText = "Ref ID"; grid.Columns["ref_id"].Width = 80; }
+                    if (grid.Columns.Contains("username")) { grid.Columns["username"].HeaderText = "User"; grid.Columns["username"].Width = 120; }
+                    if (grid.Columns.Contains("keterangan")) { grid.Columns["keterangan"].HeaderText = "Keterangan"; grid.Columns["keterangan"].Width = 260; }
+                    if (grid.Columns.Contains("method")) { grid.Columns["method"].HeaderText = "Val"; grid.Columns["method"].Width = 70; }
+                    if (grid.Columns.Contains("unit_cost")) { grid.Columns["unit_cost"].HeaderText = "UnitCost"; grid.Columns["unit_cost"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight; grid.Columns["unit_cost"].DefaultCellStyle.Format = "N2"; grid.Columns["unit_cost"].Width = 90; }
+                    if (grid.Columns.Contains("is_allocation")) { grid.Columns["is_allocation"].HeaderText = "Alloc"; grid.Columns["is_allocation"].Width = 60; }
+                    if (grid.Columns.Contains("parent_id")) { grid.Columns["parent_id"].HeaderText = "Parent"; grid.Columns["parent_id"].Width = 70; }
+
+                    lblCount.Text = $"Rows: {dt.Rows.Count:N0}";
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message, "Gagal load stock log", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+            }
+
+            void ShowSelected()
+            {
+                try
+                {
+                    if (grid.SelectedRows.Count == 0) return;
+                    var r = grid.SelectedRows[0];
+                    string Get(string col) => grid.Columns.Contains(col) ? (r.Cells[col]?.Value?.ToString() ?? "") : "";
+
+                    using var modal = new Form();
+                    modal.Text = "Detail Stock Log";
+                    modal.StartPosition = FormStartPosition.CenterParent;
+                    modal.Size = new Size(980, 720);
+                    modal.MinimizeBox = false;
+                    modal.MaximizeBox = true;
+
+                    var txt = new TextBox
+                    {
+                        Multiline = true,
+                        ReadOnly = true,
+                        ScrollBars = ScrollBars.Both,
+                        Dock = DockStyle.Fill,
+                        Font = new Font("Consolas", 10F),
+                        WordWrap = false,
+                        Text =
+                            $"Waktu: {Get("created_at")}{Environment.NewLine}" +
+                            $"Gudang: {Get("warehouse")} (#{Get("warehouse_id")}){Environment.NewLine}" +
+                            $"Item: {Get("item_name")} (#{Get("product_id")}){Environment.NewLine}" +
+                            $"Barcode: {Get("barcode")}{Environment.NewLine}" +
+                            $"Tipe: {Get("tipe_transaksi")}{Environment.NewLine}" +
+                            $"Ref: {Get("ref_type")} #{Get("ref_id")}{Environment.NewLine}" +
+                            $"Masuk: {Get("qty_masuk")}  Keluar: {Get("qty_keluar")}  Sisa: {Get("sisa_stock")}{Environment.NewLine}" +
+                            $"User: {Get("username")}{Environment.NewLine}" +
+                            $"Valuation: {Get("method")}  UnitCost: {Get("unit_cost")}{Environment.NewLine}" +
+                            $"Allocation: {Get("is_allocation")}  Parent: {Get("parent_id")}{Environment.NewLine}{Environment.NewLine}" +
+                            $"Keterangan:{Environment.NewLine}{Get("keterangan")}"
+                    };
+                    var btnCopy = new Button { Text = "Copy", Dock = DockStyle.Bottom, Height = 44 };
+                    btnCopy.Click += (_, __) => { try { Clipboard.SetText(txt.Text ?? ""); } catch { } };
+                    modal.Controls.Add(txt);
+                    modal.Controls.Add(btnCopy);
+                    modal.ShowDialog(f);
+                }
+                catch
+                {
+                }
+            }
+
+            btnSearch.Click += (_, __) => RefreshGrid();
+            btnDetail.Click += (_, __) => ShowSelected();
+            grid.CellDoubleClick += (_, e) => { if (e.RowIndex >= 0) ShowSelected(); };
+            btnClose.Click += (_, __) => f.Close();
+
+            LoadWarehouses();
             RefreshGrid();
             f.ShowDialog(this);
         }
@@ -1803,6 +2244,16 @@ LIMIT 50
             decimal omzetMonth = GetOmzet(conn, monthStart, monthEnd);
             decimal hppMonth = GetHPP(conn, monthStart, monthEnd);
             decimal profitMonth = omzetMonth - hppMonth;
+            int stockWarning = 0;
+            try
+            {
+                var low = QueryStockLow();
+                stockWarning = low?.Rows?.Count ?? 0;
+            }
+            catch
+            {
+                stockWarning = 0;
+            }
 
             var ci = System.Globalization.CultureInfo.GetCultureInfo("id-ID");
             label1.Text = "Welcome • Dashboard";
@@ -1823,6 +2274,25 @@ LIMIT 50
             lblOmzetMonth.Text = $"Omzet Bulan Ini: Rp {omzetMonth.ToString("N0", ci)}";
             lblHPPMonth.Text = $"HPP Bulanan: Rp {hppMonth.ToString("N0", ci)}";
             lblProfitMonth.Text = $"Laba Bersih: Rp {profitMonth.ToString("N0", ci)}";
+            TrySetControlText("lblDashTodayValue", $"Rp {omzetToday.ToString("N0", ci)}");
+            TrySetControlText("lblDashMonthValue", $"Rp {omzetMonth.ToString("N0", ci)}");
+            TrySetControlText("lblDashProfitValue", $"Rp {profitMonth.ToString("N0", ci)}");
+            TrySetControlText("lblDashHppValue", $"Rp {hppMonth.ToString("N0", ci)}");
+            TrySetControlText("lblDashStockWarnValue", stockWarning.ToString("N0", ci));
+        }
+
+        private void TrySetControlText(string controlName, string text)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(controlName)) return;
+                var ctrl = this.Controls.Find(controlName, true).FirstOrDefault();
+                if (ctrl == null) return;
+                ctrl.Text = text ?? "";
+            }
+            catch
+            {
+            }
         }
 
         private decimal GetOmzet(Npgsql.NpgsqlConnection conn, DateTime start, DateTime end)
@@ -1856,14 +2326,9 @@ LIMIT 50
 
         private void RenderSalesBarsLast30Days()
         {
-            var flp = new FlowLayoutPanel();
-            flp.Name = "salesBarsPanel";
-            flp.Dock = DockStyle.Right;
-            flp.Width = 360;
-            flp.Height = 160;
-            flp.Padding = new Padding(8);
-            flp.BackColor = Color.White;
-            flp.AutoScroll = true;
+            if (salesBarsFlow == null) return;
+            salesBarsFlow.SuspendLayout();
+            salesBarsFlow.Controls.Clear();
 
             var rows = new List<(string day, decimal sum)>();
             using (var conn = new Npgsql.NpgsqlConnection(DbConfig.ConnectionString))
@@ -1887,44 +2352,35 @@ LIMIT 50
             if (rows.Count == 0)
             {
                 var lbl = new Label { Text = "Tidak ada data omzet 30 hari.", AutoSize = true };
-                flp.Controls.Add(lbl);
+                salesBarsFlow.Controls.Add(lbl);
             }
             else
             {
                 decimal max = rows.Max(r => r.sum);
                 foreach (var r in rows)
                 {
-                    int barWidth = max > 0 ? (int)(300 * (r.sum / max)) : 0;
-                    var rowPanel = new Panel { Width = flp.Width - 24, Height = 24, BackColor = Color.Transparent };
-                    var lblDay = new Label { Text = r.day, Width = 60, Height = 24, TextAlign = ContentAlignment.MiddleLeft };
-                    var bar = new Panel { Width = barWidth, Height = 16, BackColor = Color.SteelBlue, Margin = new Padding(6, 4, 6, 4) };
-                    var lblVal = new Label { Text = r.sum.ToString("N0"), AutoSize = true, Height = 24, TextAlign = ContentAlignment.MiddleLeft };
+                    int baseWidth = salesBarsFlow.ClientSize.Width > 0 ? salesBarsFlow.ClientSize.Width : 900;
+                    int maxBarWidth = Math.Max(180, baseWidth - 300);
+                    int barWidth = max > 0 ? (int)(maxBarWidth * (r.sum / max)) : 0;
+                    var rowPanel = new Panel { Width = Math.Max(560, baseWidth - 24), Height = 24, BackColor = Color.Transparent };
+                    var lblDay = new Label { Text = r.day, Width = 60, Height = 24, TextAlign = ContentAlignment.MiddleLeft, ForeColor = Color.DimGray };
+                    var bar = new Panel { Width = barWidth, Height = 14, BackColor = ColorTranslator.FromHtml("#2A97AD"), Margin = new Padding(6, 5, 6, 5) };
+                    var lblVal = new Label { Text = "Rp " + r.sum.ToString("N0"), AutoSize = true, Height = 24, TextAlign = ContentAlignment.MiddleLeft, ForeColor = Color.DimGray };
                     rowPanel.Controls.Add(lblDay);
                     lblDay.Location = new Point(0, 0);
                     rowPanel.Controls.Add(bar);
                     bar.Location = new Point(66, 4);
                     rowPanel.Controls.Add(lblVal);
                     lblVal.Location = new Point(66 + barWidth + 8, 0);
-                    flp.Controls.Add(rowPanel);
+                    salesBarsFlow.Controls.Add(rowPanel);
                 }
             }
-
-            panelWelcome.Controls.Add(flp);
-            flp.BringToFront();
+            salesBarsFlow.ResumeLayout(true);
         }
 
         private void btnRefreshDashboard_Click(object sender, EventArgs e)
         {
             LoadDashboardSummary();
-            foreach (Control c in panelWelcome.Controls)
-            {
-                if (c.Name == "salesBarsPanel")
-                {
-                    panelWelcome.Controls.Remove(c);
-                    c.Dispose();
-                    break;
-                }
-            }
             RenderSalesBarsLast30Days();
         }
 
@@ -1936,6 +2392,26 @@ LIMIT 50
 
             p.FormClosed += (s, args) => this.Show();  // Kalau Casher_POS ditutup, munculkan lagi MenuNative
             p.Show();
+        }
+
+        private void sessionInfoCard_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void salesBarsFlow_Paint(object sender, PaintEventArgs e)
+        {
+
+        }
+
+        private void dashboardTitleLabel_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void sessionInfoTitleLabel_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
