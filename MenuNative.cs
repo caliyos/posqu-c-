@@ -1238,6 +1238,15 @@ WHERE sl.created_at >= @from AND sl.created_at <= @to
                             grid.Columns[c].DefaultCellStyle.Format = "N2";
                             grid.Columns[c].Width = 110;
                         }
+                        if (grid.Columns.Contains("created_at"))
+                        {
+                            var col = grid.Columns["created_at"];
+
+                            col.HeaderText = "Waktu";
+                            col.Width = 220;
+
+                            col.DefaultCellStyle.Format = "yyyy-MM-dd HH:mm:ss.ffffff";
+                        }
                     }
                     if (grid.Columns.Contains("tipe_transaksi")) { grid.Columns["tipe_transaksi"].HeaderText = "Tipe"; grid.Columns["tipe_transaksi"].Width = 120; }
                     if (grid.Columns.Contains("ref_type")) { grid.Columns["ref_type"].HeaderText = "Ref Type"; grid.Columns["ref_type"].Width = 110; }
