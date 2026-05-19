@@ -586,6 +586,9 @@ ORDER BY id ASC
                 if (createdBy <= 0)
                     throw new InvalidOperationException("Session user tidak ditemukan. Silakan login ulang.");
 
+                bool hasStockHppAvg = HasColumn(conn, tran, "stocks", "hpp_avg");
+                bool hasStockAvgHistory = HasTable(conn, tran, "stock_avg_history");
+
                 string purchaseNo = (txtPurchaseNo.Text ?? "").Trim();
                 if (chkManualPurchaseNo.Checked)
                 {
@@ -710,29 +713,109 @@ ORDER BY id ASC
                     // ==========================================
 
                     // A. Update Master Stock (Stocks table)
-                    string checkStockSql = "SELECT COUNT(*) FROM stocks WHERE item_id = @item_id AND warehouse_id = @warehouse_id";
-                    using var checkStockCmd = new NpgsqlCommand(checkStockSql, conn, tran);
-                    checkStockCmd.Parameters.AddWithValue("@item_id", itemId);
-                    checkStockCmd.Parameters.AddWithValue("@warehouse_id", warehouseId);
-                    long stockExists = (long)checkStockCmd.ExecuteScalar();
-
-                    if (stockExists > 0)
+                    if (hasStockHppAvg)
                     {
-                        string updateStockSql = "UPDATE stocks SET qty = qty + @qty WHERE item_id = @item_id AND warehouse_id = @warehouse_id";
-                        using var updateStockCmd = new NpgsqlCommand(updateStockSql, conn, tran);
-                        updateStockCmd.Parameters.AddWithValue("@qty", qty);
-                        updateStockCmd.Parameters.AddWithValue("@item_id", itemId);
-                        updateStockCmd.Parameters.AddWithValue("@warehouse_id", warehouseId);
-                        updateStockCmd.ExecuteNonQuery();
+                        using (var ensure = new NpgsqlCommand(@"
+INSERT INTO stocks (item_id, warehouse_id, qty, reserved_qty, hpp_avg)
+SELECT @item_id, @warehouse_id, 0, 0, 0
+WHERE NOT EXISTS (
+    SELECT 1 FROM stocks WHERE item_id = @item_id AND warehouse_id = @warehouse_id
+)
+", conn, tran))
+                        {
+                            ensure.Parameters.AddWithValue("@item_id", itemId);
+                            ensure.Parameters.AddWithValue("@warehouse_id", warehouseId);
+                            ensure.ExecuteNonQuery();
+                        }
+
+                        decimal qtyBefore = 0m;
+                        decimal avgBefore = 0m;
+                        using (var sel = new NpgsqlCommand(@"
+SELECT COALESCE(qty,0) AS qty, COALESCE(hpp_avg,0) AS hpp_avg
+FROM stocks
+WHERE item_id = @item_id AND warehouse_id = @warehouse_id
+FOR UPDATE
+", conn, tran))
+                        {
+                            sel.Parameters.AddWithValue("@item_id", itemId);
+                            sel.Parameters.AddWithValue("@warehouse_id", warehouseId);
+                            using var r = sel.ExecuteReader();
+                            if (r.Read())
+                            {
+                                qtyBefore = r["qty"] != DBNull.Value ? Convert.ToDecimal(r["qty"]) : 0m;
+                                avgBefore = r["hpp_avg"] != DBNull.Value ? Convert.ToDecimal(r["hpp_avg"]) : 0m;
+                            }
+                        }
+
+                        decimal qtyAfter = qtyBefore + qty;
+                        decimal avgAfter = qtyAfter > 0m
+                            ? Math.Round(((qtyBefore * avgBefore) + (qty * unitPrice)) / qtyAfter, 2, MidpointRounding.AwayFromZero)
+                            : avgBefore;
+
+                        using (var upd = new NpgsqlCommand(@"
+UPDATE stocks
+SET qty = @qty_after,
+    hpp_avg = @avg_after
+WHERE item_id = @item_id AND warehouse_id = @warehouse_id
+", conn, tran))
+                        {
+                            upd.Parameters.AddWithValue("@item_id", itemId);
+                            upd.Parameters.AddWithValue("@warehouse_id", warehouseId);
+                            upd.Parameters.AddWithValue("@qty_after", (double)qtyAfter);
+                            upd.Parameters.AddWithValue("@avg_after", avgAfter);
+                            upd.ExecuteNonQuery();
+                        }
+
+                        if (hasStockAvgHistory)
+                        {
+                            using var insHist = new NpgsqlCommand(@"
+INSERT INTO stock_avg_history
+(item_id, warehouse_id, qty_before, qty_in, qty_after, avg_before, unit_cost_in, avg_after, ref_type, ref_id, note, user_id, login_id, created_at)
+VALUES
+(@item_id, @warehouse_id, @qty_before, @qty_in, @qty_after, @avg_before, @unit_cost_in, @avg_after, @ref_type, @ref_id, @note, @user_id, @login_id, NOW())
+", conn, tran);
+                            insHist.Parameters.AddWithValue("@item_id", itemId);
+                            insHist.Parameters.AddWithValue("@warehouse_id", warehouseId);
+                            insHist.Parameters.AddWithValue("@qty_before", qtyBefore);
+                            insHist.Parameters.AddWithValue("@qty_in", qty);
+                            insHist.Parameters.AddWithValue("@qty_after", qtyAfter);
+                            insHist.Parameters.AddWithValue("@avg_before", avgBefore);
+                            insHist.Parameters.AddWithValue("@unit_cost_in", unitPrice);
+                            insHist.Parameters.AddWithValue("@avg_after", avgAfter);
+                            insHist.Parameters.AddWithValue("@ref_type", "PURCHASE");
+                            insHist.Parameters.AddWithValue("@ref_id", _poId);
+                            insHist.Parameters.AddWithValue("@note", $"Purchase #{purchaseNo}");
+                            insHist.Parameters.AddWithValue("@user_id", createdBy > 0 ? createdBy : (object)DBNull.Value);
+                            insHist.Parameters.AddWithValue("@login_id", user != null && user.LoginId > 0 ? user.LoginId : (object)DBNull.Value);
+                            insHist.ExecuteNonQuery();
+                        }
                     }
                     else
                     {
-                        string insertStockSql = "INSERT INTO stocks (item_id, warehouse_id, qty, reserved_qty) VALUES (@item_id, @warehouse_id, @qty, 0)";
-                        using var insertStockCmd = new NpgsqlCommand(insertStockSql, conn, tran);
-                        insertStockCmd.Parameters.AddWithValue("@item_id", itemId);
-                        insertStockCmd.Parameters.AddWithValue("@warehouse_id", warehouseId);
-                        insertStockCmd.Parameters.AddWithValue("@qty", qty);
-                        insertStockCmd.ExecuteNonQuery();
+                        string checkStockSql = "SELECT COUNT(*) FROM stocks WHERE item_id = @item_id AND warehouse_id = @warehouse_id";
+                        using var checkStockCmd = new NpgsqlCommand(checkStockSql, conn, tran);
+                        checkStockCmd.Parameters.AddWithValue("@item_id", itemId);
+                        checkStockCmd.Parameters.AddWithValue("@warehouse_id", warehouseId);
+                        long stockExists = (long)checkStockCmd.ExecuteScalar();
+
+                        if (stockExists > 0)
+                        {
+                            string updateStockSql = "UPDATE stocks SET qty = qty + @qty WHERE item_id = @item_id AND warehouse_id = @warehouse_id";
+                            using var updateStockCmd = new NpgsqlCommand(updateStockSql, conn, tran);
+                            updateStockCmd.Parameters.AddWithValue("@qty", qty);
+                            updateStockCmd.Parameters.AddWithValue("@item_id", itemId);
+                            updateStockCmd.Parameters.AddWithValue("@warehouse_id", warehouseId);
+                            updateStockCmd.ExecuteNonQuery();
+                        }
+                        else
+                        {
+                            string insertStockSql = "INSERT INTO stocks (item_id, warehouse_id, qty, reserved_qty) VALUES (@item_id, @warehouse_id, @qty, 0)";
+                            using var insertStockCmd = new NpgsqlCommand(insertStockSql, conn, tran);
+                            insertStockCmd.Parameters.AddWithValue("@item_id", itemId);
+                            insertStockCmd.Parameters.AddWithValue("@warehouse_id", warehouseId);
+                            insertStockCmd.Parameters.AddWithValue("@qty", qty);
+                            insertStockCmd.ExecuteNonQuery();
+                        }
                     }
 
                     // B. Insert into Stock Layers (Untuk FIFO/AVG)
@@ -857,6 +940,20 @@ WHERE table_schema = current_schema()
 LIMIT 1", con, tran);
             cmd.Parameters.AddWithValue("@t", table);
             cmd.Parameters.AddWithValue("@c", column);
+            var obj = cmd.ExecuteScalar();
+            return obj != null;
+        }
+
+        private bool HasTable(NpgsqlConnection con, NpgsqlTransaction tran, string table)
+        {
+            using var cmd = new NpgsqlCommand(@"
+SELECT 1
+FROM information_schema.tables
+WHERE table_schema = current_schema()
+  AND table_name = @t
+LIMIT 1
+", con, tran);
+            cmd.Parameters.AddWithValue("@t", table);
             var obj = cmd.ExecuteScalar();
             return obj != null;
         }

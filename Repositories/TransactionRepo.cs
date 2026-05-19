@@ -363,9 +363,15 @@ WHERE item_id = @id AND warehouse_id = @wh
             var res = cmd.ExecuteScalar();
             var method = res != null && res != DBNull.Value ? (res.ToString() ?? "") : "";
             method = (method ?? "").Trim().ToUpperInvariant();
-            if (active.Count > 0 && active.Contains(method))
+            if (!string.IsNullOrWhiteSpace(method) && active.Count > 0 && active.Contains(method))
                 return method;
-            return active.FirstOrDefault() ?? "FIFO";
+
+            string defaultMethod = new SettingController().GetDefaultHppMethod();
+            defaultMethod = (defaultMethod ?? "").Trim().ToUpperInvariant();
+            if (!string.IsNullOrWhiteSpace(defaultMethod) && active.Contains(defaultMethod))
+                return defaultMethod;
+
+            return active.FirstOrDefault() ?? "AVG";
         }
 
         public void DeletePendingTransactions(NpgsqlConnection con, NpgsqlTransaction tran, string code)

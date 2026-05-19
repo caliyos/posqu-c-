@@ -144,7 +144,7 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
                                 discount_formula = reader["discount_formula"]?.ToString() ?? "",
                                 ExpiredAt = reader["expired_at"] != DBNull.Value ? Convert.ToDateTime(reader["expired_at"]) : null,
                                 note = reader["note"]?.ToString(),
-                                valuation_method = reader["valuation_method"]?.ToString() ?? "FIFO",
+                                valuation_method = reader["valuation_method"]?.ToString() ?? "AVG",
                                 
                             };
                         }
@@ -192,7 +192,7 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
                             cmd.Parameters.AddWithValue("@rack_id", item.rack_id.HasValue && item.rack_id > 0 ? (object)item.rack_id.Value : DBNull.Value);
                             cmd.Parameters.AddWithValue("@buy_price", item.buy_price);
                             cmd.Parameters.AddWithValue("@sell_price", item.sell_price);
-                            cmd.Parameters.AddWithValue("@valuation_method", item.valuation_method ?? "FIFO");
+                            cmd.Parameters.AddWithValue("@valuation_method", item.valuation_method ?? "AVG");
                             cmd.Parameters.AddWithValue("@is_active", item.IsSellable);
                             cmd.Parameters.AddWithValue("@note", (object)item.note ?? DBNull.Value);
                             cmd.Parameters.AddWithValue("@is_inventory_p", item.is_inventory_p);
@@ -223,13 +223,18 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
                         {
                             int warehouseId = item.initial_warehouse_id ?? 1;
 
-                            string sSql = "INSERT INTO stocks (item_id, warehouse_id, qty, min_qty) VALUES (@item_id, @w_id, @qty, @min_qty)";
+                            bool hasStockHppAvg = HasColumn(con, tran, "stocks", "hpp_avg");
+                            string sSql = hasStockHppAvg
+                                ? "INSERT INTO stocks (item_id, warehouse_id, qty, min_qty, hpp_avg) VALUES (@item_id, @w_id, @qty, @min_qty, @hpp_avg)"
+                                : "INSERT INTO stocks (item_id, warehouse_id, qty, min_qty) VALUES (@item_id, @w_id, @qty, @min_qty)";
                             using (var sCmd = new NpgsqlCommand(sSql, con, tran))
                             {
                                 sCmd.Parameters.AddWithValue("@item_id", newItemId);
                                 sCmd.Parameters.AddWithValue("@w_id", warehouseId);
                                 sCmd.Parameters.AddWithValue("@qty", item.stock);
                                 sCmd.Parameters.AddWithValue("@min_qty", item.min_qty);
+                                if (hasStockHppAvg)
+                                    sCmd.Parameters.AddWithValue("@hpp_avg", item.buy_price);
                                 sCmd.ExecuteNonQuery();
                             }
 
@@ -352,7 +357,7 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
                             cmd.Parameters.AddWithValue("@rack_id", item.rack_id.HasValue && item.rack_id > 0 ? (object)item.rack_id.Value : DBNull.Value);
                             cmd.Parameters.AddWithValue("@buy_price", item.buy_price);
                             cmd.Parameters.AddWithValue("@sell_price", item.sell_price);
-                            cmd.Parameters.AddWithValue("@valuation_method", item.valuation_method ?? "FIFO");
+                            cmd.Parameters.AddWithValue("@valuation_method", item.valuation_method ?? "AVG");
                             cmd.Parameters.AddWithValue("@is_active", item.IsSellable);
                             cmd.Parameters.AddWithValue("@note", (object)item.note ?? DBNull.Value);
                             cmd.Parameters.AddWithValue("@is_inventory_p", item.is_inventory_p);

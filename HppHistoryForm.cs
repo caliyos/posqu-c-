@@ -12,9 +12,15 @@ namespace POS_qu
     public partial class HppHistoryForm : Form
     {
         private readonly int _itemId;
-        private string _method = "FIFO";
+        private string _method = "AVG";
         private string _baseUnit = "pcs";
         private readonly bool _openStockCard;
+        private int _layersPage = 1;
+        private int _layersPageSize = 200;
+        private int _layersTotalRows = 0;
+        private int _stockPage = 1;
+        private int _stockPageSize = 200;
+        private int _stockTotalRows = 0;
 
         public HppHistoryForm(int itemId, bool openStockCard = false)
         {
@@ -33,6 +39,60 @@ namespace POS_qu
                 if (e.RowIndex < 0) return;
                 RevalueSelectedLayer();
             };
+
+            cmbPageSizeLayers.SelectedIndexChanged += (s, e) =>
+            {
+                if (int.TryParse(cmbPageSizeLayers.SelectedItem?.ToString(), out var v) && v > 0)
+                    _layersPageSize = v;
+                _layersPage = 1;
+                LoadData();
+            };
+
+            cmbPageSizeStock.SelectedIndexChanged += (s, e) =>
+            {
+                if (int.TryParse(cmbPageSizeStock.SelectedItem?.ToString(), out var v) && v > 0)
+                    _stockPageSize = v;
+                _stockPage = 1;
+                LoadData();
+            };
+
+            btnSearchLayers.Click += (s, e) => { _layersPage = 1; LoadData(); };
+            btnResetLayers.Click += (s, e) =>
+            {
+                txtSearchLayers.Text = "";
+                dtLayersFrom.Checked = false;
+                dtLayersTo.Checked = false;
+                _layersPage = 1;
+                LoadData();
+            };
+            btnPrevLayers.Click += (s, e) => { if (_layersPage > 1) { _layersPage--; LoadData(); } };
+            btnNextLayers.Click += (s, e) =>
+            {
+                int maxPage = GetMaxPage(_layersTotalRows, _layersPageSize);
+                if (_layersPage < maxPage) { _layersPage++; LoadData(); }
+            };
+
+            btnSearchStock.Click += (s, e) => { _stockPage = 1; LoadData(); };
+            btnResetStock.Click += (s, e) =>
+            {
+                txtSearchStock.Text = "";
+                dtStockFrom.Checked = false;
+                dtStockTo.Checked = false;
+                chkShowAllocation.Checked = true;
+                _stockPage = 1;
+                LoadData();
+            };
+            btnPrevStock.Click += (s, e) => { if (_stockPage > 1) { _stockPage--; LoadData(); } };
+            btnNextStock.Click += (s, e) =>
+            {
+                int maxPage = GetMaxPage(_stockTotalRows, _stockPageSize);
+                if (_stockPage < maxPage) { _stockPage++; LoadData(); }
+            };
+            chkShowAllocation.CheckedChanged += (s, e) => { _stockPage = 1; LoadData(); };
+            dtStockFrom.ValueChanged += (s, e) => { if (dtStockFrom.Checked) { _stockPage = 1; LoadData(); } };
+            dtStockTo.ValueChanged += (s, e) => { if (dtStockTo.Checked) { _stockPage = 1; LoadData(); } };
+            dtLayersFrom.ValueChanged += (s, e) => { if (dtLayersFrom.Checked) { _layersPage = 1; LoadData(); } };
+            dtLayersTo.ValueChanged += (s, e) => { if (dtLayersTo.Checked) { _layersPage = 1; LoadData(); } };
         }
 
         private void HppHistoryForm_Load(object sender, EventArgs e)
@@ -53,7 +113,7 @@ namespace POS_qu
             using var cmd = new NpgsqlCommand(@"
 SELECT 
     i.name, 
-    COALESCE(NULLIF(i.valuation_method,''),'FIFO') AS valuation_method,
+    COALESCE(NULLIF(i.valuation_method,''),'AVG') AS valuation_method,
     COALESCE(NULLIF(u.abbr,''), NULLIF(u.name,''), 'pcs') AS unit_name
 FROM items i
 LEFT JOIN units u ON u.id = i.unit
@@ -64,14 +124,14 @@ LIMIT 1", con);
             if (!r.Read())
             {
                 lblItem.Text = "Item: -";
-                _method = "FIFO";
-                lblMethod.Text = "Method: FIFO";
+                _method = "AVG";
+                lblMethod.Text = "Method: AVG";
                 _baseUnit = "pcs";
                 return;
             }
 
             string name = r["name"]?.ToString() ?? "-";
-            _method = r["valuation_method"]?.ToString() ?? "FIFO";
+            _method = r["valuation_method"]?.ToString() ?? "AVG";
             _method = _method.Trim().ToUpperInvariant();
             _baseUnit = r["unit_name"]?.ToString() ?? "pcs";
             lblItem.Text = "Item: " + name;
@@ -115,11 +175,96 @@ LIMIT 1", con);
             if (cmbWarehouse.SelectedValue != null)
                 warehouseId = Convert.ToInt32(cmbWarehouse.SelectedValue);
 
-            string orderBy = GetOrderByForMethod(_method);
-            string whFilter = warehouseId > 0 ? " AND sl.warehouse_id = @wh " : "";
-
             using var con = new NpgsqlConnection(DbConfig.ConnectionString);
             con.Open();
+
+            LoadLayersPage(con, warehouseId);
+            LoadStockCard(con, warehouseId);
+        }
+
+        private static int GetMaxPage(int totalRows, int pageSize)
+        {
+            if (pageSize <= 0) return 1;
+            if (totalRows <= 0) return 1;
+            return (int)Math.Ceiling(totalRows / (double)pageSize);
+        }
+
+        private static DateTime? GetCheckedDate(DateTimePicker p)
+        {
+            if (p == null) return null;
+            if (!p.Checked) return null;
+            return p.Value.Date;
+        }
+
+        private void LoadLayersPage(NpgsqlConnection con, int warehouseId)
+        {
+            string orderBy = GetOrderByForMethod(_method);
+            string whFilter = warehouseId > 0 ? " AND sl.warehouse_id = @wh " : "";
+            string q = (txtSearchLayers.Text ?? "").Trim();
+            string qFilter = string.IsNullOrWhiteSpace(q)
+                ? ""
+                : " AND (CAST(sl.id AS text) ILIKE @q OR CAST(sl.buy_price AS text) ILIKE @q OR CAST(sl.qty_remaining AS text) ILIKE @q OR COALESCE(w.name,'') ILIKE @q) ";
+
+            DateTime? from = GetCheckedDate(dtLayersFrom);
+            DateTime? to = GetCheckedDate(dtLayersTo);
+            string fromFilter = from.HasValue ? " AND sl.created_at >= @from " : "";
+            string toFilter = to.HasValue ? " AND sl.created_at < @to " : "";
+
+            using (var cmdCount = new NpgsqlCommand($@"
+SELECT COUNT(*)
+FROM stock_layers sl
+JOIN warehouses w ON w.id = sl.warehouse_id
+WHERE sl.item_id = @item_id
+  AND sl.qty_remaining <> 0
+{whFilter}
+{fromFilter}
+{toFilter}
+{qFilter}
+", con))
+            {
+                cmdCount.Parameters.AddWithValue("@item_id", _itemId);
+                if (warehouseId > 0) cmdCount.Parameters.AddWithValue("@wh", warehouseId);
+                if (from.HasValue) cmdCount.Parameters.AddWithValue("@from", from.Value);
+                if (to.HasValue) cmdCount.Parameters.AddWithValue("@to", to.Value.AddDays(1));
+                if (!string.IsNullOrWhiteSpace(q)) cmdCount.Parameters.AddWithValue("@q", "%" + q + "%");
+                var obj = cmdCount.ExecuteScalar();
+                _layersTotalRows = obj != null && obj != DBNull.Value ? Convert.ToInt32(obj) : 0;
+            }
+
+            using (var cmdSum = new NpgsqlCommand($@"
+SELECT
+    COALESCE(SUM(sl.qty_remaining),0) AS qty_total,
+    COALESCE(SUM(sl.qty_remaining * sl.buy_price),0) AS value_total
+FROM stock_layers sl
+JOIN warehouses w ON w.id = sl.warehouse_id
+WHERE sl.item_id = @item_id
+  AND sl.qty_remaining <> 0
+{whFilter}
+{fromFilter}
+{toFilter}
+{qFilter}
+", con))
+            {
+                cmdSum.Parameters.AddWithValue("@item_id", _itemId);
+                if (warehouseId > 0) cmdSum.Parameters.AddWithValue("@wh", warehouseId);
+                if (from.HasValue) cmdSum.Parameters.AddWithValue("@from", from.Value);
+                if (to.HasValue) cmdSum.Parameters.AddWithValue("@to", to.Value.AddDays(1));
+                if (!string.IsNullOrWhiteSpace(q)) cmdSum.Parameters.AddWithValue("@q", "%" + q + "%");
+                using var r = cmdSum.ExecuteReader();
+                decimal qtyTotal = 0m;
+                decimal valueTotal = 0m;
+                if (r.Read())
+                {
+                    qtyTotal = r["qty_total"] != DBNull.Value ? Convert.ToDecimal(r["qty_total"]) : 0m;
+                    valueTotal = r["value_total"] != DBNull.Value ? Convert.ToDecimal(r["value_total"]) : 0m;
+                }
+                lblSummary.Text = $"Total: Qty {qtyTotal:N2} | Rp {valueTotal:N0}";
+            }
+
+            int maxPage = GetMaxPage(_layersTotalRows, _layersPageSize);
+            if (_layersPage > maxPage) _layersPage = maxPage;
+            if (_layersPage < 1) _layersPage = 1;
+            int offset = (_layersPage - 1) * _layersPageSize;
 
             string sql = $@"
 SELECT
@@ -137,12 +282,20 @@ JOIN warehouses w ON w.id = sl.warehouse_id
 WHERE sl.item_id = @item_id
   AND sl.qty_remaining <> 0
 {whFilter}
-ORDER BY {orderBy}";
+{fromFilter}
+{toFilter}
+{qFilter}
+ORDER BY {orderBy}
+LIMIT @limit OFFSET @offset";
 
             using var cmd = new NpgsqlCommand(sql, con);
             cmd.Parameters.AddWithValue("@item_id", _itemId);
-            if (warehouseId > 0)
-                cmd.Parameters.AddWithValue("@wh", warehouseId);
+            cmd.Parameters.AddWithValue("@limit", _layersPageSize);
+            cmd.Parameters.AddWithValue("@offset", offset);
+            if (warehouseId > 0) cmd.Parameters.AddWithValue("@wh", warehouseId);
+            if (from.HasValue) cmd.Parameters.AddWithValue("@from", from.Value);
+            if (to.HasValue) cmd.Parameters.AddWithValue("@to", to.Value.AddDays(1));
+            if (!string.IsNullOrWhiteSpace(q)) cmd.Parameters.AddWithValue("@q", "%" + q + "%");
 
             using var da = new NpgsqlDataAdapter(cmd);
             var dt = new DataTable();
@@ -191,18 +344,9 @@ ORDER BY {orderBy}";
                 dgvLayers.Columns["value_remaining"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             }
 
-            decimal totalQty = 0m;
-            decimal totalValue = 0m;
-            foreach (DataRow row in dt.Rows)
-            {
-                if (row["qty_remaining"] != DBNull.Value)
-                    totalQty += Convert.ToDecimal(row["qty_remaining"]);
-                if (row["value_remaining"] != DBNull.Value)
-                    totalValue += Convert.ToDecimal(row["value_remaining"]);
-            }
-
-            lblSummary.Text = $"Total: Qty {totalQty:N2} | Rp {totalValue:N0}";
-            LoadStockCard(warehouseId);
+            lblPageLayers.Text = $"Page {_layersPage}/{maxPage} | {_layersTotalRows:N0} rows";
+            btnPrevLayers.Enabled = _layersPage > 1;
+            btnNextLayers.Enabled = _layersPage < maxPage;
         }
 
         private void RevalueSelectedLayer()
@@ -643,36 +787,153 @@ SELECT COALESCE(
             }
         }
 
-        private void LoadStockCard(int warehouseId)
+        private void LoadStockCard(NpgsqlConnection con, int warehouseId)
         {
-            using var con = new NpgsqlConnection(DbConfig.ConnectionString);
-            con.Open();
+            bool hasAvgHistory = false;
+            try
+            {
+                using var cmdHas = new NpgsqlCommand(@"
+SELECT 1
+FROM information_schema.tables
+WHERE table_schema = current_schema()
+  AND table_name = 'stock_avg_history'
+LIMIT 1
+", con);
+                hasAvgHistory = cmdHas.ExecuteScalar() != null;
+            }
+            catch
+            {
+                hasAvgHistory = false;
+            }
 
-            string sql = @"
-SELECT
-    sl.id,
-    sl.created_at,
-    w.name AS warehouse,
-    sl.tipe_transaksi,
-    sl.qty_masuk,
-    sl.qty_keluar,
-    sl.sisa_stock,
-    COALESCE(s.name,'') AS supplier,
-    sl.unit_cost,
-    sl.method,
-    sl.is_allocation,
-    sl.parent_id,
-    sl.keterangan
-FROM stock_log sl
-LEFT JOIN warehouses w ON w.id = sl.warehouse_id
-LEFT JOIN suppliers s ON s.id = sl.supplier_id
-WHERE sl.product_id = @item_id
-  AND (@wh = 0 OR sl.warehouse_id = @wh)
-ORDER BY sl.created_at ASC, sl.id ASC";
+            bool showAlloc = chkShowAllocation.Checked;
+            string q = (txtSearchStock.Text ?? "").Trim();
+            DateTime? from = GetCheckedDate(dtStockFrom);
+            DateTime? to = GetCheckedDate(dtStockTo);
 
-            using var cmd = new NpgsqlCommand(sql, con);
+            string where = "WHERE 1=1 ";
+            if (!showAlloc) where += " AND COALESCE(is_allocation, FALSE) = FALSE ";
+            if (!string.IsNullOrWhiteSpace(q))
+                where += " AND (COALESCE(keterangan,'') ILIKE @q OR COALESCE(supplier,'') ILIKE @q OR COALESCE(tipe_transaksi,'') ILIKE @q OR COALESCE(method,'') ILIKE @q) ";
+            if (from.HasValue) where += " AND created_at >= @from ";
+            if (to.HasValue) where += " AND created_at < @to ";
+
+            string cte = hasAvgHistory
+                ? @"
+WITH data AS (
+    SELECT
+        sl.id::bigint AS id,
+        sl.created_at,
+        w.name AS warehouse,
+        sl.tipe_transaksi,
+        sl.qty_masuk,
+        sl.qty_keluar,
+        sl.sisa_stock,
+        COALESCE(s.name,'') AS supplier,
+        sl.unit_cost,
+        sl.method,
+        sl.is_allocation,
+        sl.parent_id,
+        sl.keterangan,
+        NULL::numeric AS avg_before,
+        NULL::numeric AS avg_after,
+        NULL::numeric AS qty_before,
+        NULL::numeric AS qty_in
+    FROM stock_log sl
+    LEFT JOIN warehouses w ON w.id = sl.warehouse_id
+    LEFT JOIN suppliers s ON s.id = sl.supplier_id
+    WHERE sl.product_id = @item_id
+      AND (@wh = 0 OR sl.warehouse_id = @wh)
+
+    UNION ALL
+
+    SELECT
+        h.id::bigint AS id,
+        h.created_at,
+        w.name AS warehouse,
+        'avg_update' AS tipe_transaksi,
+        0::numeric AS qty_masuk,
+        0::numeric AS qty_keluar,
+        h.qty_after AS sisa_stock,
+        COALESCE(s.name,'') AS supplier,
+        h.unit_cost_in AS unit_cost,
+        'AVG' AS method,
+        FALSE AS is_allocation,
+        NULL::int AS parent_id,
+        COALESCE(h.note,'AVG update') AS keterangan,
+        h.avg_before,
+        h.avg_after,
+        h.qty_before,
+        h.qty_in
+    FROM stock_avg_history h
+    LEFT JOIN warehouses w ON w.id = h.warehouse_id
+    LEFT JOIN purchase_orders po
+        ON h.ref_type = 'PURCHASE'
+       AND po.id = h.ref_id
+    LEFT JOIN suppliers s ON s.id = po.supplier_id
+    WHERE h.item_id = @item_id
+      AND (@wh = 0 OR h.warehouse_id = @wh)
+)
+"
+                : @"
+WITH data AS (
+    SELECT
+        sl.id::bigint AS id,
+        sl.created_at,
+        w.name AS warehouse,
+        sl.tipe_transaksi,
+        sl.qty_masuk,
+        sl.qty_keluar,
+        sl.sisa_stock,
+        COALESCE(s.name,'') AS supplier,
+        sl.unit_cost,
+        sl.method,
+        sl.is_allocation,
+        sl.parent_id,
+        sl.keterangan,
+        NULL::numeric AS avg_before,
+        NULL::numeric AS avg_after,
+        NULL::numeric AS qty_before,
+        NULL::numeric AS qty_in
+    FROM stock_log sl
+    LEFT JOIN warehouses w ON w.id = sl.warehouse_id
+    LEFT JOIN suppliers s ON s.id = sl.supplier_id
+    WHERE sl.product_id = @item_id
+      AND (@wh = 0 OR sl.warehouse_id = @wh)
+)
+";
+
+            using (var cmdCount = new NpgsqlCommand(cte + "SELECT COUNT(*) FROM data " + where, con))
+            {
+                cmdCount.Parameters.AddWithValue("@item_id", _itemId);
+                cmdCount.Parameters.AddWithValue("@wh", warehouseId);
+                if (!string.IsNullOrWhiteSpace(q)) cmdCount.Parameters.AddWithValue("@q", "%" + q + "%");
+                if (from.HasValue) cmdCount.Parameters.AddWithValue("@from", from.Value);
+                if (to.HasValue) cmdCount.Parameters.AddWithValue("@to", to.Value.AddDays(1));
+                var obj = cmdCount.ExecuteScalar();
+                _stockTotalRows = obj != null && obj != DBNull.Value ? Convert.ToInt32(obj) : 0;
+            }
+
+            int maxPage = GetMaxPage(_stockTotalRows, _stockPageSize);
+            if (_stockPage > maxPage) _stockPage = maxPage;
+            if (_stockPage < 1) _stockPage = 1;
+            int offset = (_stockPage - 1) * _stockPageSize;
+
+            using var cmd = new NpgsqlCommand(cte + @"
+SELECT *
+FROM data
+" + where + @"
+ORDER BY created_at ASC, id ASC
+LIMIT @limit OFFSET @offset
+", con);
             cmd.Parameters.AddWithValue("@item_id", _itemId);
             cmd.Parameters.AddWithValue("@wh", warehouseId);
+            cmd.Parameters.AddWithValue("@limit", _stockPageSize);
+            cmd.Parameters.AddWithValue("@offset", offset);
+            if (!string.IsNullOrWhiteSpace(q)) cmd.Parameters.AddWithValue("@q", "%" + q + "%");
+            if (from.HasValue) cmd.Parameters.AddWithValue("@from", from.Value);
+            if (to.HasValue) cmd.Parameters.AddWithValue("@to", to.Value.AddDays(1));
+
             using var da = new NpgsqlDataAdapter(cmd);
             var raw = new DataTable();
             da.Fill(raw);
@@ -690,7 +951,7 @@ ORDER BY sl.created_at ASC, sl.id ASC";
             view.Columns.Add("method", typeof(string));
             view.Columns.Add("is_allocation", typeof(bool));
 
-            if (raw.Rows.Count > 0)
+            if (_stockPage == 1 && raw.Rows.Count > 0)
             {
                 DataRow? firstSummary = null;
                 foreach (DataRow r in raw.Rows)
@@ -744,6 +1005,15 @@ ORDER BY sl.created_at ASC, sl.id ASC";
                 {
                     string m = string.IsNullOrWhiteSpace(method) ? _method : method;
                     displayKet = $"   -{keluar:N0} @ {hpp:N0} | {m}";
+                }
+                else if (string.Equals(tipe, "avg_update", StringComparison.OrdinalIgnoreCase))
+                {
+                    decimal avgBefore = r.Table.Columns.Contains("avg_before") && r["avg_before"] != DBNull.Value ? Convert.ToDecimal(r["avg_before"]) : 0m;
+                    decimal avgAfter = r.Table.Columns.Contains("avg_after") && r["avg_after"] != DBNull.Value ? Convert.ToDecimal(r["avg_after"]) : 0m;
+                    decimal qtyBefore = r.Table.Columns.Contains("qty_before") && r["qty_before"] != DBNull.Value ? Convert.ToDecimal(r["qty_before"]) : 0m;
+                    decimal qtyIn = r.Table.Columns.Contains("qty_in") && r["qty_in"] != DBNull.Value ? Convert.ToDecimal(r["qty_in"]) : 0m;
+                    string core = $"AVG: {avgBefore:N0} -> {avgAfter:N0} | stok {qtyBefore:N0} +{qtyIn:N0} @ {hpp:N0}";
+                    displayKet = string.IsNullOrWhiteSpace(ket) ? core : $"{ket} | {core}";
                 }
                 else
                 {
@@ -842,6 +1112,11 @@ ORDER BY sl.created_at ASC, sl.id ASC";
                     }
                 }
             }
+
+            int maxPageStock = GetMaxPage(_stockTotalRows, _stockPageSize);
+            lblPageStock.Text = $"Page {_stockPage}/{maxPageStock} | {_stockTotalRows:N0} rows";
+            btnPrevStock.Enabled = _stockPage > 1;
+            btnNextStock.Enabled = _stockPage < maxPageStock;
         }
 
         private static string GetOrderByForMethod(string method)

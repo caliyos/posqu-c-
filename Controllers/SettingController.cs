@@ -25,13 +25,21 @@ ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS ppn_rate NUMERIC(6,2) NOT NULL 
 ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS purchase_prefix VARCHAR(20) NOT NULL DEFAULT 'PB';
 ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS purchase_last_date DATE NULL;
 ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS purchase_last_number INT NOT NULL DEFAULT 0;
-ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS default_hpp_method VARCHAR(20) NOT NULL DEFAULT 'FIFO';
+ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS default_hpp_method VARCHAR(20) NOT NULL DEFAULT 'AVG';
 ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS hpp_fifo_active BOOLEAN NOT NULL DEFAULT TRUE;
-ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS hpp_avg_active BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS hpp_avg_active BOOLEAN NOT NULL DEFAULT TRUE;
 ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS hpp_lifo_active BOOLEAN NOT NULL DEFAULT FALSE;
 ALTER TABLE settingtoko ADD COLUMN IF NOT EXISTS hpp_fefo_active BOOLEAN NOT NULL DEFAULT FALSE;
 ", conn);
             cmd.ExecuteNonQuery();
+
+            using var cmdFix = new NpgsqlCommand(@"
+UPDATE settingtoko
+SET default_hpp_method = 'AVG',
+    hpp_avg_active = TRUE
+WHERE id = 1
+", conn);
+            cmdFix.ExecuteNonQuery();
         }
 
         public DataRow GetSettingToko()
@@ -121,13 +129,13 @@ LIMIT 1
             using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
             conn.Open();
             using var cmd = new NpgsqlCommand(@"
-SELECT COALESCE(NULLIF(default_hpp_method,''),'FIFO') AS m
+SELECT COALESCE(NULLIF(default_hpp_method,''),'AVG') AS m
 FROM settingtoko
 WHERE id = 1
 LIMIT 1
 ", conn);
             var res = cmd.ExecuteScalar();
-            return res != null && res != DBNull.Value ? res.ToString() : "FIFO";
+            return res != null && res != DBNull.Value ? res.ToString() : "AVG";
         }
 
         public List<string> GetActiveHppMethods()

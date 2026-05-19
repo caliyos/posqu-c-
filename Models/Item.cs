@@ -82,7 +82,7 @@ namespace POS_qu.Models
         public List<ItemUnit> ItemUnits { get; set; } = new List<ItemUnit>();
         
         // VALUATION METHOD (FIFO / AVG)
-        public string valuation_method { get; set; } = "FIFO";
+        public string valuation_method { get; set; } = "AVG";
 
         public List<ItemMaterial> MaterialsList { get; set; } = new List<ItemMaterial>();
 

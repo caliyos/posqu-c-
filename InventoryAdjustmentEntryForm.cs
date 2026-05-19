@@ -548,15 +548,15 @@ VALUES (@iid, @w, @q, @q, @bp, @exp, NOW())
             double remaining = qtyOut;
             var allocations = new List<(long StockLayerId, double Qty, decimal UnitCost)>();
 
-            string method = "FIFO";
-            using (var mCmd = new NpgsqlCommand("SELECT COALESCE(NULLIF(valuation_method,''),'FIFO') FROM items WHERE id=@id", con, tran))
+            string method = "AVG";
+            using (var mCmd = new NpgsqlCommand("SELECT COALESCE(NULLIF(TRIM(valuation_method),''),'AVG') FROM items WHERE id=@id", con, tran))
             {
                 mCmd.Parameters.AddWithValue("@id", itemId);
                 var res = mCmd.ExecuteScalar();
                 if (res != null && res != DBNull.Value) method = res.ToString();
             }
 
-            method = (method ?? "FIFO").Trim().ToUpperInvariant();
+            method = (method ?? "AVG").Trim().ToUpperInvariant();
             string orderBy = method == "LIFO"
                 ? "created_at DESC, id DESC"
                 : (method == "FEFO"

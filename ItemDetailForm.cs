@@ -599,7 +599,7 @@ namespace POS_qu
             _item.discount_formula = txtDiscountFormula.Text;
             _item.ExpiredAt = dtpExpired.Value.Date;
             
-            _item.valuation_method = cmbValuation?.Text ?? "FIFO";
+            _item.valuation_method = cmbValuation?.Text ?? "AVG";
             _item.product_type_code = GetProductTypeCodeFromUi();
 
             // Update multi-price

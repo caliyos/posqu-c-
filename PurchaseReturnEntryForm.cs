@@ -425,10 +425,10 @@ VALUES (@rid, @item, @qty, @price, @note, NOW())
 
         private static string GetItemValuationMethod(int itemId, NpgsqlConnection con, NpgsqlTransaction tran)
         {
-            using var cmd = new NpgsqlCommand("SELECT COALESCE(valuation_method,'FIFO') FROM items WHERE id=@id", con, tran);
+            using var cmd = new NpgsqlCommand("SELECT COALESCE(NULLIF(TRIM(valuation_method),''),'AVG') FROM items WHERE id=@id", con, tran);
             cmd.Parameters.AddWithValue("@id", itemId);
             var res = cmd.ExecuteScalar();
-            return res != null && res != DBNull.Value ? res.ToString() : "FIFO";
+            return res != null && res != DBNull.Value ? res.ToString() : "AVG";
         }
 
         private static Core.Interfaces.IStockValuationStrategy CreateStrategy(string method)

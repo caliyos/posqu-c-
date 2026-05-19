@@ -2609,7 +2609,7 @@ INSERT INTO items (
     created_at, updated_at
 ) VALUES (
     @barcode, @name, @category_id, @unit_id, @supplier_id,
-    @buy_price, @sell_price, 'FIFO', TRUE, @note,
+    @buy_price, @sell_price, 'AVG', TRUE, @note,
     @is_inventory_p, TRUE, TRUE, FALSE, @is_changeprice_p,
     FALSE, FALSE, FALSE, '', NULL,
     NOW(), NOW()
@@ -2793,16 +2793,51 @@ WHERE item_id = ANY(@ids)
                     }
                 }
 
+                bool hasStockHppAvg = false;
+                try
+                {
+                    using var cmdHas = new NpgsqlCommand(@"
+SELECT 1
+FROM information_schema.columns
+WHERE table_schema = current_schema()
+  AND table_name = 'stocks'
+  AND column_name = 'hpp_avg'
+LIMIT 1
+", con, tran);
+                    hasStockHppAvg = cmdHas.ExecuteScalar() != null;
+                }
+                catch
+                {
+                    hasStockHppAvg = false;
+                }
+
                 foreach (var kv in rowByKey)
                 {
                     try
                     {
                         var srow = kv;
-                        using (var ins = new NpgsqlCommand(@"
+                        var bp = buyPriceByItemId.TryGetValue(srow.Key.ItemId, out var bpx) ? bpx : 0m;
+
+                        if (hasStockHppAvg)
+                        {
+                            using var ins = new NpgsqlCommand(@"
+INSERT INTO stocks (item_id, warehouse_id, qty, min_qty, reserved_qty, hpp_avg)
+VALUES (@item_id, @warehouse_id, @qty, @min_qty, @reserved_qty, @hpp_avg)
+", con, tran);
+                            ins.Parameters.AddWithValue("@item_id", srow.Key.ItemId);
+                            ins.Parameters.AddWithValue("@warehouse_id", srow.Key.WarehouseId);
+                            ins.Parameters.AddWithValue("@qty", Convert.ToDouble(srow.Value.Qty));
+                            ins.Parameters.AddWithValue("@min_qty", Convert.ToDouble(srow.Value.MinQty));
+                            ins.Parameters.AddWithValue("@reserved_qty", Convert.ToDouble(srow.Value.ReservedQty));
+                            ins.Parameters.AddWithValue("@hpp_avg", bp);
+                            ins.ExecuteNonQuery();
+                        }
+                        else
+                        {
+                            using var ins = new NpgsqlCommand(@"
 INSERT INTO stocks (item_id, warehouse_id, qty, min_qty, reserved_qty)
 VALUES (@item_id, @warehouse_id, @qty, @min_qty, @reserved_qty)
-", con, tran))
-                        {
+", con, tran);
                             ins.Parameters.AddWithValue("@item_id", srow.Key.ItemId);
                             ins.Parameters.AddWithValue("@warehouse_id", srow.Key.WarehouseId);
                             ins.Parameters.AddWithValue("@qty", Convert.ToDouble(srow.Value.Qty));
@@ -2813,7 +2848,6 @@ VALUES (@item_id, @warehouse_id, @qty, @min_qty, @reserved_qty)
 
                         if (srow.Value.Qty > 0m)
                         {
-                            var bp = buyPriceByItemId.TryGetValue(srow.Key.ItemId, out var bpx) ? bpx : 0m;
                             using var insLayer = new NpgsqlCommand(@"
 INSERT INTO stock_layers (item_id, warehouse_id, qty_initial, qty_remaining, buy_price, created_at, expired_at)
 VALUES (@item_id, @warehouse_id, @qty, @qty, @buy_price, NOW(), NULL)
