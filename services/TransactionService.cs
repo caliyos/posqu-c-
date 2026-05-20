@@ -247,6 +247,29 @@ namespace POS_qu.Services
                         var journal = new JournalService();
                         journal.CreateJournalFromSale(transactionId, con, tran);
 
+                        try
+                        {
+                            var loyalty = new LoyaltyService();
+                            var earn = loyalty.ApplyEarnForSale(
+                                con,
+                                tran,
+                                customerId: invoice.CustomerId,
+                                transactionId: transactionId,
+                                invoiceNumber: transaction.TsNumbering,
+                                eligibleSpend: grandTotal,
+                                warehouseId: warehouseId,
+                                terminalId: sessionUser.TerminalId,
+                                cashierUserId: sessionUser.UserId,
+                                loginId: sessionUser.LoginId
+                            );
+                            invoice.MembershipLevel = earn.MembershipCode;
+                            invoice.EarnedPoints = earn.EarnedPoints;
+                            invoice.PointBalance = earn.BalanceAfter;
+                        }
+                        catch
+                        {
+                        }
+
                         // ===============================
                         // DELETE PENDING TRANSACTION
                         // ===============================
@@ -585,6 +608,29 @@ namespace POS_qu.Services
 
                 if (details.Count > 0)
                     _repo.InsertTransactionDetails(con, tran, details);
+
+                try
+                {
+                    var loyalty = new LoyaltyService();
+                    var earn = loyalty.ApplyEarnForSale(
+                        con,
+                        tran,
+                        customerId: invoice.CustomerId,
+                        transactionId: transactionId,
+                        invoiceNumber: transaction.TsNumbering,
+                        eligibleSpend: grandTotal,
+                        warehouseId: warehouseId,
+                        terminalId: sessionUser.TerminalId,
+                        cashierUserId: sessionUser.UserId,
+                        loginId: sessionUser.LoginId
+                    );
+                    invoice.MembershipLevel = earn.MembershipCode;
+                    invoice.EarnedPoints = earn.EarnedPoints;
+                    invoice.PointBalance = earn.BalanceAfter;
+                }
+                catch
+                {
+                }
 
                 _repo.DeletePendingTransactions(con, tran, invoice.CartSessionCode);
                 tran.Commit();

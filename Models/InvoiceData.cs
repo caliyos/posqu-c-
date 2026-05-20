@@ -77,6 +77,11 @@ namespace POS_qu.Models
 
         public decimal ChangeAmount { get; set; }
 
+        public string MembershipLevel { get; set; }
+        public int EarnedPoints { get; set; }
+        public int RedeemedPoints { get; set; }
+        public int PointBalance { get; set; }
+
 
 
     }

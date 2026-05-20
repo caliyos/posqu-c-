@@ -3338,6 +3338,18 @@ WHERE deleted_at IS NULL
             Add($"Kembalian    : {kembalian:N0}");
             Add(new string('-', 32));
 
+            if (!string.IsNullOrWhiteSpace(invoice.MembershipLevel))
+            {
+                Add($"Member Lv : {invoice.MembershipLevel}");
+                if (invoice.EarnedPoints > 0)
+                    Add($"Point Earn : +{invoice.EarnedPoints:N0}");
+                if (invoice.RedeemedPoints > 0)
+                    Add($"Point Use  : -{invoice.RedeemedPoints:N0}");
+                if (invoice.PointBalance > 0)
+                    Add($"Point Bal  : {invoice.PointBalance:N0}");
+                Add(new string('-', 32));
+            }
+
             if (showFooter && !string.IsNullOrEmpty(footer)) Add(footer);
 
             return string.Join(Environment.NewLine, lines);
