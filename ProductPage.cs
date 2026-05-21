@@ -615,6 +615,13 @@ namespace POS_qu
                 dataGridView1.Columns["stock_value"].DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
                 dataGridView1.Columns["stock_value"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
+            if (dataGridView1.Columns.Contains("hpp_avg"))
+            {
+                dataGridView1.Columns["hpp_avg"].HeaderText = "HPP AVG";
+                dataGridView1.Columns["hpp_avg"].DefaultCellStyle.Format = "N2";
+                dataGridView1.Columns["hpp_avg"].DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
+                dataGridView1.Columns["hpp_avg"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
             if (dataGridView1.Columns.Contains("retail_value"))
             {
                 dataGridView1.Columns["retail_value"].HeaderText = "Nilai Jual";
@@ -681,7 +688,8 @@ namespace POS_qu
                 items.barcode,
                 items.unit AS unit_id,
                 units.name AS unit_name,
-                CAST(COALESCE(s.qty, 0) AS NUMERIC(18,4)) AS stock,
+                CAST(COALESCE(s.qty, 0) AS NUMERIC(18,4)) AS stockx,
+                s.hpp_avg,
                 items.sell_price,
                 items.buy_price,
                 CAST(COALESCE(s.reserved_qty, 0) AS NUMERIC(18,4)) AS reserved_qty,
@@ -767,7 +775,8 @@ SELECT
     items.barcode,
     items.unit AS unit_id,
     units.name AS unit_name,
-    CAST(COALESCE(s.qty, 0) AS NUMERIC(18,4)) AS stock,
+    CAST(COALESCE(s.qty, 0) AS NUMERIC(18,4)) AS stockx,
+    s.hpp_avg,
     items.sell_price,
     items.buy_price,
     COALESCE(s.reserved_qty, 0) AS NUMERIC(18,4)) AS reserved_qty,
@@ -2075,7 +2084,17 @@ LIMIT 1
                 c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
                 c.MinimumWidth = 120;
             }
-      
+            if (dataGridView1.Columns.Contains("hpp_avg"))
+            {
+                var c = dataGridView1.Columns["hpp_avg"];
+                c.HeaderText = "HPP AVG";
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                c.DefaultCellStyle.Format = "N2";
+                c.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
+                c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
+                c.MinimumWidth = 120;
+            }
+
             if (dataGridView1.Columns.Contains("min_threshold"))
             {
                 var c = dataGridView1.Columns["min_threshold"];

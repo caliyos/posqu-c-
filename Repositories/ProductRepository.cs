@@ -35,6 +35,14 @@ CAST(COALESCE((SELECT SUM(s.min_qty)
 CAST(COALESCE((SELECT SUM(s.reserved_qty)
                FROM stocks s
                WHERE s.item_id = items.id), 0) AS NUMERIC(18,4)) AS reserved_qty,
+
+(
+    SELECT COALESCE(MAX(s.hpp_avg), 0)
+    FROM stocks s
+    WHERE s.item_id = items.id
+) AS hpp_avg,
+              
+
                 items.valuation_method,
 
                 items.unit AS unit_id,
