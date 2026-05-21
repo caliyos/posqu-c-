@@ -914,7 +914,8 @@ ORDER BY items.id ASC, COALESCE(w.id, 0) ASC
                     decimal buy = row.Table.Columns.Contains("buy_price") && row["buy_price"] != DBNull.Value ? Convert.ToDecimal(row["buy_price"]) : 0m;
                     decimal sell = row.Table.Columns.Contains("sell_price") && row["sell_price"] != DBNull.Value ? Convert.ToDecimal(row["sell_price"]) : 0m;
                     decimal stok = row.Table.Columns.Contains("stock") && row["stock"] != DBNull.Value ? Convert.ToDecimal(row["stock"]) : 0m;
-                    row["stock_value"] = buy * stok;
+                    decimal hpp_avg = row.Table.Columns.Contains("hpp_avg") && row["hpp_avg"] != DBNull.Value ? Convert.ToDecimal(row["hpp_avg"]) : 0m;
+                    row["stock_value"] = hpp_avg * stok;
                     row["retail_value"] = sell * stok;
                     row["min_threshold"] = GetMinThreshold(row);
                 }
@@ -1832,7 +1833,7 @@ ORDER BY i.id ASC, w.id ASC
                 var systemStart = new DateTime(1970, 1, 1);
                 decimal pembelianTotal = GetPurchasesValue(systemStart, now, selectedWarehouseId);
                 decimal persediaanValue = GetInventoryValueNowFromLayers(selectedWarehouseId, fallback: sumStockValue);
-                decimal hppTotalSistem = pembelianTotal - persediaanValue;
+                decimal hppTotalSistem = persediaanValue;
 
                 label9.Text =
                     $"Persediaan (Stock Layer): {persediaanValue:N0} | Pembelian Total: {pembelianTotal:N0} | HPP (Total Sistem): {hppTotalSistem:N0} | Nilai Jual: {sumRetailValue:N0}";
