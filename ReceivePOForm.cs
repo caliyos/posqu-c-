@@ -96,13 +96,13 @@ namespace POS_qu
             adapter.Fill(dt);
 
             dgvItems.DataSource = dt;
-            
+
             // Atur header
-            if(dgvItems.Columns.Contains("id")) dgvItems.Columns["id"].Visible = false;
-            if(dgvItems.Columns.Contains("po_number")) dgvItems.Columns["po_number"].HeaderText = "No PO";
-            if(dgvItems.Columns.Contains("supplier_name")) dgvItems.Columns["supplier_name"].HeaderText = "Supplier";
-            if(dgvItems.Columns.Contains("order_date")) dgvItems.Columns["order_date"].HeaderText = "Tanggal";
-            if(dgvItems.Columns.Contains("total_amount")) 
+            if (dgvItems.Columns.Contains("id")) dgvItems.Columns["id"].Visible = false;
+            if (dgvItems.Columns.Contains("po_number")) dgvItems.Columns["po_number"].HeaderText = "No PO";
+            if (dgvItems.Columns.Contains("supplier_name")) dgvItems.Columns["supplier_name"].HeaderText = "Supplier";
+            if (dgvItems.Columns.Contains("order_date")) dgvItems.Columns["order_date"].HeaderText = "Tanggal";
+            if (dgvItems.Columns.Contains("total_amount"))
             {
                 dgvItems.Columns["total_amount"].HeaderText = "Total";
                 dgvItems.Columns["total_amount"].DefaultCellStyle.Format = "N0";
@@ -221,7 +221,7 @@ namespace POS_qu
             }
 
             _poId = Convert.ToInt32(dgvItems.CurrentRow.Cells["id"].Value);
-            
+
             using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
             conn.Open();
 
@@ -239,10 +239,10 @@ WHERE id = @id";
             {
                 if (reader["supplier_id"] != DBNull.Value)
                     cmbSupplier.SelectedValue = reader["supplier_id"];
-                
+
                 if (reader["order_date"] != DBNull.Value)
                     dtpOrderDate.Value = Convert.ToDateTime(reader["order_date"]);
-                    
+
                 txtNote.Text = reader["note"].ToString();
 
                 if (reader["warehouse_id"] != DBNull.Value)
@@ -267,7 +267,7 @@ WHERE id = @id";
                 FROM purchase_order_items poi
                 JOIN items i ON poi.item_id = i.id
                 WHERE poi.po_id = @po_id";
-                
+
             using var cmdI = new NpgsqlCommand(qItems, conn);
             cmdI.Parameters.AddWithValue("@po_id", _poId);
             using var rItems = cmdI.ExecuteReader();
@@ -964,6 +964,11 @@ LIMIT 1
             this.Hide();
             POForm.FormClosed += (s, args) => this.Show();
             POForm.Show();
+        }
+
+        private void btnSave_Click_1(object sender, EventArgs e)
+        {
+
         }
     }
 }

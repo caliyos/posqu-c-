@@ -42,7 +42,7 @@ try {
     ];
     $stmtItem = $db->prepare("INSERT INTO items (name, buy_price, sell_price, barcode, valuation_method, unit, category_id, is_inventory_p, is_purchasable, is_sellable, is_note_payment, is_changeprice_p, is_have_bahan, is_box, is_produksi, note, picture, created_at, updated_at, supplier_id, flag) VALUES (:name, :buy_price, :sell_price, :barcode, :valuation_method, :unit, :category_id, :is_inventory_p, :is_purchasable, :is_sellable, :is_note_payment, :is_changeprice_p, :is_have_bahan, :is_box, :is_produksi, :note, :picture, NOW(), NOW(), :supplier_id, :flag) RETURNING id");
     $stmtVar = $db->prepare("INSERT INTO unit_variants (item_id, unit_id, conversion, sell_price, profit, minqty, is_base_unit, barcode_suffix) VALUES (:item_id, :unit_id, :conversion, :sell_price, :profit, :minqty, :is_base_unit, :barcode_suffix)");
-    $stmtStock = $db->prepare("INSERT INTO stocks (item_id, warehouse_id, qty, reserved_qty) VALUES (:item_id, 1, :qty, 0)");
+    $stmtStock = $db->prepare("INSERT INTO stocks (item_id, warehouse_id, qty, reserved_qty,hpp_avg) VALUES (:item_id, 1, :qty, 0,:sell_price)");
     $stmtStockLayer = $db->prepare("INSERT INTO stock_layers (item_id, warehouse_id, qty_remaining, buy_price) VALUES (:item_id, 1, :qty, :buy_price)");
 
     foreach ($items as $idx => $it) {
@@ -54,7 +54,7 @@ try {
         echo "Inserted item: {$it['name']} (ID: {$itemId})\n";
         
         // Insert Stock and Layer
-        $stmtStock->execute([':item_id' => $itemId, ':qty' => $initStock]);
+        $stmtStock->execute([':item_id' => $itemId, ':qty' => $initStock,':sell_price' => 2500]);
         $stmtStockLayer->execute([':item_id' => $itemId, ':qty' => $initStock, ':buy_price' => $it['buy_price']]);
 
         // $baseSell = $it['sell_price'];
