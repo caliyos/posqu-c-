@@ -64,7 +64,7 @@ namespace POS_qu.Services
                 var blocks = Math.Floor(eligibleSpend / rule.SpendAmount);
                 if (blocks > 0)
                 {
-                    var raw = blocks * rule.EarnPoints * (double)mult;
+                    var raw = blocks * rule.EarnPoints * (decimal)mult;
                     basePoints = (int)Math.Floor(raw);
                 }
             }

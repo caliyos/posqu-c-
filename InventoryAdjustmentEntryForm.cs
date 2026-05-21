@@ -111,6 +111,7 @@ namespace POS_qu
 
         private void SetupGrid()
         {
+            MessageBox.Show("x");
             _dt.Columns.Clear();
             _dt.Rows.Clear();
 
@@ -124,61 +125,73 @@ namespace POS_qu
 
             dgvItems.AutoGenerateColumns = true;
             dgvItems.DataSource = _dt;
+
             dgvItems.AllowUserToAddRows = false;
             dgvItems.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvItems.MultiSelect = false;
+
+            // SEMUA READONLY DULU
+            foreach (DataGridViewColumn col in dgvItems.Columns)
+            {
+                col.ReadOnly = true;
+            }
+
+            // YANG BOLEH EDIT
+            dgvItems.Columns["qty"].ReadOnly = false;
+            dgvItems.Columns["note"].ReadOnly = false;
+
+            // buy_price cuma editable untuk adjustment IN
+            if (_direction == InventoryAdjustmentDirection.In)
+            {
+                dgvItems.Columns["buy_price"].ReadOnly = true;
+            }
+
             dgvItems.EditMode = DataGridViewEditMode.EditOnKeystrokeOrF2;
 
-            if (dgvItems.Columns.Contains("item_id")) dgvItems.Columns["item_id"].Visible = false;
+            if (dgvItems.Columns.Contains("item_id"))
+                dgvItems.Columns["item_id"].Visible = false;
 
             if (dgvItems.Columns.Contains("barcode"))
             {
                 dgvItems.Columns["barcode"].HeaderText = "Barcode";
-                dgvItems.Columns["barcode"].ReadOnly = true;
                 dgvItems.Columns["barcode"].Width = 160;
             }
 
             if (dgvItems.Columns.Contains("name"))
             {
                 dgvItems.Columns["name"].HeaderText = "Nama";
-                dgvItems.Columns["name"].ReadOnly = true;
                 dgvItems.Columns["name"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             }
 
             if (dgvItems.Columns.Contains("unit_name"))
             {
                 dgvItems.Columns["unit_name"].HeaderText = "Satuan";
-                dgvItems.Columns["unit_name"].ReadOnly = true;
                 dgvItems.Columns["unit_name"].Width = 100;
             }
 
             if (dgvItems.Columns.Contains("qty"))
             {
                 dgvItems.Columns["qty"].HeaderText = "Qty";
-                dgvItems.Columns["qty"].ReadOnly = false;
                 dgvItems.Columns["qty"].Width = 90;
-                dgvItems.Columns["qty"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-                dgvItems.Columns["qty"].DefaultCellStyle.Format = "N2";
             }
 
             if (dgvItems.Columns.Contains("buy_price"))
             {
                 dgvItems.Columns["buy_price"].HeaderText = "HPP";
-                dgvItems.Columns["buy_price"].ReadOnly = _direction != InventoryAdjustmentDirection.In;
                 dgvItems.Columns["buy_price"].Width = 120;
-                dgvItems.Columns["buy_price"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-                dgvItems.Columns["buy_price"].DefaultCellStyle.Format = "N0";
                 dgvItems.Columns["buy_price"].Visible = _direction == InventoryAdjustmentDirection.In;
             }
 
             if (dgvItems.Columns.Contains("note"))
             {
                 dgvItems.Columns["note"].HeaderText = "Catatan";
-                dgvItems.Columns["note"].ReadOnly = false;
                 dgvItems.Columns["note"].Width = 220;
             }
 
             ApplyGridStyle();
+
+
+
         }
 
         private void ApplyGridStyle()
@@ -330,6 +343,7 @@ VALUES (@aid, @iid, @q, @bp, @n)
 
                     if (_direction == InventoryAdjustmentDirection.In)
                     {
+                        MessageBox.Show("up");
                         var oldBuy = GetCurrentBuyPrice(r.ItemId, con, tran);
                         if (oldBuy != r.BuyPrice)
                         {
@@ -354,6 +368,7 @@ VALUES (@aid, @iid, @q, @bp, @n)
                     }
                     else
                     {
+                        MessageBox.Show("down");
                         UpdateStockSubtract(con, tran, r.ItemId, warehouseId, r.Qty);
                         var allocations = ConsumeStockLayers(con, tran, r.ItemId, warehouseId, r.Qty);
                         InsertStockLogForAdjustment(
@@ -439,39 +454,132 @@ DO UPDATE SET qty = stocks.qty + EXCLUDED.qty
             cmd.ExecuteNonQuery();
         }
 
-        private void UpdateStockSubtract(NpgsqlConnection con, NpgsqlTransaction tran, long itemId, int warehouseId, double qty)
+        private void UpdateStockSubtract(
+            NpgsqlConnection con,
+            NpgsqlTransaction tran,
+            long itemId,
+            int warehouseId,
+            double qty)
         {
-            using var cmd = new NpgsqlCommand(@"
-UPDATE stocks
-SET qty = qty - @q
-WHERE item_id = @iid AND warehouse_id = @w
-", con, tran);
-            cmd.Parameters.AddWithValue("@iid", itemId);
-            cmd.Parameters.AddWithValue("@w", warehouseId);
-            cmd.Parameters.AddWithValue("@q", qty);
-            cmd.ExecuteNonQuery();
+            // STOCK SEBELUM
+            double stockBefore = 0;
+
+            using (var checkCmd = new NpgsqlCommand(@"
+        SELECT COALESCE(qty, 0)
+        FROM stocks
+        WHERE item_id = @iid
+        AND warehouse_id = @w
+    ", con, tran))
+            {
+                checkCmd.Parameters.AddWithValue("@iid", itemId);
+                checkCmd.Parameters.AddWithValue("@w", warehouseId);
+
+                var res = checkCmd.ExecuteScalar();
+
+                if (res != null)
+                    stockBefore = Convert.ToDouble(res);
+            }
+
+            // UPDATE STOCK
+            using (var cmd = new NpgsqlCommand(@"
+        UPDATE stocks
+        SET qty = qty - @q
+        WHERE item_id = @iid
+        AND warehouse_id = @w
+    ", con, tran))
+            {
+                cmd.Parameters.AddWithValue("@iid", itemId);
+                cmd.Parameters.AddWithValue("@w", warehouseId);
+                cmd.Parameters.AddWithValue("@q", qty);
+
+                cmd.ExecuteNonQuery();
+            }
+
+            // STOCK SESUDAH
+            double stockAfter = stockBefore - qty;
+
+            // ALERT
+            MessageBox.Show(
+                $"Stock berkurang {qty}\n" +
+                $"Sebelum : {stockBefore}\n" +
+                $"Sesudah : {stockAfter}",
+                "Informasi Stock",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+            );
         }
 
         private void InsertStockLayer(NpgsqlConnection con, NpgsqlTransaction tran, long itemId, int warehouseId, double qty, decimal buyPrice)
         {
             DateTime? expiredAt = null;
-            using (var expCmd = new NpgsqlCommand("SELECT expired_at FROM items WHERE id=@id", con, tran))
+
+            // Ambil expired
+            using (var expCmd = new NpgsqlCommand(
+                "SELECT expired_at FROM items WHERE id=@id", con, tran))
             {
                 expCmd.Parameters.AddWithValue("@id", itemId);
+
                 var res = expCmd.ExecuteScalar();
-                if (res != null && res != DBNull.Value) expiredAt = Convert.ToDateTime(res).Date;
+
+                if (res != null && res != DBNull.Value)
+                    expiredAt = Convert.ToDateTime(res).Date;
             }
 
-            using var cmd = new NpgsqlCommand(@"
-INSERT INTO stock_layers (item_id, warehouse_id, qty_initial, qty_remaining, buy_price, expired_at, created_at)
-VALUES (@iid, @w, @q, @q, @bp, @exp, NOW())
-", con, tran);
-            cmd.Parameters.AddWithValue("@iid", itemId);
-            cmd.Parameters.AddWithValue("@w", warehouseId);
-            cmd.Parameters.AddWithValue("@q", qty);
-            cmd.Parameters.AddWithValue("@bp", buyPrice < 0 ? 0m : buyPrice);
-            cmd.Parameters.AddWithValue("@exp", (object?)expiredAt ?? DBNull.Value);
-            cmd.ExecuteNonQuery();
+            // STOCK SEBELUM
+            double stockBefore = 0;
+
+            using (var stockCmd = new NpgsqlCommand(@"
+        SELECT COALESCE(SUM(qty_remaining),0)
+        FROM stock_layers
+        WHERE item_id=@iid AND warehouse_id=@wid
+    ", con, tran))
+            {
+                stockCmd.Parameters.AddWithValue("@iid", itemId);
+                stockCmd.Parameters.AddWithValue("@wid", warehouseId);
+
+                stockBefore = Convert.ToDouble(stockCmd.ExecuteScalar());
+            }
+
+            // INSERT STOCK
+            using (var cmd = new NpgsqlCommand(@"
+        INSERT INTO stock_layers
+        (item_id, warehouse_id, qty_initial, qty_remaining, buy_price, expired_at, created_at)
+        VALUES (@iid, @w, @q, @q, @bp, @exp, NOW())
+    ", con, tran))
+            {
+                cmd.Parameters.AddWithValue("@iid", itemId);
+                cmd.Parameters.AddWithValue("@w", warehouseId);
+                cmd.Parameters.AddWithValue("@q", qty);
+                cmd.Parameters.AddWithValue("@bp", buyPrice < 0 ? 0m : buyPrice);
+                cmd.Parameters.AddWithValue("@exp", (object?)expiredAt ?? DBNull.Value);
+
+                cmd.ExecuteNonQuery();
+            }
+
+            // STOCK SESUDAH
+            double stockAfter = stockBefore + qty;
+
+            // ALERT
+            if (qty > 0)
+            {
+                MessageBox.Show(
+                    $"Stock bertambah {qty}\n" +
+                    $"Sebelum : {stockBefore}\n" +
+                    $"Sesudah : {stockAfter}",
+                    "Informasi Stock",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            else if (qty < 0)
+            {
+                MessageBox.Show(
+                    $"Stock berkurang {Math.Abs(qty)}\n" +
+                    $"Sebelum : {stockBefore}\n" +
+                    $"Sesudah : {stockAfter}",
+                    "Informasi Stock",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
         }
 
         private void InsertStockLogForAdjustment(
@@ -640,6 +748,11 @@ VALUES (@iid, @old, @new, @t, @sid, @by, NOW())
             cmd.Parameters.AddWithValue("@sid", sourceId);
             cmd.Parameters.AddWithValue("@by", changedBy > 0 ? changedBy : (object)DBNull.Value);
             cmd.ExecuteNonQuery();
+        }
+
+        private void btnSave_Click_1(object sender, EventArgs e)
+        {
+
         }
     }
 }

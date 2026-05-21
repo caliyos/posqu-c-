@@ -30,21 +30,21 @@ namespace POS_qu
 
         private void InitializeComponent()
         {
-            panelTop = new System.Windows.Forms.Panel();
-            lblTitle = new System.Windows.Forms.Label();
-            lblDate = new System.Windows.Forms.Label();
-            dtpDate = new System.Windows.Forms.DateTimePicker();
-            lblWarehouse = new System.Windows.Forms.Label();
-            cmbWarehouse = new System.Windows.Forms.ComboBox();
-            lblReason = new System.Windows.Forms.Label();
-            cmbReason = new System.Windows.Forms.ComboBox();
-            lblNote = new System.Windows.Forms.Label();
-            txtNote = new System.Windows.Forms.TextBox();
-            btnAddItem = new System.Windows.Forms.Button();
-            btnRemoveItem = new System.Windows.Forms.Button();
-            btnSave = new System.Windows.Forms.Button();
-            btnClose = new System.Windows.Forms.Button();
-            dgvItems = new System.Windows.Forms.DataGridView();
+            panelTop = new Panel();
+            btnClose = new Button();
+            btnSave = new Button();
+            btnRemoveItem = new Button();
+            btnAddItem = new Button();
+            txtNote = new TextBox();
+            lblNote = new Label();
+            cmbReason = new ComboBox();
+            lblReason = new Label();
+            cmbWarehouse = new ComboBox();
+            lblWarehouse = new Label();
+            dtpDate = new DateTimePicker();
+            lblDate = new Label();
+            lblTitle = new Label();
+            dgvItems = new DataGridView();
             panelTop.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvItems).BeginInit();
             SuspendLayout();
@@ -64,147 +64,158 @@ namespace POS_qu
             panelTop.Controls.Add(dtpDate);
             panelTop.Controls.Add(lblDate);
             panelTop.Controls.Add(lblTitle);
-            panelTop.Dock = System.Windows.Forms.DockStyle.Top;
-            panelTop.Location = new System.Drawing.Point(0, 0);
+            panelTop.Dock = DockStyle.Top;
+            panelTop.Location = new Point(0, 0);
+            panelTop.Margin = new Padding(3, 2, 3, 2);
             panelTop.Name = "panelTop";
-            panelTop.Padding = new System.Windows.Forms.Padding(12);
-            panelTop.Size = new System.Drawing.Size(1280, 150);
+            panelTop.Padding = new Padding(10, 9, 10, 9);
+            panelTop.Size = new Size(1120, 112);
             panelTop.TabIndex = 0;
-            // 
-            // lblTitle
-            // 
-            lblTitle.AutoSize = true;
-            lblTitle.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
-            lblTitle.Location = new System.Drawing.Point(12, 10);
-            lblTitle.Name = "lblTitle";
-            lblTitle.Size = new System.Drawing.Size(183, 28);
-            lblTitle.TabIndex = 0;
-            lblTitle.Text = "Inventory Adjust";
-            // 
-            // lblDate
-            // 
-            lblDate.AutoSize = true;
-            lblDate.Location = new System.Drawing.Point(15, 48);
-            lblDate.Name = "lblDate";
-            lblDate.Size = new System.Drawing.Size(67, 20);
-            lblDate.TabIndex = 1;
-            lblDate.Text = "Tanggal:";
-            // 
-            // dtpDate
-            // 
-            dtpDate.Format = System.Windows.Forms.DateTimePickerFormat.Short;
-            dtpDate.Location = new System.Drawing.Point(90, 45);
-            dtpDate.Name = "dtpDate";
-            dtpDate.Size = new System.Drawing.Size(160, 27);
-            dtpDate.TabIndex = 2;
-            // 
-            // lblWarehouse
-            // 
-            lblWarehouse.AutoSize = true;
-            lblWarehouse.Location = new System.Drawing.Point(270, 48);
-            lblWarehouse.Name = "lblWarehouse";
-            lblWarehouse.Size = new System.Drawing.Size(60, 20);
-            lblWarehouse.TabIndex = 3;
-            lblWarehouse.Text = "Gudang:";
-            // 
-            // cmbWarehouse
-            // 
-            cmbWarehouse.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            cmbWarehouse.Location = new System.Drawing.Point(338, 45);
-            cmbWarehouse.Name = "cmbWarehouse";
-            cmbWarehouse.Size = new System.Drawing.Size(260, 28);
-            cmbWarehouse.TabIndex = 4;
-            // 
-            // lblReason
-            // 
-            lblReason.AutoSize = true;
-            lblReason.Location = new System.Drawing.Point(15, 84);
-            lblReason.Name = "lblReason";
-            lblReason.Size = new System.Drawing.Size(54, 20);
-            lblReason.TabIndex = 5;
-            lblReason.Text = "Alasan:";
-            // 
-            // cmbReason
-            // 
-            cmbReason.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
-            cmbReason.Location = new System.Drawing.Point(90, 81);
-            cmbReason.Name = "cmbReason";
-            cmbReason.Size = new System.Drawing.Size(508, 28);
-            cmbReason.TabIndex = 6;
-            // 
-            // lblNote
-            // 
-            lblNote.AutoSize = true;
-            lblNote.Location = new System.Drawing.Point(15, 118);
-            lblNote.Name = "lblNote";
-            lblNote.Size = new System.Drawing.Size(58, 20);
-            lblNote.TabIndex = 7;
-            lblNote.Text = "Catatan:";
-            // 
-            // txtNote
-            // 
-            txtNote.Location = new System.Drawing.Point(90, 115);
-            txtNote.Name = "txtNote";
-            txtNote.Size = new System.Drawing.Size(508, 27);
-            txtNote.TabIndex = 8;
-            // 
-            // btnAddItem
-            // 
-            btnAddItem.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnAddItem.Location = new System.Drawing.Point(760, 45);
-            btnAddItem.Name = "btnAddItem";
-            btnAddItem.Size = new System.Drawing.Size(150, 34);
-            btnAddItem.TabIndex = 9;
-            btnAddItem.Text = "Tambah Item";
-            btnAddItem.UseVisualStyleBackColor = true;
-            // 
-            // btnRemoveItem
-            // 
-            btnRemoveItem.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnRemoveItem.Location = new System.Drawing.Point(920, 45);
-            btnRemoveItem.Name = "btnRemoveItem";
-            btnRemoveItem.Size = new System.Drawing.Size(150, 34);
-            btnRemoveItem.TabIndex = 10;
-            btnRemoveItem.Text = "Hapus Item";
-            btnRemoveItem.UseVisualStyleBackColor = true;
-            // 
-            // btnSave
-            // 
-            btnSave.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnSave.Location = new System.Drawing.Point(760, 85);
-            btnSave.Name = "btnSave";
-            btnSave.Size = new System.Drawing.Size(150, 34);
-            btnSave.TabIndex = 11;
-            btnSave.Text = "Simpan";
-            btnSave.UseVisualStyleBackColor = true;
             // 
             // btnClose
             // 
-            btnClose.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right;
-            btnClose.Location = new System.Drawing.Point(920, 85);
+            btnClose.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnClose.Location = new Point(805, 64);
+            btnClose.Margin = new Padding(3, 2, 3, 2);
             btnClose.Name = "btnClose";
-            btnClose.Size = new System.Drawing.Size(150, 34);
+            btnClose.Size = new Size(131, 26);
             btnClose.TabIndex = 12;
             btnClose.Text = "Tutup";
             btnClose.UseVisualStyleBackColor = true;
             // 
+            // btnSave
+            // 
+            btnSave.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnSave.Location = new Point(665, 64);
+            btnSave.Margin = new Padding(3, 2, 3, 2);
+            btnSave.Name = "btnSave";
+            btnSave.Size = new Size(131, 26);
+            btnSave.TabIndex = 11;
+            btnSave.Text = "Simpan";
+            btnSave.UseVisualStyleBackColor = true;
+            btnSave.Click += btnSave_Click_1;
+            // 
+            // btnRemoveItem
+            // 
+            btnRemoveItem.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnRemoveItem.Location = new Point(805, 34);
+            btnRemoveItem.Margin = new Padding(3, 2, 3, 2);
+            btnRemoveItem.Name = "btnRemoveItem";
+            btnRemoveItem.Size = new Size(131, 26);
+            btnRemoveItem.TabIndex = 10;
+            btnRemoveItem.Text = "Hapus Item";
+            btnRemoveItem.UseVisualStyleBackColor = true;
+            // 
+            // btnAddItem
+            // 
+            btnAddItem.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnAddItem.Location = new Point(665, 34);
+            btnAddItem.Margin = new Padding(3, 2, 3, 2);
+            btnAddItem.Name = "btnAddItem";
+            btnAddItem.Size = new Size(131, 26);
+            btnAddItem.TabIndex = 9;
+            btnAddItem.Text = "Tambah Item";
+            btnAddItem.UseVisualStyleBackColor = true;
+            // 
+            // txtNote
+            // 
+            txtNote.Location = new Point(79, 86);
+            txtNote.Margin = new Padding(3, 2, 3, 2);
+            txtNote.Name = "txtNote";
+            txtNote.Size = new Size(445, 23);
+            txtNote.TabIndex = 8;
+            // 
+            // lblNote
+            // 
+            lblNote.AutoSize = true;
+            lblNote.Location = new Point(13, 88);
+            lblNote.Name = "lblNote";
+            lblNote.Size = new Size(51, 15);
+            lblNote.TabIndex = 7;
+            lblNote.Text = "Catatan:";
+            // 
+            // cmbReason
+            // 
+            cmbReason.Location = new Point(79, 61);
+            cmbReason.Margin = new Padding(3, 2, 3, 2);
+            cmbReason.Name = "cmbReason";
+            cmbReason.Size = new Size(445, 23);
+            cmbReason.TabIndex = 6;
+            // 
+            // lblReason
+            // 
+            lblReason.AutoSize = true;
+            lblReason.Location = new Point(13, 63);
+            lblReason.Name = "lblReason";
+            lblReason.Size = new Size(45, 15);
+            lblReason.TabIndex = 5;
+            lblReason.Text = "Alasan:";
+            // 
+            // cmbWarehouse
+            // 
+            cmbWarehouse.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbWarehouse.Location = new Point(296, 34);
+            cmbWarehouse.Margin = new Padding(3, 2, 3, 2);
+            cmbWarehouse.Name = "cmbWarehouse";
+            cmbWarehouse.Size = new Size(228, 23);
+            cmbWarehouse.TabIndex = 4;
+            // 
+            // lblWarehouse
+            // 
+            lblWarehouse.AutoSize = true;
+            lblWarehouse.Location = new Point(236, 36);
+            lblWarehouse.Name = "lblWarehouse";
+            lblWarehouse.Size = new Size(52, 15);
+            lblWarehouse.TabIndex = 3;
+            lblWarehouse.Text = "Gudang:";
+            // 
+            // dtpDate
+            // 
+            dtpDate.Format = DateTimePickerFormat.Short;
+            dtpDate.Location = new Point(79, 34);
+            dtpDate.Margin = new Padding(3, 2, 3, 2);
+            dtpDate.Name = "dtpDate";
+            dtpDate.Size = new Size(140, 23);
+            dtpDate.TabIndex = 2;
+            // 
+            // lblDate
+            // 
+            lblDate.AutoSize = true;
+            lblDate.Location = new Point(13, 36);
+            lblDate.Name = "lblDate";
+            lblDate.Size = new Size(51, 15);
+            lblDate.TabIndex = 1;
+            lblDate.Text = "Tanggal:";
+            // 
+            // lblTitle
+            // 
+            lblTitle.AutoSize = true;
+            lblTitle.Font = new Font("Segoe UI", 12F, FontStyle.Bold);
+            lblTitle.Location = new Point(10, 8);
+            lblTitle.Name = "lblTitle";
+            lblTitle.Size = new Size(138, 21);
+            lblTitle.TabIndex = 0;
+            lblTitle.Text = "Inventory Adjust";
+            // 
             // dgvItems
             // 
-            dgvItems.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvItems.Dock = System.Windows.Forms.DockStyle.Fill;
-            dgvItems.Location = new System.Drawing.Point(0, 150);
+            dgvItems.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvItems.Dock = DockStyle.Fill;
+            dgvItems.Location = new Point(0, 112);
+            dgvItems.Margin = new Padding(3, 2, 3, 2);
             dgvItems.Name = "dgvItems";
             dgvItems.RowHeadersWidth = 51;
-            dgvItems.Size = new System.Drawing.Size(1280, 570);
+            dgvItems.Size = new Size(1120, 428);
             dgvItems.TabIndex = 1;
             // 
             // InventoryAdjustmentEntryForm
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
-            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(1280, 720);
+            AutoScaleDimensions = new SizeF(7F, 15F);
+            AutoScaleMode = AutoScaleMode.Font;
+            ClientSize = new Size(1120, 540);
             Controls.Add(dgvItems);
             Controls.Add(panelTop);
+            Margin = new Padding(3, 2, 3, 2);
             Name = "InventoryAdjustmentEntryForm";
             Text = "InventoryAdjustmentEntryForm";
             panelTop.ResumeLayout(false);

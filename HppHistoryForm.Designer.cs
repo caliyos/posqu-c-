@@ -431,15 +431,15 @@ namespace POS_qu
             dgvLayers.AllowUserToDeleteRows = false;
             dgvLayers.BackgroundColor = Color.White;
             dgvLayers.BorderStyle = BorderStyle.None;
-            dgvLayers.Dock = DockStyle.Fill;
-            dgvLayers.Location = new Point(2, 2);
+            dgvLayers.Dock = DockStyle.Bottom;
+            dgvLayers.Location = new Point(2, 41);
             dgvLayers.Margin = new Padding(2);
             dgvLayers.Name = "dgvLayers";
             dgvLayers.ReadOnly = true;
             dgvLayers.RowHeadersVisible = false;
             dgvLayers.RowHeadersWidth = 62;
             dgvLayers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvLayers.Size = new Size(971, 346);
+            dgvLayers.Size = new Size(971, 307);
             dgvLayers.TabIndex = 0;
             // 
             // tabStockCard
@@ -644,15 +644,15 @@ namespace POS_qu
             dgvStockCard.AllowUserToDeleteRows = false;
             dgvStockCard.BackgroundColor = Color.White;
             dgvStockCard.BorderStyle = BorderStyle.None;
-            dgvStockCard.Dock = DockStyle.Fill;
-            dgvStockCard.Location = new Point(2, 2);
+            dgvStockCard.Dock = DockStyle.Bottom;
+            dgvStockCard.Location = new Point(2, 54);
             dgvStockCard.Margin = new Padding(2);
             dgvStockCard.Name = "dgvStockCard";
             dgvStockCard.ReadOnly = true;
             dgvStockCard.RowHeadersVisible = false;
             dgvStockCard.RowHeadersWidth = 62;
             dgvStockCard.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvStockCard.Size = new Size(971, 346);
+            dgvStockCard.Size = new Size(971, 294);
             dgvStockCard.TabIndex = 0;
             // 
             // panelBottom
