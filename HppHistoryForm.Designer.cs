@@ -137,7 +137,7 @@ namespace POS_qu
             btnClose.FlatStyle = FlatStyle.Flat;
             btnClose.Font = new Font("Segoe UI Semibold", 10F, FontStyle.Bold);
             btnClose.ForeColor = Color.White;
-            btnClose.Location = new Point(591, 39);
+            btnClose.Location = new Point(689, 8);
             btnClose.Margin = new Padding(2);
             btnClose.Name = "btnClose";
             btnClose.Size = new Size(84, 28);
@@ -159,6 +159,7 @@ namespace POS_qu
             btnRevalue.TabIndex = 6;
             btnRevalue.Text = "Koreksi HPP (Layer)";
             btnRevalue.UseVisualStyleBackColor = false;
+            btnRevalue.Visible = false;
             // 
             // btnRefresh
             // 
@@ -431,7 +432,6 @@ namespace POS_qu
             dgvLayers.AllowUserToDeleteRows = false;
             dgvLayers.BackgroundColor = Color.White;
             dgvLayers.BorderStyle = BorderStyle.None;
-            dgvLayers.Dock = DockStyle.Bottom;
             dgvLayers.Location = new Point(2, 41);
             dgvLayers.Margin = new Padding(2);
             dgvLayers.Name = "dgvLayers";
@@ -644,7 +644,6 @@ namespace POS_qu
             dgvStockCard.AllowUserToDeleteRows = false;
             dgvStockCard.BackgroundColor = Color.White;
             dgvStockCard.BorderStyle = BorderStyle.None;
-            dgvStockCard.Dock = DockStyle.Bottom;
             dgvStockCard.Location = new Point(2, 54);
             dgvStockCard.Margin = new Padding(2);
             dgvStockCard.Name = "dgvStockCard";

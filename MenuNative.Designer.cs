@@ -424,7 +424,7 @@
             // 
             menuStrip1.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
             menuStrip1.ImageScalingSize = new Size(24, 24);
-            menuStrip1.Items.AddRange(new ToolStripItem[] { masterToolStripMenuItem, productToolStripMenuItem, stockMenuToolStripMenuItem, promosiDiskonToolStripMenuItem, casherToolStripMenuItem, pembelianToolStripMenuItem, reportsToolStripMenuItem, printingToolStripMenuItem, settingsToolStripMenuItem, helpToolStripMenuItem, aboutToolStripMenuItem });
+            menuStrip1.Items.AddRange(new ToolStripItem[] { masterToolStripMenuItem, productToolStripMenuItem, stockMenuToolStripMenuItem, pembelianToolStripMenuItem, promosiDiskonToolStripMenuItem, casherToolStripMenuItem, reportsToolStripMenuItem, printingToolStripMenuItem, settingsToolStripMenuItem, helpToolStripMenuItem, aboutToolStripMenuItem });
             menuStrip1.Location = new Point(0, 0);
             menuStrip1.Name = "menuStrip1";
             menuStrip1.Padding = new Padding(4, 1, 0, 1);
@@ -614,8 +614,8 @@
             // 
             casherToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { daftarTransaksiToolStripMenuItem, casherToolStripMenuItem1, pendingTransaksiAdminToolStripMenuItem });
             casherToolStripMenuItem.Name = "casherToolStripMenuItem";
-            casherToolStripMenuItem.Size = new Size(70, 25);
-            casherToolStripMenuItem.Text = "Casher";
+            casherToolStripMenuItem.Size = new Size(52, 25);
+            casherToolStripMenuItem.Text = "POS";
             casherToolStripMenuItem.Click += casherToolStripMenuItem_Click;
             // 
             // daftarTransaksiToolStripMenuItem

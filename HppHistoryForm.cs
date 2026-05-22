@@ -97,6 +97,7 @@ namespace POS_qu
 
         private void HppHistoryForm_Load(object sender, EventArgs e)
         {
+            this.WindowState = FormWindowState.Maximized;
             ApplyGridStyle(dgvLayers);
             ApplyGridStyle(dgvStockCard);
             LoadItemInfo();
@@ -104,6 +105,7 @@ namespace POS_qu
             if (_openStockCard)
                 tabMain.SelectedTab = tabStockCard;
             LoadData();
+
         }
 
         private void LoadItemInfo()

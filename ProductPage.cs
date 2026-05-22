@@ -182,7 +182,7 @@ namespace POS_qu
                 comboDt.Columns.Add("id", typeof(int));
                 comboDt.Columns.Add("name", typeof(string));
 
-                comboDt.Rows.Add(0, "Semua Gudang");
+                //comboDt.Rows.Add(0, "Semua Gudang");
                 _warehouseNameById.Clear();
 
                 if (dt != null)

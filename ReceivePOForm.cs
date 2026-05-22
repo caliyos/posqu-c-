@@ -749,8 +749,8 @@ FOR UPDATE
 
                         decimal qtyAfter = qtyBefore + qty;
                         decimal avgAfter = qtyAfter > 0m
-                            ? Math.Round(((qtyBefore * avgBefore) + (qty * unitPrice)) / qtyAfter, 2, MidpointRounding.AwayFromZero)
-                            : avgBefore;
+          ? ((qtyBefore * avgBefore) + (qty * unitPrice)) / qtyAfter
+          : avgBefore;
 
                         using (var upd = new NpgsqlCommand(@"
 UPDATE stocks
