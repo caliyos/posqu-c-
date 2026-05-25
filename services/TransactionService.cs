@@ -1169,8 +1169,8 @@ namespace POS_qu.Services
             try
             {
                 var active = new POS_qu.Controllers.SettingController().GetActiveHppMethods();
-                if (active.Count == 1 && string.Equals(active[0], "FIFO", StringComparison.OrdinalIgnoreCase))
-                    return new POS_qu.Services.StockValuation.FifoStrategy();
+                if (active.Count == 1 && string.Equals(active[0], "AVG", StringComparison.OrdinalIgnoreCase))
+                    return new POS_qu.Services.StockValuation.AverageStrategy();
             }
             catch
             {
@@ -1179,7 +1179,7 @@ namespace POS_qu.Services
             if (method == "AVG") return new POS_qu.Services.StockValuation.AverageStrategy();
             if (method == "LIFO") return new POS_qu.Services.StockValuation.LifoStrategy();
             if (method == "FEFO") return new POS_qu.Services.StockValuation.FefoStrategy();
-            return new POS_qu.Services.StockValuation.FifoStrategy();
+            return new POS_qu.Services.StockValuation.AverageStrategy();
         }
 
     }

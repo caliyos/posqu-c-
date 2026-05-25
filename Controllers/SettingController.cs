@@ -145,8 +145,8 @@ LIMIT 1
             conn.Open();
             using var cmd = new NpgsqlCommand(@"
 SELECT
-    COALESCE(hpp_fifo_active, TRUE) AS fifo,
-    COALESCE(hpp_avg_active, FALSE) AS avg,
+    COALESCE(hpp_fifo_active, FALSE) AS fifo,
+    COALESCE(hpp_avg_active, TRUE) AS avg,
     COALESCE(hpp_lifo_active, FALSE) AS lifo,
     COALESCE(hpp_fefo_active, FALSE) AS fefo
 FROM settingtoko
@@ -164,16 +164,16 @@ LIMIT 1
                 if (Convert.ToBoolean(r["fefo"])) list.Add("FEFO");
             }
 
-            if (list.Count == 0) list.Add("FIFO");
+            if (list.Count == 0) list.Add("AVG");
             return list;
         }
 
         public void SetDefaultHppMethod(string method)
         {
             EnsureSettingTokoSchema();
-            method = (method ?? "FIFO").Trim().ToUpperInvariant();
+            method = (method ?? "AVG").Trim().ToUpperInvariant();
             if (method != "FIFO" && method != "AVG" && method != "LIFO" && method != "FEFO")
-                method = "FIFO";
+                method = "AVG";
 
             using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
             conn.Open();
