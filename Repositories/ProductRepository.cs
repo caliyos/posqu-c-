@@ -107,8 +107,9 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
                 con.Open();
                 string sql = @"
                     SELECT items.*, 
-                           COALESCE((SELECT SUM(qty) FROM stocks WHERE item_id = items.id), 0) AS stock_qty,
-                           COALESCE((SELECT SUM(min_qty) FROM stocks WHERE item_id = items.id), 0) AS min_qty,
+                           COALESCE((SELECT SUM(qty) FROM stocks WHERE item_id = items.id AND warehouse_id = warehouse_id ), 0) AS stock_qty,
+                           COALESCE((SELECT SUM(min_qty) FROM stocks WHERE item_id = items.id AND warehouse_id = warehouse_id), 0) AS min_qty,
+                           COALESCE((SELECT hpp_avg FROM stocks WHERE item_id = items.id AND warehouse_id = warehouse_id), 0) AS hpp_avg,
                            CASE
                                WHEN (SELECT COUNT(*) FROM stocks WHERE item_id = items.id) = 1
                                    THEN COALESCE((SELECT warehouse_id FROM stocks WHERE item_id = items.id LIMIT 1), 0)
@@ -116,6 +117,7 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
                            END AS warehouse_id,
                            COALESCE((SELECT SUM(reserved_qty) FROM stocks WHERE item_id = items.id), 0) AS reserved_qty
                     FROM items 
+                    
                     WHERE id = @id";
                 using (var cmd = new NpgsqlCommand(sql, con))
                 {
@@ -153,7 +155,8 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
                                 ExpiredAt = reader["expired_at"] != DBNull.Value ? Convert.ToDateTime(reader["expired_at"]) : null,
                                 note = reader["note"]?.ToString(),
                                 valuation_method = reader["valuation_method"]?.ToString() ?? "AVG",
-                                
+                                hpp_avg = reader["hpp_avg"] != DBNull.Value ? Convert.ToDecimal(reader["hpp_avg"]) : 0,
+
                             };
                         }
                     }
@@ -596,7 +599,7 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
             {
                 con.Open();
                 string sql = @"
-                    SELECT ip.id, ip.item_id, ip.unit_id, ip.price_level_id, ip.min_qty, ip.max_qty, ip.price, 
+                    SELECT ip.id, ip.item_id, ip.unit_id, ip.price_level_id, ip.price, ip.min_qty, ip.max_qty, 
                            u.name as unit_name, pl.name as price_level_name 
                     FROM item_prices ip
                     LEFT JOIN units u ON ip.unit_id = u.id
@@ -615,9 +618,10 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
                                 ItemId = Convert.ToInt32(reader["item_id"]),
                                 UnitId = Convert.ToInt32(reader["unit_id"]),
                                 PriceLevelId = Convert.ToInt32(reader["price_level_id"]),
+                                Price = Convert.ToDecimal(reader["price"]),
                                 MinQty = Convert.ToInt32(reader["min_qty"]),
                                 MaxQty = reader["max_qty"] != DBNull.Value ? Convert.ToInt32(reader["max_qty"]) : 0,
-                                Price = Convert.ToDecimal(reader["price"]),
+                             
                                 UnitName = reader["unit_name"]?.ToString(),
                                 PriceLevelName = reader["price_level_name"]?.ToString()
                             });

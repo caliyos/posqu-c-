@@ -113,11 +113,11 @@ namespace POS_qu
             dgvMultiPrice.DataSource = new BindingList<ItemPrice>();
             dgvMultiPrice.AutoGenerateColumns = false;
             dgvMultiPrice.Columns.Clear();
-            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "UnitName", HeaderText = "Satuan", Width = 150 });
-            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "PriceLevelName", HeaderText = "Level Harga", Width = 150 });
-            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { Name = "colMinQty", DataPropertyName = "MinQty", HeaderText = "Min Qty", Width = 100, DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", FormatProvider = UiNumberFormat.DotCulture, Alignment = DataGridViewContentAlignment.MiddleRight } });
-            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { Name = "colMaxQty", DataPropertyName = "MaxQty", HeaderText = "Max Qty", Width = 100, DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", FormatProvider = UiNumberFormat.DotCulture, Alignment = DataGridViewContentAlignment.MiddleRight } });
-            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { Name = "colPrice", DataPropertyName = "Price", HeaderText = "Harga Jual", Width = 200, DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", FormatProvider = UiNumberFormat.DotCulture, Alignment = DataGridViewContentAlignment.MiddleRight } });
+            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "UnitName", HeaderText = "Satuan", Width = 100 });
+            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "PriceLevelName", HeaderText = "Level Harga", Width = 100 });
+            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { Name = "colMinQty", DataPropertyName = "MinQty", HeaderText = "Min Qty", Width = 100, DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", FormatProvider = UiNumberFormat.DotCulture, Alignment = DataGridViewContentAlignment.MiddleLeft } });
+            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { Name = "colMaxQty", DataPropertyName = "MaxQty", HeaderText = "Max Qty", Width = 100, DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", FormatProvider = UiNumberFormat.DotCulture, Alignment = DataGridViewContentAlignment.MiddleLeft } });
+            dgvMultiPrice.Columns.Add(new DataGridViewTextBoxColumn { Name = "colPrice", DataPropertyName = "Price", HeaderText = "Harga Jual", Width = 200, DefaultCellStyle = new DataGridViewCellStyle { Format = "N2", FormatProvider = UiNumberFormat.DotCulture, Alignment = DataGridViewContentAlignment.MiddleLeft } });
             dgvMultiPrice.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
 
             dgvMultiPrice.ReadOnly = true;
@@ -351,7 +351,9 @@ namespace POS_qu
         {
             _item = item;
             txtName.Text = _item.name;
-            txtBuyPrice.Text = _item.buy_price.ToString("N2", UiNumberFormat.DotCulture);
+            label9.Text = $"HPP ({_item.valuation_method})";
+            txtBuyPrice.Text = _item.hpp_avg.ToString("N2", UiNumberFormat.DotCulture);
+            txtBuyPrice.ReadOnly = true;
             txtSellPrice.Text = _item.sell_price.ToString("N2", UiNumberFormat.DotCulture);
             txtStock.Text = _item.stock.ToString();
             txtBarcode.Text = _item.barcode;
@@ -650,9 +652,20 @@ namespace POS_qu
         private void UpdateStockOutput()
         {
             if (lblStockOut == null) return;
+
             decimal val = ParseQty(txtStock.Text);
-            string unitName = cmbUnit.SelectedIndex >= 0 ? cmbUnit.Text : "pcs";
+
+            string unitName = string.IsNullOrWhiteSpace(cmbUnit.Text)
+                ? "pcs"
+                : cmbUnit.Text;
+
+            if (cmbUnit.SelectedItem is DataRowView row)
+            {
+                unitName = row["display"]?.ToString() ?? "pcs";
+            }
+
             string qtyText = val.ToString("N2", UiNumberFormat.DotCulture);
+
             lblStockOut.Text = $"{qtyText} {unitName}";
             // nilai stok (HPP) dan nilai jual
             decimal bp = UiNumberFormat.ParseMoney(txtBuyPrice.Text);
@@ -787,15 +800,16 @@ LIMIT 1
             {
                 StartPosition = FormStartPosition.CenterParent,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
-                Width = 450,
+                Width = 500,
                 Height = 450,
-                Text = "Edit Harga Bertingkat"
+                Text = "Edit Harga Bertingkat",
+                Font = new Font("Segoe UI", 11, FontStyle.Bold)
             };
 
             Label lblItemName = new Label() { Left = 20, Top = 15, Width = 400, Text = "Item: " + itemName, Font = new Font("Segoe UI", 11, FontStyle.Bold) };
             
             Label lblUnit = new Label() { Left = 20, Top = 60, Text = "Satuan", AutoSize = true };
-            ComboBox cmbVariantUnit = new ComboBox() { Left = 150, Top = 58, Width = 250, DropDownStyle = ComboBoxStyle.DropDownList };
+            ComboBox cmbVariantUnit = new ComboBox() { Left = 150, Top = 58, Width = 280, DropDownStyle = ComboBoxStyle.DropDownList };
             
             // Populate cmbVariantUnit with base unit and variants
             List<dynamic> unitList = new List<dynamic>();
@@ -822,7 +836,7 @@ LIMIT 1
             else if (cmbUnit.SelectedValue != null) cmbVariantUnit.SelectedValue = Convert.ToInt32(cmbUnit.SelectedValue);
 
             Label lblLevel = new Label() { Left = 20, Top = 100, Text = "Level Harga", AutoSize = true };
-            ComboBox cmbLevel = new ComboBox() { Left = 150, Top = 98, Width = 250, DropDownStyle = ComboBoxStyle.DropDownList };
+            ComboBox cmbLevel = new ComboBox() { Left = 150, Top = 98, Width = 280, DropDownStyle = ComboBoxStyle.DropDownList };
             var dtLevels = _productService.GetPriceLevels();
             
             // Konversi dari DataTable ke custom class/object list agar tidak muncul System.Data.DataRowView
@@ -838,13 +852,13 @@ LIMIT 1
             if (price.PriceLevelId > 0) cmbLevel.SelectedValue = price.PriceLevelId;
 
             Label lblMinQty = new Label() { Left = 20, Top = 140, Text = "Min Qty", AutoSize = true };
-            TextBox txtMinQty = new TextBox() { Left = 150, Top = 138, Width = 100, Text = price.MinQty.ToString() };
+            TextBox txtMinQty = new TextBox() { Left = 170, Top = 138, Width = 100, Text = price.MinQty.ToString() };
             
-            Label lblMaxQty = new Label() { Left = 250, Top = 140, Text = "Max Qty", AutoSize = true };
-            TextBox txtMaxQty = new TextBox() { Left = 330, Top = 138, Width = 70, Text = price.MaxQty?.ToString() };
+            Label lblMaxQty = new Label() { Left = 280, Top = 140, Text = "Max Qty", AutoSize = true };
+            TextBox txtMaxQty = new TextBox() { Left = 360, Top = 138, Width = 70, Text = price.MaxQty?.ToString() };
 
-            Label lblPrice = new Label() { Left = 20, Top = 180, Text = "Harga Jual", AutoSize = true };
-            TextBox txtPrice = new TextBox() { Left = 150, Top = 178, Width = 250, Text = price.Price.ToString("N2", UiNumberFormat.DotCulture) };
+            Label lblPrice = new Label() { Left = 20, Top = 180, Text = "Harga Jual Per Item", AutoSize = true };
+            TextBox txtPrice = new TextBox() { Left = 170, Top = 178, Width = 100, Text = price.Price.ToString("N2", UiNumberFormat.DotCulture) };
 
             Label lblFinalPrice = new Label() { Left = 20, Top = 230, Width = 350, Text = "Harga Akhir: -" };
             Label lblMargin = new Label() { Left = 20, Top = 260, Width = 350, Text = "Margin: -" };

@@ -86,5 +86,7 @@ namespace POS_qu.Models
 
         public List<ItemMaterial> MaterialsList { get; set; } = new List<ItemMaterial>();
 
+        public decimal hpp_avg { get; set; }  // Harga per pcs untuk unit variant
+
     }
 }

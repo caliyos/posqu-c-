@@ -247,28 +247,31 @@ namespace POS_qu.Services
                         var journal = new JournalService();
                         journal.CreateJournalFromSale(transactionId, con, tran);
 
-                        try
-                        {
-                            var loyalty = new LoyaltyService();
-                            var earn = loyalty.ApplyEarnForSale(
-                                con,
-                                tran,
-                                customerId: invoice.CustomerId,
-                                transactionId: transactionId,
-                                invoiceNumber: transaction.TsNumbering,
-                                eligibleSpend: grandTotal,
-                                warehouseId: warehouseId,
-                                terminalId: sessionUser.TerminalId,
-                                cashierUserId: sessionUser.UserId,
-                                loginId: sessionUser.LoginId
-                            );
-                            invoice.MembershipLevel = earn.MembershipCode;
-                            invoice.EarnedPoints = earn.EarnedPoints;
-                            invoice.PointBalance = earn.BalanceAfter;
-                        }
-                        catch
-                        {
-                        }
+
+                        // JOURNAL FEATURE LATER MAYBE
+                        //try
+                        //{
+                        //    var loyalty = new LoyaltyService();
+                        //    var earn = loyalty.ApplyEarnForSale(
+                        //        con,
+                        //        tran,
+                        //        customerId: invoice.CustomerId,
+                        //        transactionId: transactionId,
+                        //        invoiceNumber: transaction.TsNumbering,
+                        //        eligibleSpend: grandTotal,
+                        //        warehouseId: warehouseId,
+                        //        terminalId: sessionUser.TerminalId,
+                        //        cashierUserId: sessionUser.UserId,
+                        //        loginId: sessionUser.LoginId
+                        //    );
+                        //    invoice.MembershipLevel = earn.MembershipCode;
+                        //    invoice.EarnedPoints = earn.EarnedPoints;
+                        //    invoice.PointBalance = earn.BalanceAfter;
+                        //}
+                        //catch
+                        //{
+                        //}
+                        // END JOURNAL FEATURE LATER MAYBE
 
                         // ===============================
                         // DELETE PENDING TRANSACTION

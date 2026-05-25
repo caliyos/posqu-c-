@@ -688,7 +688,7 @@ namespace POS_qu
                 items.barcode,
                 items.unit AS unit_id,
                 units.name AS unit_name,
-                CAST(COALESCE(s.qty, 0) AS NUMERIC(18,4)) AS stockx,
+                CAST(COALESCE(s.qty, 0) AS NUMERIC(18,4)) AS stock,
                 s.hpp_avg,
                 items.sell_price,
                 items.buy_price,
@@ -2190,7 +2190,8 @@ LIMIT 1
                 sell_price = rowSelected.Cells["sell_price"]?.Value != null && decimal.TryParse(rowSelected.Cells["sell_price"].Value.ToString(), out var sp) ? sp : 0m,
                 stock = stock,
                 min_qty = minQty,
-                initial_warehouse_id = warehouseId > 0 ? warehouseId : null
+                initial_warehouse_id = warehouseId > 0 ? warehouseId : null,
+                hpp_avg = rowSelected.Cells["hpp_avg"]?.Value != null && decimal.TryParse(rowSelected.Cells["hpp_avg"].Value.ToString(), out var hp) ? hp : 0m,
             };
 
             using (var detailForm = new ItemDetailForm(itemForEdit))
