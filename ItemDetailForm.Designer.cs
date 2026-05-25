@@ -193,7 +193,7 @@ namespace POS_qu
             // 
             label4.AutoSize = true;
             label4.Dock = DockStyle.Fill;
-            label4.Location = new Point(2, 193);
+            label4.Location = new Point(2, 191);
             label4.Margin = new Padding(2, 6, 2, 6);
             label4.Name = "label4";
             label4.Size = new Size(165, 25);
@@ -205,7 +205,7 @@ namespace POS_qu
             // 
             label5.AutoSize = true;
             label5.Dock = DockStyle.Fill;
-            label5.Location = new Point(2, 230);
+            label5.Location = new Point(2, 228);
             label5.Margin = new Padding(2, 6, 2, 6);
             label5.Name = "label5";
             label5.Size = new Size(165, 25);
@@ -231,7 +231,7 @@ namespace POS_qu
             cmbProductType.FormattingEnabled = true;
             cmbProductType.Items.AddRange(new object[] { "Stockable (Inventory Item)", "Consumable (Non-Stock Item)", "Service", "Manufactured (BOM/Assembly)" });
             cmbProductType.Location = new Point(171, 76);
-            cmbProductType.Margin = new Padding(2, 2, 2, 2);
+            cmbProductType.Margin = new Padding(2);
             cmbProductType.Name = "cmbProductType";
             cmbProductType.Size = new Size(323, 33);
             cmbProductType.TabIndex = 3;
@@ -240,7 +240,7 @@ namespace POS_qu
             // 
             txtBarcode.Dock = DockStyle.Fill;
             txtBarcode.Location = new Point(171, 2);
-            txtBarcode.Margin = new Padding(2, 2, 2, 2);
+            txtBarcode.Margin = new Padding(2);
             txtBarcode.Name = "txtBarcode";
             txtBarcode.Size = new Size(323, 33);
             txtBarcode.TabIndex = 1;
@@ -249,7 +249,7 @@ namespace POS_qu
             // 
             txtName.Dock = DockStyle.Fill;
             txtName.Location = new Point(171, 39);
-            txtName.Margin = new Padding(2, 2, 2, 2);
+            txtName.Margin = new Padding(2);
             txtName.Name = "txtName";
             txtName.Size = new Size(323, 33);
             txtName.TabIndex = 2;
@@ -259,7 +259,7 @@ namespace POS_qu
             cmbUnit.Dock = DockStyle.Fill;
             cmbUnit.FormattingEnabled = true;
             cmbUnit.Location = new Point(171, 113);
-            cmbUnit.Margin = new Padding(2, 2, 2, 2);
+            cmbUnit.Margin = new Padding(2);
             cmbUnit.Name = "cmbUnit";
             cmbUnit.Size = new Size(323, 33);
             cmbUnit.TabIndex = 5;
@@ -268,8 +268,8 @@ namespace POS_qu
             // 
             cmbCategory.Dock = DockStyle.Fill;
             cmbCategory.FormattingEnabled = true;
-            cmbCategory.Location = new Point(171, 189);
-            cmbCategory.Margin = new Padding(2, 2, 2, 2);
+            cmbCategory.Location = new Point(171, 187);
+            cmbCategory.Margin = new Padding(2);
             cmbCategory.Name = "cmbCategory";
             cmbCategory.Size = new Size(323, 33);
             cmbCategory.TabIndex = 7;
@@ -278,8 +278,8 @@ namespace POS_qu
             // 
             cmbSupplier.Dock = DockStyle.Fill;
             cmbSupplier.FormattingEnabled = true;
-            cmbSupplier.Location = new Point(171, 226);
-            cmbSupplier.Margin = new Padding(2, 2, 2, 2);
+            cmbSupplier.Location = new Point(171, 224);
+            cmbSupplier.Margin = new Padding(2);
             cmbSupplier.Name = "cmbSupplier";
             cmbSupplier.Size = new Size(323, 33);
             cmbSupplier.TabIndex = 8;
@@ -289,7 +289,7 @@ namespace POS_qu
             lblBrand.AutoSize = true;
             lblBrand.Dock = DockStyle.Fill;
             lblBrand.Font = new Font("Segoe UI", 10F);
-            lblBrand.Location = new Point(2, 267);
+            lblBrand.Location = new Point(2, 265);
             lblBrand.Margin = new Padding(2, 6, 2, 6);
             lblBrand.Name = "lblBrand";
             lblBrand.Size = new Size(165, 44);
@@ -303,7 +303,7 @@ namespace POS_qu
             cmbBrand.Font = new Font("Segoe UI", 10F);
             cmbBrand.FormattingEnabled = true;
             cmbBrand.Location = new Point(0, 0);
-            cmbBrand.Margin = new Padding(2, 2, 2, 2);
+            cmbBrand.Margin = new Padding(2);
             cmbBrand.Name = "cmbBrand";
             cmbBrand.Size = new Size(185, 25);
             cmbBrand.TabIndex = 58;
@@ -314,7 +314,7 @@ namespace POS_qu
             btnAddBrand.FlatAppearance.BorderColor = Color.LightGray;
             btnAddBrand.FlatStyle = FlatStyle.Flat;
             btnAddBrand.Location = new Point(185, 0);
-            btnAddBrand.Margin = new Padding(2, 2, 2, 2);
+            btnAddBrand.Margin = new Padding(2);
             btnAddBrand.Name = "btnAddBrand";
             btnAddBrand.Size = new Size(44, 52);
             btnAddBrand.TabIndex = 59;
@@ -327,7 +327,7 @@ namespace POS_qu
             lblRack.AutoSize = true;
             lblRack.Dock = DockStyle.Fill;
             lblRack.Font = new Font("Segoe UI", 10F);
-            lblRack.Location = new Point(2, 323);
+            lblRack.Location = new Point(2, 321);
             lblRack.Margin = new Padding(2, 6, 2, 6);
             lblRack.Name = "lblRack";
             lblRack.Size = new Size(165, 46);
@@ -341,7 +341,7 @@ namespace POS_qu
             cmbRack.Font = new Font("Segoe UI", 10F);
             cmbRack.FormattingEnabled = true;
             cmbRack.Location = new Point(0, 0);
-            cmbRack.Margin = new Padding(2, 2, 2, 2);
+            cmbRack.Margin = new Padding(2);
             cmbRack.Name = "cmbRack";
             cmbRack.Size = new Size(185, 25);
             cmbRack.TabIndex = 61;
@@ -352,7 +352,7 @@ namespace POS_qu
             btnAddRack.FlatAppearance.BorderColor = Color.LightGray;
             btnAddRack.FlatStyle = FlatStyle.Flat;
             btnAddRack.Location = new Point(185, 0);
-            btnAddRack.Margin = new Padding(2, 2, 2, 2);
+            btnAddRack.Margin = new Padding(2);
             btnAddRack.Name = "btnAddRack";
             btnAddRack.Size = new Size(44, 54);
             btnAddRack.TabIndex = 62;
@@ -379,7 +379,7 @@ namespace POS_qu
             cmbWarehouse.Font = new Font("Segoe UI", 10F);
             cmbWarehouse.FormattingEnabled = true;
             cmbWarehouse.Location = new Point(171, 2);
-            cmbWarehouse.Margin = new Padding(2, 2, 2, 2);
+            cmbWarehouse.Margin = new Padding(2);
             cmbWarehouse.Name = "cmbWarehouse";
             cmbWarehouse.Size = new Size(323, 25);
             cmbWarehouse.TabIndex = 64;
@@ -403,7 +403,7 @@ namespace POS_qu
             cmbValuation.Font = new Font("Segoe UI", 10F);
             cmbValuation.FormattingEnabled = true;
             cmbValuation.Location = new Point(171, 33);
-            cmbValuation.Margin = new Padding(2, 2, 2, 2);
+            cmbValuation.Margin = new Padding(2);
             cmbValuation.Name = "cmbValuation";
             cmbValuation.Size = new Size(323, 25);
             cmbValuation.TabIndex = 66;
@@ -432,7 +432,7 @@ namespace POS_qu
             // 
             chk_IsProduced.AutoSize = true;
             chk_IsProduced.Location = new Point(27, 279);
-            chk_IsProduced.Margin = new Padding(2, 2, 2, 2);
+            chk_IsProduced.Margin = new Padding(2);
             chk_IsProduced.Name = "chk_IsProduced";
             chk_IsProduced.Size = new Size(149, 29);
             chk_IsProduced.TabIndex = 14;
@@ -443,7 +443,7 @@ namespace POS_qu
             // 
             chk_IsPackage.AutoSize = true;
             chk_IsPackage.Location = new Point(27, 246);
-            chk_IsPackage.Margin = new Padding(2, 2, 2, 2);
+            chk_IsPackage.Margin = new Padding(2);
             chk_IsPackage.Name = "chk_IsPackage";
             chk_IsPackage.Size = new Size(114, 29);
             chk_IsPackage.TabIndex = 13;
@@ -454,7 +454,7 @@ namespace POS_qu
             // 
             chk_HasMaterials.AutoSize = true;
             chk_HasMaterials.Location = new Point(27, 213);
-            chk_HasMaterials.Margin = new Padding(2, 2, 2, 2);
+            chk_HasMaterials.Margin = new Padding(2);
             chk_HasMaterials.Name = "chk_HasMaterials";
             chk_HasMaterials.Size = new Size(161, 29);
             chk_HasMaterials.TabIndex = 12;
@@ -465,7 +465,7 @@ namespace POS_qu
             // 
             chk_is_changeprice_p.AutoSize = true;
             chk_is_changeprice_p.Location = new Point(27, 180);
-            chk_is_changeprice_p.Margin = new Padding(2, 2, 2, 2);
+            chk_is_changeprice_p.Margin = new Padding(2);
             chk_is_changeprice_p.Name = "chk_is_changeprice_p";
             chk_is_changeprice_p.Size = new Size(288, 29);
             chk_is_changeprice_p.TabIndex = 11;
@@ -476,7 +476,7 @@ namespace POS_qu
             // 
             chk_RequireNotePayment.AutoSize = true;
             chk_RequireNotePayment.Location = new Point(27, 146);
-            chk_RequireNotePayment.Margin = new Padding(2, 2, 2, 2);
+            chk_RequireNotePayment.Margin = new Padding(2);
             chk_RequireNotePayment.Name = "chk_RequireNotePayment";
             chk_RequireNotePayment.Size = new Size(230, 29);
             chk_RequireNotePayment.TabIndex = 10;
@@ -487,7 +487,7 @@ namespace POS_qu
             // 
             chk_IsSellable.AutoSize = true;
             chk_IsSellable.Location = new Point(27, 113);
-            chk_IsSellable.Margin = new Padding(2, 2, 2, 2);
+            chk_IsSellable.Margin = new Padding(2);
             chk_IsSellable.Name = "chk_IsSellable";
             chk_IsSellable.Size = new Size(80, 29);
             chk_IsSellable.TabIndex = 9;
@@ -498,7 +498,7 @@ namespace POS_qu
             // 
             chk_IsPurchasable.AutoSize = true;
             chk_IsPurchasable.Location = new Point(27, 80);
-            chk_IsPurchasable.Margin = new Padding(2, 2, 2, 2);
+            chk_IsPurchasable.Margin = new Padding(2);
             chk_IsPurchasable.Name = "chk_IsPurchasable";
             chk_IsPurchasable.Size = new Size(80, 29);
             chk_IsPurchasable.TabIndex = 8;
@@ -509,7 +509,7 @@ namespace POS_qu
             // 
             chk_is_inventory_p.AutoSize = true;
             chk_is_inventory_p.Location = new Point(27, 47);
-            chk_is_inventory_p.Margin = new Padding(2, 2, 2, 2);
+            chk_is_inventory_p.Margin = new Padding(2);
             chk_is_inventory_p.Name = "chk_is_inventory_p";
             chk_is_inventory_p.Size = new Size(137, 29);
             chk_is_inventory_p.TabIndex = 7;
@@ -547,7 +547,7 @@ namespace POS_qu
             tabPageUnitVariant.Controls.Add(btnUnitVariant);
             tabPageUnitVariant.Controls.Add(dgvVariants);
             tabPageUnitVariant.Location = new Point(4, 38);
-            tabPageUnitVariant.Margin = new Padding(2, 2, 2, 2);
+            tabPageUnitVariant.Margin = new Padding(2);
             tabPageUnitVariant.Name = "tabPageUnitVariant";
             tabPageUnitVariant.Size = new Size(981, 528);
             tabPageUnitVariant.TabIndex = 3;
@@ -573,7 +573,7 @@ namespace POS_qu
             btnUnitVariant.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             btnUnitVariant.ForeColor = Color.White;
             btnUnitVariant.Location = new Point(17, 50);
-            btnUnitVariant.Margin = new Padding(2, 2, 2, 2);
+            btnUnitVariant.Margin = new Padding(2);
             btnUnitVariant.Name = "btnUnitVariant";
             btnUnitVariant.Size = new Size(169, 34);
             btnUnitVariant.TabIndex = 0;
@@ -593,7 +593,7 @@ namespace POS_qu
             dgvVariants.EnableHeadersVisualStyles = false;
             dgvVariants.GridColor = Color.FromArgb(235, 235, 235);
             dgvVariants.Location = new Point(2, 118);
-            dgvVariants.Margin = new Padding(2, 2, 2, 2);
+            dgvVariants.Margin = new Padding(2);
             dgvVariants.Name = "dgvVariants";
             dgvVariants.ReadOnly = true;
             dgvVariants.RowHeadersVisible = false;
@@ -610,10 +610,10 @@ namespace POS_qu
             Harga.Controls.Add(btnAddPrice);
             Harga.Controls.Add(dgvMultiPrice);
             Harga.Location = new Point(4, 38);
-            Harga.Margin = new Padding(2, 2, 2, 2);
+            Harga.Margin = new Padding(2);
             Harga.Name = "Harga";
-            Harga.Padding = new Padding(2, 2, 2, 2);
-            Harga.Size = new Size(800, 392);
+            Harga.Padding = new Padding(2);
+            Harga.Size = new Size(981, 528);
             Harga.TabIndex = 0;
             Harga.Text = "Multi Harga";
             Harga.UseVisualStyleBackColor = true;
@@ -625,7 +625,7 @@ namespace POS_qu
             btnDeletePrice.FlatStyle = FlatStyle.Flat;
             btnDeletePrice.ForeColor = Color.White;
             btnDeletePrice.Location = new Point(336, 17);
-            btnDeletePrice.Margin = new Padding(2, 2, 2, 2);
+            btnDeletePrice.Margin = new Padding(2);
             btnDeletePrice.Name = "btnDeletePrice";
             btnDeletePrice.Size = new Size(147, 36);
             btnDeletePrice.TabIndex = 53;
@@ -640,7 +640,7 @@ namespace POS_qu
             btnEditPrice.FlatStyle = FlatStyle.Flat;
             btnEditPrice.ForeColor = Color.Black;
             btnEditPrice.Location = new Point(177, 17);
-            btnEditPrice.Margin = new Padding(2, 2, 2, 2);
+            btnEditPrice.Margin = new Padding(2);
             btnEditPrice.Name = "btnEditPrice";
             btnEditPrice.Size = new Size(147, 36);
             btnEditPrice.TabIndex = 53;
@@ -655,7 +655,7 @@ namespace POS_qu
             btnAddPrice.FlatStyle = FlatStyle.Flat;
             btnAddPrice.ForeColor = Color.White;
             btnAddPrice.Location = new Point(17, 17);
-            btnAddPrice.Margin = new Padding(2, 2, 2, 2);
+            btnAddPrice.Margin = new Padding(2);
             btnAddPrice.Name = "btnAddPrice";
             btnAddPrice.Size = new Size(147, 36);
             btnAddPrice.TabIndex = 53;
@@ -670,7 +670,7 @@ namespace POS_qu
             dgvMultiPrice.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
             dgvMultiPrice.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvMultiPrice.Location = new Point(17, 66);
-            dgvMultiPrice.Margin = new Padding(2, 2, 2, 2);
+            dgvMultiPrice.Margin = new Padding(2);
             dgvMultiPrice.Name = "dgvMultiPrice";
             dgvMultiPrice.RowHeadersWidth = 62;
             dgvMultiPrice.Size = new Size(945, 328);
@@ -689,9 +689,9 @@ namespace POS_qu
             Bahan.Controls.Add(btnAddMaterial);
             Bahan.Controls.Add(lblAssemblyTitle);
             Bahan.Location = new Point(4, 38);
-            Bahan.Margin = new Padding(2, 2, 2, 2);
+            Bahan.Margin = new Padding(2);
             Bahan.Name = "Bahan";
-            Bahan.Size = new Size(800, 392);
+            Bahan.Size = new Size(981, 528);
             Bahan.TabIndex = 2;
             Bahan.Text = "Item Berbahan / Rakitan";
             Bahan.UseVisualStyleBackColor = true;
@@ -720,7 +720,7 @@ namespace POS_qu
             // txtAssemblySellPrice
             // 
             txtAssemblySellPrice.Location = new Point(198, 353);
-            txtAssemblySellPrice.Margin = new Padding(2, 2, 2, 2);
+            txtAssemblySellPrice.Margin = new Padding(2);
             txtAssemblySellPrice.Name = "txtAssemblySellPrice";
             txtAssemblySellPrice.Size = new Size(231, 33);
             txtAssemblySellPrice.TabIndex = 7;
@@ -766,7 +766,7 @@ namespace POS_qu
             dgvMaterials.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvMaterials.Columns.AddRange(new DataGridViewColumn[] { colMaterialItem, colMaterialQty, colMaterialBaseUnit, colMaterialViewUnits, colMaterialUnit, colMaterialPrice, colMaterialSubtotal });
             dgvMaterials.Location = new Point(17, 108);
-            dgvMaterials.Margin = new Padding(2, 2, 2, 2);
+            dgvMaterials.Margin = new Padding(2);
             dgvMaterials.Name = "dgvMaterials";
             dgvMaterials.RowHeadersVisible = false;
             dgvMaterials.RowHeadersWidth = 62;
@@ -842,7 +842,7 @@ namespace POS_qu
             btnRemoveMaterial.FlatStyle = FlatStyle.Flat;
             btnRemoveMaterial.ForeColor = Color.White;
             btnRemoveMaterial.Location = new Point(198, 58);
-            btnRemoveMaterial.Margin = new Padding(2, 2, 2, 2);
+            btnRemoveMaterial.Margin = new Padding(2);
             btnRemoveMaterial.Name = "btnRemoveMaterial";
             btnRemoveMaterial.Size = new Size(169, 36);
             btnRemoveMaterial.TabIndex = 2;
@@ -857,7 +857,7 @@ namespace POS_qu
             btnAddMaterial.FlatStyle = FlatStyle.Flat;
             btnAddMaterial.ForeColor = Color.White;
             btnAddMaterial.Location = new Point(17, 58);
-            btnAddMaterial.Margin = new Padding(2, 2, 2, 2);
+            btnAddMaterial.Margin = new Padding(2);
             btnAddMaterial.Name = "btnAddMaterial";
             btnAddMaterial.Size = new Size(169, 36);
             btnAddMaterial.TabIndex = 1;
@@ -946,7 +946,7 @@ namespace POS_qu
             panel2.Controls.Add(Margin);
             panel2.Controls.Add(Diskon);
             panel2.Location = new Point(628, 19);
-            panel2.Margin = new Padding(2, 2, 2, 2);
+            panel2.Margin = new Padding(2);
             panel2.Name = "panel2";
             panel2.Size = new Size(336, 146);
             panel2.TabIndex = 2;
@@ -1064,7 +1064,7 @@ namespace POS_qu
             // txtDiscountFormula
             // 
             txtDiscountFormula.Location = new Point(179, 176);
-            txtDiscountFormula.Margin = new Padding(2, 2, 2, 2);
+            txtDiscountFormula.Margin = new Padding(2);
             txtDiscountFormula.Name = "txtDiscountFormula";
             txtDiscountFormula.Size = new Size(229, 33);
             txtDiscountFormula.TabIndex = 19;
@@ -1072,7 +1072,7 @@ namespace POS_qu
             // txtSellPrice
             // 
             txtSellPrice.Location = new Point(179, 136);
-            txtSellPrice.Margin = new Padding(2, 2, 2, 2);
+            txtSellPrice.Margin = new Padding(2);
             txtSellPrice.Name = "txtSellPrice";
             txtSellPrice.Size = new Size(229, 33);
             txtSellPrice.TabIndex = 18;
@@ -1080,7 +1080,7 @@ namespace POS_qu
             // txtBuyPrice
             // 
             txtBuyPrice.Location = new Point(179, 97);
-            txtBuyPrice.Margin = new Padding(2, 2, 2, 2);
+            txtBuyPrice.Margin = new Padding(2);
             txtBuyPrice.Name = "txtBuyPrice";
             txtBuyPrice.Size = new Size(229, 33);
             txtBuyPrice.TabIndex = 17;
@@ -1088,7 +1088,7 @@ namespace POS_qu
             // txtMinQty
             // 
             txtMinQty.Location = new Point(179, 55);
-            txtMinQty.Margin = new Padding(2, 2, 2, 2);
+            txtMinQty.Margin = new Padding(2);
             txtMinQty.Name = "txtMinQty";
             txtMinQty.Size = new Size(100, 33);
             txtMinQty.TabIndex = 16;
@@ -1096,7 +1096,7 @@ namespace POS_qu
             // txtStock
             // 
             txtStock.Location = new Point(179, 16);
-            txtStock.Margin = new Padding(2, 2, 2, 2);
+            txtStock.Margin = new Padding(2);
             txtStock.Name = "txtStock";
             txtStock.Size = new Size(100, 33);
             txtStock.TabIndex = 16;
@@ -1107,8 +1107,8 @@ namespace POS_qu
             dtpExpired.Dock = DockStyle.Left;
             dtpExpired.Font = new Font("Segoe UI", 10F);
             dtpExpired.Format = DateTimePickerFormat.Short;
-            dtpExpired.Location = new Point(171, 414);
-            dtpExpired.Margin = new Padding(2, 2, 2, 2);
+            dtpExpired.Location = new Point(171, 412);
+            dtpExpired.Margin = new Padding(2);
             dtpExpired.Name = "dtpExpired";
             dtpExpired.ShowCheckBox = true;
             dtpExpired.Size = new Size(168, 25);
@@ -1119,7 +1119,7 @@ namespace POS_qu
             lblExpired.AutoSize = true;
             lblExpired.Dock = DockStyle.Fill;
             lblExpired.Font = new Font("Segoe UI", 10F);
-            lblExpired.Location = new Point(2, 418);
+            lblExpired.Location = new Point(2, 416);
             lblExpired.Margin = new Padding(2, 6, 2, 6);
             lblExpired.Name = "lblExpired";
             lblExpired.Size = new Size(165, 19);
@@ -1129,8 +1129,8 @@ namespace POS_qu
             // txtNote
             // 
             txtNote.Dock = DockStyle.Fill;
-            txtNote.Location = new Point(171, 377);
-            txtNote.Margin = new Padding(2, 2, 2, 2);
+            txtNote.Location = new Point(171, 375);
+            txtNote.Margin = new Padding(2);
             txtNote.Name = "txtNote";
             txtNote.Size = new Size(323, 33);
             txtNote.TabIndex = 6;
@@ -1139,7 +1139,7 @@ namespace POS_qu
             // 
             label7.AutoSize = true;
             label7.Dock = DockStyle.Fill;
-            label7.Location = new Point(2, 381);
+            label7.Location = new Point(2, 379);
             label7.Margin = new Padding(2, 6, 2, 6);
             label7.Name = "label7";
             label7.Size = new Size(165, 25);
@@ -1194,7 +1194,7 @@ namespace POS_qu
             label13.Location = new Point(2, 154);
             label13.Margin = new Padding(2, 6, 2, 6);
             label13.Name = "label13";
-            label13.Size = new Size(165, 27);
+            label13.Size = new Size(165, 25);
             label13.TabIndex = 0;
             label13.Text = "Urut Unit";
             // 
@@ -1206,7 +1206,7 @@ namespace POS_qu
             pnlRoot.Dock = DockStyle.Fill;
             pnlRoot.Font = new Font("Segoe UI", 14.25F, FontStyle.Regular, GraphicsUnit.Point, 0);
             pnlRoot.Location = new Point(0, 0);
-            pnlRoot.Margin = new Padding(4, 4, 4, 4);
+            pnlRoot.Margin = new Padding(4);
             pnlRoot.Name = "pnlRoot";
             pnlRoot.Padding = new Padding(21, 20, 21, 20);
             pnlRoot.Size = new Size(1574, 891);
@@ -1218,7 +1218,7 @@ namespace POS_qu
             pnlBottomBar.Controls.Add(flpBottomActions);
             pnlBottomBar.Dock = DockStyle.Bottom;
             pnlBottomBar.Location = new Point(21, 785);
-            pnlBottomBar.Margin = new Padding(4, 4, 4, 4);
+            pnlBottomBar.Margin = new Padding(4);
             pnlBottomBar.Name = "pnlBottomBar";
             pnlBottomBar.Padding = new Padding(0, 12, 0, 0);
             pnlBottomBar.Size = new Size(1532, 86);
@@ -1358,15 +1358,15 @@ namespace POS_qu
             tlpInfo.RowStyles.Add(new RowStyle());
             tlpInfo.RowStyles.Add(new RowStyle());
             tlpInfo.RowStyles.Add(new RowStyle());
-            tlpInfo.Size = new Size(496, 443);
+            tlpInfo.Size = new Size(496, 441);
             tlpInfo.TabIndex = 0;
             // 
             // pnlBrandRow
             // 
             pnlBrandRow.Controls.Add(cmbBrand);
             pnlBrandRow.Controls.Add(btnAddBrand);
-            pnlBrandRow.Location = new Point(171, 263);
-            pnlBrandRow.Margin = new Padding(2, 2, 2, 2);
+            pnlBrandRow.Location = new Point(171, 261);
+            pnlBrandRow.Margin = new Padding(2);
             pnlBrandRow.Name = "pnlBrandRow";
             pnlBrandRow.Size = new Size(229, 52);
             pnlBrandRow.TabIndex = 58;
@@ -1375,8 +1375,8 @@ namespace POS_qu
             // 
             pnlRackRow.Controls.Add(cmbRack);
             pnlRackRow.Controls.Add(btnAddRack);
-            pnlRackRow.Location = new Point(171, 319);
-            pnlRackRow.Margin = new Padding(2, 2, 2, 2);
+            pnlRackRow.Location = new Point(171, 317);
+            pnlRackRow.Margin = new Padding(2);
             pnlRackRow.Name = "pnlRackRow";
             pnlRackRow.Size = new Size(229, 54);
             pnlRackRow.TabIndex = 61;
