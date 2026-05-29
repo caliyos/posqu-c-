@@ -149,7 +149,7 @@ namespace POS_qu
         private void AddVariantToPanel(UnitVariant variant)
         {
             var sellIfFollowBase = baseSellPrice * variant.Conversion;
-            var hppTotal = _item.buy_price * variant.Conversion;
+            var hppTotal = _item.hpp_avg * variant.Conversion;
             var priceDiff = variant.SellPrice - sellIfFollowBase;
             var priceDiffPercent = sellIfFollowBase == 0m ? 0m : (priceDiff / sellIfFollowBase) * 100m;
             var hppDiff = variant.SellPrice - hppTotal;

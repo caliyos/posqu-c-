@@ -760,7 +760,7 @@ LIMIT 1
             string itemName = txtName.Text;
             decimal buyPrice = UiNumberFormat.ParseMoney(txtBuyPrice.Text);
 
-            if (ShowPriceEditor(newPrice, itemName, buyPrice))
+            if (ShowPriceEditor(newPrice, itemName, buyPrice,false))
             {
                 list.Add(newPrice);
                 dgvMultiPrice.Refresh();
@@ -774,7 +774,7 @@ LIMIT 1
             string itemName = txtName.Text;
             decimal buyPrice = UiNumberFormat.ParseMoney(txtBuyPrice.Text);
 
-            if (ShowPriceEditor(price, itemName, buyPrice))
+            if (ShowPriceEditor(price, itemName, buyPrice,true))
             {
                 dgvMultiPrice.Refresh();
             }
@@ -794,23 +794,23 @@ LIMIT 1
         // ------------------------
         // ShowPriceEditor Modular
         // ------------------------
-        private bool ShowPriceEditor(ItemPrice price, string itemName, decimal buyPrice)
+        private bool ShowPriceEditor(ItemPrice price, string itemName, decimal buyPrice,bool isEdit)
         {
             using Form popup = new Form()
             {
                 StartPosition = FormStartPosition.CenterParent,
                 FormBorderStyle = FormBorderStyle.FixedDialog,
-                Width = 500,
-                Height = 450,
-                Text = "Edit Harga Bertingkat",
+                Width = 650,
+                Height = 580,
+                Text = "Edit multi harga (harga bertingkat)",
                 Font = new Font("Segoe UI", 11, FontStyle.Bold)
             };
 
-            Label lblItemName = new Label() { Left = 20, Top = 15, Width = 400, Text = "Item: " + itemName, Font = new Font("Segoe UI", 11, FontStyle.Bold) };
-            
+            Label lblItemName = new Label() { Left = 20, Top = 15, Width = 600, Text = "Item: " + itemName, Font = new Font("Segoe UI", 11, FontStyle.Bold) };
+
             Label lblUnit = new Label() { Left = 20, Top = 60, Text = "Satuan", AutoSize = true };
             ComboBox cmbVariantUnit = new ComboBox() { Left = 150, Top = 58, Width = 280, DropDownStyle = ComboBoxStyle.DropDownList };
-            
+
             // Populate cmbVariantUnit with base unit and variants
             List<dynamic> unitList = new List<dynamic>();
 
@@ -828,86 +828,275 @@ LIMIT 1
                     unitList.Add(new { id = v.UnitId, display = v.UnitName });
                 }
             }
-            
+
+      
             cmbVariantUnit.ValueMember = "id";
             cmbVariantUnit.DisplayMember = "display";
             cmbVariantUnit.DataSource = unitList;
-            if (price.UnitId > 0) cmbVariantUnit.SelectedValue = price.UnitId;
-            else if (cmbUnit.SelectedValue != null) cmbVariantUnit.SelectedValue = Convert.ToInt32(cmbUnit.SelectedValue);
+            cmbVariantUnit.BindingContext = new BindingContext();
+
+
+            //if (cmbUnit.SelectedValue != null) cmbVariantUnit.SelectedValue = Convert.ToInt32(cmbUnit.SelectedValue);
+            //else if (price.UnitId > 0) cmbVariantUnit.SelectedValue = price.UnitId;
+            if (isEdit)
+            {
+                cmbVariantUnit.SelectedValue = price.UnitId;
+            }
+            else
+            {
+                if (cmbUnit.SelectedValue != null) cmbVariantUnit.SelectedValue = Convert.ToInt32(cmbUnit.SelectedValue);
+                else if (price.UnitId > 0) cmbVariantUnit.SelectedValue = price.UnitId;
+            }
+
+
 
             Label lblLevel = new Label() { Left = 20, Top = 100, Text = "Level Harga", AutoSize = true };
             ComboBox cmbLevel = new ComboBox() { Left = 150, Top = 98, Width = 280, DropDownStyle = ComboBoxStyle.DropDownList };
             var dtLevels = _productService.GetPriceLevels();
-            
-            // Konversi dari DataTable ke custom class/object list agar tidak muncul System.Data.DataRowView
+
+            // Debug: Lihat isi unitList
+            System.Diagnostics.Debug.WriteLine("=== unitList Contents ===");
+            foreach (var item in unitList)
+            {
+                System.Diagnostics.Debug.WriteLine($"ID: {item.id}, Display: {item.display}");
+            }
+            System.Diagnostics.Debug.WriteLine($"price.UnitId: {price.UnitId}");
+            System.Diagnostics.Debug.WriteLine($"cmbUnit.SelectedValuexx: {cmbUnit.SelectedValue}");
+
             List<dynamic> levelList = new List<dynamic>();
             foreach (DataRow row in dtLevels.Rows)
             {
                 levelList.Add(new { id = Convert.ToInt32(row["id"]), name = row["name"].ToString() });
             }
-            
+
             cmbLevel.ValueMember = "id";
             cmbLevel.DisplayMember = "name";
             cmbLevel.DataSource = levelList;
-            if (price.PriceLevelId > 0) cmbLevel.SelectedValue = price.PriceLevelId;
+            cmbLevel.BindingContext = new BindingContext();
+
+            if (isEdit)
+            {
+                cmbLevel.SelectedValue = price.PriceLevelId;
+            }
+            else
+            {
+                if (price.PriceLevelId > 0) cmbLevel.SelectedValue = price.PriceLevelId;
+            }
+
+
+           
 
             Label lblMinQty = new Label() { Left = 20, Top = 140, Text = "Min Qty", AutoSize = true };
-            TextBox txtMinQty = new TextBox() { Left = 170, Top = 138, Width = 100, Text = price.MinQty.ToString() };
-            
+            TextBox txtMinQty = new TextBox() { Left = 170, Top = 138, Width = 100, Text = price.MinQty.ToString("N2", UiNumberFormat.DotCulture) };
+
             Label lblMaxQty = new Label() { Left = 280, Top = 140, Text = "Max Qty", AutoSize = true };
-            TextBox txtMaxQty = new TextBox() { Left = 360, Top = 138, Width = 70, Text = price.MaxQty?.ToString() };
+            TextBox txtMaxQty = new TextBox() { Left = 360, Top = 138, Width = 100, Text = price.MaxQty?.ToString("N2", UiNumberFormat.DotCulture) ?? "" };
 
             Label lblPrice = new Label() { Left = 20, Top = 180, Text = "Harga Jual Per Item", AutoSize = true };
-            TextBox txtPrice = new TextBox() { Left = 170, Top = 178, Width = 100, Text = price.Price.ToString("N2", UiNumberFormat.DotCulture) };
+            TextBox txtPrice = new TextBox() { Left = 170, Top = 178, Width = 150, Text = price.Price.ToString("N2", UiNumberFormat.DotCulture) };
 
-            Label lblFinalPrice = new Label() { Left = 20, Top = 230, Width = 350, Text = "Harga Akhir: -" };
-            Label lblMargin = new Label() { Left = 20, Top = 260, Width = 350, Text = "Margin: -" };
+            // Panel untuk informasi perbandingan
+            GroupBox grpComparison = new GroupBox()
+            {
+                Left = 20,
+                Top = 220,
+                Width = 600,
+                Height = 200,
+                Text = "Perbandingan Harga",
+                Font = new Font("Segoe UI", 10, FontStyle.Bold)
+            };
+
+            Label lblMultiPrice = new Label() { Left = 15, Top = 30, Width = 570, Text = "", Font = new Font("Segoe UI", 10) };
+            Label lblCompareBase = new Label() { Left = 15, Top = 65, Width = 570, Text = "", Font = new Font("Segoe UI", 10) };
+            Label lblCompareHPP = new Label() { Left = 15, Top = 100, Width = 570, Text = "", Font = new Font("Segoe UI", 10) };
+            Label lblFinalPrice = new Label() { Left = 15, Top = 140, Width = 570, Text = "", Font = new Font("Segoe UI", 10, FontStyle.Bold) };
+            Label lblMargin = new Label() { Left = 15, Top = 170, Width = 570, Text = "", Font = new Font("Segoe UI", 10, FontStyle.Bold) };
+
+            grpComparison.Controls.AddRange(new Control[] { lblMultiPrice, lblCompareBase, lblCompareHPP, lblFinalPrice, lblMargin });
 
             // Auto-update base buyPrice based on selected variant's conversion
             void UpdateVariantBuyPrice()
             {
                 if (cmbVariantUnit.SelectedValue == null) return;
                 int selectedUnitId = Convert.ToInt32(cmbVariantUnit.SelectedValue);
-                int baseUnitId = cmbUnit.SelectedValue != null ? Convert.ToInt32(cmbUnit.SelectedValue) : 0;
-                
-                decimal variantBuyPrice = buyPrice; // default to base
-                
-                if (selectedUnitId != baseUnitId)
+                int currentBaseUnitId = cmbUnit.SelectedValue != null ? Convert.ToInt32(cmbUnit.SelectedValue) : 0;
+
+                decimal variantBuyPrice = buyPrice;
+                decimal conversion = 1;
+
+                if (selectedUnitId != currentBaseUnitId)
                 {
                     var variant = _item.UnitVariants.FirstOrDefault(v => v.UnitId == selectedUnitId);
                     if (variant != null && variant.Conversion > 0)
                     {
-                        variantBuyPrice = buyPrice * (decimal)variant.Conversion;
+                        conversion = (decimal)variant.Conversion;
+                        variantBuyPrice = buyPrice * conversion;
                     }
                 }
-                
-                // Set the local variable that Recalculate uses
+
                 price.buy_price_temp = variantBuyPrice;
+                UpdateComparisons(conversion, selectedUnitId, currentBaseUnitId);
                 Recalculate();
             }
 
-            cmbVariantUnit.SelectedIndexChanged += (s, e) => UpdateVariantBuyPrice();
+            void UpdateComparisons(decimal conversion, int selectedUnitId, int currentBaseUnitId)
+            {
+                // Ambil harga jual base dari item
+                decimal baseSellPrice = _item.sell_price;
+
+                // HPP dari parameter
+                decimal currentHPP = buyPrice;
+
+                // Konversi ke satuan yang dipilih
+                decimal baseSellPriceConverted = baseSellPrice * conversion;
+                decimal hppConverted = currentHPP * conversion;
+
+                // Ambil harga yang dimasukkan
+                decimal currentPrice = UiNumberFormat.ParseMoney(txtPrice.Text);
+
+                // Hitung perbandingan
+                decimal diffFromBase = currentPrice - baseSellPriceConverted;
+                decimal diffFromHPP = currentPrice - hppConverted;
+
+                decimal percentFromBase = baseSellPriceConverted != 0 ? (diffFromBase / baseSellPriceConverted) * 100 : 0;
+                decimal percentFromHPP = hppConverted != 0 ? (diffFromHPP / hppConverted) * 100 : 0;
+
+                // Dapatkan nama level dan satuan
+                string levelName = cmbLevel.Text;
+                string unitName = cmbVariantUnit.Text;
+
+                // Multi Harga
+                lblMultiPrice.Text = $"Multi Harga ({unitName}/{levelName}) : Rp {currentPrice.ToString("N2", UiNumberFormat.DotCulture)}";
+
+                // Perbandingan dengan Harga Jual Base
+                string basePriceText = baseSellPriceConverted >= 1000
+                    ? $"Rp {baseSellPriceConverted.ToString("N2", UiNumberFormat.DotCulture)}"
+                    : $"Rp {baseSellPriceConverted.ToString("N2", UiNumberFormat.DotCulture)}/{unitName}";
+
+                if (diffFromBase >= 0)
+                {
+                    lblCompareBase.Text = $"Perbandingan dgn Harga Jual Base ({basePriceText}) : + Rp {diffFromBase.ToString("N2", UiNumberFormat.DotCulture)} (+{percentFromBase.ToString("N2", UiNumberFormat.DotCulture)}%)";
+                    lblCompareBase.ForeColor = diffFromBase > 0 ? Color.Green : Color.Gray;
+                }
+                else
+                {
+                    lblCompareBase.Text = $"Perbandingan dgn Harga Jual Base ({basePriceText}) : - Rp {Math.Abs(diffFromBase).ToString("N2", UiNumberFormat.DotCulture)} ({percentFromBase.ToString("N2", UiNumberFormat.DotCulture)}%)";
+                    lblCompareBase.ForeColor = Color.Red;
+                }
+
+                // Perbandingan dengan HPP
+                string hppText = hppConverted >= 1000
+                    ? $"Rp {hppConverted.ToString("N2", UiNumberFormat.DotCulture)}"
+                    : $"Rp {hppConverted.ToString("N2", UiNumberFormat.DotCulture)}/{unitName}";
+
+                if (diffFromHPP >= 0)
+                {
+                    lblCompareHPP.Text = $"Perbandingan dgn HPP ({hppText}) : + Rp {diffFromHPP.ToString("N2", UiNumberFormat.DotCulture)} (+{percentFromHPP.ToString("N2", UiNumberFormat.DotCulture)}%)";
+                    lblCompareHPP.ForeColor = diffFromHPP > 0 ? Color.Green : Color.Gray;
+                }
+                else
+                {
+                    lblCompareHPP.Text = $"Perbandingan dgn HPP ({hppText}) : - Rp {Math.Abs(diffFromHPP).ToString("N2", UiNumberFormat.DotCulture)} ({percentFromHPP.ToString("N2", UiNumberFormat.DotCulture)}%)";
+                    lblCompareHPP.ForeColor = Color.Red;
+                }
+            }
 
             void Recalculate()
             {
                 decimal sellPrice = UiNumberFormat.ParseMoney(txtPrice.Text);
-
                 decimal currentBuyPrice = price.buy_price_temp > 0 ? price.buy_price_temp : buyPrice;
                 decimal margin = sellPrice - currentBuyPrice;
                 decimal marginPercent = currentBuyPrice > 0 ? (margin / currentBuyPrice) * 100 : 0;
 
-                lblFinalPrice.Text = $"Harga Akhir: {sellPrice.ToString("N2", UiNumberFormat.DotCulture)}";
-                lblMargin.Text = $"Margin: {margin.ToString("N2", UiNumberFormat.DotCulture)} ({marginPercent.ToString("+0.##;-0.##", UiNumberFormat.DotCulture)}%)";
+                lblFinalPrice.Text = $"Harga Akhir: Rp {sellPrice.ToString("N2", UiNumberFormat.DotCulture)}";
+                lblMargin.Text = $"Margin: Rp {margin.ToString("N2", UiNumberFormat.DotCulture)} ({marginPercent.ToString("+0.##;-0.##", UiNumberFormat.DotCulture)}%)";
+
+                if (margin > 0)
+                {
+                    lblMargin.ForeColor = Color.Green;
+                }
+                else if (margin < 0)
+                {
+                    lblMargin.ForeColor = Color.Red;
+                }
+                else
+                {
+                    lblMargin.ForeColor = Color.Gray;
+                }
             }
 
-            txtPrice.TextChanged += (s, e) => Recalculate();
+            cmbVariantUnit.SelectedIndexChanged += (s, e) => UpdateVariantBuyPrice();
+            cmbLevel.SelectedIndexChanged += (s, e) =>
+            {
+                if (cmbVariantUnit.SelectedValue != null)
+                {
+                    int selectedUnitId = Convert.ToInt32(cmbVariantUnit.SelectedValue);
+                    int currentBaseUnitId = cmbUnit.SelectedValue != null ? Convert.ToInt32(cmbUnit.SelectedValue) : 0;
+                    decimal conversion = 1;
+
+                    if (selectedUnitId != currentBaseUnitId)
+                    {
+                        var variant = _item.UnitVariants.FirstOrDefault(v => v.UnitId == selectedUnitId);
+                        if (variant != null && variant.Conversion > 0)
+                        {
+                            conversion = (decimal)variant.Conversion;
+                        }
+                    }
+                    UpdateComparisons(conversion, selectedUnitId, currentBaseUnitId);
+                }
+                Recalculate();
+            };
+
+            txtPrice.TextChanged += (s, e) =>
+            {
+                if (cmbVariantUnit.SelectedValue != null)
+                {
+                    int selectedUnitId = Convert.ToInt32(cmbVariantUnit.SelectedValue);
+                    int currentBaseUnitId = cmbUnit.SelectedValue != null ? Convert.ToInt32(cmbUnit.SelectedValue) : 0;
+                    decimal conversion = 1;
+
+                    if (selectedUnitId != currentBaseUnitId)
+                    {
+                        var variant = _item.UnitVariants.FirstOrDefault(v => v.UnitId == selectedUnitId);
+                        if (variant != null && variant.Conversion > 0)
+                        {
+                            conversion = (decimal)variant.Conversion;
+                        }
+                    }
+                    UpdateComparisons(conversion, selectedUnitId, currentBaseUnitId);
+                }
+                Recalculate();
+            };
+
             txtPrice.Leave += (s, e) => txtPrice.Text = UiNumberFormat.FormatMoneyText(txtPrice.Text);
+
+            // Initial update
+            if (cmbVariantUnit.SelectedValue != null)
+            {
+                int selectedUnitId = Convert.ToInt32(cmbVariantUnit.SelectedValue);
+                int currentBaseUnitId = cmbUnit.SelectedValue != null ? Convert.ToInt32(cmbUnit.SelectedValue) : 0;
+                decimal conversion = 1;
+
+                if (selectedUnitId != currentBaseUnitId)
+                {
+                    var variant = _item.UnitVariants.FirstOrDefault(v => v.UnitId == selectedUnitId);
+                    if (variant != null && variant.Conversion > 0)
+                    {
+                        conversion = (decimal)variant.Conversion;
+                    }
+                }
+                UpdateComparisons(conversion, selectedUnitId, currentBaseUnitId);
+            }
             Recalculate();
 
-            Button btnOK = new Button() { Left = 200, Top = 320, Width = 90, Height = 45, Text = "OK", DialogResult = DialogResult.OK };
-            Button btnCancel = new Button() { Left = 310, Top = 320, Width = 90, Height = 45, Text = "Batal", DialogResult = DialogResult.Cancel };
+            Button btnOK = new Button() { Left = 400, Top = 440, Width = 100, Height = 45, Text = "OK", DialogResult = DialogResult.OK, BackColor = Color.LightGreen };
+            Button btnCancel = new Button() { Left = 520, Top = 440, Width = 100, Height = 45, Text = "Batal", DialogResult = DialogResult.Cancel };
 
-            popup.Controls.AddRange(new Control[] { lblItemName, lblUnit, cmbVariantUnit, lblLevel, cmbLevel, lblMinQty, txtMinQty, lblMaxQty, txtMaxQty, lblPrice, txtPrice, lblFinalPrice, lblMargin, btnOK, btnCancel });
+            popup.Controls.AddRange(new Control[] {
+        lblItemName, lblUnit, cmbVariantUnit, lblLevel, cmbLevel,
+        lblMinQty, txtMinQty, lblMaxQty, txtMaxQty, lblPrice, txtPrice,
+        grpComparison, btnOK, btnCancel
+    });
             popup.AcceptButton = btnOK;
             popup.CancelButton = btnCancel;
 

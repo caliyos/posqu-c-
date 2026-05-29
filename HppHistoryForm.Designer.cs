@@ -140,10 +140,11 @@ namespace POS_qu
             btnClose.Location = new Point(689, 8);
             btnClose.Margin = new Padding(2);
             btnClose.Name = "btnClose";
-            btnClose.Size = new Size(84, 28);
+            btnClose.Size = new Size(104, 28);
             btnClose.TabIndex = 7;
-            btnClose.Text = "Tutup";
+            btnClose.Text = "Tutup (Esc)";
             btnClose.UseVisualStyleBackColor = false;
+            btnClose.Click += btnClose_Click;
             // 
             // btnRevalue
             // 

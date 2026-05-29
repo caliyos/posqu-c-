@@ -93,10 +93,12 @@ namespace POS_qu
             dtStockTo.ValueChanged += (s, e) => { if (dtStockTo.Checked) { _stockPage = 1; LoadData(); } };
             dtLayersFrom.ValueChanged += (s, e) => { if (dtLayersFrom.Checked) { _layersPage = 1; LoadData(); } };
             dtLayersTo.ValueChanged += (s, e) => { if (dtLayersTo.Checked) { _layersPage = 1; LoadData(); } };
+            this.KeyDown += Form1_KeyDown;
         }
 
         private void HppHistoryForm_Load(object sender, EventArgs e)
         {
+            this.KeyPreview = true;
             this.WindowState = FormWindowState.Maximized;
             ApplyGridStyle(dgvLayers);
             ApplyGridStyle(dgvStockCard);
@@ -189,6 +191,14 @@ LIMIT 1", con);
             if (pageSize <= 0) return 1;
             if (totalRows <= 0) return 1;
             return (int)Math.Ceiling(totalRows / (double)pageSize);
+        }
+
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Escape)
+            {
+                this.Close();
+            }
         }
 
         private static DateTime? GetCheckedDate(DateTimePicker p)
@@ -1144,6 +1154,11 @@ LIMIT @limit OFFSET @offset
             dgv.RowsDefaultCellStyle.SelectionBackColor = Color.FromArgb(232, 240, 254);
             dgv.RowsDefaultCellStyle.SelectionForeColor = Color.FromArgb(51, 51, 51);
             dgv.RowTemplate.Height = 40;
+        }
+
+        private void btnClose_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
     }
 }
