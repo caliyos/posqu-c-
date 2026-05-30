@@ -229,7 +229,7 @@ namespace POS_qu
             cmbProductType.Dock = DockStyle.Fill;
             cmbProductType.DropDownStyle = ComboBoxStyle.DropDownList;
             cmbProductType.FormattingEnabled = true;
-            cmbProductType.Items.AddRange(new object[] { "Stockable (Inventory Item)", "Consumable (Non-Stock Item)", "Service", "Manufactured (BOM/Assembly)" });
+            cmbProductType.Items.AddRange(new object[] { "Stockable (Inventory Item)", "Consumable (Non-Stock Item)", "Service", "Paket / Bundle" });
             cmbProductType.Location = new Point(171, 76);
             cmbProductType.Margin = new Padding(2);
             cmbProductType.Name = "cmbProductType";
@@ -693,14 +693,14 @@ namespace POS_qu
             Bahan.Name = "Bahan";
             Bahan.Size = new Size(981, 528);
             Bahan.TabIndex = 2;
-            Bahan.Text = "Item Berbahan / Rakitan";
+            Bahan.Text = "Paket / Bundle";
             Bahan.UseVisualStyleBackColor = true;
             // 
             // lblAssemblyMarginValue
             // 
             lblAssemblyMarginValue.AutoSize = true;
             lblAssemblyMarginValue.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            lblAssemblyMarginValue.Location = new Point(537, 353);
+            lblAssemblyMarginValue.Location = new Point(552, 329);
             lblAssemblyMarginValue.Margin = new Padding(2, 0, 2, 0);
             lblAssemblyMarginValue.Name = "lblAssemblyMarginValue";
             lblAssemblyMarginValue.Size = new Size(17, 19);
@@ -710,7 +710,7 @@ namespace POS_qu
             // lblAssemblyMarginTitle
             // 
             lblAssemblyMarginTitle.AutoSize = true;
-            lblAssemblyMarginTitle.Location = new Point(452, 357);
+            lblAssemblyMarginTitle.Location = new Point(444, 323);
             lblAssemblyMarginTitle.Margin = new Padding(2, 0, 2, 0);
             lblAssemblyMarginTitle.Name = "lblAssemblyMarginTitle";
             lblAssemblyMarginTitle.Size = new Size(73, 25);
@@ -719,7 +719,7 @@ namespace POS_qu
             // 
             // txtAssemblySellPrice
             // 
-            txtAssemblySellPrice.Location = new Point(198, 353);
+            txtAssemblySellPrice.Location = new Point(198, 374);
             txtAssemblySellPrice.Margin = new Padding(2);
             txtAssemblySellPrice.Name = "txtAssemblySellPrice";
             txtAssemblySellPrice.Size = new Size(231, 33);
@@ -729,7 +729,7 @@ namespace POS_qu
             // lblAssemblySellPrice
             // 
             lblAssemblySellPrice.AutoSize = true;
-            lblAssemblySellPrice.Location = new Point(17, 357);
+            lblAssemblySellPrice.Location = new Point(17, 378);
             lblAssemblySellPrice.Margin = new Padding(2, 0, 2, 0);
             lblAssemblySellPrice.Name = "lblAssemblySellPrice";
             lblAssemblySellPrice.Size = new Size(101, 25);
@@ -740,7 +740,7 @@ namespace POS_qu
             // 
             lblTotalHppValue.AutoSize = true;
             lblTotalHppValue.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
-            lblTotalHppValue.Location = new Point(198, 319);
+            lblTotalHppValue.Location = new Point(198, 326);
             lblTotalHppValue.Margin = new Padding(2, 0, 2, 0);
             lblTotalHppValue.Name = "lblTotalHppValue";
             lblTotalHppValue.Size = new Size(17, 19);
@@ -872,9 +872,9 @@ namespace POS_qu
             lblAssemblyTitle.Location = new Point(17, 17);
             lblAssemblyTitle.Margin = new Padding(2, 0, 2, 0);
             lblAssemblyTitle.Name = "lblAssemblyTitle";
-            lblAssemblyTitle.Size = new Size(195, 21);
+            lblAssemblyTitle.Size = new Size(210, 21);
             lblAssemblyTitle.TabIndex = 0;
-            lblAssemblyTitle.Text = "Komponen Item Rakitan";
+            lblAssemblyTitle.Text = "Komponen Paket / Bundle";
             // 
             // pnlPricing
             // 

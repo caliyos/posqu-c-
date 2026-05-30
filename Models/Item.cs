@@ -84,6 +84,8 @@ namespace POS_qu.Models
         // VALUATION METHOD (FIFO / AVG)
         public string valuation_method { get; set; } = "AVG";
 
+        public decimal hpp { get; set; }
+
         public List<ItemMaterial> MaterialsList { get; set; } = new List<ItemMaterial>();
 
         public decimal hpp_avg { get; set; }  // Harga per pcs untuk unit variant

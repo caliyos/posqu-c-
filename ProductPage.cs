@@ -608,26 +608,20 @@ namespace POS_qu
             UpdateValueColumns(dt);
 
             dataGridView1.DataSource = dt;
-            if (dataGridView1.Columns.Contains("stock_value"))
+      
+            if (dataGridView1.Columns.Contains("hpp"))
             {
-                dataGridView1.Columns["stock_value"].HeaderText = "Nilai Stok (HPP)";
-                dataGridView1.Columns["stock_value"].DefaultCellStyle.Format = "N2";
-                dataGridView1.Columns["stock_value"].DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
-                dataGridView1.Columns["stock_value"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                dataGridView1.Columns["hpp"].HeaderText = "HPP";
+                dataGridView1.Columns["hpp"].DefaultCellStyle.Format = "N2";
+                dataGridView1.Columns["hpp"].DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
+                dataGridView1.Columns["hpp"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
-            if (dataGridView1.Columns.Contains("hpp_avg"))
+            if (dataGridView1.Columns.Contains("stock_sell_value"))
             {
-                dataGridView1.Columns["hpp_avg"].HeaderText = "HPP AVG";
-                dataGridView1.Columns["hpp_avg"].DefaultCellStyle.Format = "N2";
-                dataGridView1.Columns["hpp_avg"].DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
-                dataGridView1.Columns["hpp_avg"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-            }
-            if (dataGridView1.Columns.Contains("retail_value"))
-            {
-                dataGridView1.Columns["retail_value"].HeaderText = "Nilai Jual";
-                dataGridView1.Columns["retail_value"].DefaultCellStyle.Format = "N2";
-                dataGridView1.Columns["retail_value"].DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
-                dataGridView1.Columns["retail_value"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                dataGridView1.Columns["stock_sell_value"].HeaderText = "Nilai Jual";
+                dataGridView1.Columns["stock_sell_value"].DefaultCellStyle.Format = "N2";
+                dataGridView1.Columns["stock_sell_value"].DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
+                dataGridView1.Columns["stock_sell_value"].DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
             if (dataGridView1.Columns.Contains("reserved_qty"))
             {
@@ -673,7 +667,8 @@ namespace POS_qu
 
             if (wid <= 0)
             {
-                return GetBaseProductsForAllWarehouses();
+                //return GetBaseProductsForAllWarehouses();
+                return _productService.GetProducts();
             }
 
             try
@@ -775,7 +770,7 @@ SELECT
     items.barcode,
     items.unit AS unit_id,
     units.name AS unit_name,
-    CAST(COALESCE(s.qty, 0) AS NUMERIC(18,4)) AS stockx,
+    CAST(COALESCE(s.qty, 0) AS NUMERIC(18,4)) AS stock,
     s.hpp_avg,
     items.sell_price,
     items.buy_price,
@@ -897,8 +892,8 @@ ORDER BY items.id ASC, COALESCE(w.id, 0) ASC
 
         private void EnsureValueColumns(DataTable dt)
         {
-            if (!dt.Columns.Contains("stock_value"))
-                dt.Columns.Add("stock_value", typeof(decimal));
+            //if (!dt.Columns.Contains("stock_value"))
+            //    dt.Columns.Add("stock_value", typeof(decimal));
             if (!dt.Columns.Contains("retail_value"))
                 dt.Columns.Add("retail_value", typeof(decimal));
             if (!dt.Columns.Contains("min_threshold"))
@@ -911,12 +906,6 @@ ORDER BY items.id ASC, COALESCE(w.id, 0) ASC
             {
                 try
                 {
-                    decimal buy = row.Table.Columns.Contains("buy_price") && row["buy_price"] != DBNull.Value ? Convert.ToDecimal(row["buy_price"]) : 0m;
-                    decimal sell = row.Table.Columns.Contains("sell_price") && row["sell_price"] != DBNull.Value ? Convert.ToDecimal(row["sell_price"]) : 0m;
-                    decimal stok = row.Table.Columns.Contains("stock") && row["stock"] != DBNull.Value ? Convert.ToDecimal(row["stock"]) : 0m;
-                    decimal hpp_avg = row.Table.Columns.Contains("hpp_avg") && row["hpp_avg"] != DBNull.Value ? Convert.ToDecimal(row["hpp_avg"]) : 0m;
-                    row["stock_value"] = hpp_avg * stok;
-                    row["retail_value"] = sell * stok;
                     row["min_threshold"] = GetMinThreshold(row);
                 }
                 catch
@@ -1831,9 +1820,15 @@ ORDER BY i.id ASC, w.id ASC
                 int selectedWarehouseId = GetSelectedWarehouseId();
                 var now = DateTime.Now;
                 var systemStart = new DateTime(1970, 1, 1);
-                decimal pembelianTotal = GetPurchasesValue(systemStart, now, selectedWarehouseId);
-                decimal persediaanValue = GetInventoryValueNowFromLayers(selectedWarehouseId, fallback: sumStockValue);
+                decimal pembelianTotal = GetInventoryCostValue(0);
+                decimal persediaanValue = GetInventoryValueNowFromView(selectedWarehouseId, fallback: sumStockValue);
                 decimal hppTotalSistem = persediaanValue;
+
+                if (_dtFull != null && _dtFull.Columns.Contains("stock_sell_value"))
+                {
+                    sumRetailValue = _dtFull.AsEnumerable()
+                        .Sum(r => r.Field<decimal?>("stock_sell_value") ?? 0m);
+                }
 
                 label9.Text =
                     $"Persediaan (Stock Layer): {persediaanValue:N0} | Pembelian Total: {pembelianTotal:N0} | HPP (Total Sistem): {hppTotalSistem:N0} | Nilai Jual: {sumRetailValue:N0}";
@@ -1905,81 +1900,45 @@ WHERE sl.created_at <= @asof
             }
         }
 
-        private decimal GetPurchasesValue(DateTime startInclusive, DateTime endExclusive, int warehouseId)
+        private decimal GetInventoryCostValue(int warehouseId)
         {
-            decimal poTotal = 0m;
-            decimal adjInTotal = 0m;
-
             try
             {
                 using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
                 conn.Open();
 
-                bool poHasWarehouse = ColumnExists(conn, "purchase_orders", "warehouse_id");
-                string whFilterPo = warehouseId > 0 && poHasWarehouse ? "AND po.warehouse_id = @wh" : "";
+                using var cmd = new NpgsqlCommand(@"
+            SELECT COALESCE(SUM(stock_value),0)
+            FROM v_inventory_value_v2
+            WHERE (@wh = 0 OR warehouse_id = @wh)
+        ", conn);
 
-                using (var cmd = new NpgsqlCommand($@"
-SELECT COALESCE(SUM(poi.quantity * poi.unit_price),0)
-FROM purchase_order_items poi
-JOIN purchase_orders po ON po.id = poi.po_id
-WHERE po.order_date >= @start::date
-  AND po.order_date < @end::date
-  AND COALESCE(po.status,'') ILIKE 'RECEIV%'
-{whFilterPo}
-", conn))
-                {
-                    cmd.Parameters.AddWithValue("@start", startInclusive);
-                    cmd.Parameters.AddWithValue("@end", endExclusive);
-                    if (warehouseId > 0 && poHasWarehouse) cmd.Parameters.AddWithValue("@wh", warehouseId);
-                    var obj = cmd.ExecuteScalar();
-                    poTotal = obj == null || obj == DBNull.Value ? 0m : Convert.ToDecimal(obj);
-                }
+                cmd.Parameters.AddWithValue("@wh", warehouseId);
 
-                string whFilterAdj = warehouseId > 0 ? "AND ia.warehouse_id = @wh" : "";
-                using (var cmd = new NpgsqlCommand($@"
-SELECT COALESCE(SUM(ii.qty * COALESCE(ii.buy_price,0)),0)
-FROM inventory_adjustment_items ii
-JOIN inventory_adjustments ia ON ia.id = ii.adjustment_id
-WHERE ia.direction = 'IN'
-  AND ia.adjustment_date >= @start::date
-  AND ia.adjustment_date < @end::date
-{whFilterAdj}
-", conn))
-                {
-                    cmd.Parameters.AddWithValue("@start", startInclusive);
-                    cmd.Parameters.AddWithValue("@end", endExclusive);
-                    if (warehouseId > 0) cmd.Parameters.AddWithValue("@wh", warehouseId);
-                    var obj = cmd.ExecuteScalar();
-                    adjInTotal = obj == null || obj == DBNull.Value ? 0m : Convert.ToDecimal(obj);
-                }
+                var obj = cmd.ExecuteScalar();
+                return obj == null || obj == DBNull.Value ? 0m : Convert.ToDecimal(obj);
             }
             catch
             {
                 return 0m;
             }
-
-            return poTotal + adjInTotal;
         }
-
-        private decimal GetInventoryValueNowFromLayers(int warehouseId, decimal fallback)
+        private decimal GetInventoryValueNowFromView(int warehouseId, decimal fallback)
         {
             try
             {
                 using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
                 conn.Open();
 
-                if (!ColumnExists(conn, "stock_layers", "qty_remaining") || !ColumnExists(conn, "stock_layers", "buy_price"))
-                    return fallback;
+                string sql = @"
+SELECT COALESCE(SUM(stock_value), 0)
+FROM v_inventory_value_v2
+WHERE (@wh = 0 OR warehouse_id = @wh)
+";
 
-                string whFilter = warehouseId > 0 ? "AND warehouse_id = @wh" : "";
+                using var cmd = new NpgsqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@wh", warehouseId);
 
-                using var cmd = new NpgsqlCommand($@"
-SELECT COALESCE(SUM(COALESCE(qty_remaining,0)::numeric * COALESCE(buy_price,0)),0)
-FROM stock_layers
-WHERE COALESCE(qty_remaining,0) > 0
-{whFilter}
-", conn);
-                if (warehouseId > 0) cmd.Parameters.AddWithValue("@wh", warehouseId);
                 var obj = cmd.ExecuteScalar();
                 return obj == null || obj == DBNull.Value ? 0m : Convert.ToDecimal(obj);
             }
@@ -2085,10 +2044,10 @@ LIMIT 1
                 c.AutoSizeMode = DataGridViewAutoSizeColumnMode.DisplayedCells;
                 c.MinimumWidth = 120;
             }
-            if (dataGridView1.Columns.Contains("hpp_avg"))
+            if (dataGridView1.Columns.Contains("hpp"))
             {
-                var c = dataGridView1.Columns["hpp_avg"];
-                c.HeaderText = "HPP AVG";
+                var c = dataGridView1.Columns["hpp"];
+                c.HeaderText = "HPP";
                 c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
                 c.DefaultCellStyle.Format = "N2";
                 c.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
@@ -2191,7 +2150,7 @@ LIMIT 1
                 stock = stock,
                 min_qty = minQty,
                 initial_warehouse_id = warehouseId > 0 ? warehouseId : null,
-                hpp_avg = rowSelected.Cells["hpp_avg"]?.Value != null && decimal.TryParse(rowSelected.Cells["hpp_avg"].Value.ToString(), out var hp) ? hp : 0m,
+                hpp = rowSelected.Cells["hpp"]?.Value != null && decimal.TryParse(rowSelected.Cells["hpp"].Value.ToString(), out var hp) ? hp : 0m,
             };
 
             using (var detailForm = new ItemDetailForm(itemForEdit))

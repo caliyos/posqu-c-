@@ -34,12 +34,12 @@ namespace POS_qu
         private const string ProductTypeStockable = "Stockable (Inventory Item)";
         private const string ProductTypeConsumable = "Consumable (Non-Stock Item)";
         private const string ProductTypeService = "Service";
-        private const string ProductTypeManufactured = "Manufactured (BOM/Assembly)";
+        private const string ProductTypeManufactured = "Paket / Bundle";
 
         private const string ProductTypeCodeStockable = "stockable";
         private const string ProductTypeCodeConsumable = "consumable";
         private const string ProductTypeCodeService = "service";
-        private const string ProductTypeCodeManufactured = "manufactured";
+        private const string ProductTypeCodeManufactured = "manufactured"; // paket bundle
 
         public ItemDetailForm()
         {

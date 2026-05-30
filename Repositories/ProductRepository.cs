@@ -17,78 +17,70 @@ namespace POS_qu.Repositories
             using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 con.Open();
-                string sql = @"
-            SELECT 
-                items.id,
-                items.name,
-                items.barcode,
-                items.buy_price,
-                items.sell_price,
-CAST(COALESCE((SELECT SUM(s.qty)
-               FROM stocks s
-               WHERE s.item_id = items.id), 0) AS NUMERIC(18,4)) AS stock,
 
-CAST(COALESCE((SELECT SUM(s.min_qty)
-               FROM stocks s
-               WHERE s.item_id = items.id), 0) AS NUMERIC(18,4)) AS min_qty,
+                string sql = @"SELECT 
+    items.id,
+    items.name,
+    items.barcode,
 
-CAST(COALESCE((SELECT SUM(s.reserved_qty)
-               FROM stocks s
-               WHERE s.item_id = items.id), 0) AS NUMERIC(18,4)) AS reserved_qty,
+    items.buy_price,
+    items.sell_price,
 
-(
-    SELECT COALESCE(MAX(s.hpp_avg), 0)
-    FROM stocks s
-    WHERE s.item_id = items.id
-) AS hpp_avg,
-              
+  s.warehouse_id,  
+  s.min_qty,
 
-                items.valuation_method,
+    COALESCE(inv.stock_qty, 0) AS stock,
+    COALESCE(inv.current_hpp, 0) AS hpp,
+    COALESCE(inv.stock_value, 0) AS stock_value,
+    COALESCE(inv.stock_sell_value, 0) AS stock_sell_value,
+    inv.stock_integrity_status,
 
-                items.unit AS unit_id,
-                units.name AS unit_name,
+    items.valuation_method,
 
-CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
+    items.unit AS unit_id,
+    units.name AS unit_name,
 
-                items.category_id,
-                categories.name AS category_name,
+    items.category_id,
+    categories.name AS category_name,
 
-                items.note,
-                items.picture,
+    items.note,
+    items.picture,
 
-                -- BOOLEAN FLAGS
-                items.is_inventory_p,
-                items.is_purchasable,
-                items.is_sellable,
-                items.is_note_payment,
-                items.is_changeprice_p,
-                items.is_have_bahan,
-                items.is_box,
-                items.is_produksi,
+    items.is_inventory_p,
+    items.is_purchasable,
+    items.is_sellable,
+    items.is_produksi,
 
-                items.discount_formula,
+    items.supplier_id,
+    suppliers.name AS supplier_name,
 
-                items.supplier_id,
-                suppliers.name AS supplier_name,
+    items.created_at,
+    items.updated_at
 
-                items.flag,
-                items.created_at,
-                items.updated_at
-            FROM items
-            LEFT JOIN LATERAL (
-                SELECT iv.minqty
-                FROM unit_variants iv
-                WHERE iv.item_id = items.id
-                  AND iv.is_active = TRUE
-                  AND iv.is_base_unit = TRUE
-                LIMIT 1
-            ) uvbase ON TRUE
-            LEFT JOIN units       ON items.unit = units.id
-            LEFT JOIN categories  ON items.category_id = categories.id
-            LEFT JOIN suppliers   ON items.supplier_id = suppliers.id
-            WHERE items.deleted_at IS NULL
-            ORDER BY items.id ASC
-        ";
+
+FROM items
+
+LEFT JOIN stocks s
+    ON s.item_id = items.id
+
+
+LEFT JOIN v_inventory_value_v2 inv
+    ON inv.item_id = items.id
+   AND inv.warehouse_id = s.warehouse_id
+
+LEFT JOIN units
+    ON items.unit = units.id
+
+LEFT JOIN categories
+    ON items.category_id = categories.id
+
+LEFT JOIN suppliers
+    ON items.supplier_id = suppliers.id
+
+WHERE items.deleted_at IS NULL
+ORDER BY items.id ASC;
+";
+
                 using (var cmd = new NpgsqlCommand(sql, con))
                 using (var da = new NpgsqlDataAdapter(cmd))
                 {
@@ -156,6 +148,7 @@ CAST(COALESCE(uvbase.minqty, 0) AS NUMERIC(18,4)) AS min_stock,
                                 note = reader["note"]?.ToString(),
                                 valuation_method = reader["valuation_method"]?.ToString() ?? "AVG",
                                 hpp_avg = reader["hpp_avg"] != DBNull.Value ? Convert.ToDecimal(reader["hpp_avg"]) : 0,
+                                hpp = reader["hpp_avg"] != DBNull.Value ? Convert.ToDecimal(reader["hpp_avg"]) : 0,
 
                             };
                         }

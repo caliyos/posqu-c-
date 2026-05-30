@@ -26,6 +26,11 @@ namespace POS_qu.Services
             return _repository.GetItemById(id);
         }
 
+        public DataTable GetProducts()
+        {
+            return _repository.GetAllItems();
+        }
+
         public bool SaveProduct(Item item, out string message)
         {
             message = "";

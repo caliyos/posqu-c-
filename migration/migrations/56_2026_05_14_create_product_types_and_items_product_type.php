@@ -12,7 +12,7 @@ return function($db) {
             ('stockable', 'Stockable (Inventory Item)'),
             ('consumable', 'Consumable (Non-Stock Item)'),
             ('service', 'Service'),
-            ('manufactured', 'Manufactured (BOM/Assembly)')
+            ('manufactured', 'Paket / Bundle)')
         ON CONFLICT (code) DO NOTHING;
 
         ALTER TABLE items
