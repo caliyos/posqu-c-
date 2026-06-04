@@ -12,6 +12,8 @@ namespace POS_qu.Models
         public int UnitId { get; set; }
         public string UnitName { get; set; } = "";
         public decimal UnitCost { get; set; }
+
+        public decimal Hpp { get; set; }
         public decimal Subtotal => Qty * UnitCost;
     }
 }

@@ -498,6 +498,11 @@ namespace POS_qu
                     chk_is_inventory_p.Checked = true;
                     chk_IsProduced.Checked = true;
                     chk_HasMaterials.Checked = true;
+                    txtStock.ReadOnly = true;
+                    txtBuyPrice.ReadOnly = true;
+                    txtDiscountFormula.ReadOnly = true;
+                    txtMinQty.ReadOnly = true;
+                    txtSellPrice.ReadOnly = true;
                 }
                 else if (stockable)
                 {
@@ -1215,6 +1220,13 @@ LIMIT 1
                 c.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
                 c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
             }
+            if (dgvMaterials.Columns.Contains("colMaterialHpp"))
+            {
+                var c = dgvMaterials.Columns["colMaterialHpp"];
+                c.DefaultCellStyle.Format = "N2";
+                c.DefaultCellStyle.FormatProvider = UiNumberFormat.DotCulture;
+                c.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            }
             if (dgvMaterials.Columns.Contains("colMaterialPrice"))
             {
                 var c = dgvMaterials.Columns["colMaterialPrice"];
@@ -1502,11 +1514,12 @@ LIMIT 1
                     ComponentName = detail.name ?? f.SelectedItem.name ?? "",
                     Qty = 1m,
                     UnitId = detail.unitid > 0 ? detail.unitid : 1,
-                    UnitCost = detail.buy_price
+                    Hpp = detail.hpp,
+                    UnitCost = detail.sell_price
                 };
                 _materialsFromForm.Add(row);
-                ApplyAllowedUnitsToComboCellByRow(row);
-                ApplyUnitCostForMaterialRow(row);
+                //ApplyAllowedUnitsToComboCellByRow(row);
+                //ApplyUnitCostForMaterialRow(row);
                 UpdateMaterialsTotals();
             }
         }
@@ -1520,10 +1533,12 @@ LIMIT 1
 
         private void txtAssemblySellPrice_TextChanged(object sender, EventArgs e)
         {
-            if (_syncingAssemblySellPrice) return;
-            _syncingAssemblySellPrice = true;
-            txtSellPrice.Text = txtAssemblySellPrice.Text;
-            _syncingAssemblySellPrice = false;
+            // FOR NOW, DISABLE SYNC FROM ASSEMBLY SELL PRICE TO MAIN SELL PRICE TO AVOID CONFUSION
+
+            //if (_syncingAssemblySellPrice) return;
+            //_syncingAssemblySellPrice = true;
+            //txtSellPrice.Text = txtAssemblySellPrice.Text;
+            //_syncingAssemblySellPrice = false;
             UpdateMaterialsTotals();
         }
 
@@ -1539,16 +1554,20 @@ LIMIT 1
         private void UpdateMaterialsTotals()
         {
             decimal totalHpp = 0m;
+            decimal totalSellPrice = 0m;
             foreach (var m in _materialsFromForm)
             {
                 if (m == null) continue;
-                totalHpp += (m.Qty * m.UnitCost);
+                totalHpp += (m.Qty * m.Hpp);
+                totalSellPrice += (m.Qty * m.UnitCost);
             }
 
             lblTotalHppValue.Text = totalHpp.ToString("N2", UiNumberFormat.DotCulture);
+            lblTotalSellPriceValue.Text = totalSellPrice.ToString("N2", UiNumberFormat.DotCulture);
             if (_materialsFromForm.Count > 0)
             {
                 txtBuyPrice.Text = totalHpp.ToString("N2", UiNumberFormat.DotCulture);
+                txtSellPrice.Text = totalSellPrice.ToString("N2", UiNumberFormat.DotCulture);
             }
             UpdateAssemblyMargin();
         }
@@ -1556,10 +1575,14 @@ LIMIT 1
         private void UpdateAssemblyMargin()
         {
             decimal totalHpp = 0m;
+            decimal totalSellPrice = 0m;
+
             foreach (var m in _materialsFromForm)
             {
                 if (m == null) continue;
-                totalHpp += (m.Qty * m.UnitCost);
+                totalHpp += (m.Qty * m.Hpp);
+                totalSellPrice += (m.Qty * m.UnitCost);
+
             }
 
             decimal sellPrice = 0m;
@@ -1567,7 +1590,43 @@ LIMIT 1
 
             decimal margin = sellPrice - totalHpp;
             decimal marginPercent = totalHpp > 0 ? (margin / totalHpp) * 100m : 0m;
+
+            decimal marginSellPrice = 0m;
+            decimal marginSellPercent = 0m;
+            marginSellPrice = sellPrice - totalSellPrice;
+            marginSellPercent = totalSellPrice > 0 ? (marginSellPrice / totalSellPrice) * 100m : 0m;
+
             lblAssemblyMarginValue.Text = $"{margin.ToString("N2", UiNumberFormat.DotCulture)} ({marginPercent.ToString("+0.##;-0.##", UiNumberFormat.DotCulture)}%)";
+            if (margin > 0)
+            {
+                lblAssemblyMarginValue.ForeColor = Color.Green;
+            }
+            else if (margin < 0)
+            {
+                lblAssemblyMarginValue.ForeColor = Color.Red;
+            }
+            else
+            {
+                lblAssemblyMarginValue.ForeColor = Color.Gray;
+
+            }
+
+            lblAssemblyHargaJualMarginTitle.Text = $"{marginSellPrice.ToString("N2", UiNumberFormat.DotCulture)} ({marginSellPercent.ToString("+0.##;-0.##", UiNumberFormat.DotCulture)}%)";
+            if (marginSellPrice > 0)
+            {
+                lblAssemblyHargaJualMarginTitle.ForeColor = Color.Green;
+            }
+            else if (marginSellPrice < 0)
+            {
+                lblAssemblyHargaJualMarginTitle.ForeColor = Color.Red;
+            }
+            else
+            {
+                lblAssemblyHargaJualMarginTitle.ForeColor = Color.Gray;
+
+            }
+
+
         }
     }
 }

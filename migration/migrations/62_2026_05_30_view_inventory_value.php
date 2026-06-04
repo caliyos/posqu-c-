@@ -24,6 +24,7 @@ return function($db) {
             s.warehouse_id,
 
             COALESCE(s.qty, 0) AS stock_qty_stocks,
+            COALESCE(s.min_qty, 0) AS stock_min_qty_stocks,
             COALESCE(fs.stock_qty_layers, 0) AS stock_qty_layers,
 
             CASE
@@ -41,6 +42,10 @@ return function($db) {
 
                 ELSE 0
             END AS stock_qty,
+           s.min_qty,
+           s.reserved_qty,
+            s.hpp_avg,
+
 
             CASE
                 WHEN UPPER(COALESCE(i.valuation_method, 'AVG')) = 'AVG'

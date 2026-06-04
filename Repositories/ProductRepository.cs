@@ -94,26 +94,30 @@ ORDER BY items.id ASC;
         public Item GetItemById(int id)
         {
             Item item = null;
+
             using (var con = new NpgsqlConnection(DbConfig.ConnectionString))
             {
                 con.Open();
+
                 string sql = @"
-                    SELECT items.*, 
-                           COALESCE((SELECT SUM(qty) FROM stocks WHERE item_id = items.id AND warehouse_id = warehouse_id ), 0) AS stock_qty,
-                           COALESCE((SELECT SUM(min_qty) FROM stocks WHERE item_id = items.id AND warehouse_id = warehouse_id), 0) AS min_qty,
-                           COALESCE((SELECT hpp_avg FROM stocks WHERE item_id = items.id AND warehouse_id = warehouse_id), 0) AS hpp_avg,
-                           CASE
-                               WHEN (SELECT COUNT(*) FROM stocks WHERE item_id = items.id) = 1
-                                   THEN COALESCE((SELECT warehouse_id FROM stocks WHERE item_id = items.id LIMIT 1), 0)
-                               ELSE 0
-                           END AS warehouse_id,
-                           COALESCE((SELECT SUM(reserved_qty) FROM stocks WHERE item_id = items.id), 0) AS reserved_qty
-                    FROM items 
-                    
-                    WHERE id = @id";
+            SELECT 
+                i.*,
+                COALESCE(v.stock_qty, 0) AS stock_qty,
+                COALESCE(v.stock_min_qty_stocks, 0) AS min_qty,
+                COALESCE(v.current_hpp, 0) AS hpp,
+                COALESCE(v.current_hpp, 0) AS hpp_avg,
+                COALESCE(v.reserved_qty, 0) AS reserved_qty,
+                COALESCE(v.warehouse_id, 0) AS warehouse_id
+            FROM items i
+            LEFT JOIN v_inventory_value_v2 v 
+                   ON v.item_id = i.id
+            WHERE i.id = @id;
+        ";
+
                 using (var cmd = new NpgsqlCommand(sql, con))
                 {
                     cmd.Parameters.AddWithValue("@id", id);
+
                     using (var reader = cmd.ExecuteReader())
                     {
                         if (reader.Read())
@@ -128,12 +132,16 @@ ORDER BY items.id ASC;
                                 supplier_id = reader["supplier_id"] != DBNull.Value ? Convert.ToInt32(reader["supplier_id"]) : 0,
                                 brand_id = reader["brand_id"] != DBNull.Value ? Convert.ToInt32(reader["brand_id"]) : null,
                                 rack_id = reader["rack_id"] != DBNull.Value ? Convert.ToInt32(reader["rack_id"]) : null,
+
                                 initial_warehouse_id = reader["warehouse_id"] != DBNull.Value ? Convert.ToInt32(reader["warehouse_id"]) : null,
+
                                 buy_price = reader["buy_price"] != DBNull.Value ? Convert.ToDecimal(reader["buy_price"]) : 0,
                                 sell_price = reader["sell_price"] != DBNull.Value ? Convert.ToDecimal(reader["sell_price"]) : 0,
-                                stock = Convert.ToInt32(reader["stock_qty"]),
-                                min_qty = Convert.ToInt32(reader["min_qty"]),
-                                reserved_stock = Convert.ToInt32(reader["reserved_qty"]),
+
+                                stock = reader["stock_qty"] != DBNull.Value ? Convert.ToInt32(reader["stock_qty"]) : 0,
+                                min_qty = reader["min_qty"] != DBNull.Value ? Convert.ToInt32(reader["min_qty"]) : 0,
+                                reserved_stock = reader["reserved_qty"] != DBNull.Value ? Convert.ToInt32(reader["reserved_qty"]) : 0,
+
                                 is_inventory_p = reader["is_inventory_p"] != DBNull.Value && Convert.ToBoolean(reader["is_inventory_p"]),
                                 IsPurchasable = reader["is_purchasable"] != DBNull.Value && Convert.ToBoolean(reader["is_purchasable"]),
                                 IsSellable = reader["is_sellable"] != DBNull.Value && Convert.ToBoolean(reader["is_sellable"]),
@@ -142,14 +150,17 @@ ORDER BY items.id ASC;
                                 HasMaterials = reader["is_have_bahan"] != DBNull.Value && Convert.ToBoolean(reader["is_have_bahan"]),
                                 IsPackage = reader["is_box"] != DBNull.Value && Convert.ToBoolean(reader["is_box"]),
                                 IsProduced = reader["is_produksi"] != DBNull.Value && Convert.ToBoolean(reader["is_produksi"]),
+
                                 product_type_code = HasField(reader, "product_type_code") ? (reader["product_type_code"]?.ToString() ?? "") : "",
                                 discount_formula = reader["discount_formula"]?.ToString() ?? "",
-                                ExpiredAt = reader["expired_at"] != DBNull.Value ? Convert.ToDateTime(reader["expired_at"]) : null,
                                 note = reader["note"]?.ToString(),
-                                valuation_method = reader["valuation_method"]?.ToString() ?? "AVG",
-                                hpp_avg = reader["hpp_avg"] != DBNull.Value ? Convert.ToDecimal(reader["hpp_avg"]) : 0,
-                                hpp = reader["hpp_avg"] != DBNull.Value ? Convert.ToDecimal(reader["hpp_avg"]) : 0,
 
+                                valuation_method = reader["valuation_method"]?.ToString() ?? "AVG",
+
+                                hpp_avg = reader["hpp_avg"] != DBNull.Value ? Convert.ToDecimal(reader["hpp_avg"]) : 0,
+                                hpp = reader["hpp"] != DBNull.Value ? Convert.ToDecimal(reader["hpp"]) : 0,
+
+                                ExpiredAt = reader["expired_at"] != DBNull.Value ? Convert.ToDateTime(reader["expired_at"]) : null,
                             };
                         }
                     }
@@ -160,9 +171,9 @@ ORDER BY items.id ASC;
                     item.MaterialsList = GetItemMaterials(item.id, con);
                 }
             }
+
             return item;
         }
-
         public int InsertItem(Item item)
         {
             int newItemId = 0;
