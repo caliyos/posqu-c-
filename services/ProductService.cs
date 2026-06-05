@@ -40,7 +40,33 @@ namespace POS_qu.Services
             };
             return row;
         }
+        public decimal GetKitBundleStock(IEnumerable<ItemMaterial> materials)
+        {
+            if (materials == null || !materials.Any())
+                return 0m;
 
+            decimal minStock = decimal.MaxValue;
+
+            foreach (var material in materials)
+            {
+                var item = _repository.GetProductDetail(material.ComponentItemId);
+
+                if (item == null)
+                    return 0m;
+
+                if (material.Qty <= 0)
+                    continue;
+
+                decimal possibleQty = item.stock / material.Qty;
+
+                if (possibleQty < minStock)
+                    minStock = possibleQty;
+            }
+
+            return minStock == decimal.MaxValue
+                ? 0m
+                : Math.Floor(minStock);
+        }
         public DataTable GetProducts()
         {
             return _repository.GetAllItems();

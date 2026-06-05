@@ -83,14 +83,6 @@ namespace POS_qu
             var detail = _productService.GetProductDetail(item.id) ?? item;
             detail.UnitVariants = _productService.GetItemUnitVariants(item.id) ?? new List<UnitVariant>();
             detail.Prices = _productService.GetItemPrices(item.id) ?? new List<ItemPrice>();
-
-            if (item.initial_warehouse_id.HasValue && item.initial_warehouse_id.Value > 0)
-            {
-                detail.initial_warehouse_id = item.initial_warehouse_id;
-                detail.stock = item.stock;
-                detail.min_qty = item.min_qty;
-            }
-
             return detail;
         }
 
@@ -1197,6 +1189,8 @@ LIMIT 1
             dgvVariants.DataSource = _item.UnitVariants;
         }
 
+
+        private object _oldCellValue;
         private void InitializeMaterialsTab()
         {
             dgvMaterials.AutoGenerateColumns = false;
@@ -1265,61 +1259,85 @@ LIMIT 1
                 }
             };
 
-            dgvMaterials.CellContentClick += (s, e) =>
-            {
-                if (e.RowIndex < 0) return;
-                if (dgvMaterials.Rows[e.RowIndex].DataBoundItem is not ItemMaterial row) return;
+            //dgvMaterials.CellContentClick += (s, e) =>
+            //{
+            //    if (e.RowIndex < 0) return;
+            //    if (dgvMaterials.Rows[e.RowIndex].DataBoundItem is not ItemMaterial row) return;
 
-                var colName = dgvMaterials.Columns[e.ColumnIndex].Name;
-                if (colName == "colMaterialBaseUnit")
-                {
-                    ApplyBaseUnitToComboCell(e.RowIndex, row.ComponentItemId);
-                    ApplyUnitCostForMaterialRow(row);
-                    UpdateMaterialsTotals();
-                    dgvMaterials.Refresh();
-                    return;
-                }
+            //    var colName = dgvMaterials.Columns[e.ColumnIndex].Name;
+            //    if (colName == "colMaterialBaseUnit")
+            //    {
+            //        ApplyBaseUnitToComboCell(e.RowIndex, row.ComponentItemId);
+            //        ApplyUnitCostForMaterialRow(row);
+            //        UpdateMaterialsTotals();
+            //        dgvMaterials.Refresh();
+            //        return;
+            //    }
 
-                if (colName != "colMaterialViewUnits") return;
+            //    if (colName != "colMaterialViewUnits") return;
 
-                ApplyAllowedUnitsToComboCell(e.RowIndex, row.ComponentItemId);
+            //    ApplyAllowedUnitsToComboCell(e.RowIndex, row.ComponentItemId);
 
-                dgvMaterials.CurrentCell = dgvMaterials.Rows[e.RowIndex].Cells["colMaterialUnit"];
-                if (!dgvMaterials.BeginEdit(true)) return;
+            //    dgvMaterials.CurrentCell = dgvMaterials.Rows[e.RowIndex].Cells["colMaterialUnit"];
+            //    if (!dgvMaterials.BeginEdit(true)) return;
 
-                if (dgvMaterials.EditingControl is DataGridViewComboBoxEditingControl combo)
-                {
-                    combo.DroppedDown = true;
-                }
-            };
+            //    if (dgvMaterials.EditingControl is DataGridViewComboBoxEditingControl combo)
+            //    {
+            //        combo.DroppedDown = true;
+            //    }
+            //};
 
             dgvMaterials.CellBeginEdit += (s, e) =>
             {
                 if (e.RowIndex < 0) return;
-                if (dgvMaterials.Columns[e.ColumnIndex].Name != "colMaterialUnit") return;
-                if (dgvMaterials.Rows[e.RowIndex].DataBoundItem is not ItemMaterial row) return;
+
+                _oldCellValue = dgvMaterials[e.ColumnIndex, e.RowIndex].Value;
+
+                if (dgvMaterials.Columns[e.ColumnIndex].Name != "colMaterialUnit")
+                    return;
+
+                if (dgvMaterials.Rows[e.RowIndex].DataBoundItem is not ItemMaterial row)
+                    return;
 
                 ApplyAllowedUnitsToComboCell(e.RowIndex, row.ComponentItemId);
             };
 
-            dgvMaterials.CurrentCellDirtyStateChanged += (s, e) =>
-            {
-                if (dgvMaterials.IsCurrentCellDirty)
-                {
-                    dgvMaterials.CommitEdit(DataGridViewDataErrorContexts.Commit);
-                }
-            };
+            //dgvMaterials.CurrentCellDirtyStateChanged += (s, e) =>
+            //{
+            //    if (dgvMaterials.IsCurrentCellDirty)
+            //    {
+            //        dgvMaterials.CommitEdit(DataGridViewDataErrorContexts.Commit);
+            //    }
+            //};
             dgvMaterials.CellValueChanged += (s, e) =>
             {
                 if (e.RowIndex < 0) return;
                 if (_syncingMaterialsGrid) return;
-                if (dgvMaterials.Rows[e.RowIndex].DataBoundItem is not ItemMaterial row) return;
+
+                if (dgvMaterials.Rows[e.RowIndex].DataBoundItem is not ItemMaterial row)
+                    return;
 
                 if (dgvMaterials.Columns[e.ColumnIndex].Name == "colMaterialUnit")
                 {
                     ApplyAllowedUnitsToComboCell(e.RowIndex, row.ComponentItemId);
                     ApplyUnitCostForMaterialRow(row);
                 }
+
+                var maxStock = _productService.GetKitBundleStock(_materialsFromForm);
+
+                if (maxStock <= 0)
+                {
+                    MessageBox.Show(
+                        "Stock material tidak mencukupi.",
+                        "Peringatan",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+
+                    dgvMaterials[e.ColumnIndex, e.RowIndex].Value = _oldCellValue;
+
+                    return;
+                }
+
                 UpdateMaterialsTotals();
                 dgvMaterials.Refresh();
             };
@@ -1346,30 +1364,30 @@ LIMIT 1
 
         private void ApplyAllowedUnitsToComboCell(int rowIndex, int componentItemId)
         {
-            if (rowIndex < 0) return;
-            if (componentItemId <= 0) return;
-            if (dgvMaterials.Rows[rowIndex].DataBoundItem is not ItemMaterial row) return;
+            //if (rowIndex < 0) return;
+            //if (componentItemId <= 0) return;
+            //if (dgvMaterials.Rows[rowIndex].DataBoundItem is not ItemMaterial row) return;
 
-            var allowed = GetAllowedUnitsForComponent(componentItemId);
-            if (dgvMaterials.Rows[rowIndex].Cells["colMaterialUnit"] is DataGridViewComboBoxCell cell)
-            {
-                cell.DataSource = allowed;
-                cell.DisplayMember = "display";
-                cell.ValueMember = "id";
-            }
+            //var allowed = GetAllowedUnitsForComponent(componentItemId);
+            //if (dgvMaterials.Rows[rowIndex].Cells["colMaterialUnit"] is DataGridViewComboBoxCell cell)
+            //{
+            //    cell.DataSource = allowed;
+            //    cell.DisplayMember = "display";
+            //    cell.ValueMember = "id";
+            //}
 
-            if (allowed.Rows.Count == 0) return;
-            if (row.UnitId <= 0)
-            {
-                row.UnitId = Convert.ToInt32(allowed.Rows[0]["id"]);
-                return;
-            }
+            //if (allowed.Rows.Count == 0) return;
+            //if (row.UnitId <= 0)
+            //{
+            //    row.UnitId = Convert.ToInt32(allowed.Rows[0]["id"]);
+            //    return;
+            //}
 
-            bool ok = allowed.AsEnumerable().Any(r => Convert.ToInt32(r["id"]) == row.UnitId);
-            if (!ok)
-            {
-                row.UnitId = Convert.ToInt32(allowed.Rows[0]["id"]);
-            }
+            //bool ok = allowed.AsEnumerable().Any(r => Convert.ToInt32(r["id"]) == row.UnitId);
+            //if (!ok)
+            //{
+            //    row.UnitId = Convert.ToInt32(allowed.Rows[0]["id"]);
+            //}
         }
 
         private void ApplyBaseUnitToComboCell(int rowIndex, int componentItemId)
@@ -1549,6 +1567,7 @@ LIMIT 1
         {
             decimal totalHpp = 0m;
             decimal totalSellPrice = 0m;
+            decimal stock = 0m;
             foreach (var m in _materialsFromForm)
             {
                 if (m == null) continue;
@@ -1563,6 +1582,9 @@ LIMIT 1
                 txtBuyPrice.Text = totalHpp.ToString("N2", UiNumberFormat.DotCulture);
                 //txtSellPrice.Text = totalSellPrice.ToString("N2", UiNumberFormat.DotCulture);
             }
+            var maxStock = _productService.GetKitBundleStock(_materialsFromForm);
+            txtStock.Text = maxStock.ToString("N2", UiNumberFormat.DotCulture);
+           
             UpdateAssemblyMargin();
             
         }
