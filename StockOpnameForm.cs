@@ -17,7 +17,7 @@ namespace POS_qu
 {
     public partial class StockOpnameForm : Form
     {
-        private readonly IProductService _productService;
+        private readonly ProductService _productService;
         private readonly WarehouseController _warehouseController;
         private readonly int _prefillWarehouseId;
         private readonly TransactionRepo _txRepo = new TransactionRepo();

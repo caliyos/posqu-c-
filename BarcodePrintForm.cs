@@ -16,7 +16,7 @@ namespace POS_qu
 {
     public partial class BarcodePrintForm : Form
     {
-        private readonly IProductService _productService;
+        private readonly ProductService _productService;
         private readonly HashSet<int> _preselectedItemIds;
         private DataTable _itemsTable;
 

@@ -1,12 +1,13 @@
+using POS_qu.Core.Interfaces;
+using POS_qu.Models;
+using POS_qu.Repositories;
 using System;
 using System.Data;
-using POS_qu.Models;
-using POS_qu.Core.Interfaces;
-using POS_qu.Repositories;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
 
 namespace POS_qu.Services
 {
-    public class ProductService : IProductService
+    public class ProductService 
     {
         private readonly ProductRepository _repository;
 
@@ -20,10 +21,24 @@ namespace POS_qu.Services
             return _repository.GetAllItems();
         }
 
-        public Item GetProductDetail(int id)
+        public POS_qu.Models.Item GetProductDetail(int id)
         {
             if (id <= 0) return null;
-            return _repository.GetItemById(id);
+            return _repository.GetProductDetail(id);
+        }
+
+        public ItemMaterial AddMaterial(POS_qu.Models.Item detail)
+        {
+            var row = new ItemMaterial
+            {
+                ComponentItemId = detail.id,
+                ComponentName = detail.name,
+                Qty = 1m,
+                UnitId = detail.unitid > 0 ? detail.unitid : 1,
+                Hpp = detail.hpp,
+                UnitCost = detail.sell_price
+            };
+            return row;
         }
 
         public DataTable GetProducts()
@@ -31,7 +46,7 @@ namespace POS_qu.Services
             return _repository.GetAllItems();
         }
 
-        public bool SaveProduct(Item item, out string message)
+        public bool SaveProduct(POS_qu.Models.Item item, out string message)
         {
             message = "";
 

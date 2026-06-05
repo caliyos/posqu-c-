@@ -1,3 +1,11 @@
+//using DocumentFormat.OpenXml.Spreadsheet;
+using Npgsql;
+using POS_qu.Controllers;
+using POS_qu.Core.Interfaces;
+using POS_qu.Helpers;
+using POS_qu.Models;
+using POS_qu.Repositories;
+using POS_qu.Services;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -5,19 +13,12 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
-using POS_qu.Controllers;
-using POS_qu.Models;
-using POS_qu.Core.Interfaces;
-using POS_qu.Services;
-using POS_qu.Repositories;
-using POS_qu.Helpers;
-using Npgsql;
 
 namespace POS_qu
 {
     public partial class ItemDetailForm : Form
     {
-        private IProductService _productService;
+        private ProductService _productService;
         private int? editingItemId = null;
         private List<UnitVariant> unitVariantsFromForm = new List<UnitVariant>(); // Store globally if needed
         private Item _item;
@@ -430,7 +431,7 @@ namespace POS_qu
                     _materialsFromForm.Add(m);
                 }
             }
-            EnsureMaterialRowsValid();
+            //EnsureMaterialRowsValid();
             UpdateMaterialsTotals();
             SyncSellPriceToAssembly();
 
@@ -1325,23 +1326,23 @@ LIMIT 1
             dgvMaterials.DataError += (s, e) => { e.ThrowException = false; };
         }
 
-        private void EnsureMaterialRowsValid()
-        {
-            foreach (var row in _materialsFromForm)
-            {
-                ApplyAllowedUnitsToComboCellByRow(row);
-                ApplyUnitCostForMaterialRow(row);
-            }
-            dgvMaterials.Refresh();
-        }
+        //private void EnsureMaterialRowsValid()
+        //{
+        //    foreach (var row in _materialsFromForm)
+        //    {
+        //        ApplyAllowedUnitsToComboCellByRow(row);
+        //        ApplyUnitCostForMaterialRow(row);
+        //    }
+        //    dgvMaterials.Refresh();
+        //}
 
-        private void ApplyAllowedUnitsToComboCellByRow(ItemMaterial row)
-        {
-            if (row == null || row.ComponentItemId <= 0) return;
-            int rowIndex = _materialsFromForm.IndexOf(row);
-            if (rowIndex < 0) return;
-            ApplyAllowedUnitsToComboCell(rowIndex, row.ComponentItemId);
-        }
+        //private void ApplyAllowedUnitsToComboCellByRow(ItemMaterial row)
+        //{
+        //    if (row == null || row.ComponentItemId <= 0) return;
+        //    int rowIndex = _materialsFromForm.IndexOf(row);
+        //    if (rowIndex < 0) return;
+        //    ApplyAllowedUnitsToComboCell(rowIndex, row.ComponentItemId);
+        //}
 
         private void ApplyAllowedUnitsToComboCell(int rowIndex, int componentItemId)
         {
@@ -1505,22 +1506,16 @@ LIMIT 1
                 if (f.ShowDialog() != DialogResult.OK) return;
                 if (f.SelectedItem == null || f.SelectedItem.id <= 0) return;
 
+                ////////////////////////////////
                 var detail = _productService.GetProductDetail(f.SelectedItem.id);
                 if (detail == null) return;
+                ItemMaterial material = _productService.AddMaterial(detail);
+                _materialsFromForm.Add(material);
 
-                var row = new ItemMaterial
-                {
-                    ComponentItemId = detail.id,
-                    ComponentName = detail.name ?? f.SelectedItem.name ?? "",
-                    Qty = 1m,
-                    UnitId = detail.unitid > 0 ? detail.unitid : 1,
-                    Hpp = detail.hpp,
-                    UnitCost = detail.sell_price
-                };
-                _materialsFromForm.Add(row);
                 //ApplyAllowedUnitsToComboCellByRow(row);
                 //ApplyUnitCostForMaterialRow(row);
                 UpdateMaterialsTotals();
+                /////////////////////////////
             }
         }
 
@@ -1533,12 +1528,11 @@ LIMIT 1
 
         private void txtAssemblySellPrice_TextChanged(object sender, EventArgs e)
         {
-            // FOR NOW, DISABLE SYNC FROM ASSEMBLY SELL PRICE TO MAIN SELL PRICE TO AVOID CONFUSION
 
-            //if (_syncingAssemblySellPrice) return;
-            //_syncingAssemblySellPrice = true;
-            //txtSellPrice.Text = txtAssemblySellPrice.Text;
-            //_syncingAssemblySellPrice = false;
+            if (_syncingAssemblySellPrice) return;
+            _syncingAssemblySellPrice = true;
+            txtSellPrice.Text = txtAssemblySellPrice.Text;
+            _syncingAssemblySellPrice = false;
             UpdateMaterialsTotals();
         }
 
@@ -1567,10 +1561,12 @@ LIMIT 1
             if (_materialsFromForm.Count > 0)
             {
                 txtBuyPrice.Text = totalHpp.ToString("N2", UiNumberFormat.DotCulture);
-                txtSellPrice.Text = totalSellPrice.ToString("N2", UiNumberFormat.DotCulture);
+                //txtSellPrice.Text = totalSellPrice.ToString("N2", UiNumberFormat.DotCulture);
             }
             UpdateAssemblyMargin();
+            
         }
+
 
         private void UpdateAssemblyMargin()
         {
@@ -1582,13 +1578,12 @@ LIMIT 1
                 if (m == null) continue;
                 totalHpp += (m.Qty * m.Hpp);
                 totalSellPrice += (m.Qty * m.UnitCost);
-
             }
 
             decimal sellPrice = 0m;
             decimal.TryParse(txtAssemblySellPrice.Text, out sellPrice);
 
-            decimal margin = sellPrice - totalHpp;
+            decimal margin = totalSellPrice - totalHpp;
             decimal marginPercent = totalHpp > 0 ? (margin / totalHpp) * 100m : 0m;
 
             decimal marginSellPrice = 0m;

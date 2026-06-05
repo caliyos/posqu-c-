@@ -91,7 +91,7 @@ ORDER BY items.id ASC;
             }
         }
 
-        public Item GetItemById(int id)
+        public Item GetProductDetail(int id)
         {
             Item item = null;
 
@@ -505,10 +505,12 @@ ORDER BY items.id ASC;
             var list = new List<ItemMaterial>();
             string sql = @"
                 SELECT im.id, im.parent_item_id, im.component_item_id, im.qty, im.unit_id, im.unit_cost,
-                       i.name AS component_name, u.name AS unit_name
+                       i.name AS component_name, u.name AS unit_name,
+                        v.current_hpp
                 FROM item_materials im
                 JOIN items i ON i.id = im.component_item_id
                 LEFT JOIN units u ON u.id = im.unit_id
+                LEFT JOIN v_inventory_value_v2 v ON v.item_id = i.id
                 WHERE im.parent_item_id = @id
                 ORDER BY im.id ASC";
             using (var cmd = new NpgsqlCommand(sql, con))
@@ -527,7 +529,8 @@ ORDER BY items.id ASC;
                             Qty = reader["qty"] != DBNull.Value ? Convert.ToDecimal(reader["qty"]) : 0m,
                             UnitId = reader["unit_id"] != DBNull.Value ? Convert.ToInt32(reader["unit_id"]) : 0,
                             UnitName = reader["unit_name"]?.ToString() ?? "",
-                            UnitCost = reader["unit_cost"] != DBNull.Value ? Convert.ToDecimal(reader["unit_cost"]) : 0m
+                            UnitCost = reader["unit_cost"] != DBNull.Value ? Convert.ToDecimal(reader["unit_cost"]) : 0m,
+                            Hpp = reader["current_hpp"] != DBNull.Value ? Convert.ToDecimal(reader["current_hpp"]) : 0m 
                         });
                     }
                 }

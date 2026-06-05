@@ -16,7 +16,7 @@ namespace POS_qu
 {
     public partial class SaldoAwalForm : Form
     {
-        private readonly IProductService _productService;
+        private readonly ProductService _productService;
         private DataTable _dt;
 
         public SaldoAwalForm()

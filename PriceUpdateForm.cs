@@ -15,7 +15,7 @@ namespace POS_qu
 {
     public partial class PriceUpdateForm : Form
     {
-        private readonly IProductService _productService;
+        private readonly ProductService _productService;
         private DataTable _dt;
 
         public PriceUpdateForm()

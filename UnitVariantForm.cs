@@ -20,7 +20,7 @@ namespace POS_qu
     {
         public List<UnitVariant> UnitVariants { get; private set; }
         private Item _item;
-        private IProductService _productService;
+        private ProductService _productService;
         private string baseUnitName;
         private decimal baseSellPrice;
 
