@@ -161,6 +161,7 @@ namespace POS_qu
             txtSellPrice.TextChanged += (s, e) => UpdateStockOutput();
             UpdateStockOutput();
             cmbSort.SelectedIndexChanged += cmbSort_SelectedIndexChanged;
+            txtAssemblySellPrice.Leave += txtAssemblySellPrice_Leave;
 
             if (cmbProductType != null)
             {
@@ -1584,11 +1585,22 @@ LIMIT 1
             }
             var maxStock = _productService.GetKitBundleStock(_materialsFromForm);
             txtStock.Text = maxStock.ToString("N2", UiNumberFormat.DotCulture);
-           
+
+          
             UpdateAssemblyMargin();
             
         }
 
+        private void txtAssemblySellPrice_Leave(object sender, EventArgs e)
+        {
+            if (decimal.TryParse(
+          txtAssemblySellPrice.Text.Replace(".", ""),
+          out decimal value))
+            {
+                txtAssemblySellPrice.Text =
+                    value.ToString("N0", UiNumberFormat.DotCulture);
+            }
+        }
 
         private void UpdateAssemblyMargin()
         {
