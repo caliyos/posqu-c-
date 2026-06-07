@@ -997,6 +997,7 @@ namespace POS_qu.Services
         private static decimal RoundMoney(decimal v) =>
             Math.Round(v, 2, MidpointRounding.AwayFromZero);
 
+  
         private List<TransactionDetail> DeductStockFillBuyPriceAndLog(
             NpgsqlConnection con,
             NpgsqlTransaction tran,
@@ -1014,6 +1015,8 @@ namespace POS_qu.Services
             {
                 if (d == null)
                     continue;
+
+        
 
                 if (d.ItemId <= 0 || !_repo.IsInventoryItem(con, tran, d.ItemId))
                 {

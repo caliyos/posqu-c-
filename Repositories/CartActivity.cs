@@ -843,6 +843,32 @@ WHERE i.id = @item
         {
             if (warehouseId <= 0) warehouseId = 1;
 
+            ////////////////////////// DEBUGGING HELPER //////////////////////////////
+            //            using (var debug = new NpgsqlCommand(@"
+            //SELECT reserved_qty, qty
+            //FROM stocks
+            //WHERE item_id = @itemId
+            //AND warehouse_id = @w
+            //", conn, tran))
+            //            {
+            //                debug.Parameters.AddWithValue("@itemId", itemId);
+            //                debug.Parameters.AddWithValue("@w", warehouseId);
+
+            //                using var reader = debug.ExecuteReader();
+
+            //                if (reader.Read())
+            //                {
+            //                    var reserved = reader.GetDecimal(0);
+            //                    var qty = reader.GetDecimal(1);
+
+            //                    System.Diagnostics.Debug.WriteLine(
+            //    $"RESERVED={reserved}, QTY={qty}, baseQtyDiff={baseQtyDiff}"
+            //);
+            //                }
+            //            }
+
+            //////////////////////////END DEBUGGING HELPER //////////////////////////////
+
             double layerQty = 0d;
             using (var q = new NpgsqlCommand(@"
 SELECT COALESCE(SUM(qty_remaining),0) 
@@ -894,6 +920,34 @@ WHERE item_id = @itemId AND warehouse_id = @w
                 clamp.ExecuteNonQuery();
             }
 
+
+            ////////////////////////// DEBUGGING HELPER //////////////////////////////
+            //            using (var debug = new NpgsqlCommand(@"
+            //SELECT reserved_qty, qty
+            //FROM stocks
+            //WHERE item_id = @itemId
+            //AND warehouse_id = @w
+            //", conn, tran))
+            //            {
+            //                debug.Parameters.AddWithValue("@itemId", itemId);
+            //                debug.Parameters.AddWithValue("@w", warehouseId);
+
+            //                using var reader = debug.ExecuteReader();
+
+            //                if (reader.Read())
+            //                {
+            //                    var reserved = reader.GetDecimal(0);
+            //                    var qty = reader.GetDecimal(1);
+
+            //                    System.Diagnostics.Debug.WriteLine(
+            //     $"RESERVED={reserved}, QTY={qty}, baseQtyDiff={baseQtyDiff}"
+            // );
+            //                }
+            //            }
+
+ ////////////////////////// END DEBUGGING HELPER //////////////////////////////
+
+
             string sql = @"
 UPDATE stocks
 SET reserved_qty = reserved_qty + @baseQtyDiff
@@ -912,7 +966,61 @@ AND (reserved_qty + @baseQtyDiff) <= qty;
         }
 
 
+        public bool IsKitBundle(
+    NpgsqlConnection conn,
+    NpgsqlTransaction tran,
+    int itemId)
+        {
+            using var cmd = new NpgsqlCommand(@"
+SELECT product_type_code
+FROM items
+WHERE id = @itemId
+", conn, tran);
 
+            cmd.Parameters.AddWithValue("@itemId", itemId);
+
+            return Convert.ToString(cmd.ExecuteScalar())
+                   == "manufactured";
+        }
+
+        public List<ItemMaterial> GetKitBundleBom(
+            NpgsqlConnection conn,
+            NpgsqlTransaction tran,
+            long parentItemId)
+        {
+            var result = new List<ItemMaterial>();
+
+            using var cmd = new NpgsqlCommand(@"
+        SELECT
+            id,
+            parent_item_id,
+            component_item_id,
+            qty,
+            unit_id,
+            unit_cost
+        FROM item_materials
+        WHERE parent_item_id = @parentItemId
+    ", conn, tran);
+
+            cmd.Parameters.AddWithValue("@parentItemId", parentItemId);
+
+            using var reader = cmd.ExecuteReader();
+
+            while (reader.Read())
+            {
+                result.Add(new ItemMaterial
+                {
+                    Id = Convert.ToInt32(reader["id"]),
+                    ParentItemId = Convert.ToInt32(reader["parent_item_id"]),
+                    ComponentItemId = Convert.ToInt32(reader["component_item_id"]),
+                    Qty = Convert.ToDecimal(reader["qty"]),
+                    UnitId = Convert.ToInt32(reader["unit_id"]),
+                    UnitCost = Convert.ToDecimal(reader["unit_cost"])
+                });
+            }
+
+            return result;
+        }
 
 
 

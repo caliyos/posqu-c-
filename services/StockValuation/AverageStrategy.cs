@@ -3,9 +3,11 @@ using System.Data;
 using Npgsql;
 using POS_qu.Core.Interfaces;
 using POS_qu.Models;
+using POS_qu.Repositories;
 
 namespace POS_qu.Services.StockValuation
 {
+    //_cartrepo = new CartActivity;
     public class AverageStrategy : IStockValuationStrategy
     {
         private static bool HasColumn(NpgsqlConnection con, NpgsqlTransaction tran, string tableName, string columnName)
@@ -71,7 +73,15 @@ VALUES (@item_id, @warehouse_id, @qty, @qty, @cost, @exp, NOW())
         {
             var con = (NpgsqlConnection)dbConnection;
             var tran = (NpgsqlTransaction)dbTransaction;
-            
+
+            // KIT/ BUNDLE handling: if the item is a kit/bundle, we need to break it down to its components and deduct stock from them instead, but we won't create stock deduction lines for the kit/bundle itself since it doesn't have its own stock layers
+            if (_cartrepo.IsKitBundle(con, tran, itemId))
+            {
+                return DeductKitOnly(itemId, qtyToDeduct,warehouseId, con, tran);
+            }
+
+            // For regular items, we calculate COGS based on average cost and deduct stock from layers accordingly
+
             decimal avgCost = GetAverageCost(itemId, warehouseId, con, tran);
             var result = new StockDeductionResult { QtyDeducted = qtyToDeduct, TotalCogs = qtyToDeduct * avgCost };
 
@@ -138,8 +148,39 @@ VALUES (@item_id, @warehouse_id, @qty, @qty, @cost, NOW())
             return result;
         }
 
+        private StockDeductionResult DeductKitOnly(
+    int kitItemId,
+    decimal qtyToDeduct,
+    int warehouseId,
+    NpgsqlConnection con,
+    NpgsqlTransaction tran)
+        {
+            var result = new StockDeductionResult();
+
+            var boms = _cartrepo.GetKitBundleBom(con, tran, kitItemId);
+
+            foreach (var bom in boms)
+            {
+                decimal totalQty = bom.Qty * qtyToDeduct;
+
+                var r = CalculateCOGSAndDeductStock(
+                    bom.ComponentItemId,
+                    warehouseId,
+                    totalQty,
+                    con,
+                    tran
+                );
+
+                result.TotalCogs += r.TotalCogs;
+                result.Lines.AddRange(r.Lines);
+            }
+
+            return result;
+        }
+
         private void UpdateMainStock(int itemId, int warehouseId, decimal qtyChange, decimal unitCost, NpgsqlConnection con, NpgsqlTransaction tran)
         {
+
             bool hasHppAvg = HasColumn(con, tran, "stocks", "hpp_avg");
             if (hasHppAvg)
             {
@@ -235,6 +276,8 @@ DO UPDATE SET qty = stocks.qty + EXCLUDED.qty
             }
         }
 
+        private CartActivity _cartrepo = new CartActivity();
+  
         private static decimal GetAverageCost(int itemId, int warehouseId, NpgsqlConnection con, NpgsqlTransaction tran)
         {
             if (HasColumn(con, tran, "stocks", "hpp_avg"))

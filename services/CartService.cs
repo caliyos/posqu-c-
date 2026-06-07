@@ -259,7 +259,38 @@ public class CartService : ICartService
 
 
 
+    private bool ReserveKitComponents(
+     NpgsqlConnection conn,
+     NpgsqlTransaction tran,
+     int kitItemId,
+     int warehouseId,
+     int qtyDiff)
+    {
+        var materials =
+            _repo.GetKitBundleBom(
+                conn,
+                tran,
+                kitItemId);
 
+        foreach (var material in materials)
+        {
+            int reserveQty =
+                (int)(material.Qty * qtyDiff);
+
+            bool ok =
+                _repo.TryUpdateReservedStock(
+                    conn,
+                    tran,
+                    (int)material.ComponentItemId,
+                    warehouseId,
+                    reserveQty);
+
+            if (!ok)
+                return false;
+        }
+
+        return true;
+    }
 
     public InvoiceData UpdateCartItemStock(InvoiceItem item,InvoiceData invoice)
     {
@@ -296,17 +327,38 @@ public class CartService : ICartService
             // ===============================
             if (qtyDiff != 0)
             {
-                int activeWarehouseId = SessionUser.GetCurrentUser()?.WarehouseId ?? 1;
-                bool reservedUpdated = _repo.TryUpdateReservedStock(
-                    conn, tran,
-                    item.ItemId,
-                    activeWarehouseId,
-                    stockAdjustment
-                );
+                int activeWarehouseId =
+                    SessionUser.GetCurrentUser()?.WarehouseId ?? 1;
+
+                bool reservedUpdated;
+
+                if (_repo.IsKitBundle(conn, tran, item.ItemId))
+                {
+                    reservedUpdated = 
+                    ReserveKitComponents(
+                        conn,
+                        tran,
+                        item.ItemId,
+                        activeWarehouseId,
+                        stockAdjustment   // BUKAN stockAdjustment
+                    );
+                }
+                else
+                {
+                    reservedUpdated =
+                        _repo.TryUpdateReservedStock(
+                            conn,
+                            tran,
+                            item.ItemId,
+                            activeWarehouseId,
+                            stockAdjustment
+                        );
+                }
 
                 if (!reservedUpdated)
                 {
-                    throw new InvalidOperationException("Stock tidak cukup.");
+                    throw new InvalidOperationException(
+                        "Stock tidak cukup.");
                 }
             }
 
@@ -785,61 +837,83 @@ LIMIT 1
             var session = SessionUser.GetCurrentUser();
             int activeWarehouseId = session?.WarehouseId ?? 1;
 
-            int stockNeeded = request.Quantity * request.ConversionRate;
+            using var conn = new NpgsqlConnection(DbConfig.ConnectionString);
+            conn.Open();
+            using var tran = conn.BeginTransaction();
 
-            using (var conn = new NpgsqlConnection(DbConfig.ConnectionString))
-            {
-                conn.Open();
-                using var tran = conn.BeginTransaction();
-
-                bool deleteSuccess = _repo.DeletePendingTransaction(
-                    conn, tran,
-                    session.TerminalId,
-                    session.UserId,
-                    request.ItemId,
-                    request.UnitId,
-                    request.CartSessionCode
-                );
-
-                if (!deleteSuccess)
-                    throw new InvalidOperationException("Failed to delete item from pending transactions.");
-
-                if (stockNeeded != 0)
-                {
-                    bool ok = _repo.TryUpdateReservedStock(conn, tran, request.ItemId, activeWarehouseId, -stockNeeded);
-                    if (!ok)
-                        throw new InvalidOperationException("Gagal melepas reserved stock.");
-                }
-
-                tran.Commit();
-            }
-
-            // Log aktivitas
-            _activityService.LogAction(
-                userId: session.UserId.ToString(),
-                actionType: ActivityType.Cart.ToString(),
-                referenceId: null,
-                desc: $"Deleted item from cart: {request.ItemId}",
-                details: new
-                {
-                    request.ItemId,
-                    request.Reason,
-                    terminal = session.TerminalId,
-                    shiftId = session.ShiftId,
-                    IpAddress = NetworkHelper.GetLocalIPAddress(),
-                    UserAgent = GlobalContext.getAppVersion(),
-                    loginId = session.LoginId,
-                    request.CartSessionCode,
-                    request.IsPaymentMode
-                }
+            // 1. Hapus dari pending transaction dulu
+            bool deleteSuccess = _repo.DeletePendingTransaction(
+                conn, tran,
+                session.TerminalId,
+                session.UserId,
+                request.ItemId,
+                request.UnitId,
+                request.CartSessionCode
             );
 
+            if (!deleteSuccess)
+                throw new InvalidOperationException("Failed to delete item from pending transactions.");
+
+            // 2. RELEASE STOCK (KIT vs NORMAL)
+            bool releaseOk = true;
+
+            if (_repo.IsKitBundle(conn, tran, request.ItemId))
+            {
+                // =========================
+                // KIT / BUNDLE
+                // =========================
+                var boms = _repo.GetKitBundleBom(
+                    conn,
+                    tran,
+                    request.ItemId
+                );
+
+                foreach (var bom in boms)
+                {
+                    int releaseQty =
+                        (int)(bom.Qty * request.Quantity);
+
+                    bool ok = _repo.TryUpdateReservedStock(
+                        conn,
+                        tran,
+                        bom.ComponentItemId,
+                        activeWarehouseId,
+                        -releaseQty
+                    );
+
+                    if (!ok)
+                    {
+                        releaseOk = false;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                // =========================
+                // ITEM NORMAL
+                // =========================
+                int stockNeeded =
+                    request.Quantity * request.ConversionRate;
+
+                releaseOk = _repo.TryUpdateReservedStock(
+                    conn,
+                    tran,
+                    request.ItemId,
+                    activeWarehouseId,
+                    -stockNeeded
+                );
+            }
+
+            if (!releaseOk)
+                throw new InvalidOperationException("Gagal melepas reserved stock.");
+
+            tran.Commit();
             return true;
         }
         catch (Exception ex)
         {
             throw new InvalidOperationException("Failed to delete item from cart.", ex);
-       
         }
     }
 
