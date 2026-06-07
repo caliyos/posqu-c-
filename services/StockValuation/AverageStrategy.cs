@@ -79,73 +79,77 @@ VALUES (@item_id, @warehouse_id, @qty, @qty, @cost, @exp, NOW())
             {
                 return DeductKitOnly(itemId, qtyToDeduct,warehouseId, con, tran);
             }
+            else
+            {
+                // For regular items, we calculate COGS based on average cost and deduct stock from layers accordingly
 
-            // For regular items, we calculate COGS based on average cost and deduct stock from layers accordingly
+                decimal avgCost = GetAverageCost(itemId, warehouseId, con, tran);
+                var result = new StockDeductionResult { QtyDeducted = qtyToDeduct, TotalCogs = qtyToDeduct * avgCost };
 
-            decimal avgCost = GetAverageCost(itemId, warehouseId, con, tran);
-            var result = new StockDeductionResult { QtyDeducted = qtyToDeduct, TotalCogs = qtyToDeduct * avgCost };
-
-            decimal remainingToDeduct = qtyToDeduct;
-            using (var cmd = new NpgsqlCommand(@"
+                decimal remainingToDeduct = qtyToDeduct;
+                using (var cmd = new NpgsqlCommand(@"
 SELECT id, qty_remaining
 FROM stock_layers
 WHERE item_id=@item_id AND warehouse_id=@warehouse_id AND qty_remaining > 0
 ORDER BY created_at ASC, id ASC
 FOR UPDATE
 ", con, tran))
-            {
-                cmd.Parameters.AddWithValue("@item_id", itemId);
-                cmd.Parameters.AddWithValue("@warehouse_id", warehouseId);
-                using var r = cmd.ExecuteReader();
-                var rows = new System.Collections.Generic.List<(long Id, decimal Qty)>();
-                while (r.Read())
                 {
-                    long id = Convert.ToInt64(r["id"]);
-                    decimal qty = r["qty_remaining"] != DBNull.Value ? Convert.ToDecimal(r["qty_remaining"]) : 0m;
-                    rows.Add((id, qty));
-                }
-                r.Close();
+                    cmd.Parameters.AddWithValue("@item_id", itemId);
+                    cmd.Parameters.AddWithValue("@warehouse_id", warehouseId);
+                    using var r = cmd.ExecuteReader();
+                    var rows = new System.Collections.Generic.List<(long Id, decimal Qty)>();
+                    while (r.Read())
+                    {
+                        long id = Convert.ToInt64(r["id"]);
+                        decimal qty = r["qty_remaining"] != DBNull.Value ? Convert.ToDecimal(r["qty_remaining"]) : 0m;
+                        rows.Add((id, qty));
+                    }
+                    r.Close();
 
-                foreach (var row in rows)
+                    foreach (var row in rows)
+                    {
+                        if (remainingToDeduct <= 0) break;
+                        decimal take = Math.Min(row.Qty, remainingToDeduct);
+                        remainingToDeduct -= take;
+                        result.Lines.Add(new StockDeductionLine
+                        {
+                            StockLayerId = row.Id,
+                            Qty = take,
+                            UnitCost = avgCost
+                        });
+                        using var upd = new NpgsqlCommand("UPDATE stock_layers SET qty_remaining = qty_remaining - @q WHERE id = @id", con, tran);
+                        upd.Parameters.AddWithValue("@q", (double)take);
+                        upd.Parameters.AddWithValue("@id", row.Id);
+                        upd.ExecuteNonQuery();
+                    }
+                }
+
+                if (remainingToDeduct > 0)
                 {
-                    if (remainingToDeduct <= 0) break;
-                    decimal take = Math.Min(row.Qty, remainingToDeduct);
-                    remainingToDeduct -= take;
+                    decimal fallbackCost = GetFallbackBuyPrice(itemId, con, tran);
                     result.Lines.Add(new StockDeductionLine
                     {
-                        StockLayerId = row.Id,
-                        Qty = take,
-                        UnitCost = avgCost
+                        StockLayerId = null,
+                        Qty = remainingToDeduct,
+                        UnitCost = fallbackCost
                     });
-                    using var upd = new NpgsqlCommand("UPDATE stock_layers SET qty_remaining = qty_remaining - @q WHERE id = @id", con, tran);
-                    upd.Parameters.AddWithValue("@q", (double)take);
-                    upd.Parameters.AddWithValue("@id", row.Id);
-                    upd.ExecuteNonQuery();
-                }
-            }
-
-            if (remainingToDeduct > 0)
-            {
-                decimal fallbackCost = GetFallbackBuyPrice(itemId, con, tran);
-                result.Lines.Add(new StockDeductionLine
-                {
-                    StockLayerId = null,
-                    Qty = remainingToDeduct,
-                    UnitCost = fallbackCost
-                });
-                using var ins = new NpgsqlCommand(@"
+                    using var ins = new NpgsqlCommand(@"
 INSERT INTO stock_layers (item_id, warehouse_id, qty_initial, qty_remaining, buy_price, created_at)
 VALUES (@item_id, @warehouse_id, @qty, @qty, @cost, NOW())
 ", con, tran);
-                ins.Parameters.AddWithValue("@item_id", itemId);
-                ins.Parameters.AddWithValue("@warehouse_id", warehouseId);
-                ins.Parameters.AddWithValue("@qty", (double)(-remainingToDeduct));
-                ins.Parameters.AddWithValue("@cost", fallbackCost);
-                ins.ExecuteNonQuery();
+                    ins.Parameters.AddWithValue("@item_id", itemId);
+                    ins.Parameters.AddWithValue("@warehouse_id", warehouseId);
+                    ins.Parameters.AddWithValue("@qty", (double)(-remainingToDeduct));
+                    ins.Parameters.AddWithValue("@cost", fallbackCost);
+                    ins.ExecuteNonQuery();
+                }
+
+                UpdateMainStock(itemId, warehouseId, -qtyToDeduct, avgCost, con, tran);
+                return result;
             }
 
-            UpdateMainStock(itemId, warehouseId, -qtyToDeduct, avgCost, con, tran);
-            return result;
+          
         }
 
         private StockDeductionResult DeductKitOnly(
@@ -180,7 +184,7 @@ VALUES (@item_id, @warehouse_id, @qty, @qty, @cost, NOW())
 
         private void UpdateMainStock(int itemId, int warehouseId, decimal qtyChange, decimal unitCost, NpgsqlConnection con, NpgsqlTransaction tran)
         {
-
+           
             bool hasHppAvg = HasColumn(con, tran, "stocks", "hpp_avg");
             if (hasHppAvg)
             {
@@ -275,6 +279,14 @@ DO UPDATE SET qty = stocks.qty + EXCLUDED.qty
                 cmd.ExecuteNonQuery();
             }
         }
+
+
+
+
+
+
+
+
 
         private CartActivity _cartrepo = new CartActivity();
   

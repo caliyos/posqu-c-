@@ -184,6 +184,14 @@ ORDER BY items.id ASC;
                 {
                     try
                     {
+
+                        // KIT/BUNDLE tidak punya stock sendiri
+                        if (item.product_type_code == "manufactured")
+                        {
+                            item.stock = 0;
+                            item.min_qty = 0;
+                        }
+
                         string sql = @"INSERT INTO items (
                                             barcode, name, category_id, unit, supplier_id, brand_id, rack_id,
                                             buy_price, sell_price, valuation_method, is_active, note,
@@ -348,6 +356,13 @@ ORDER BY items.id ASC;
                 {
                     try
                     {
+                        // KIT/BUNDLE tidak punya stock sendiri
+                        if (item.product_type_code == "manufactured")
+                        {
+                            item.stock = 0;
+                            item.min_qty = 0;
+                        }
+
                         string sql = @"UPDATE items SET 
                                        barcode = @barcode, name = @name, category_id = @category_id, 
                                        unit = @unit_id, supplier_id = @supplier_id, brand_id = @brand_id, rack_id = @rack_id,

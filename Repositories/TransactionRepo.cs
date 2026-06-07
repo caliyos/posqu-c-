@@ -281,6 +281,7 @@ VALUES (
             }
         }
 
+        private CartActivity _cartrepo = new CartActivity();
         public void ReleaseReservedStockInWarehouse(
             NpgsqlConnection con,
             NpgsqlTransaction tran,
@@ -288,6 +289,9 @@ VALUES (
             int warehouseId,
             decimal qtyToRelease)
         {
+            if (_cartrepo.IsKitBundle(con, tran, itemId))
+                return;
+
             if (warehouseId <= 0) warehouseId = 1;
             if (qtyToRelease <= 0m) return;
 
