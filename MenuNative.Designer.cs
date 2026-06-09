@@ -17,6 +17,7 @@
 
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MenuNative));
             panel1 = new Panel();
             sessionInfoCard = new POS_qu.Helpers.RoundedPanel();
             lblSessionInfo = new Label();
@@ -64,6 +65,10 @@
             daftarStockOpnameToolStripMenuItem = new ToolStripMenuItem();
             daftarItemMasukToolStripMenuItem = new ToolStripMenuItem();
             daftarItemKeluarToolStripMenuItem = new ToolStripMenuItem();
+            pembelianToolStripMenuItem = new ToolStripMenuItem();
+            pesananPembelianToolStripMenuItem = new ToolStripMenuItem();
+            penerimaanBarangToolStripMenuItem = new ToolStripMenuItem();
+            returPembelianToolStripMenuItem = new ToolStripMenuItem();
             promosiDiskonToolStripMenuItem = new ToolStripMenuItem();
             daftarProgramToolStripMenuItem = new ToolStripMenuItem();
             buatProgramToolStripMenuItem = new ToolStripMenuItem();
@@ -73,10 +78,6 @@
             daftarTransaksiToolStripMenuItem = new ToolStripMenuItem();
             casherToolStripMenuItem1 = new ToolStripMenuItem();
             pendingTransaksiAdminToolStripMenuItem = new ToolStripMenuItem();
-            pembelianToolStripMenuItem = new ToolStripMenuItem();
-            pesananPembelianToolStripMenuItem = new ToolStripMenuItem();
-            penerimaanBarangToolStripMenuItem = new ToolStripMenuItem();
-            returPembelianToolStripMenuItem = new ToolStripMenuItem();
             reportsToolStripMenuItem = new ToolStripMenuItem();
             penjualanToolStripMenuItem = new ToolStripMenuItem();
             stockToolStripMenuItem = new ToolStripMenuItem();
@@ -575,6 +576,35 @@
             daftarItemKeluarToolStripMenuItem.Text = "Daftar Item Keluar";
             daftarItemKeluarToolStripMenuItem.Click += daftarItemKeluarToolStripMenuItem_Click;
             // 
+            // pembelianToolStripMenuItem
+            // 
+            pembelianToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { pesananPembelianToolStripMenuItem, penerimaanBarangToolStripMenuItem, returPembelianToolStripMenuItem });
+            pembelianToolStripMenuItem.Name = "pembelianToolStripMenuItem";
+            pembelianToolStripMenuItem.Size = new Size(94, 25);
+            pembelianToolStripMenuItem.Text = "Pembelian";
+            pembelianToolStripMenuItem.Click += pembelianToolStripMenuItem_Click;
+            // 
+            // pesananPembelianToolStripMenuItem
+            // 
+            pesananPembelianToolStripMenuItem.Name = "pesananPembelianToolStripMenuItem";
+            pesananPembelianToolStripMenuItem.Size = new Size(301, 26);
+            pesananPembelianToolStripMenuItem.Text = "Pesanan Pembelian";
+            pesananPembelianToolStripMenuItem.Click += pOToolStripMenuItem_Click;
+            // 
+            // penerimaanBarangToolStripMenuItem
+            // 
+            penerimaanBarangToolStripMenuItem.Name = "penerimaanBarangToolStripMenuItem";
+            penerimaanBarangToolStripMenuItem.Size = new Size(301, 26);
+            penerimaanBarangToolStripMenuItem.Text = "Pembelian / Penerimaan Barang";
+            penerimaanBarangToolStripMenuItem.Click += penerimaanBarangToolStripMenuItem_Click;
+            // 
+            // returPembelianToolStripMenuItem
+            // 
+            returPembelianToolStripMenuItem.Name = "returPembelianToolStripMenuItem";
+            returPembelianToolStripMenuItem.Size = new Size(301, 26);
+            returPembelianToolStripMenuItem.Text = "Retur Pembelian (Ke Supplier)";
+            returPembelianToolStripMenuItem.Click += returPembelianToolStripMenuItem_Click;
+            // 
             // promosiDiskonToolStripMenuItem
             // 
             promosiDiskonToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { daftarProgramToolStripMenuItem, buatProgramToolStripMenuItem, ruleSyaratToolStripMenuItem, historyLogToolStripMenuItem });
@@ -637,35 +667,6 @@
             pendingTransaksiAdminToolStripMenuItem.Name = "pendingTransaksiAdminToolStripMenuItem";
             pendingTransaksiAdminToolStripMenuItem.Size = new Size(196, 26);
             pendingTransaksiAdminToolStripMenuItem.Text = "Pending (Admin)";
-            // 
-            // pembelianToolStripMenuItem
-            // 
-            pembelianToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { pesananPembelianToolStripMenuItem, penerimaanBarangToolStripMenuItem, returPembelianToolStripMenuItem });
-            pembelianToolStripMenuItem.Name = "pembelianToolStripMenuItem";
-            pembelianToolStripMenuItem.Size = new Size(94, 25);
-            pembelianToolStripMenuItem.Text = "Pembelian";
-            pembelianToolStripMenuItem.Click += pembelianToolStripMenuItem_Click;
-            // 
-            // pesananPembelianToolStripMenuItem
-            // 
-            pesananPembelianToolStripMenuItem.Name = "pesananPembelianToolStripMenuItem";
-            pesananPembelianToolStripMenuItem.Size = new Size(301, 26);
-            pesananPembelianToolStripMenuItem.Text = "Pesanan Pembelian";
-            pesananPembelianToolStripMenuItem.Click += pOToolStripMenuItem_Click;
-            // 
-            // penerimaanBarangToolStripMenuItem
-            // 
-            penerimaanBarangToolStripMenuItem.Name = "penerimaanBarangToolStripMenuItem";
-            penerimaanBarangToolStripMenuItem.Size = new Size(301, 26);
-            penerimaanBarangToolStripMenuItem.Text = "Pembelian / Penerimaan Barang";
-            penerimaanBarangToolStripMenuItem.Click += penerimaanBarangToolStripMenuItem_Click;
-            // 
-            // returPembelianToolStripMenuItem
-            // 
-            returPembelianToolStripMenuItem.Name = "returPembelianToolStripMenuItem";
-            returPembelianToolStripMenuItem.Size = new Size(301, 26);
-            returPembelianToolStripMenuItem.Text = "Retur Pembelian (Ke Supplier)";
-            returPembelianToolStripMenuItem.Click += returPembelianToolStripMenuItem_Click;
             // 
             // reportsToolStripMenuItem
             // 
@@ -841,6 +842,7 @@
             Controls.Add(panel1);
             Controls.Add(menuStrip1);
             Controls.Add(copyrightLabel);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MainMenuStrip = menuStrip1;
             Margin = new Padding(1);
             Name = "MenuNative";
