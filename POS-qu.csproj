@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
@@ -8,6 +8,10 @@
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
 	  <ForceDesignerDpiUnaware>true</ForceDesignerDpiUnaware>
+ 
+    <Product>beo-pos</Product>
+  <Company>caliyos</Company>
+  <Version>1.0.0</Version>
   </PropertyGroup>
 
   <ItemGroup>

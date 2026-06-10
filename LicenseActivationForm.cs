@@ -480,10 +480,11 @@ namespace POS_qu.Helpers
 
         public static async Task<LocalLicenseFile?> LoadAsync()
         {
+            //MessageBox.Show("Loading license file...", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
             var path = LocalFirstPaths.LicenseFilePath;
             if (!File.Exists(path)) return null;
 
-            var json = await File.ReadAllTextAsync(path);
+            var json = File.ReadAllText(path);
             if (string.IsNullOrWhiteSpace(json)) return null;
 
             try
@@ -510,6 +511,70 @@ namespace POS_qu.Helpers
             }
             return legacy;
         }
+
+        //public static async Task<LocalLicenseFile?> LoadAsync()
+        //{
+        //    MessageBox.Show("1");
+
+        //    var path = LocalFirstPaths.LicenseFilePath;
+
+        //    MessageBox.Show(path);
+
+        //    if (!File.Exists(path))
+        //    {
+        //        MessageBox.Show("FILE TIDAK ADA");
+        //        return null;
+        //    }
+
+        //    MessageBox.Show("2");
+
+            //    //var json = await File.ReadAllTextAsync(path);
+            //    var json = File.ReadAllText(path);
+
+
+            //    MessageBox.Show("3");
+
+            //    try
+            //    {
+            //        using var doc = JsonDocument.Parse(json);
+
+            //        MessageBox.Show("4");
+
+            //        if (doc.RootElement.TryGetProperty("protected_payload", out _))
+            //        {
+            //            MessageBox.Show("5");
+
+            //            var env = JsonSerializer.Deserialize<ProtectedLicenseEnvelope>(json, JsonOptions);
+
+            //            MessageBox.Show("6");
+
+            //            var blob = Convert.FromBase64String(env.ProtectedPayload);
+
+            //            MessageBox.Show("7");
+
+            //            var plain = ProtectedData.Unprotect(
+            //                blob,
+            //                GetEntropy(),
+            //                DataProtectionScope.LocalMachine);
+
+            //            MessageBox.Show("8");
+
+            //            var plainJson = Encoding.UTF8.GetString(plain);
+
+            //            MessageBox.Show(plainJson);
+
+            //            return JsonSerializer.Deserialize<LocalLicenseFile>(plainJson, JsonOptions);
+            //        }
+            //    }
+            //    catch (Exception ex)
+            //    {
+            //        MessageBox.Show(ex.ToString());
+            //    }
+
+            //    MessageBox.Show("9");
+
+            //    return JsonSerializer.Deserialize<LocalLicenseFile>(json, JsonOptions);
+            //}
 
         public static async Task SaveAsync(LocalLicenseFile file)
         {

@@ -117,6 +117,23 @@ namespace POS_qu.Helpers
     {
         //private static string vStrConnection = "Host=localhost;Port=5433;Username=postgres;Password=postgres11;Database=posqu";
 
+
+        public static bool IsInternetAvailable()
+        {
+            try
+            {
+                using (var ping = new Ping())
+                {
+                    var reply = ping.Send("8.8.8.8", 1000);
+                    return reply.Status == IPStatus.Success;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public static string GetPcId()
         {
             return NetworkInterface

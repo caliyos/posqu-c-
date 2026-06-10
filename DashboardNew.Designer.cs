@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DashboardNew));
             label1 = new Label();
             label2 = new Label();
@@ -44,6 +45,7 @@
             label8 = new Label();
             label7 = new Label();
             roundedPanel4 = new POS_qu.Helpers.RoundedPanel();
+            lblClock = new Label();
             lblSessionInfo = new Label();
             roundedPanel5 = new POS_qu.Helpers.RoundedPanel();
             label16 = new Label();
@@ -103,6 +105,9 @@
             usersToolStripMenuItem = new ToolStripMenuItem();
             helpToolStripMenuItem = new ToolStripMenuItem();
             licensesToolStripMenuItem = new ToolStripMenuItem();
+            supportPengembangToolStripMenuItem = new ToolStripMenuItem();
+            cekUpdateToolStripMenuItem = new ToolStripMenuItem();
+            aboutBeoposToolStripMenuItem = new ToolStripMenuItem();
             aboutToolStripMenuItem = new ToolStripMenuItem();
             roundedButton1 = new RoundedButton();
             label9 = new Label();
@@ -146,6 +151,12 @@
             label21 = new Label();
             label23 = new Label();
             label20 = new Label();
+            label42 = new Label();
+            pictureBox9 = new PictureBox();
+            roundedPanel12 = new POS_qu.Helpers.RoundedPanel();
+            pictureBox10 = new PictureBox();
+            label38 = new Label();
+            timerClock = new System.Windows.Forms.Timer(components);
             roundedPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             roundedPanel2.SuspendLayout();
@@ -166,6 +177,9 @@
             roundedPanel10.SuspendLayout();
             roundedPanel11.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox8).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBox9).BeginInit();
+            roundedPanel12.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBox10).BeginInit();
             SuspendLayout();
             // 
             // label1
@@ -326,18 +340,30 @@
             // 
             roundedPanel4.BackColor = Color.White;
             roundedPanel4.BorderRadius = 10;
+            roundedPanel4.Controls.Add(lblClock);
             roundedPanel4.Controls.Add(lblSessionInfo);
             roundedPanel4.Location = new Point(39, 532);
             roundedPanel4.Name = "roundedPanel4";
-            roundedPanel4.Size = new Size(340, 418);
+            roundedPanel4.Size = new Size(340, 372);
             roundedPanel4.TabIndex = 3;
+            // 
+            // lblClock
+            // 
+            lblClock.AutoSize = true;
+            lblClock.ForeColor = SystemColors.AppWorkspace;
+            lblClock.Location = new Point(15, 314);
+            lblClock.Name = "lblClock";
+            lblClock.Size = new Size(52, 21);
+            lblClock.TabIndex = 11;
+            lblClock.Text = "waktu";
             // 
             // lblSessionInfo
             // 
             lblSessionInfo.AutoSize = true;
+            lblSessionInfo.Font = new Font("Segoe UI", 9.75F, FontStyle.Italic, GraphicsUnit.Point, 0);
             lblSessionInfo.Location = new Point(15, 19);
             lblSessionInfo.Name = "lblSessionInfo";
-            lblSessionInfo.Size = new Size(92, 21);
+            lblSessionInfo.Size = new Size(71, 17);
             lblSessionInfo.TabIndex = 3;
             lblSessionInfo.Text = "System Info";
             // 
@@ -348,7 +374,7 @@
             roundedPanel5.Controls.Add(label16);
             roundedPanel5.Location = new Point(408, 543);
             roundedPanel5.Name = "roundedPanel5";
-            roundedPanel5.Size = new Size(329, 407);
+            roundedPanel5.Size = new Size(329, 361);
             roundedPanel5.TabIndex = 3;
             // 
             // label16
@@ -707,7 +733,7 @@
             // 
             // helpToolStripMenuItem
             // 
-            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { licensesToolStripMenuItem });
+            helpToolStripMenuItem.DropDownItems.AddRange(new ToolStripItem[] { licensesToolStripMenuItem, supportPengembangToolStripMenuItem, cekUpdateToolStripMenuItem, aboutBeoposToolStripMenuItem });
             helpToolStripMenuItem.Name = "helpToolStripMenuItem";
             helpToolStripMenuItem.Size = new Size(54, 25);
             helpToolStripMenuItem.Text = "Help";
@@ -718,6 +744,27 @@
             licensesToolStripMenuItem.Size = new Size(213, 26);
             licensesToolStripMenuItem.Text = "Licenses/Activation";
             // 
+            // supportPengembangToolStripMenuItem
+            // 
+            supportPengembangToolStripMenuItem.Name = "supportPengembangToolStripMenuItem";
+            supportPengembangToolStripMenuItem.Size = new Size(213, 26);
+            supportPengembangToolStripMenuItem.Text = "Kontak Developer";
+            supportPengembangToolStripMenuItem.Click += supportPengembangToolStripMenuItem_Click;
+            // 
+            // cekUpdateToolStripMenuItem
+            // 
+            cekUpdateToolStripMenuItem.Name = "cekUpdateToolStripMenuItem";
+            cekUpdateToolStripMenuItem.Size = new Size(213, 26);
+            cekUpdateToolStripMenuItem.Text = "Cek Update";
+            cekUpdateToolStripMenuItem.Click += cekUpdateToolStripMenuItem_Click;
+            // 
+            // aboutBeoposToolStripMenuItem
+            // 
+            aboutBeoposToolStripMenuItem.Name = "aboutBeoposToolStripMenuItem";
+            aboutBeoposToolStripMenuItem.Size = new Size(213, 26);
+            aboutBeoposToolStripMenuItem.Text = "About beo-pos";
+            aboutBeoposToolStripMenuItem.Click += aboutBeoposToolStripMenuItem_Click;
+            // 
             // aboutToolStripMenuItem
             // 
             aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
@@ -726,13 +773,13 @@
             // 
             // roundedButton1
             // 
-            roundedButton1.BackColor = Color.SteelBlue;
+            roundedButton1.BackColor = Color.RoyalBlue;
             roundedButton1.BorderRadius = 20;
             roundedButton1.FlatAppearance.BorderSize = 0;
             roundedButton1.FlatStyle = FlatStyle.Flat;
             roundedButton1.ForeColor = Color.Black;
             roundedButton1.Image = (Image)resources.GetObject("roundedButton1.Image");
-            roundedButton1.Location = new Point(305, 88);
+            roundedButton1.Location = new Point(293, 88);
             roundedButton1.Name = "roundedButton1";
             roundedButton1.Size = new Size(84, 62);
             roundedButton1.TabIndex = 6;
@@ -741,7 +788,7 @@
             // label9
             // 
             label9.AutoSize = true;
-            label9.Location = new Point(305, 64);
+            label9.Location = new Point(293, 64);
             label9.Name = "label9";
             label9.Size = new Size(97, 21);
             label9.TabIndex = 7;
@@ -855,7 +902,7 @@
             pictureBox7.Image = (Image)resources.GetObject("pictureBox7.Image");
             pictureBox7.Location = new Point(25, 22);
             pictureBox7.Name = "pictureBox7";
-            pictureBox7.Size = new Size(65, 58);
+            pictureBox7.Size = new Size(72, 58);
             pictureBox7.SizeMode = PictureBoxSizeMode.StretchImage;
             pictureBox7.TabIndex = 2;
             pictureBox7.TabStop = false;
@@ -889,7 +936,7 @@
             roundedPanel9.Controls.Add(label17);
             roundedPanel9.Location = new Point(769, 543);
             roundedPanel9.Name = "roundedPanel9";
-            roundedPanel9.Size = new Size(329, 407);
+            roundedPanel9.Size = new Size(329, 361);
             roundedPanel9.TabIndex = 3;
             // 
             // label17
@@ -908,7 +955,7 @@
             roundedPanel10.Controls.Add(label18);
             roundedPanel10.Location = new Point(1127, 543);
             roundedPanel10.Name = "roundedPanel10";
-            roundedPanel10.Size = new Size(304, 407);
+            roundedPanel10.Size = new Size(304, 361);
             roundedPanel10.TabIndex = 3;
             // 
             // label18
@@ -927,7 +974,7 @@
             roundedButton2.FlatAppearance.BorderSize = 0;
             roundedButton2.FlatStyle = FlatStyle.Flat;
             roundedButton2.ForeColor = Color.White;
-            roundedButton2.Location = new Point(60, 312);
+            roundedButton2.Location = new Point(39, 282);
             roundedButton2.Name = "roundedButton2";
             roundedButton2.Size = new Size(156, 47);
             roundedButton2.TabIndex = 8;
@@ -941,11 +988,11 @@
             roundedButton3.FlatAppearance.BorderSize = 0;
             roundedButton3.FlatStyle = FlatStyle.Flat;
             roundedButton3.ForeColor = Color.White;
-            roundedButton3.Location = new Point(60, 365);
+            roundedButton3.Location = new Point(39, 335);
             roundedButton3.Name = "roundedButton3";
             roundedButton3.Size = new Size(156, 47);
             roundedButton3.TabIndex = 8;
-            roundedButton3.Text = "Inventory (Ketik B)";
+            roundedButton3.Text = "Product (Ketik B)";
             roundedButton3.UseVisualStyleBackColor = false;
             // 
             // roundedButton4
@@ -955,7 +1002,7 @@
             roundedButton4.FlatAppearance.BorderSize = 0;
             roundedButton4.FlatStyle = FlatStyle.Flat;
             roundedButton4.ForeColor = Color.White;
-            roundedButton4.Location = new Point(60, 418);
+            roundedButton4.Location = new Point(39, 388);
             roundedButton4.Name = "roundedButton4";
             roundedButton4.Size = new Size(156, 47);
             roundedButton4.TabIndex = 8;
@@ -969,7 +1016,7 @@
             roundedButton5.FlatAppearance.BorderSize = 0;
             roundedButton5.FlatStyle = FlatStyle.Flat;
             roundedButton5.ForeColor = Color.White;
-            roundedButton5.Location = new Point(60, 471);
+            roundedButton5.Location = new Point(39, 441);
             roundedButton5.Name = "roundedButton5";
             roundedButton5.Size = new Size(156, 47);
             roundedButton5.TabIndex = 8;
@@ -1212,13 +1259,65 @@
             label20.TabIndex = 0;
             label20.Text = "Target Penjualan Harian";
             // 
+            // label42
+            // 
+            label42.AutoSize = true;
+            label42.Font = new Font("Segoe UI", 9F, FontStyle.Italic, GraphicsUnit.Point, 0);
+            label42.Location = new Point(71, 1016);
+            label42.Name = "label42";
+            label42.Size = new Size(111, 15);
+            label42.TabIndex = 0;
+            label42.Text = "Licensed To : caliyos";
+            // 
+            // pictureBox9
+            // 
+            pictureBox9.Image = (Image)resources.GetObject("pictureBox9.Image");
+            pictureBox9.Location = new Point(49, 1012);
+            pictureBox9.Name = "pictureBox9";
+            pictureBox9.Size = new Size(22, 19);
+            pictureBox9.SizeMode = PictureBoxSizeMode.StretchImage;
+            pictureBox9.TabIndex = 10;
+            pictureBox9.TabStop = false;
+            // 
+            // roundedPanel12
+            // 
+            roundedPanel12.BackColor = Color.White;
+            roundedPanel12.BorderRadius = 10;
+            roundedPanel12.Controls.Add(pictureBox10);
+            roundedPanel12.Controls.Add(label38);
+            roundedPanel12.Location = new Point(1483, 674);
+            roundedPanel12.Name = "roundedPanel12";
+            roundedPanel12.Size = new Size(379, 230);
+            roundedPanel12.TabIndex = 3;
+            // 
+            // pictureBox10
+            // 
+            pictureBox10.Image = (Image)resources.GetObject("pictureBox10.Image");
+            pictureBox10.Location = new Point(3, 0);
+            pictureBox10.Name = "pictureBox10";
+            pictureBox10.Size = new Size(59, 55);
+            pictureBox10.SizeMode = PictureBoxSizeMode.StretchImage;
+            pictureBox10.TabIndex = 2;
+            pictureBox10.TabStop = false;
+            // 
+            // label38
+            // 
+            label38.AutoSize = true;
+            label38.Location = new Point(68, 10);
+            label38.Name = "label38";
+            label38.Size = new Size(264, 21);
+            label38.TabIndex = 0;
+            label38.Text = "Program Promo/Diskon aktif Hari ini";
+            // 
             // DashboardNew
             // 
             AutoScaleDimensions = new SizeF(9F, 21F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = SystemColors.InactiveBorder;
             ClientSize = new Size(1904, 1041);
+            Controls.Add(pictureBox9);
             Controls.Add(roundedButton5);
+            Controls.Add(label42);
             Controls.Add(roundedButton4);
             Controls.Add(roundedButton3);
             Controls.Add(roundedButton2);
@@ -1230,6 +1329,7 @@
             Controls.Add(roundedPanel11);
             Controls.Add(roundedPanel3);
             Controls.Add(roundedPanel2);
+            Controls.Add(roundedPanel12);
             Controls.Add(roundedPanel10);
             Controls.Add(roundedPanel9);
             Controls.Add(roundedPanel5);
@@ -1276,6 +1376,10 @@
             roundedPanel11.ResumeLayout(false);
             roundedPanel11.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox8).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBox9).EndInit();
+            roundedPanel12.ResumeLayout(false);
+            roundedPanel12.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBox10).EndInit();
             ResumeLayout(false);
             PerformLayout();
         }
@@ -1399,5 +1503,15 @@
         private Label label34;
         private Label label35;
         private Label label33;
+        private Label label42;
+        private PictureBox pictureBox9;
+        private Helpers.RoundedPanel roundedPanel12;
+        private Label label38;
+        private ToolStripMenuItem supportPengembangToolStripMenuItem;
+        private ToolStripMenuItem cekUpdateToolStripMenuItem;
+        private ToolStripMenuItem aboutBeoposToolStripMenuItem;
+        private System.Windows.Forms.Timer timerClock;
+        private Label lblClock;
+        private PictureBox pictureBox10;
     }
 }
