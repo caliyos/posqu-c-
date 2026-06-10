@@ -23,12 +23,6 @@
             lblSessionInfo = new Label();
             sessionInfoTitleLabel = new Label();
             panelWelcome = new Panel();
-            dashboardPanel = new Panel();
-            dashboardBodyPanel = new Panel();
-            dashboardLeftPanel = new Panel();
-            salesBarsCard = new POS_qu.Helpers.RoundedPanel();
-            salesBarsFlow = new FlowLayoutPanel();
-            salesBarsTitleLabel = new Label();
             dashboardTopPanel = new Panel();
             label2 = new Label();
             dashboardActionsPanel = new FlowLayoutPanel();
@@ -102,17 +96,19 @@
             aboutToolStripMenuItem = new ToolStripMenuItem();
             manajemenRolesPermissionsToolStripMenuItem = new ToolStripMenuItem();
             copyrightLabel = new Label();
+            dashboardLeftPanel = new Panel();
+            salesBarsCard = new POS_qu.Helpers.RoundedPanel();
+            salesBarsTitleLabel = new Label();
+            salesBarsFlow = new FlowLayoutPanel();
             panel1.SuspendLayout();
             sessionInfoCard.SuspendLayout();
             panelWelcome.SuspendLayout();
-            dashboardPanel.SuspendLayout();
-            dashboardBodyPanel.SuspendLayout();
-            dashboardLeftPanel.SuspendLayout();
-            salesBarsCard.SuspendLayout();
             dashboardTopPanel.SuspendLayout();
             dashboardActionsPanel.SuspendLayout();
             cardTodayInner.SuspendLayout();
             menuStrip1.SuspendLayout();
+            dashboardLeftPanel.SuspendLayout();
+            salesBarsCard.SuspendLayout();
             SuspendLayout();
             // 
             // panel1
@@ -173,7 +169,6 @@
             // panelWelcome
             // 
             panelWelcome.BackColor = Color.Gainsboro;
-            panelWelcome.Controls.Add(dashboardPanel);
             panelWelcome.Controls.Add(dashboardTopPanel);
             panelWelcome.Dock = DockStyle.Left;
             panelWelcome.Location = new Point(0, 0);
@@ -183,84 +178,10 @@
             panelWelcome.Size = new Size(1504, 1014);
             panelWelcome.TabIndex = 1;
             // 
-            // dashboardPanel
-            // 
-            dashboardPanel.BackColor = Color.Transparent;
-            dashboardPanel.Controls.Add(dashboardBodyPanel);
-            dashboardPanel.Dock = DockStyle.Fill;
-            dashboardPanel.Location = new Point(10, 71);
-            dashboardPanel.Margin = new Padding(3, 2, 3, 2);
-            dashboardPanel.Name = "dashboardPanel";
-            dashboardPanel.Padding = new Padding(10, 7, 10, 9);
-            dashboardPanel.Size = new Size(1484, 934);
-            dashboardPanel.TabIndex = 2;
-            // 
-            // dashboardBodyPanel
-            // 
-            dashboardBodyPanel.BackColor = Color.Transparent;
-            dashboardBodyPanel.Controls.Add(dashboardLeftPanel);
-            dashboardBodyPanel.Dock = DockStyle.Fill;
-            dashboardBodyPanel.Location = new Point(10, 7);
-            dashboardBodyPanel.Margin = new Padding(0);
-            dashboardBodyPanel.Name = "dashboardBodyPanel";
-            dashboardBodyPanel.Size = new Size(1464, 918);
-            dashboardBodyPanel.TabIndex = 100;
-            // 
-            // dashboardLeftPanel
-            // 
-            dashboardLeftPanel.BackColor = Color.Transparent;
-            dashboardLeftPanel.Controls.Add(salesBarsCard);
-            dashboardLeftPanel.Dock = DockStyle.Fill;
-            dashboardLeftPanel.Location = new Point(0, 0);
-            dashboardLeftPanel.Margin = new Padding(0);
-            dashboardLeftPanel.Name = "dashboardLeftPanel";
-            dashboardLeftPanel.Padding = new Padding(0, 0, 8, 0);
-            dashboardLeftPanel.Size = new Size(1464, 918);
-            dashboardLeftPanel.TabIndex = 101;
-            // 
-            // salesBarsCard
-            // 
-            salesBarsCard.BackColor = Color.Transparent;
-            salesBarsCard.BorderRadius = 16;
-            salesBarsCard.Controls.Add(salesBarsFlow);
-            salesBarsCard.Controls.Add(salesBarsTitleLabel);
-            salesBarsCard.Dock = DockStyle.Top;
-            salesBarsCard.Location = new Point(0, 0);
-            salesBarsCard.Margin = new Padding(0);
-            salesBarsCard.Name = "salesBarsCard";
-            salesBarsCard.Padding = new Padding(13, 11, 13, 11);
-            salesBarsCard.Size = new Size(1456, 177);
-            salesBarsCard.TabIndex = 1;
-            // 
-            // salesBarsFlow
-            // 
-            salesBarsFlow.AutoScroll = true;
-            salesBarsFlow.BackColor = Color.Transparent;
-            salesBarsFlow.Dock = DockStyle.Top;
-            salesBarsFlow.FlowDirection = FlowDirection.TopDown;
-            salesBarsFlow.Location = new Point(13, 45);
-            salesBarsFlow.Margin = new Padding(3, 2, 3, 2);
-            salesBarsFlow.Name = "salesBarsFlow";
-            salesBarsFlow.Padding = new Padding(0, 5, 0, 0);
-            salesBarsFlow.Size = new Size(1430, 100);
-            salesBarsFlow.TabIndex = 1;
-            salesBarsFlow.WrapContents = false;
-            salesBarsFlow.Paint += salesBarsFlow_Paint;
-            // 
-            // salesBarsTitleLabel
-            // 
-            salesBarsTitleLabel.Dock = DockStyle.Top;
-            salesBarsTitleLabel.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            salesBarsTitleLabel.ForeColor = Color.Black;
-            salesBarsTitleLabel.Location = new Point(13, 11);
-            salesBarsTitleLabel.Name = "salesBarsTitleLabel";
-            salesBarsTitleLabel.Size = new Size(1430, 34);
-            salesBarsTitleLabel.TabIndex = 0;
-            salesBarsTitleLabel.Text = "Omzet 30 Hari Terakhir";
-            // 
             // dashboardTopPanel
             // 
             dashboardTopPanel.BackColor = Color.Transparent;
+            dashboardTopPanel.Controls.Add(dashboardLeftPanel);
             dashboardTopPanel.Controls.Add(label2);
             dashboardTopPanel.Controls.Add(dashboardActionsPanel);
             dashboardTopPanel.Controls.Add(dashboardTitleLabel);
@@ -833,6 +754,57 @@
             copyrightLabel.Size = new Size(70, 13);
             copyrightLabel.TabIndex = 3;
             // 
+            // dashboardLeftPanel
+            // 
+            dashboardLeftPanel.BackColor = Color.Transparent;
+            dashboardLeftPanel.Controls.Add(salesBarsCard);
+            dashboardLeftPanel.Location = new Point(565, 24);
+            dashboardLeftPanel.Margin = new Padding(0);
+            dashboardLeftPanel.Name = "dashboardLeftPanel";
+            dashboardLeftPanel.Padding = new Padding(0, 0, 8, 0);
+            dashboardLeftPanel.Size = new Size(1464, 918);
+            dashboardLeftPanel.TabIndex = 101;
+            // 
+            // salesBarsCard
+            // 
+            salesBarsCard.BackColor = Color.Transparent;
+            salesBarsCard.BorderRadius = 16;
+            salesBarsCard.Controls.Add(salesBarsFlow);
+            salesBarsCard.Controls.Add(salesBarsTitleLabel);
+            salesBarsCard.Dock = DockStyle.Top;
+            salesBarsCard.Location = new Point(0, 0);
+            salesBarsCard.Margin = new Padding(0);
+            salesBarsCard.Name = "salesBarsCard";
+            salesBarsCard.Padding = new Padding(13, 11, 13, 11);
+            salesBarsCard.Size = new Size(1456, 177);
+            salesBarsCard.TabIndex = 1;
+            // 
+            // salesBarsTitleLabel
+            // 
+            salesBarsTitleLabel.Dock = DockStyle.Top;
+            salesBarsTitleLabel.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            salesBarsTitleLabel.ForeColor = Color.Black;
+            salesBarsTitleLabel.Location = new Point(13, 11);
+            salesBarsTitleLabel.Name = "salesBarsTitleLabel";
+            salesBarsTitleLabel.Size = new Size(1430, 34);
+            salesBarsTitleLabel.TabIndex = 0;
+            salesBarsTitleLabel.Text = "Omzet 30 Hari Terakhir";
+            // 
+            // salesBarsFlow
+            // 
+            salesBarsFlow.AutoScroll = true;
+            salesBarsFlow.BackColor = Color.Transparent;
+            salesBarsFlow.Dock = DockStyle.Top;
+            salesBarsFlow.FlowDirection = FlowDirection.TopDown;
+            salesBarsFlow.Location = new Point(13, 45);
+            salesBarsFlow.Margin = new Padding(3, 2, 3, 2);
+            salesBarsFlow.Name = "salesBarsFlow";
+            salesBarsFlow.Padding = new Padding(0, 5, 0, 0);
+            salesBarsFlow.Size = new Size(1430, 100);
+            salesBarsFlow.TabIndex = 1;
+            salesBarsFlow.WrapContents = false;
+            salesBarsFlow.Paint += salesBarsFlow_Paint;
+            // 
             // MenuNative
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -850,16 +822,14 @@
             panel1.PerformLayout();
             sessionInfoCard.ResumeLayout(false);
             panelWelcome.ResumeLayout(false);
-            dashboardPanel.ResumeLayout(false);
-            dashboardBodyPanel.ResumeLayout(false);
-            dashboardLeftPanel.ResumeLayout(false);
-            salesBarsCard.ResumeLayout(false);
             dashboardTopPanel.ResumeLayout(false);
             dashboardTopPanel.PerformLayout();
             dashboardActionsPanel.ResumeLayout(false);
             cardTodayInner.ResumeLayout(false);
             menuStrip1.ResumeLayout(false);
             menuStrip1.PerformLayout();
+            dashboardLeftPanel.ResumeLayout(false);
+            salesBarsCard.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
@@ -928,9 +898,6 @@
         private ToolStripMenuItem daftarTransaksiToolStripMenuItem;
         private ToolStripMenuItem casherToolStripMenuItem1;
         private ToolStripMenuItem pendingTransaksiAdminToolStripMenuItem;
-        private Panel dashboardPanel;
-        private Panel dashboardBodyPanel;
-        private Panel dashboardLeftPanel;
         private System.Windows.Forms.Label lblOmzetToday;
         private System.Windows.Forms.Label lblOmzetMonth;
         private System.Windows.Forms.Label lblHPPMonth;
@@ -942,13 +909,14 @@
         private Panel cardTodayInner;
         private Label cardTodayTitle;
         private Label lblDashTodayValue;
-        private POS_qu.Helpers.RoundedPanel salesBarsCard;
-        private Label salesBarsTitleLabel;
-        private FlowLayoutPanel salesBarsFlow;
         private Button btnRefreshDashboard;
         private Button btnAdminPending;
         private POS_qu.Helpers.RoundedPanel sessionInfoCard;
         private Label lblSessionInfo;
         private Label sessionInfoTitleLabel;
+        private Panel dashboardLeftPanel;
+        private POS_qu.Helpers.RoundedPanel salesBarsCard;
+        private FlowLayoutPanel salesBarsFlow;
+        private Label salesBarsTitleLabel;
     }
 }

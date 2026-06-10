@@ -48,7 +48,8 @@ namespace POS_qu
 
                 // Pindah ke form utama
                 this.Hide();
-                MenuNative menu = new MenuNative();
+                //MenuNative menu = new MenuNative();
+                DashboardNew menu = new DashboardNew();
                 menu.FormClosed += (s, args) => Application.Exit();
                 menu.Show();
             }

@@ -17,67 +17,77 @@ namespace POS_qu
         static void Main()
         {
             ApplicationConfiguration.Initialize();
+          
+            //using (var splash = new Splash())
+            //{
+            //    splash.Show();
+            //    Application.DoEvents();
 
-            var splash = new Splash();
-            splash.Show();
+            //    // loading
+            //    System.Threading.Thread.Sleep(3000);
+
+            //    splash.Close();
+            //}
+
 
             Application.DoEvents();
+            Application.Run(new Login());
+
+            Application.Run(new DashboardNew());
 
             // =========================
             // SETUP + CHECK DB (OUTSIDE UI LOGIC)
             // =========================
-            bool needSetup = false;
+            //bool needSetup = false;
 
-            try
-            {
-                POS_qu.Helpers.DbConfig.LoadConfig();
+            //try
+            //{
+            //    POS_qu.Helpers.DbConfig.LoadConfig();
 
-                if (string.IsNullOrWhiteSpace(POS_qu.Helpers.DbConfig.ConnectionString))
-                {
-                    needSetup = true;
-                }
-                else
-                {
-                    using var conn = new Npgsql.NpgsqlConnection(
-                        POS_qu.Helpers.DbConfig.ConnectionString
-                    );
+            //    if (string.IsNullOrWhiteSpace(POS_qu.Helpers.DbConfig.ConnectionString))
+            //    {
+            //        needSetup = true;
+            //    }
+            //    else
+            //    {
+            //        using var conn = new Npgsql.NpgsqlConnection(
+            //            POS_qu.Helpers.DbConfig.ConnectionString
+            //        );
 
-                    conn.Open();
-                }
-            }
-            catch
-            {
-                needSetup = true;
-            }
+            //        conn.Open();
+            //    }
+            //}
+            //catch
+            //{
+            //    needSetup = true;
+            //}
 
-            if (needSetup)
-            {
+            //if (needSetup)
+            //{
                 
 
-                using (var setup = new POS_qu.DatabaseSetting())
-                {
-                    setup.ShowDialog();
-                }
+            //    using (var setup = new POS_qu.DatabaseSetting())
+            //    {
+            //        setup.ShowDialog();
+            //    }
 
-                POS_qu.Helpers.DbConfig.LoadConfig();
-            }
+            //    POS_qu.Helpers.DbConfig.LoadConfig();
+            //}
 
-            POS_qu.Helpers.GlobalContext.RefreshConnectionInfo();
+            //POS_qu.Helpers.GlobalContext.RefreshConnectionInfo();
 
-            // =========================
-            // SHOW SPLASH 3 DETIK (SMOOTH)
-            // =========================
-            var sw = System.Diagnostics.Stopwatch.StartNew();
+            //// =========================
+            //// SHOW SPLASH 3 DETIK (SMOOTH)
+            //// =========================
+            //var sw = System.Diagnostics.Stopwatch.StartNew();
 
-            while (sw.ElapsedMilliseconds < 3000)
-            {
-                Application.DoEvents();
-                System.Threading.Thread.Sleep(50);
-            }
+            //while (sw.ElapsedMilliseconds < 3000)
+            //{
+            //    Application.DoEvents();
+            //    System.Threading.Thread.Sleep(50);
+            //}
 
-            splash.Close();
-
-            Application.Run(new Login());
+            //Application.Run(new Login());
         }
 
     }
